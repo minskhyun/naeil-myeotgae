@@ -57,6 +57,7 @@ npm install
 npm run dev
 ```
 
+http://localhost:5173에서 확인할 수 있습니다. 기본값은 public/mock/의 샘플 데이터를 사용하는 데모 모드입니다.
 
 ### 백엔드
 
