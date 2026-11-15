@@ -3,7 +3,7 @@
     python run.py --store sinchon-a --demo                          # 가상 데이터로 끝까지
     python run.py --store sinchon-a --demo --demo-days 35           # 가상 데이터를 35일로 잘라 '짧은 데이터 모드' 시연
     python run.py --store seongsu-a --pos data/raw/seongsu-a.xlsx \\
-                  --signals data/artifacts/seongsu-a/signals.csv   # 실데이터
+                  --signals data/raw/seongsu-a_signals.json        # 실데이터 (새얼의 신호 파일)
     python run.py --store seongsu-a --from-step predict             # 앞 단계 결과 파일을 그대로 쓰고 predict만
 
 결과는 모두 data/artifacts/{store_id}/ 에 쌓인다 (이 폴더는 .gitignore 대상, 커밋되지 않음).
@@ -22,7 +22,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from contracts.schemas import BacktestResult
+from contracts.schemas import BacktestResult, SignalRow
 from ml.alerts import make_warnings
 from ml.evaluate import ARTIFACTS, ROOT, run_backtest, write_backtest
 from ml.features import DEFAULT_CLOSE_TIME, load_sales, load_signals
@@ -65,12 +65,24 @@ def step_ingest(args, out: Path) -> str:
     from ml.ingest import ingest_store                         # 실데이터에서만 필요 (다음 단계에서 구현)
     note = ingest_store(Path(args.pos), args.store, out, pos_type=args.pos_type)
     if args.signals and Path(args.signals).resolve() != (out / "signals.csv").resolve():
-        shutil.copyfile(args.signals, out / "signals.csv")
+        note += ", " + _import_signals(Path(args.signals), args.store, out)
     if not (out / "store.json").exists():                      # 처음이면 기본 설정을 만든다 (나중에 직접 고쳐도 됨)
         (out / "store.json").write_text(json.dumps(
             {"store_id": args.store, "close_time": args.close_time or DEFAULT_CLOSE_TIME, "prep_mode": "균형"},
             ensure_ascii=False, indent=1), encoding="utf-8")
     return note
+
+
+def _import_signals(path: Path, store_id: str, out: Path) -> str:
+    """새얼의 신호 파일(.json/.csv) → 계약(SignalRow) 검사 → 이 매장 것만 out/signals.csv로 저장."""
+    sig = load_signals(path)
+    for rec in sig.to_dict("records"):                          # 한 줄이라도 형식이 틀리면 여기서 멈춘다
+        SignalRow.model_validate(rec)
+    mine = sig[sig["store_id"] == store_id]
+    if mine.empty:
+        raise SystemExit(f"{path.name}에 store_id='{store_id}'인 신호가 없습니다 (있는 매장: {sorted(set(sig['store_id']))}).")
+    mine.to_csv(out / "signals.csv", index=False, encoding="utf-8")
+    return f"신호 {len(mine)}행 ({', '.join(sorted(set(mine['signal'])))})"
 
 
 def _load(out: Path):
@@ -123,7 +135,7 @@ def parse_args(argv=None):
     p.add_argument("--demo-days", type=int, help="가상 데이터를 앞 N일로 잘라 실행 (짧은 데이터 모드 시연)")
     p.add_argument("--pos", help="POS 파일 경로 (실데이터)")
     p.add_argument("--pos-type", default="auto", choices=["auto", "toss", "okpos"])
-    p.add_argument("--signals", help="외부 신호 파일 (SignalRow 형식 csv)")
+    p.add_argument("--signals", help="외부 신호 파일 (SignalRow 형식 .json 또는 .csv)")
     p.add_argument("--close-time", help="영업 종료 시각 (store.json이 없을 때만 씀, 기본 21:00)")
     p.add_argument("--from-step", default="ingest", choices=STEPS, help="이 단계부터 실행")
     p.add_argument("--iterations", type=int, help="CatBoost 반복 수 (테스트용, 보통은 비워 둠)")

@@ -42,6 +42,7 @@
   - **기념일 신호 요청:** `signal="special_day"`, `kind="calendar"`, `value=1`. 발렌타인·화이트데이·빼빼로데이·크리스마스(이브) 등 해당하는 날만 행을 넣는다 (없는 날은 0으로 처리됨).
   - **`collection.json` 형식을 확정해야 한다.** 지금은 `[{"date", "title", "text", "source_url"}]`로 가정했다. `data/artifacts/{store}/collection.json`에 두면 경고가 만들어진다.
 - 실행 명령: `python run.py --store {id} --demo` 또는 `--pos {파일} --signals {파일}`
+- 신호 파일은 `.json`(SignalRow 객체 목록)도 받는다 (11/15). `run.py --signals`가 읽을 때 형식을 검사하고 이 매장 줄만 `signals.csv`로 저장한다. `+09:00`·`Z`가 붙은 시각은 한국 시간으로 바꾼다.
 
 ## C. 11/18 실데이터에서 확인할 것
 - [ ] POS 열 이름 → `ml/ingest.py`의 `COLUMN_MAP`에 추가

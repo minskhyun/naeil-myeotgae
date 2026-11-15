@@ -8,7 +8,9 @@
      - 판매 이력: D-1일까지 (모든 lag·이동평균은 shift(1) 다음에 계산)
      - 외부 신호: published_at <= issue_time(D) 인 것 중 가장 늦게 공개된 값
 """
+import json
 import warnings
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -270,5 +272,17 @@ def load_sales(path) -> pd.DataFrame:
     return pd.read_csv(path, parse_dates=["date"])
 
 
+def _kst(s: pd.Series) -> pd.Series:
+    """시각 열 → 한국 시간(시간대 표시 없음). '2026-11-17T17:00:00+09:00'처럼 시간대가 붙어 오면 KST로 바꾼 뒤 뗀다."""
+    t = pd.to_datetime(s, utc=s.astype(str).str.contains(r"[+-]\d\d:\d\d$|Z$").any(), format="ISO8601")
+    return t.dt.tz_convert("Asia/Seoul").dt.tz_localize(None) if t.dt.tz is not None else t
+
+
 def load_signals(path) -> pd.DataFrame:
-    return pd.read_csv(path, parse_dates=["date", "published_at"])
+    """SignalRow 형식 신호 파일 (.csv 또는 .json = SignalRow 객체들의 목록)."""
+    path = Path(path)
+    if path.suffix.lower() == ".json":
+        df = pd.DataFrame(json.loads(path.read_text(encoding="utf-8-sig")))
+    else:
+        df = pd.read_csv(path)
+    return df.assign(date=pd.to_datetime(df["date"]).dt.normalize(), published_at=_kst(df["published_at"]))

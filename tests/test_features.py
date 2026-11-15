@@ -142,3 +142,17 @@ def test_short_data_35_days(sales, signals):
     f = build_frame(short, signals, ["temp_mean", "rain_mm"])
     assert len(f) > 0
     assert f["mean_28"].isna().any() and f["mean_28"].notna().any()
+
+
+def test_load_signals_json_matches_csv(tmp_path):
+    """새얼이 JSON(SignalRow 목록)으로 줘도 CSV와 똑같이 읽히고, '+09:00'이 붙은 시각은 한국 시간으로 맞춘다."""
+    import json
+    rows = [dict(date="2026-11-01", store_id="s", signal="rain_mm", value=9.7, source_url="u",
+                 published_at="2026-10-31T17:00:00+09:00", kind="forecast"),
+            dict(date="2026-11-01", store_id="s", signal="nearby_event", value=1, source_url="u",
+                 published_at="2026-10-20T01:00:00Z", kind="event")]          # UTC 01시 = KST 10시
+    (tmp_path / "s.json").write_text(json.dumps(rows), encoding="utf-8")
+    pd.DataFrame(rows).assign(published_at=["2026-10-31 17:00:00", "2026-10-20 10:00:00"]).to_csv(tmp_path / "s.csv", index=False)
+    a, b = load_signals(tmp_path / "s.json"), load_signals(tmp_path / "s.csv")
+    pd.testing.assert_frame_equal(a, b)
+    assert a["published_at"].tolist() == [pd.Timestamp("2026-10-31 17:00"), pd.Timestamp("2026-10-20 10:00")]
