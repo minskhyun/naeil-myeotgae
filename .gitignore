@@ -147,3 +147,21 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# ---------------------------------------------------------------- Python (ml/, contracts/, tests/)
+.venv/
+__pycache__/
+.pytest_cache/
+catboost_info/
+
+# 실제 매장 데이터와 그 결과물은 절대 커밋하지 않는다
+data/raw/
+data/artifacts/
+data/*.csv
+llm_cache/
+
+# 코드가 아닌 개인 파일 (루트)
+/*.zip
+/*.pdf
+/*.docx
+/내일몇개_리포트_분석코드/

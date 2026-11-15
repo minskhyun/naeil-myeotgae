@@ -1,0 +1,13 @@
+﻿date,store_id,signal,value,source_url,published_at,kind
+2026-10-30,sinchon-a,rain_mm,0.0,https://www.weather.go.kr,2026-10-31T01:00:00,observed
+2026-10-30,sinchon-a,temp_mean,9.3,https://www.weather.go.kr,2026-10-31T01:00:00,observed
+2026-10-31,sinchon-a,rain_mm,2.5,https://www.weather.go.kr,2026-10-29T17:00:00,forecast
+2026-10-31,sinchon-a,rain_mm,1.8,https://www.weather.go.kr,2026-10-30T17:00:00,forecast
+2026-10-31,sinchon-a,rain_mm,1.9,https://www.weather.go.kr,2026-11-01T01:00:00,observed
+2026-10-31,sinchon-a,temp_mean,4.1,https://www.weather.go.kr,2026-10-29T17:00:00,forecast
+2026-10-31,sinchon-a,temp_mean,7.1,https://www.weather.go.kr,2026-10-30T17:00:00,forecast
+2026-10-31,sinchon-a,temp_mean,6.3,https://www.weather.go.kr,2026-11-01T01:00:00,observed
+2026-11-01,sinchon-a,rain_mm,15.1,https://www.weather.go.kr,2026-10-30T17:00:00,forecast
+2026-11-01,sinchon-a,rain_mm,9.7,https://www.weather.go.kr,2026-10-31T17:00:00,forecast
+2026-11-01,sinchon-a,temp_mean,1.6,https://www.weather.go.kr,2026-10-30T17:00:00,forecast
+2026-11-01,sinchon-a,temp_mean,2.3,https://www.weather.go.kr,2026-10-31T17:00:00,forecast

@@ -1,0 +1,3741 @@
+﻿date,store_id,menu,qty,sold_out
+2025-11-01,sinchon-a,베이글,16,False
+2025-11-01,sinchon-a,소금빵,50,False
+2025-11-01,sinchon-a,식빵,19,False
+2025-11-01,sinchon-a,아메리카노(HOT),41,False
+2025-11-01,sinchon-a,아이스 아메리카노,44,False
+2025-11-01,sinchon-a,아이스 카페라떼,12,False
+2025-11-01,sinchon-a,에그타르트,19,False
+2025-11-01,sinchon-a,카페라떼(HOT),27,False
+2025-11-01,sinchon-a,크루아상,33,False
+2025-11-01,sinchon-a,휘낭시에,26,False
+2025-11-02,sinchon-a,베이글,14,False
+2025-11-02,sinchon-a,소금빵,43,False
+2025-11-02,sinchon-a,식빵,14,False
+2025-11-02,sinchon-a,아메리카노(HOT),13,False
+2025-11-02,sinchon-a,아이스 아메리카노,25,False
+2025-11-02,sinchon-a,아이스 카페라떼,6,False
+2025-11-02,sinchon-a,에그타르트,17,False
+2025-11-02,sinchon-a,카페라떼(HOT),21,False
+2025-11-02,sinchon-a,크루아상,18,False
+2025-11-02,sinchon-a,휘낭시에,7,False
+2025-11-03,sinchon-a,베이글,20,False
+2025-11-03,sinchon-a,소금빵,67,False
+2025-11-03,sinchon-a,식빵,8,False
+2025-11-03,sinchon-a,아메리카노(HOT),36,False
+2025-11-03,sinchon-a,아이스 아메리카노,46,False
+2025-11-03,sinchon-a,아이스 카페라떼,19,False
+2025-11-03,sinchon-a,에그타르트,27,False
+2025-11-03,sinchon-a,카페라떼(HOT),20,False
+2025-11-03,sinchon-a,크루아상,31,False
+2025-11-03,sinchon-a,휘낭시에,43,False
+2025-11-04,sinchon-a,베이글,25,False
+2025-11-04,sinchon-a,소금빵,61,False
+2025-11-04,sinchon-a,식빵,8,False
+2025-11-04,sinchon-a,아메리카노(HOT),48,False
+2025-11-04,sinchon-a,아이스 아메리카노,44,False
+2025-11-04,sinchon-a,아이스 카페라떼,25,False
+2025-11-04,sinchon-a,에그타르트,29,False
+2025-11-04,sinchon-a,카페라떼(HOT),23,False
+2025-11-04,sinchon-a,크루아상,38,False
+2025-11-04,sinchon-a,휘낭시에,28,False
+2025-11-05,sinchon-a,베이글,24,False
+2025-11-05,sinchon-a,소금빵,54,False
+2025-11-05,sinchon-a,식빵,11,False
+2025-11-05,sinchon-a,아메리카노(HOT),45,False
+2025-11-05,sinchon-a,아이스 아메리카노,54,False
+2025-11-05,sinchon-a,아이스 카페라떼,14,False
+2025-11-05,sinchon-a,에그타르트,30,False
+2025-11-05,sinchon-a,카페라떼(HOT),21,False
+2025-11-05,sinchon-a,크루아상,37,False
+2025-11-05,sinchon-a,휘낭시에,28,False
+2025-11-06,sinchon-a,베이글,20,False
+2025-11-06,sinchon-a,소금빵,61,False
+2025-11-06,sinchon-a,식빵,8,False
+2025-11-06,sinchon-a,아메리카노(HOT),33,False
+2025-11-06,sinchon-a,아이스 아메리카노,49,False
+2025-11-06,sinchon-a,아이스 카페라떼,20,False
+2025-11-06,sinchon-a,에그타르트,26,False
+2025-11-06,sinchon-a,카페라떼(HOT),17,False
+2025-11-06,sinchon-a,크루아상,32,False
+2025-11-06,sinchon-a,휘낭시에,18,False
+2025-11-07,sinchon-a,베이글,24,False
+2025-11-07,sinchon-a,소금빵,80,True
+2025-11-07,sinchon-a,식빵,10,False
+2025-11-07,sinchon-a,아메리카노(HOT),43,False
+2025-11-07,sinchon-a,아이스 아메리카노,54,False
+2025-11-07,sinchon-a,아이스 카페라떼,23,False
+2025-11-07,sinchon-a,에그타르트,31,False
+2025-11-07,sinchon-a,카페라떼(HOT),24,False
+2025-11-07,sinchon-a,크루아상,29,False
+2025-11-07,sinchon-a,휘낭시에,22,False
+2025-11-08,sinchon-a,베이글,19,False
+2025-11-08,sinchon-a,소금빵,36,False
+2025-11-08,sinchon-a,식빵,19,False
+2025-11-08,sinchon-a,아메리카노(HOT),44,False
+2025-11-08,sinchon-a,아이스 아메리카노,42,False
+2025-11-08,sinchon-a,아이스 카페라떼,26,False
+2025-11-08,sinchon-a,에그타르트,17,False
+2025-11-08,sinchon-a,카페라떼(HOT),14,False
+2025-11-08,sinchon-a,크루아상,25,False
+2025-11-08,sinchon-a,휘낭시에,14,False
+2025-11-09,sinchon-a,베이글,22,False
+2025-11-09,sinchon-a,소금빵,33,False
+2025-11-09,sinchon-a,식빵,9,False
+2025-11-09,sinchon-a,아메리카노(HOT),34,False
+2025-11-09,sinchon-a,아이스 아메리카노,30,False
+2025-11-09,sinchon-a,아이스 카페라떼,10,False
+2025-11-09,sinchon-a,에그타르트,22,False
+2025-11-09,sinchon-a,카페라떼(HOT),19,False
+2025-11-09,sinchon-a,크루아상,26,False
+2025-11-09,sinchon-a,휘낭시에,17,False
+2025-11-10,sinchon-a,베이글,18,False
+2025-11-10,sinchon-a,소금빵,62,False
+2025-11-10,sinchon-a,식빵,8,False
+2025-11-10,sinchon-a,아메리카노(HOT),31,False
+2025-11-10,sinchon-a,아이스 아메리카노,38,False
+2025-11-10,sinchon-a,아이스 카페라떼,19,False
+2025-11-10,sinchon-a,에그타르트,31,False
+2025-11-10,sinchon-a,카페라떼(HOT),14,False
+2025-11-10,sinchon-a,크루아상,23,False
+2025-11-10,sinchon-a,휘낭시에,14,False
+2025-11-11,sinchon-a,베이글,18,False
+2025-11-11,sinchon-a,소금빵,78,False
+2025-11-11,sinchon-a,식빵,13,False
+2025-11-11,sinchon-a,아메리카노(HOT),52,False
+2025-11-11,sinchon-a,아이스 아메리카노,64,False
+2025-11-11,sinchon-a,아이스 카페라떼,12,False
+2025-11-11,sinchon-a,에그타르트,21,False
+2025-11-11,sinchon-a,카페라떼(HOT),27,False
+2025-11-11,sinchon-a,크루아상,28,False
+2025-11-11,sinchon-a,휘낭시에,21,False
+2025-11-12,sinchon-a,베이글,28,False
+2025-11-12,sinchon-a,소금빵,58,False
+2025-11-12,sinchon-a,식빵,6,False
+2025-11-12,sinchon-a,아메리카노(HOT),56,False
+2025-11-12,sinchon-a,아이스 아메리카노,50,False
+2025-11-12,sinchon-a,아이스 카페라떼,33,False
+2025-11-12,sinchon-a,에그타르트,31,False
+2025-11-12,sinchon-a,카페라떼(HOT),48,False
+2025-11-12,sinchon-a,크루아상,59,False
+2025-11-12,sinchon-a,휘낭시에,17,False
+2025-11-13,sinchon-a,베이글,8,False
+2025-11-13,sinchon-a,소금빵,59,False
+2025-11-13,sinchon-a,식빵,9,False
+2025-11-13,sinchon-a,아메리카노(HOT),47,False
+2025-11-13,sinchon-a,아이스 아메리카노,55,False
+2025-11-13,sinchon-a,아이스 카페라떼,13,False
+2025-11-13,sinchon-a,에그타르트,15,False
+2025-11-13,sinchon-a,카페라떼(HOT),19,False
+2025-11-13,sinchon-a,크루아상,31,False
+2025-11-13,sinchon-a,휘낭시에,28,False
+2025-11-14,sinchon-a,베이글,14,False
+2025-11-14,sinchon-a,소금빵,55,False
+2025-11-14,sinchon-a,식빵,16,False
+2025-11-14,sinchon-a,아메리카노(HOT),34,False
+2025-11-14,sinchon-a,아이스 아메리카노,40,False
+2025-11-14,sinchon-a,아이스 카페라떼,22,False
+2025-11-14,sinchon-a,에그타르트,20,False
+2025-11-14,sinchon-a,카페라떼(HOT),23,False
+2025-11-14,sinchon-a,크루아상,36,False
+2025-11-14,sinchon-a,휘낭시에,16,False
+2025-11-15,sinchon-a,베이글,13,False
+2025-11-15,sinchon-a,소금빵,49,False
+2025-11-15,sinchon-a,식빵,13,False
+2025-11-15,sinchon-a,아메리카노(HOT),30,False
+2025-11-15,sinchon-a,아이스 아메리카노,36,False
+2025-11-15,sinchon-a,아이스 카페라떼,16,False
+2025-11-15,sinchon-a,에그타르트,22,False
+2025-11-15,sinchon-a,카페라떼(HOT),12,False
+2025-11-15,sinchon-a,크루아상,24,False
+2025-11-15,sinchon-a,휘낭시에,15,False
+2025-11-16,sinchon-a,베이글,14,False
+2025-11-16,sinchon-a,소금빵,34,False
+2025-11-16,sinchon-a,식빵,4,False
+2025-11-16,sinchon-a,아메리카노(HOT),37,False
+2025-11-16,sinchon-a,아이스 아메리카노,21,False
+2025-11-16,sinchon-a,아이스 카페라떼,11,False
+2025-11-16,sinchon-a,에그타르트,21,False
+2025-11-16,sinchon-a,카페라떼(HOT),20,False
+2025-11-16,sinchon-a,크루아상,21,False
+2025-11-16,sinchon-a,휘낭시에,16,False
+2025-11-17,sinchon-a,베이글,18,False
+2025-11-17,sinchon-a,소금빵,49,False
+2025-11-17,sinchon-a,식빵,4,False
+2025-11-17,sinchon-a,아메리카노(HOT),42,False
+2025-11-17,sinchon-a,아이스 아메리카노,65,False
+2025-11-17,sinchon-a,아이스 카페라떼,12,False
+2025-11-17,sinchon-a,에그타르트,23,False
+2025-11-17,sinchon-a,카페라떼(HOT),27,False
+2025-11-17,sinchon-a,크루아상,53,False
+2025-11-17,sinchon-a,휘낭시에,43,False
+2025-11-18,sinchon-a,베이글,18,False
+2025-11-18,sinchon-a,소금빵,58,False
+2025-11-18,sinchon-a,식빵,14,False
+2025-11-18,sinchon-a,아메리카노(HOT),40,False
+2025-11-18,sinchon-a,아이스 아메리카노,41,False
+2025-11-18,sinchon-a,아이스 카페라떼,18,False
+2025-11-18,sinchon-a,에그타르트,31,False
+2025-11-18,sinchon-a,카페라떼(HOT),25,False
+2025-11-18,sinchon-a,크루아상,35,False
+2025-11-18,sinchon-a,휘낭시에,26,False
+2025-11-19,sinchon-a,베이글,15,False
+2025-11-19,sinchon-a,소금빵,49,False
+2025-11-19,sinchon-a,식빵,8,False
+2025-11-19,sinchon-a,아메리카노(HOT),34,False
+2025-11-19,sinchon-a,아이스 아메리카노,45,False
+2025-11-19,sinchon-a,아이스 카페라떼,9,False
+2025-11-19,sinchon-a,에그타르트,16,False
+2025-11-19,sinchon-a,카페라떼(HOT),23,False
+2025-11-19,sinchon-a,크루아상,27,False
+2025-11-19,sinchon-a,휘낭시에,21,False
+2025-11-20,sinchon-a,베이글,25,False
+2025-11-20,sinchon-a,소금빵,46,False
+2025-11-20,sinchon-a,식빵,9,False
+2025-11-20,sinchon-a,아메리카노(HOT),51,False
+2025-11-20,sinchon-a,아이스 아메리카노,49,False
+2025-11-20,sinchon-a,아이스 카페라떼,25,False
+2025-11-20,sinchon-a,에그타르트,20,False
+2025-11-20,sinchon-a,카페라떼(HOT),41,False
+2025-11-20,sinchon-a,크루아상,33,False
+2025-11-20,sinchon-a,휘낭시에,21,False
+2025-11-21,sinchon-a,베이글,12,False
+2025-11-21,sinchon-a,소금빵,54,False
+2025-11-21,sinchon-a,식빵,5,False
+2025-11-21,sinchon-a,아메리카노(HOT),35,False
+2025-11-21,sinchon-a,아이스 아메리카노,21,False
+2025-11-21,sinchon-a,아이스 카페라떼,10,False
+2025-11-21,sinchon-a,에그타르트,12,False
+2025-11-21,sinchon-a,카페라떼(HOT),23,False
+2025-11-21,sinchon-a,크루아상,26,False
+2025-11-21,sinchon-a,휘낭시에,16,False
+2025-11-22,sinchon-a,베이글,17,False
+2025-11-22,sinchon-a,소금빵,49,False
+2025-11-22,sinchon-a,식빵,13,False
+2025-11-22,sinchon-a,아메리카노(HOT),38,False
+2025-11-22,sinchon-a,아이스 아메리카노,20,False
+2025-11-22,sinchon-a,아이스 카페라떼,14,False
+2025-11-22,sinchon-a,에그타르트,15,False
+2025-11-22,sinchon-a,카페라떼(HOT),9,False
+2025-11-22,sinchon-a,크루아상,29,False
+2025-11-22,sinchon-a,휘낭시에,16,False
+2025-11-23,sinchon-a,베이글,17,False
+2025-11-23,sinchon-a,소금빵,31,False
+2025-11-23,sinchon-a,식빵,11,False
+2025-11-23,sinchon-a,아메리카노(HOT),33,False
+2025-11-23,sinchon-a,아이스 아메리카노,34,False
+2025-11-23,sinchon-a,아이스 카페라떼,8,False
+2025-11-23,sinchon-a,에그타르트,15,False
+2025-11-23,sinchon-a,카페라떼(HOT),17,False
+2025-11-23,sinchon-a,크루아상,23,False
+2025-11-23,sinchon-a,휘낭시에,14,False
+2025-11-24,sinchon-a,베이글,6,False
+2025-11-24,sinchon-a,소금빵,53,False
+2025-11-24,sinchon-a,식빵,9,False
+2025-11-24,sinchon-a,아메리카노(HOT),56,False
+2025-11-24,sinchon-a,아이스 아메리카노,27,False
+2025-11-24,sinchon-a,아이스 카페라떼,5,False
+2025-11-24,sinchon-a,에그타르트,25,False
+2025-11-24,sinchon-a,카페라떼(HOT),26,False
+2025-11-24,sinchon-a,크루아상,33,False
+2025-11-24,sinchon-a,휘낭시에,28,False
+2025-11-25,sinchon-a,베이글,25,False
+2025-11-25,sinchon-a,소금빵,70,False
+2025-11-25,sinchon-a,식빵,5,False
+2025-11-25,sinchon-a,아메리카노(HOT),42,False
+2025-11-25,sinchon-a,아이스 아메리카노,39,False
+2025-11-25,sinchon-a,아이스 카페라떼,16,False
+2025-11-25,sinchon-a,에그타르트,21,False
+2025-11-25,sinchon-a,카페라떼(HOT),40,False
+2025-11-25,sinchon-a,크루아상,37,False
+2025-11-25,sinchon-a,휘낭시에,30,False
+2025-11-26,sinchon-a,베이글,15,False
+2025-11-26,sinchon-a,소금빵,43,False
+2025-11-26,sinchon-a,식빵,7,False
+2025-11-26,sinchon-a,아메리카노(HOT),62,False
+2025-11-26,sinchon-a,아이스 아메리카노,33,False
+2025-11-26,sinchon-a,아이스 카페라떼,12,False
+2025-11-26,sinchon-a,에그타르트,24,False
+2025-11-26,sinchon-a,카페라떼(HOT),17,False
+2025-11-26,sinchon-a,크루아상,29,False
+2025-11-26,sinchon-a,휘낭시에,18,False
+2025-11-27,sinchon-a,베이글,19,False
+2025-11-27,sinchon-a,소금빵,55,False
+2025-11-27,sinchon-a,식빵,4,False
+2025-11-27,sinchon-a,아메리카노(HOT),56,False
+2025-11-27,sinchon-a,아이스 아메리카노,30,False
+2025-11-27,sinchon-a,아이스 카페라떼,11,False
+2025-11-27,sinchon-a,에그타르트,21,False
+2025-11-27,sinchon-a,카페라떼(HOT),20,False
+2025-11-27,sinchon-a,크루아상,31,False
+2025-11-27,sinchon-a,휘낭시에,22,False
+2025-11-28,sinchon-a,베이글,16,False
+2025-11-28,sinchon-a,소금빵,54,False
+2025-11-28,sinchon-a,식빵,7,False
+2025-11-28,sinchon-a,아메리카노(HOT),68,False
+2025-11-28,sinchon-a,아이스 아메리카노,33,False
+2025-11-28,sinchon-a,아이스 카페라떼,14,False
+2025-11-28,sinchon-a,에그타르트,17,False
+2025-11-28,sinchon-a,카페라떼(HOT),15,False
+2025-11-28,sinchon-a,크루아상,24,False
+2025-11-28,sinchon-a,휘낭시에,17,False
+2025-11-29,sinchon-a,베이글,22,False
+2025-11-29,sinchon-a,소금빵,33,False
+2025-11-29,sinchon-a,식빵,15,False
+2025-11-29,sinchon-a,아메리카노(HOT),58,False
+2025-11-29,sinchon-a,아이스 아메리카노,18,False
+2025-11-29,sinchon-a,아이스 카페라떼,4,False
+2025-11-29,sinchon-a,에그타르트,16,False
+2025-11-29,sinchon-a,카페라떼(HOT),19,False
+2025-11-29,sinchon-a,크루아상,17,False
+2025-11-29,sinchon-a,휘낭시에,21,False
+2025-11-30,sinchon-a,베이글,14,False
+2025-11-30,sinchon-a,소금빵,24,False
+2025-11-30,sinchon-a,식빵,7,False
+2025-11-30,sinchon-a,아메리카노(HOT),29,False
+2025-11-30,sinchon-a,아이스 아메리카노,18,False
+2025-11-30,sinchon-a,아이스 카페라떼,7,False
+2025-11-30,sinchon-a,에그타르트,19,False
+2025-11-30,sinchon-a,카페라떼(HOT),17,False
+2025-11-30,sinchon-a,크루아상,21,False
+2025-11-30,sinchon-a,휘낭시에,14,False
+2025-12-01,sinchon-a,베이글,18,False
+2025-12-01,sinchon-a,소금빵,48,False
+2025-12-01,sinchon-a,식빵,8,False
+2025-12-01,sinchon-a,아메리카노(HOT),35,False
+2025-12-01,sinchon-a,아이스 아메리카노,18,False
+2025-12-01,sinchon-a,아이스 카페라떼,25,False
+2025-12-01,sinchon-a,에그타르트,21,False
+2025-12-01,sinchon-a,카페라떼(HOT),14,False
+2025-12-01,sinchon-a,크루아상,24,False
+2025-12-01,sinchon-a,휘낭시에,17,False
+2025-12-02,sinchon-a,베이글,32,False
+2025-12-02,sinchon-a,소금빵,73,False
+2025-12-02,sinchon-a,식빵,17,False
+2025-12-02,sinchon-a,아메리카노(HOT),64,False
+2025-12-02,sinchon-a,아이스 아메리카노,60,False
+2025-12-02,sinchon-a,아이스 카페라떼,22,False
+2025-12-02,sinchon-a,에그타르트,29,False
+2025-12-02,sinchon-a,카페라떼(HOT),28,False
+2025-12-02,sinchon-a,크루아상,40,False
+2025-12-02,sinchon-a,휘낭시에,32,False
+2025-12-03,sinchon-a,베이글,14,False
+2025-12-03,sinchon-a,소금빵,53,False
+2025-12-03,sinchon-a,식빵,9,False
+2025-12-03,sinchon-a,아메리카노(HOT),57,False
+2025-12-03,sinchon-a,아이스 아메리카노,38,False
+2025-12-03,sinchon-a,아이스 카페라떼,14,False
+2025-12-03,sinchon-a,에그타르트,32,False
+2025-12-03,sinchon-a,카페라떼(HOT),26,False
+2025-12-03,sinchon-a,크루아상,34,False
+2025-12-03,sinchon-a,휘낭시에,22,False
+2025-12-04,sinchon-a,베이글,12,False
+2025-12-04,sinchon-a,소금빵,55,False
+2025-12-04,sinchon-a,식빵,4,False
+2025-12-04,sinchon-a,아메리카노(HOT),44,False
+2025-12-04,sinchon-a,아이스 아메리카노,19,False
+2025-12-04,sinchon-a,아이스 카페라떼,7,False
+2025-12-04,sinchon-a,에그타르트,14,False
+2025-12-04,sinchon-a,카페라떼(HOT),25,False
+2025-12-04,sinchon-a,크루아상,29,False
+2025-12-04,sinchon-a,휘낭시에,13,False
+2025-12-05,sinchon-a,베이글,12,False
+2025-12-05,sinchon-a,소금빵,47,False
+2025-12-05,sinchon-a,식빵,17,False
+2025-12-05,sinchon-a,아메리카노(HOT),68,False
+2025-12-05,sinchon-a,아이스 아메리카노,34,False
+2025-12-05,sinchon-a,아이스 카페라떼,13,False
+2025-12-05,sinchon-a,에그타르트,22,False
+2025-12-05,sinchon-a,카페라떼(HOT),38,False
+2025-12-05,sinchon-a,크루아상,32,False
+2025-12-05,sinchon-a,휘낭시에,17,False
+2025-12-06,sinchon-a,베이글,14,False
+2025-12-06,sinchon-a,소금빵,47,False
+2025-12-06,sinchon-a,식빵,15,False
+2025-12-06,sinchon-a,아메리카노(HOT),44,False
+2025-12-06,sinchon-a,아이스 아메리카노,28,False
+2025-12-06,sinchon-a,아이스 카페라떼,16,False
+2025-12-06,sinchon-a,에그타르트,22,False
+2025-12-06,sinchon-a,카페라떼(HOT),14,False
+2025-12-06,sinchon-a,크루아상,32,False
+2025-12-06,sinchon-a,휘낭시에,22,False
+2025-12-07,sinchon-a,베이글,7,False
+2025-12-07,sinchon-a,소금빵,39,False
+2025-12-07,sinchon-a,식빵,13,False
+2025-12-07,sinchon-a,아메리카노(HOT),38,False
+2025-12-07,sinchon-a,아이스 아메리카노,27,False
+2025-12-07,sinchon-a,아이스 카페라떼,5,False
+2025-12-07,sinchon-a,에그타르트,13,False
+2025-12-07,sinchon-a,카페라떼(HOT),13,False
+2025-12-07,sinchon-a,크루아상,27,False
+2025-12-07,sinchon-a,휘낭시에,7,False
+2025-12-08,sinchon-a,베이글,25,False
+2025-12-08,sinchon-a,소금빵,68,False
+2025-12-08,sinchon-a,식빵,9,False
+2025-12-08,sinchon-a,아메리카노(HOT),33,False
+2025-12-08,sinchon-a,아이스 아메리카노,50,False
+2025-12-08,sinchon-a,아이스 카페라떼,18,False
+2025-12-08,sinchon-a,에그타르트,29,False
+2025-12-08,sinchon-a,카페라떼(HOT),30,False
+2025-12-08,sinchon-a,크루아상,34,False
+2025-12-08,sinchon-a,휘낭시에,29,False
+2025-12-09,sinchon-a,베이글,27,False
+2025-12-09,sinchon-a,소금빵,62,False
+2025-12-09,sinchon-a,식빵,10,False
+2025-12-09,sinchon-a,아메리카노(HOT),50,False
+2025-12-09,sinchon-a,아이스 아메리카노,64,False
+2025-12-09,sinchon-a,아이스 카페라떼,19,False
+2025-12-09,sinchon-a,에그타르트,36,True
+2025-12-09,sinchon-a,카페라떼(HOT),20,False
+2025-12-09,sinchon-a,크루아상,37,False
+2025-12-09,sinchon-a,휘낭시에,22,False
+2025-12-10,sinchon-a,베이글,26,False
+2025-12-10,sinchon-a,소금빵,59,False
+2025-12-10,sinchon-a,식빵,3,False
+2025-12-10,sinchon-a,아메리카노(HOT),54,False
+2025-12-10,sinchon-a,아이스 아메리카노,50,False
+2025-12-10,sinchon-a,아이스 카페라떼,13,False
+2025-12-10,sinchon-a,에그타르트,20,False
+2025-12-10,sinchon-a,카페라떼(HOT),22,False
+2025-12-10,sinchon-a,크루아상,40,False
+2025-12-10,sinchon-a,휘낭시에,28,False
+2025-12-11,sinchon-a,베이글,17,False
+2025-12-11,sinchon-a,소금빵,62,False
+2025-12-11,sinchon-a,식빵,4,False
+2025-12-11,sinchon-a,아메리카노(HOT),63,False
+2025-12-11,sinchon-a,아이스 아메리카노,57,False
+2025-12-11,sinchon-a,아이스 카페라떼,14,False
+2025-12-11,sinchon-a,에그타르트,20,False
+2025-12-11,sinchon-a,카페라떼(HOT),16,False
+2025-12-11,sinchon-a,크루아상,40,False
+2025-12-11,sinchon-a,휘낭시에,24,False
+2025-12-12,sinchon-a,베이글,16,False
+2025-12-12,sinchon-a,소금빵,53,False
+2025-12-12,sinchon-a,식빵,10,False
+2025-12-12,sinchon-a,아메리카노(HOT),41,False
+2025-12-12,sinchon-a,아이스 아메리카노,53,False
+2025-12-12,sinchon-a,아이스 카페라떼,14,False
+2025-12-12,sinchon-a,에그타르트,34,False
+2025-12-12,sinchon-a,카페라떼(HOT),27,False
+2025-12-12,sinchon-a,크루아상,35,False
+2025-12-12,sinchon-a,휘낭시에,29,False
+2025-12-13,sinchon-a,베이글,31,False
+2025-12-13,sinchon-a,소금빵,60,False
+2025-12-13,sinchon-a,식빵,18,False
+2025-12-13,sinchon-a,아메리카노(HOT),34,False
+2025-12-13,sinchon-a,아이스 아메리카노,44,False
+2025-12-13,sinchon-a,아이스 카페라떼,14,False
+2025-12-13,sinchon-a,에그타르트,18,False
+2025-12-13,sinchon-a,카페라떼(HOT),15,False
+2025-12-13,sinchon-a,크루아상,31,False
+2025-12-13,sinchon-a,휘낭시에,18,False
+2025-12-14,sinchon-a,베이글,19,False
+2025-12-14,sinchon-a,소금빵,40,False
+2025-12-14,sinchon-a,식빵,14,False
+2025-12-14,sinchon-a,아메리카노(HOT),25,False
+2025-12-14,sinchon-a,아이스 아메리카노,40,False
+2025-12-14,sinchon-a,아이스 카페라떼,18,False
+2025-12-14,sinchon-a,에그타르트,29,False
+2025-12-14,sinchon-a,카페라떼(HOT),15,False
+2025-12-14,sinchon-a,크루아상,22,False
+2025-12-14,sinchon-a,휘낭시에,14,False
+2025-12-15,sinchon-a,두바이쫀득쿠키,0,False
+2025-12-15,sinchon-a,베이글,31,False
+2025-12-15,sinchon-a,소금빵,80,True
+2025-12-15,sinchon-a,식빵,7,False
+2025-12-15,sinchon-a,아메리카노(HOT),59,False
+2025-12-15,sinchon-a,아이스 아메리카노,45,False
+2025-12-15,sinchon-a,아이스 카페라떼,16,False
+2025-12-15,sinchon-a,에그타르트,36,True
+2025-12-15,sinchon-a,카페라떼(HOT),21,False
+2025-12-15,sinchon-a,크루아상,54,False
+2025-12-15,sinchon-a,휘낭시에,32,False
+2025-12-16,sinchon-a,두바이쫀득쿠키,3,False
+2025-12-16,sinchon-a,베이글,20,False
+2025-12-16,sinchon-a,소금빵,80,True
+2025-12-16,sinchon-a,식빵,5,False
+2025-12-16,sinchon-a,아메리카노(HOT),83,False
+2025-12-16,sinchon-a,아이스 아메리카노,64,False
+2025-12-16,sinchon-a,아이스 카페라떼,13,False
+2025-12-16,sinchon-a,에그타르트,11,False
+2025-12-16,sinchon-a,카페라떼(HOT),28,False
+2025-12-16,sinchon-a,크루아상,22,False
+2025-12-16,sinchon-a,휘낭시에,22,False
+2025-12-17,sinchon-a,두바이쫀득쿠키,1,False
+2025-12-17,sinchon-a,베이글,22,False
+2025-12-17,sinchon-a,소금빵,67,False
+2025-12-17,sinchon-a,식빵,12,False
+2025-12-17,sinchon-a,아메리카노(HOT),90,False
+2025-12-17,sinchon-a,아이스 아메리카노,35,False
+2025-12-17,sinchon-a,아이스 카페라떼,11,False
+2025-12-17,sinchon-a,에그타르트,31,False
+2025-12-17,sinchon-a,카페라떼(HOT),25,False
+2025-12-17,sinchon-a,크루아상,43,False
+2025-12-17,sinchon-a,휘낭시에,31,False
+2025-12-18,sinchon-a,두바이쫀득쿠키,3,False
+2025-12-18,sinchon-a,베이글,31,False
+2025-12-18,sinchon-a,소금빵,69,False
+2025-12-18,sinchon-a,식빵,12,False
+2025-12-18,sinchon-a,아메리카노(HOT),61,False
+2025-12-18,sinchon-a,아이스 아메리카노,49,False
+2025-12-18,sinchon-a,아이스 카페라떼,17,False
+2025-12-18,sinchon-a,에그타르트,25,False
+2025-12-18,sinchon-a,카페라떼(HOT),31,False
+2025-12-18,sinchon-a,크루아상,35,False
+2025-12-18,sinchon-a,휘낭시에,27,False
+2025-12-19,sinchon-a,두바이쫀득쿠키,3,False
+2025-12-19,sinchon-a,베이글,15,False
+2025-12-19,sinchon-a,소금빵,61,False
+2025-12-19,sinchon-a,식빵,9,False
+2025-12-19,sinchon-a,아메리카노(HOT),76,False
+2025-12-19,sinchon-a,아이스 아메리카노,35,False
+2025-12-19,sinchon-a,아이스 카페라떼,17,False
+2025-12-19,sinchon-a,에그타르트,21,False
+2025-12-19,sinchon-a,카페라떼(HOT),36,False
+2025-12-19,sinchon-a,크루아상,40,False
+2025-12-19,sinchon-a,휘낭시에,25,False
+2025-12-20,sinchon-a,두바이쫀득쿠키,4,False
+2025-12-20,sinchon-a,베이글,3,False
+2025-12-20,sinchon-a,소금빵,29,False
+2025-12-20,sinchon-a,식빵,11,False
+2025-12-20,sinchon-a,아메리카노(HOT),19,False
+2025-12-20,sinchon-a,아이스 아메리카노,17,False
+2025-12-20,sinchon-a,아이스 카페라떼,6,False
+2025-12-20,sinchon-a,에그타르트,9,False
+2025-12-20,sinchon-a,카페라떼(HOT),7,False
+2025-12-20,sinchon-a,크루아상,21,False
+2025-12-20,sinchon-a,휘낭시에,8,False
+2025-12-21,sinchon-a,두바이쫀득쿠키,7,False
+2025-12-21,sinchon-a,베이글,7,False
+2025-12-21,sinchon-a,소금빵,19,False
+2025-12-21,sinchon-a,식빵,14,False
+2025-12-21,sinchon-a,아메리카노(HOT),22,False
+2025-12-21,sinchon-a,아이스 아메리카노,12,False
+2025-12-21,sinchon-a,아이스 카페라떼,1,False
+2025-12-21,sinchon-a,에그타르트,6,False
+2025-12-21,sinchon-a,카페라떼(HOT),4,False
+2025-12-21,sinchon-a,크루아상,8,False
+2025-12-21,sinchon-a,휘낭시에,10,False
+2025-12-22,sinchon-a,두바이쫀득쿠키,9,False
+2025-12-22,sinchon-a,베이글,18,False
+2025-12-22,sinchon-a,소금빵,53,False
+2025-12-22,sinchon-a,식빵,7,False
+2025-12-22,sinchon-a,아메리카노(HOT),35,False
+2025-12-22,sinchon-a,아이스 아메리카노,16,False
+2025-12-22,sinchon-a,아이스 카페라떼,13,False
+2025-12-22,sinchon-a,에그타르트,14,False
+2025-12-22,sinchon-a,카페라떼(HOT),20,False
+2025-12-22,sinchon-a,크루아상,24,False
+2025-12-22,sinchon-a,휘낭시에,18,False
+2025-12-23,sinchon-a,두바이쫀득쿠키,8,False
+2025-12-23,sinchon-a,베이글,17,False
+2025-12-23,sinchon-a,소금빵,41,False
+2025-12-23,sinchon-a,식빵,10,False
+2025-12-23,sinchon-a,아메리카노(HOT),41,False
+2025-12-23,sinchon-a,아이스 아메리카노,21,False
+2025-12-23,sinchon-a,아이스 카페라떼,8,False
+2025-12-23,sinchon-a,에그타르트,18,False
+2025-12-23,sinchon-a,카페라떼(HOT),16,False
+2025-12-23,sinchon-a,크루아상,13,False
+2025-12-23,sinchon-a,휘낭시에,17,False
+2025-12-24,sinchon-a,두바이쫀득쿠키,9,False
+2025-12-24,sinchon-a,베이글,17,False
+2025-12-24,sinchon-a,소금빵,39,False
+2025-12-24,sinchon-a,식빵,5,False
+2025-12-24,sinchon-a,아메리카노(HOT),33,False
+2025-12-24,sinchon-a,아이스 아메리카노,32,False
+2025-12-24,sinchon-a,아이스 카페라떼,9,False
+2025-12-24,sinchon-a,에그타르트,13,False
+2025-12-24,sinchon-a,카페라떼(HOT),22,False
+2025-12-24,sinchon-a,크루아상,14,False
+2025-12-24,sinchon-a,휘낭시에,17,False
+2025-12-25,sinchon-a,두바이쫀득쿠키,9,False
+2025-12-25,sinchon-a,베이글,9,False
+2025-12-25,sinchon-a,소금빵,24,False
+2025-12-25,sinchon-a,식빵,5,False
+2025-12-25,sinchon-a,아메리카노(HOT),23,False
+2025-12-25,sinchon-a,아이스 아메리카노,15,False
+2025-12-25,sinchon-a,아이스 카페라떼,6,False
+2025-12-25,sinchon-a,에그타르트,9,False
+2025-12-25,sinchon-a,카페라떼(HOT),14,False
+2025-12-25,sinchon-a,크루아상,12,False
+2025-12-25,sinchon-a,휘낭시에,8,False
+2025-12-26,sinchon-a,두바이쫀득쿠키,16,False
+2025-12-26,sinchon-a,베이글,11,False
+2025-12-26,sinchon-a,소금빵,37,False
+2025-12-26,sinchon-a,식빵,6,False
+2025-12-26,sinchon-a,아메리카노(HOT),56,False
+2025-12-26,sinchon-a,아이스 아메리카노,20,False
+2025-12-26,sinchon-a,아이스 카페라떼,11,False
+2025-12-26,sinchon-a,에그타르트,11,False
+2025-12-26,sinchon-a,카페라떼(HOT),14,False
+2025-12-26,sinchon-a,크루아상,18,False
+2025-12-26,sinchon-a,휘낭시에,11,False
+2025-12-27,sinchon-a,두바이쫀득쿠키,11,False
+2025-12-27,sinchon-a,베이글,5,False
+2025-12-27,sinchon-a,소금빵,12,False
+2025-12-27,sinchon-a,식빵,4,False
+2025-12-27,sinchon-a,아메리카노(HOT),29,False
+2025-12-27,sinchon-a,아이스 아메리카노,12,False
+2025-12-27,sinchon-a,아이스 카페라떼,3,False
+2025-12-27,sinchon-a,에그타르트,8,False
+2025-12-27,sinchon-a,카페라떼(HOT),18,False
+2025-12-27,sinchon-a,크루아상,8,False
+2025-12-27,sinchon-a,휘낭시에,9,False
+2025-12-28,sinchon-a,두바이쫀득쿠키,11,False
+2025-12-28,sinchon-a,베이글,7,False
+2025-12-28,sinchon-a,소금빵,19,False
+2025-12-28,sinchon-a,식빵,11,False
+2025-12-28,sinchon-a,아메리카노(HOT),29,False
+2025-12-28,sinchon-a,아이스 아메리카노,8,False
+2025-12-28,sinchon-a,아이스 카페라떼,0,False
+2025-12-28,sinchon-a,에그타르트,10,False
+2025-12-28,sinchon-a,카페라떼(HOT),11,False
+2025-12-28,sinchon-a,크루아상,15,False
+2025-12-28,sinchon-a,휘낭시에,12,False
+2025-12-29,sinchon-a,두바이쫀득쿠키,26,False
+2025-12-29,sinchon-a,베이글,16,False
+2025-12-29,sinchon-a,소금빵,33,False
+2025-12-29,sinchon-a,식빵,9,False
+2025-12-29,sinchon-a,아메리카노(HOT),26,False
+2025-12-29,sinchon-a,아이스 아메리카노,22,False
+2025-12-29,sinchon-a,아이스 카페라떼,8,False
+2025-12-29,sinchon-a,에그타르트,9,False
+2025-12-29,sinchon-a,카페라떼(HOT),18,False
+2025-12-29,sinchon-a,크루아상,16,False
+2025-12-29,sinchon-a,휘낭시에,20,False
+2025-12-30,sinchon-a,두바이쫀득쿠키,17,False
+2025-12-30,sinchon-a,베이글,14,False
+2025-12-30,sinchon-a,소금빵,36,False
+2025-12-30,sinchon-a,식빵,7,False
+2025-12-30,sinchon-a,아메리카노(HOT),41,False
+2025-12-30,sinchon-a,아이스 아메리카노,22,False
+2025-12-30,sinchon-a,아이스 카페라떼,9,False
+2025-12-30,sinchon-a,에그타르트,18,False
+2025-12-30,sinchon-a,카페라떼(HOT),29,False
+2025-12-30,sinchon-a,크루아상,23,False
+2025-12-30,sinchon-a,휘낭시에,15,False
+2025-12-31,sinchon-a,두바이쫀득쿠키,35,False
+2025-12-31,sinchon-a,베이글,19,False
+2025-12-31,sinchon-a,소금빵,42,False
+2025-12-31,sinchon-a,식빵,7,False
+2025-12-31,sinchon-a,아메리카노(HOT),34,False
+2025-12-31,sinchon-a,아이스 아메리카노,29,False
+2025-12-31,sinchon-a,아이스 카페라떼,7,False
+2025-12-31,sinchon-a,에그타르트,7,False
+2025-12-31,sinchon-a,카페라떼(HOT),25,False
+2025-12-31,sinchon-a,크루아상,26,False
+2025-12-31,sinchon-a,휘낭시에,16,False
+2026-01-02,sinchon-a,두바이쫀득쿠키,39,False
+2026-01-02,sinchon-a,베이글,13,False
+2026-01-02,sinchon-a,소금빵,44,False
+2026-01-02,sinchon-a,식빵,7,False
+2026-01-02,sinchon-a,아메리카노(HOT),25,False
+2026-01-02,sinchon-a,아이스 아메리카노,13,False
+2026-01-02,sinchon-a,아이스 카페라떼,4,False
+2026-01-02,sinchon-a,에그타르트,8,False
+2026-01-02,sinchon-a,카페라떼(HOT),21,False
+2026-01-02,sinchon-a,크루아상,19,False
+2026-01-02,sinchon-a,휘낭시에,5,False
+2026-01-03,sinchon-a,두바이쫀득쿠키,22,False
+2026-01-03,sinchon-a,베이글,8,False
+2026-01-03,sinchon-a,소금빵,22,False
+2026-01-03,sinchon-a,식빵,5,False
+2026-01-03,sinchon-a,아메리카노(HOT),23,False
+2026-01-03,sinchon-a,아이스 아메리카노,8,False
+2026-01-03,sinchon-a,아이스 카페라떼,3,False
+2026-01-03,sinchon-a,에그타르트,6,False
+2026-01-03,sinchon-a,카페라떼(HOT),10,False
+2026-01-03,sinchon-a,크루아상,27,False
+2026-01-03,sinchon-a,휘낭시에,11,False
+2026-01-04,sinchon-a,두바이쫀득쿠키,25,False
+2026-01-04,sinchon-a,베이글,9,False
+2026-01-04,sinchon-a,소금빵,27,False
+2026-01-04,sinchon-a,식빵,6,False
+2026-01-04,sinchon-a,아메리카노(HOT),26,False
+2026-01-04,sinchon-a,아이스 아메리카노,10,False
+2026-01-04,sinchon-a,아이스 카페라떼,8,False
+2026-01-04,sinchon-a,에그타르트,2,False
+2026-01-04,sinchon-a,카페라떼(HOT),12,False
+2026-01-04,sinchon-a,크루아상,17,False
+2026-01-04,sinchon-a,휘낭시에,14,False
+2026-01-05,sinchon-a,두바이쫀득쿠키,43,False
+2026-01-05,sinchon-a,베이글,8,False
+2026-01-05,sinchon-a,소금빵,34,False
+2026-01-05,sinchon-a,식빵,8,False
+2026-01-05,sinchon-a,아메리카노(HOT),51,False
+2026-01-05,sinchon-a,아이스 아메리카노,18,False
+2026-01-05,sinchon-a,아이스 카페라떼,5,False
+2026-01-05,sinchon-a,에그타르트,18,False
+2026-01-05,sinchon-a,카페라떼(HOT),20,False
+2026-01-05,sinchon-a,크루아상,29,False
+2026-01-05,sinchon-a,휘낭시에,22,False
+2026-01-06,sinchon-a,두바이쫀득쿠키,46,False
+2026-01-06,sinchon-a,베이글,11,False
+2026-01-06,sinchon-a,소금빵,37,False
+2026-01-06,sinchon-a,식빵,12,False
+2026-01-06,sinchon-a,아메리카노(HOT),52,False
+2026-01-06,sinchon-a,아이스 아메리카노,19,False
+2026-01-06,sinchon-a,아이스 카페라떼,5,False
+2026-01-06,sinchon-a,에그타르트,16,False
+2026-01-06,sinchon-a,카페라떼(HOT),18,False
+2026-01-06,sinchon-a,크루아상,19,False
+2026-01-06,sinchon-a,휘낭시에,12,False
+2026-01-07,sinchon-a,두바이쫀득쿠키,48,False
+2026-01-07,sinchon-a,베이글,15,False
+2026-01-07,sinchon-a,소금빵,44,False
+2026-01-07,sinchon-a,식빵,7,False
+2026-01-07,sinchon-a,아메리카노(HOT),35,False
+2026-01-07,sinchon-a,아이스 아메리카노,18,False
+2026-01-07,sinchon-a,아이스 카페라떼,7,False
+2026-01-07,sinchon-a,에그타르트,24,False
+2026-01-07,sinchon-a,카페라떼(HOT),22,False
+2026-01-07,sinchon-a,크루아상,29,False
+2026-01-07,sinchon-a,휘낭시에,9,False
+2026-01-08,sinchon-a,두바이쫀득쿠키,42,False
+2026-01-08,sinchon-a,베이글,4,False
+2026-01-08,sinchon-a,소금빵,41,False
+2026-01-08,sinchon-a,식빵,8,False
+2026-01-08,sinchon-a,아메리카노(HOT),40,False
+2026-01-08,sinchon-a,아이스 아메리카노,22,False
+2026-01-08,sinchon-a,아이스 카페라떼,5,False
+2026-01-08,sinchon-a,에그타르트,24,False
+2026-01-08,sinchon-a,카페라떼(HOT),14,False
+2026-01-08,sinchon-a,크루아상,20,False
+2026-01-08,sinchon-a,휘낭시에,21,False
+2026-01-09,sinchon-a,두바이쫀득쿠키,47,False
+2026-01-09,sinchon-a,베이글,8,False
+2026-01-09,sinchon-a,소금빵,31,False
+2026-01-09,sinchon-a,식빵,9,False
+2026-01-09,sinchon-a,아메리카노(HOT),42,False
+2026-01-09,sinchon-a,아이스 아메리카노,13,False
+2026-01-09,sinchon-a,아이스 카페라떼,4,False
+2026-01-09,sinchon-a,에그타르트,14,False
+2026-01-09,sinchon-a,카페라떼(HOT),17,False
+2026-01-09,sinchon-a,크루아상,20,False
+2026-01-09,sinchon-a,휘낭시에,21,False
+2026-01-10,sinchon-a,두바이쫀득쿠키,52,False
+2026-01-10,sinchon-a,베이글,9,False
+2026-01-10,sinchon-a,소금빵,18,False
+2026-01-10,sinchon-a,식빵,12,False
+2026-01-10,sinchon-a,아메리카노(HOT),20,False
+2026-01-10,sinchon-a,아이스 아메리카노,18,False
+2026-01-10,sinchon-a,아이스 카페라떼,5,False
+2026-01-10,sinchon-a,에그타르트,9,False
+2026-01-10,sinchon-a,카페라떼(HOT),8,False
+2026-01-10,sinchon-a,크루아상,18,False
+2026-01-10,sinchon-a,휘낭시에,9,False
+2026-01-11,sinchon-a,두바이쫀득쿠키,34,False
+2026-01-11,sinchon-a,베이글,10,False
+2026-01-11,sinchon-a,소금빵,18,False
+2026-01-11,sinchon-a,식빵,16,False
+2026-01-11,sinchon-a,아메리카노(HOT),28,False
+2026-01-11,sinchon-a,아이스 아메리카노,6,False
+2026-01-11,sinchon-a,아이스 카페라떼,10,False
+2026-01-11,sinchon-a,에그타르트,11,False
+2026-01-11,sinchon-a,카페라떼(HOT),6,False
+2026-01-11,sinchon-a,크루아상,13,False
+2026-01-11,sinchon-a,휘낭시에,8,False
+2026-01-12,sinchon-a,두바이쫀득쿠키,62,False
+2026-01-12,sinchon-a,베이글,12,False
+2026-01-12,sinchon-a,소금빵,26,False
+2026-01-12,sinchon-a,식빵,8,False
+2026-01-12,sinchon-a,아메리카노(HOT),32,False
+2026-01-12,sinchon-a,아이스 아메리카노,19,False
+2026-01-12,sinchon-a,아이스 카페라떼,12,False
+2026-01-12,sinchon-a,에그타르트,9,False
+2026-01-12,sinchon-a,카페라떼(HOT),14,False
+2026-01-12,sinchon-a,크루아상,21,False
+2026-01-12,sinchon-a,휘낭시에,18,False
+2026-01-13,sinchon-a,두바이쫀득쿠키,62,False
+2026-01-13,sinchon-a,베이글,16,False
+2026-01-13,sinchon-a,소금빵,44,False
+2026-01-13,sinchon-a,식빵,13,False
+2026-01-13,sinchon-a,아메리카노(HOT),39,False
+2026-01-13,sinchon-a,아이스 아메리카노,28,False
+2026-01-13,sinchon-a,아이스 카페라떼,8,False
+2026-01-13,sinchon-a,에그타르트,19,False
+2026-01-13,sinchon-a,카페라떼(HOT),23,False
+2026-01-13,sinchon-a,크루아상,26,False
+2026-01-13,sinchon-a,휘낭시에,17,False
+2026-01-14,sinchon-a,두바이쫀득쿠키,58,False
+2026-01-14,sinchon-a,베이글,8,False
+2026-01-14,sinchon-a,소금빵,36,False
+2026-01-14,sinchon-a,식빵,12,False
+2026-01-14,sinchon-a,아메리카노(HOT),43,False
+2026-01-14,sinchon-a,아이스 아메리카노,31,False
+2026-01-14,sinchon-a,아이스 카페라떼,6,False
+2026-01-14,sinchon-a,에그타르트,21,False
+2026-01-14,sinchon-a,카페라떼(HOT),16,False
+2026-01-14,sinchon-a,크루아상,25,False
+2026-01-14,sinchon-a,휘낭시에,12,False
+2026-01-15,sinchon-a,두바이쫀득쿠키,63,False
+2026-01-15,sinchon-a,베이글,10,False
+2026-01-15,sinchon-a,소금빵,29,False
+2026-01-15,sinchon-a,식빵,6,False
+2026-01-15,sinchon-a,아메리카노(HOT),30,False
+2026-01-15,sinchon-a,아이스 아메리카노,30,False
+2026-01-15,sinchon-a,아이스 카페라떼,8,False
+2026-01-15,sinchon-a,에그타르트,15,False
+2026-01-15,sinchon-a,카페라떼(HOT),22,False
+2026-01-15,sinchon-a,크루아상,9,False
+2026-01-15,sinchon-a,휘낭시에,18,False
+2026-01-16,sinchon-a,두바이쫀득쿠키,51,False
+2026-01-16,sinchon-a,베이글,18,False
+2026-01-16,sinchon-a,소금빵,28,False
+2026-01-16,sinchon-a,식빵,12,False
+2026-01-16,sinchon-a,아메리카노(HOT),32,False
+2026-01-16,sinchon-a,아이스 아메리카노,19,False
+2026-01-16,sinchon-a,아이스 카페라떼,10,False
+2026-01-16,sinchon-a,에그타르트,20,False
+2026-01-16,sinchon-a,카페라떼(HOT),16,False
+2026-01-16,sinchon-a,크루아상,15,False
+2026-01-16,sinchon-a,휘낭시에,16,False
+2026-01-17,sinchon-a,두바이쫀득쿠키,44,False
+2026-01-17,sinchon-a,베이글,9,False
+2026-01-17,sinchon-a,소금빵,34,False
+2026-01-17,sinchon-a,식빵,5,False
+2026-01-17,sinchon-a,아메리카노(HOT),27,False
+2026-01-17,sinchon-a,아이스 아메리카노,14,False
+2026-01-17,sinchon-a,아이스 카페라떼,6,False
+2026-01-17,sinchon-a,에그타르트,8,False
+2026-01-17,sinchon-a,카페라떼(HOT),6,False
+2026-01-17,sinchon-a,크루아상,10,False
+2026-01-17,sinchon-a,휘낭시에,10,False
+2026-01-18,sinchon-a,두바이쫀득쿠키,34,False
+2026-01-18,sinchon-a,베이글,2,False
+2026-01-18,sinchon-a,소금빵,20,False
+2026-01-18,sinchon-a,식빵,9,False
+2026-01-18,sinchon-a,아메리카노(HOT),22,False
+2026-01-18,sinchon-a,아이스 아메리카노,8,False
+2026-01-18,sinchon-a,아이스 카페라떼,3,False
+2026-01-18,sinchon-a,에그타르트,8,False
+2026-01-18,sinchon-a,카페라떼(HOT),5,False
+2026-01-18,sinchon-a,크루아상,13,False
+2026-01-18,sinchon-a,휘낭시에,10,False
+2026-01-19,sinchon-a,두바이쫀득쿠키,40,False
+2026-01-19,sinchon-a,베이글,13,False
+2026-01-19,sinchon-a,소금빵,33,False
+2026-01-19,sinchon-a,식빵,15,False
+2026-01-19,sinchon-a,아메리카노(HOT),32,False
+2026-01-19,sinchon-a,아이스 아메리카노,21,False
+2026-01-19,sinchon-a,아이스 카페라떼,6,False
+2026-01-19,sinchon-a,에그타르트,9,False
+2026-01-19,sinchon-a,카페라떼(HOT),10,False
+2026-01-19,sinchon-a,크루아상,8,False
+2026-01-19,sinchon-a,휘낭시에,8,False
+2026-01-20,sinchon-a,두바이쫀득쿠키,56,False
+2026-01-20,sinchon-a,베이글,12,False
+2026-01-20,sinchon-a,소금빵,38,False
+2026-01-20,sinchon-a,식빵,6,False
+2026-01-20,sinchon-a,아메리카노(HOT),36,False
+2026-01-20,sinchon-a,아이스 아메리카노,23,False
+2026-01-20,sinchon-a,아이스 카페라떼,7,False
+2026-01-20,sinchon-a,에그타르트,14,False
+2026-01-20,sinchon-a,카페라떼(HOT),14,False
+2026-01-20,sinchon-a,크루아상,16,False
+2026-01-20,sinchon-a,휘낭시에,14,False
+2026-01-21,sinchon-a,두바이쫀득쿠키,47,False
+2026-01-21,sinchon-a,베이글,18,False
+2026-01-21,sinchon-a,소금빵,38,False
+2026-01-21,sinchon-a,식빵,11,False
+2026-01-21,sinchon-a,아메리카노(HOT),37,False
+2026-01-21,sinchon-a,아이스 아메리카노,21,False
+2026-01-21,sinchon-a,아이스 카페라떼,9,False
+2026-01-21,sinchon-a,에그타르트,11,False
+2026-01-21,sinchon-a,카페라떼(HOT),20,False
+2026-01-21,sinchon-a,크루아상,25,False
+2026-01-21,sinchon-a,휘낭시에,24,False
+2026-01-22,sinchon-a,두바이쫀득쿠키,46,False
+2026-01-22,sinchon-a,베이글,10,False
+2026-01-22,sinchon-a,소금빵,31,False
+2026-01-22,sinchon-a,식빵,9,False
+2026-01-22,sinchon-a,아메리카노(HOT),36,False
+2026-01-22,sinchon-a,아이스 아메리카노,24,False
+2026-01-22,sinchon-a,아이스 카페라떼,11,False
+2026-01-22,sinchon-a,에그타르트,10,False
+2026-01-22,sinchon-a,카페라떼(HOT),16,False
+2026-01-22,sinchon-a,크루아상,25,False
+2026-01-22,sinchon-a,휘낭시에,14,False
+2026-01-23,sinchon-a,두바이쫀득쿠키,47,False
+2026-01-23,sinchon-a,베이글,7,False
+2026-01-23,sinchon-a,소금빵,42,False
+2026-01-23,sinchon-a,식빵,11,False
+2026-01-23,sinchon-a,아메리카노(HOT),31,False
+2026-01-23,sinchon-a,아이스 아메리카노,20,False
+2026-01-23,sinchon-a,아이스 카페라떼,3,False
+2026-01-23,sinchon-a,에그타르트,9,False
+2026-01-23,sinchon-a,카페라떼(HOT),17,False
+2026-01-23,sinchon-a,크루아상,19,False
+2026-01-23,sinchon-a,휘낭시에,10,False
+2026-01-24,sinchon-a,두바이쫀득쿠키,25,False
+2026-01-24,sinchon-a,베이글,11,False
+2026-01-24,sinchon-a,소금빵,29,False
+2026-01-24,sinchon-a,식빵,12,False
+2026-01-24,sinchon-a,아메리카노(HOT),22,False
+2026-01-24,sinchon-a,아이스 아메리카노,10,False
+2026-01-24,sinchon-a,아이스 카페라떼,5,False
+2026-01-24,sinchon-a,에그타르트,11,False
+2026-01-24,sinchon-a,카페라떼(HOT),13,False
+2026-01-24,sinchon-a,크루아상,21,False
+2026-01-24,sinchon-a,휘낭시에,13,False
+2026-01-25,sinchon-a,두바이쫀득쿠키,17,False
+2026-01-25,sinchon-a,베이글,6,False
+2026-01-25,sinchon-a,소금빵,33,False
+2026-01-25,sinchon-a,식빵,16,False
+2026-01-25,sinchon-a,아메리카노(HOT),18,False
+2026-01-25,sinchon-a,아이스 아메리카노,19,False
+2026-01-25,sinchon-a,아이스 카페라떼,2,False
+2026-01-25,sinchon-a,에그타르트,5,False
+2026-01-25,sinchon-a,카페라떼(HOT),12,False
+2026-01-25,sinchon-a,크루아상,9,False
+2026-01-25,sinchon-a,휘낭시에,9,False
+2026-01-26,sinchon-a,두바이쫀득쿠키,37,False
+2026-01-26,sinchon-a,베이글,9,False
+2026-01-26,sinchon-a,소금빵,43,False
+2026-01-26,sinchon-a,식빵,11,False
+2026-01-26,sinchon-a,아메리카노(HOT),39,False
+2026-01-26,sinchon-a,아이스 아메리카노,18,False
+2026-01-26,sinchon-a,아이스 카페라떼,6,False
+2026-01-26,sinchon-a,에그타르트,14,False
+2026-01-26,sinchon-a,카페라떼(HOT),9,False
+2026-01-26,sinchon-a,크루아상,19,False
+2026-01-26,sinchon-a,휘낭시에,17,False
+2026-01-27,sinchon-a,두바이쫀득쿠키,33,False
+2026-01-27,sinchon-a,베이글,17,False
+2026-01-27,sinchon-a,소금빵,33,False
+2026-01-27,sinchon-a,식빵,11,False
+2026-01-27,sinchon-a,아메리카노(HOT),41,False
+2026-01-27,sinchon-a,아이스 아메리카노,14,False
+2026-01-27,sinchon-a,아이스 카페라떼,8,False
+2026-01-27,sinchon-a,에그타르트,21,False
+2026-01-27,sinchon-a,카페라떼(HOT),18,False
+2026-01-27,sinchon-a,크루아상,15,False
+2026-01-27,sinchon-a,휘낭시에,14,False
+2026-01-28,sinchon-a,두바이쫀득쿠키,34,False
+2026-01-28,sinchon-a,베이글,11,False
+2026-01-28,sinchon-a,소금빵,29,False
+2026-01-28,sinchon-a,식빵,12,False
+2026-01-28,sinchon-a,아메리카노(HOT),61,False
+2026-01-28,sinchon-a,아이스 아메리카노,18,False
+2026-01-28,sinchon-a,아이스 카페라떼,6,False
+2026-01-28,sinchon-a,에그타르트,16,False
+2026-01-28,sinchon-a,카페라떼(HOT),24,False
+2026-01-28,sinchon-a,크루아상,21,False
+2026-01-28,sinchon-a,휘낭시에,14,False
+2026-01-29,sinchon-a,두바이쫀득쿠키,50,False
+2026-01-29,sinchon-a,베이글,19,False
+2026-01-29,sinchon-a,소금빵,32,False
+2026-01-29,sinchon-a,식빵,10,False
+2026-01-29,sinchon-a,아메리카노(HOT),47,False
+2026-01-29,sinchon-a,아이스 아메리카노,14,False
+2026-01-29,sinchon-a,아이스 카페라떼,10,False
+2026-01-29,sinchon-a,에그타르트,16,False
+2026-01-29,sinchon-a,카페라떼(HOT),19,False
+2026-01-29,sinchon-a,크루아상,22,False
+2026-01-29,sinchon-a,휘낭시에,16,False
+2026-01-30,sinchon-a,두바이쫀득쿠키,33,False
+2026-01-30,sinchon-a,베이글,7,False
+2026-01-30,sinchon-a,소금빵,29,False
+2026-01-30,sinchon-a,식빵,4,False
+2026-01-30,sinchon-a,아메리카노(HOT),57,False
+2026-01-30,sinchon-a,아이스 아메리카노,15,False
+2026-01-30,sinchon-a,아이스 카페라떼,7,False
+2026-01-30,sinchon-a,에그타르트,13,False
+2026-01-30,sinchon-a,카페라떼(HOT),14,False
+2026-01-30,sinchon-a,크루아상,26,False
+2026-01-30,sinchon-a,휘낭시에,12,False
+2026-01-31,sinchon-a,두바이쫀득쿠키,27,False
+2026-01-31,sinchon-a,베이글,13,False
+2026-01-31,sinchon-a,소금빵,26,False
+2026-01-31,sinchon-a,식빵,14,False
+2026-01-31,sinchon-a,아메리카노(HOT),24,False
+2026-01-31,sinchon-a,아이스 아메리카노,16,False
+2026-01-31,sinchon-a,아이스 카페라떼,7,False
+2026-01-31,sinchon-a,에그타르트,9,False
+2026-01-31,sinchon-a,카페라떼(HOT),16,False
+2026-01-31,sinchon-a,크루아상,19,False
+2026-01-31,sinchon-a,휘낭시에,7,False
+2026-02-01,sinchon-a,두바이쫀득쿠키,20,False
+2026-02-01,sinchon-a,베이글,6,False
+2026-02-01,sinchon-a,소금빵,31,False
+2026-02-01,sinchon-a,식빵,7,False
+2026-02-01,sinchon-a,아메리카노(HOT),30,False
+2026-02-01,sinchon-a,아이스 아메리카노,13,False
+2026-02-01,sinchon-a,아이스 카페라떼,4,False
+2026-02-01,sinchon-a,에그타르트,13,False
+2026-02-01,sinchon-a,카페라떼(HOT),20,False
+2026-02-01,sinchon-a,크루아상,14,False
+2026-02-01,sinchon-a,휘낭시에,9,False
+2026-02-02,sinchon-a,두바이쫀득쿠키,23,False
+2026-02-02,sinchon-a,베이글,12,False
+2026-02-02,sinchon-a,소금빵,37,False
+2026-02-02,sinchon-a,식빵,11,False
+2026-02-02,sinchon-a,아메리카노(HOT),53,False
+2026-02-02,sinchon-a,아이스 아메리카노,15,False
+2026-02-02,sinchon-a,아이스 카페라떼,8,False
+2026-02-02,sinchon-a,에그타르트,13,False
+2026-02-02,sinchon-a,카페라떼(HOT),15,False
+2026-02-02,sinchon-a,크루아상,34,False
+2026-02-02,sinchon-a,휘낭시에,18,False
+2026-02-03,sinchon-a,두바이쫀득쿠키,32,False
+2026-02-03,sinchon-a,베이글,13,False
+2026-02-03,sinchon-a,소금빵,30,False
+2026-02-03,sinchon-a,식빵,10,False
+2026-02-03,sinchon-a,아메리카노(HOT),39,False
+2026-02-03,sinchon-a,아이스 아메리카노,18,False
+2026-02-03,sinchon-a,아이스 카페라떼,4,False
+2026-02-03,sinchon-a,에그타르트,8,False
+2026-02-03,sinchon-a,카페라떼(HOT),12,False
+2026-02-03,sinchon-a,크루아상,22,False
+2026-02-03,sinchon-a,휘낭시에,10,False
+2026-02-04,sinchon-a,두바이쫀득쿠키,23,False
+2026-02-04,sinchon-a,베이글,11,False
+2026-02-04,sinchon-a,소금빵,25,False
+2026-02-04,sinchon-a,식빵,10,False
+2026-02-04,sinchon-a,아메리카노(HOT),42,False
+2026-02-04,sinchon-a,아이스 아메리카노,17,False
+2026-02-04,sinchon-a,아이스 카페라떼,5,False
+2026-02-04,sinchon-a,에그타르트,13,False
+2026-02-04,sinchon-a,카페라떼(HOT),12,False
+2026-02-04,sinchon-a,크루아상,20,False
+2026-02-04,sinchon-a,휘낭시에,17,False
+2026-02-05,sinchon-a,두바이쫀득쿠키,26,False
+2026-02-05,sinchon-a,베이글,11,False
+2026-02-05,sinchon-a,소금빵,26,False
+2026-02-05,sinchon-a,식빵,11,False
+2026-02-05,sinchon-a,아메리카노(HOT),37,False
+2026-02-05,sinchon-a,아이스 아메리카노,17,False
+2026-02-05,sinchon-a,아이스 카페라떼,8,False
+2026-02-05,sinchon-a,에그타르트,17,False
+2026-02-05,sinchon-a,카페라떼(HOT),13,False
+2026-02-05,sinchon-a,크루아상,16,False
+2026-02-05,sinchon-a,휘낭시에,23,False
+2026-02-06,sinchon-a,두바이쫀득쿠키,18,False
+2026-02-06,sinchon-a,베이글,20,False
+2026-02-06,sinchon-a,소금빵,44,False
+2026-02-06,sinchon-a,식빵,10,False
+2026-02-06,sinchon-a,아메리카노(HOT),27,False
+2026-02-06,sinchon-a,아이스 아메리카노,12,False
+2026-02-06,sinchon-a,아이스 카페라떼,6,False
+2026-02-06,sinchon-a,에그타르트,18,False
+2026-02-06,sinchon-a,카페라떼(HOT),20,False
+2026-02-06,sinchon-a,크루아상,13,False
+2026-02-06,sinchon-a,휘낭시에,18,False
+2026-02-07,sinchon-a,두바이쫀득쿠키,14,False
+2026-02-07,sinchon-a,베이글,6,False
+2026-02-07,sinchon-a,소금빵,26,False
+2026-02-07,sinchon-a,식빵,14,False
+2026-02-07,sinchon-a,아메리카노(HOT),33,False
+2026-02-07,sinchon-a,아이스 아메리카노,8,False
+2026-02-07,sinchon-a,아이스 카페라떼,5,False
+2026-02-07,sinchon-a,에그타르트,14,False
+2026-02-07,sinchon-a,카페라떼(HOT),7,False
+2026-02-07,sinchon-a,크루아상,16,False
+2026-02-07,sinchon-a,휘낭시에,5,False
+2026-02-08,sinchon-a,두바이쫀득쿠키,15,False
+2026-02-08,sinchon-a,베이글,8,False
+2026-02-08,sinchon-a,소금빵,19,False
+2026-02-08,sinchon-a,식빵,15,False
+2026-02-08,sinchon-a,아메리카노(HOT),20,False
+2026-02-08,sinchon-a,아이스 아메리카노,18,False
+2026-02-08,sinchon-a,아이스 카페라떼,10,False
+2026-02-08,sinchon-a,에그타르트,10,False
+2026-02-08,sinchon-a,카페라떼(HOT),17,False
+2026-02-08,sinchon-a,크루아상,16,False
+2026-02-08,sinchon-a,휘낭시에,5,False
+2026-02-09,sinchon-a,두바이쫀득쿠키,17,False
+2026-02-09,sinchon-a,베이글,9,False
+2026-02-09,sinchon-a,소금빵,47,False
+2026-02-09,sinchon-a,식빵,10,False
+2026-02-09,sinchon-a,아메리카노(HOT),44,False
+2026-02-09,sinchon-a,아이스 아메리카노,17,False
+2026-02-09,sinchon-a,아이스 카페라떼,4,False
+2026-02-09,sinchon-a,에그타르트,17,False
+2026-02-09,sinchon-a,카페라떼(HOT),18,False
+2026-02-09,sinchon-a,크루아상,28,False
+2026-02-09,sinchon-a,휘낭시에,11,False
+2026-02-10,sinchon-a,두바이쫀득쿠키,17,False
+2026-02-10,sinchon-a,베이글,9,False
+2026-02-10,sinchon-a,소금빵,37,False
+2026-02-10,sinchon-a,식빵,9,False
+2026-02-10,sinchon-a,아메리카노(HOT),25,False
+2026-02-10,sinchon-a,아이스 아메리카노,32,False
+2026-02-10,sinchon-a,아이스 카페라떼,10,False
+2026-02-10,sinchon-a,에그타르트,12,False
+2026-02-10,sinchon-a,카페라떼(HOT),11,False
+2026-02-10,sinchon-a,크루아상,23,False
+2026-02-10,sinchon-a,휘낭시에,16,False
+2026-02-11,sinchon-a,두바이쫀득쿠키,13,False
+2026-02-11,sinchon-a,베이글,13,False
+2026-02-11,sinchon-a,소금빵,43,False
+2026-02-11,sinchon-a,식빵,5,False
+2026-02-11,sinchon-a,아메리카노(HOT),36,False
+2026-02-11,sinchon-a,아이스 아메리카노,27,False
+2026-02-11,sinchon-a,아이스 카페라떼,8,False
+2026-02-11,sinchon-a,에그타르트,16,False
+2026-02-11,sinchon-a,카페라떼(HOT),13,False
+2026-02-11,sinchon-a,크루아상,19,False
+2026-02-11,sinchon-a,휘낭시에,26,False
+2026-02-12,sinchon-a,두바이쫀득쿠키,16,False
+2026-02-12,sinchon-a,베이글,17,False
+2026-02-12,sinchon-a,소금빵,30,False
+2026-02-12,sinchon-a,식빵,7,False
+2026-02-12,sinchon-a,아메리카노(HOT),34,False
+2026-02-12,sinchon-a,아이스 아메리카노,26,False
+2026-02-12,sinchon-a,아이스 카페라떼,10,False
+2026-02-12,sinchon-a,에그타르트,22,False
+2026-02-12,sinchon-a,카페라떼(HOT),10,False
+2026-02-12,sinchon-a,크루아상,20,False
+2026-02-12,sinchon-a,휘낭시에,18,False
+2026-02-13,sinchon-a,두바이쫀득쿠키,13,False
+2026-02-13,sinchon-a,베이글,8,False
+2026-02-13,sinchon-a,소금빵,29,False
+2026-02-13,sinchon-a,식빵,6,False
+2026-02-13,sinchon-a,아메리카노(HOT),26,False
+2026-02-13,sinchon-a,아이스 아메리카노,23,False
+2026-02-13,sinchon-a,아이스 카페라떼,8,False
+2026-02-13,sinchon-a,에그타르트,17,False
+2026-02-13,sinchon-a,카페라떼(HOT),11,False
+2026-02-13,sinchon-a,크루아상,19,False
+2026-02-13,sinchon-a,휘낭시에,21,False
+2026-02-14,sinchon-a,두바이쫀득쿠키,17,False
+2026-02-14,sinchon-a,베이글,7,False
+2026-02-14,sinchon-a,소금빵,29,False
+2026-02-14,sinchon-a,식빵,11,False
+2026-02-14,sinchon-a,아메리카노(HOT),18,False
+2026-02-14,sinchon-a,아이스 아메리카노,12,False
+2026-02-14,sinchon-a,아이스 카페라떼,2,False
+2026-02-14,sinchon-a,에그타르트,10,False
+2026-02-14,sinchon-a,카페라떼(HOT),10,False
+2026-02-14,sinchon-a,크루아상,22,False
+2026-02-14,sinchon-a,휘낭시에,13,False
+2026-02-15,sinchon-a,두바이쫀득쿠키,8,False
+2026-02-15,sinchon-a,베이글,5,False
+2026-02-15,sinchon-a,소금빵,32,False
+2026-02-15,sinchon-a,식빵,11,False
+2026-02-15,sinchon-a,아메리카노(HOT),16,False
+2026-02-15,sinchon-a,아이스 아메리카노,12,False
+2026-02-15,sinchon-a,아이스 카페라떼,6,False
+2026-02-15,sinchon-a,에그타르트,9,False
+2026-02-15,sinchon-a,카페라떼(HOT),14,False
+2026-02-15,sinchon-a,크루아상,12,False
+2026-02-15,sinchon-a,휘낭시에,9,False
+2026-02-16,sinchon-a,두바이쫀득쿠키,11,False
+2026-02-16,sinchon-a,베이글,12,False
+2026-02-16,sinchon-a,소금빵,25,False
+2026-02-16,sinchon-a,식빵,8,False
+2026-02-16,sinchon-a,아메리카노(HOT),18,False
+2026-02-16,sinchon-a,아이스 아메리카노,13,False
+2026-02-16,sinchon-a,아이스 카페라떼,9,False
+2026-02-16,sinchon-a,에그타르트,15,False
+2026-02-16,sinchon-a,카페라떼(HOT),12,False
+2026-02-16,sinchon-a,크루아상,14,False
+2026-02-16,sinchon-a,휘낭시에,13,False
+2026-02-18,sinchon-a,두바이쫀득쿠키,14,False
+2026-02-18,sinchon-a,베이글,8,False
+2026-02-18,sinchon-a,소금빵,36,False
+2026-02-18,sinchon-a,식빵,6,False
+2026-02-18,sinchon-a,아메리카노(HOT),23,False
+2026-02-18,sinchon-a,아이스 아메리카노,12,False
+2026-02-18,sinchon-a,아이스 카페라떼,9,False
+2026-02-18,sinchon-a,에그타르트,13,False
+2026-02-18,sinchon-a,카페라떼(HOT),8,False
+2026-02-18,sinchon-a,크루아상,12,False
+2026-02-18,sinchon-a,휘낭시에,17,False
+2026-02-19,sinchon-a,두바이쫀득쿠키,10,False
+2026-02-19,sinchon-a,베이글,17,False
+2026-02-19,sinchon-a,소금빵,24,False
+2026-02-19,sinchon-a,식빵,8,False
+2026-02-19,sinchon-a,아메리카노(HOT),43,False
+2026-02-19,sinchon-a,아이스 아메리카노,19,False
+2026-02-19,sinchon-a,아이스 카페라떼,11,False
+2026-02-19,sinchon-a,에그타르트,18,False
+2026-02-19,sinchon-a,카페라떼(HOT),15,False
+2026-02-19,sinchon-a,크루아상,26,False
+2026-02-19,sinchon-a,휘낭시에,7,False
+2026-02-20,sinchon-a,두바이쫀득쿠키,9,False
+2026-02-20,sinchon-a,베이글,10,False
+2026-02-20,sinchon-a,소금빵,25,False
+2026-02-20,sinchon-a,식빵,6,False
+2026-02-20,sinchon-a,아메리카노(HOT),37,False
+2026-02-20,sinchon-a,아이스 아메리카노,23,False
+2026-02-20,sinchon-a,아이스 카페라떼,5,False
+2026-02-20,sinchon-a,에그타르트,9,False
+2026-02-20,sinchon-a,카페라떼(HOT),20,False
+2026-02-20,sinchon-a,크루아상,15,False
+2026-02-20,sinchon-a,휘낭시에,14,False
+2026-02-21,sinchon-a,두바이쫀득쿠키,9,False
+2026-02-21,sinchon-a,베이글,2,False
+2026-02-21,sinchon-a,소금빵,21,False
+2026-02-21,sinchon-a,식빵,4,False
+2026-02-21,sinchon-a,아메리카노(HOT),20,False
+2026-02-21,sinchon-a,아이스 아메리카노,14,False
+2026-02-21,sinchon-a,아이스 카페라떼,2,False
+2026-02-21,sinchon-a,에그타르트,6,False
+2026-02-21,sinchon-a,카페라떼(HOT),6,False
+2026-02-21,sinchon-a,크루아상,17,False
+2026-02-21,sinchon-a,휘낭시에,8,False
+2026-02-22,sinchon-a,두바이쫀득쿠키,6,False
+2026-02-22,sinchon-a,베이글,6,False
+2026-02-22,sinchon-a,소금빵,22,False
+2026-02-22,sinchon-a,식빵,9,False
+2026-02-22,sinchon-a,아메리카노(HOT),17,False
+2026-02-22,sinchon-a,아이스 아메리카노,25,False
+2026-02-22,sinchon-a,아이스 카페라떼,9,False
+2026-02-22,sinchon-a,에그타르트,10,False
+2026-02-22,sinchon-a,카페라떼(HOT),8,False
+2026-02-22,sinchon-a,크루아상,16,False
+2026-02-22,sinchon-a,휘낭시에,14,False
+2026-02-23,sinchon-a,두바이쫀득쿠키,8,False
+2026-02-23,sinchon-a,베이글,16,False
+2026-02-23,sinchon-a,소금빵,27,False
+2026-02-23,sinchon-a,식빵,10,False
+2026-02-23,sinchon-a,아메리카노(HOT),29,False
+2026-02-23,sinchon-a,아이스 아메리카노,28,False
+2026-02-23,sinchon-a,아이스 카페라떼,7,False
+2026-02-23,sinchon-a,에그타르트,14,False
+2026-02-23,sinchon-a,카페라떼(HOT),20,False
+2026-02-23,sinchon-a,크루아상,15,False
+2026-02-23,sinchon-a,휘낭시에,14,False
+2026-02-24,sinchon-a,두바이쫀득쿠키,9,False
+2026-02-24,sinchon-a,베이글,13,False
+2026-02-24,sinchon-a,소금빵,38,False
+2026-02-24,sinchon-a,식빵,13,False
+2026-02-24,sinchon-a,아메리카노(HOT),21,False
+2026-02-24,sinchon-a,아이스 아메리카노,38,False
+2026-02-24,sinchon-a,아이스 카페라떼,8,False
+2026-02-24,sinchon-a,에그타르트,6,False
+2026-02-24,sinchon-a,카페라떼(HOT),13,False
+2026-02-24,sinchon-a,크루아상,23,False
+2026-02-24,sinchon-a,휘낭시에,14,False
+2026-02-25,sinchon-a,두바이쫀득쿠키,13,False
+2026-02-25,sinchon-a,베이글,10,False
+2026-02-25,sinchon-a,소금빵,50,False
+2026-02-25,sinchon-a,식빵,8,False
+2026-02-25,sinchon-a,아메리카노(HOT),33,False
+2026-02-25,sinchon-a,아이스 아메리카노,28,False
+2026-02-25,sinchon-a,아이스 카페라떼,16,False
+2026-02-25,sinchon-a,에그타르트,15,False
+2026-02-25,sinchon-a,카페라떼(HOT),16,False
+2026-02-25,sinchon-a,크루아상,19,False
+2026-02-25,sinchon-a,휘낭시에,20,False
+2026-02-26,sinchon-a,두바이쫀득쿠키,8,False
+2026-02-26,sinchon-a,베이글,17,False
+2026-02-26,sinchon-a,소금빵,38,False
+2026-02-26,sinchon-a,식빵,5,False
+2026-02-26,sinchon-a,아메리카노(HOT),29,False
+2026-02-26,sinchon-a,아이스 아메리카노,18,False
+2026-02-26,sinchon-a,아이스 카페라떼,7,False
+2026-02-26,sinchon-a,에그타르트,16,False
+2026-02-26,sinchon-a,카페라떼(HOT),15,False
+2026-02-26,sinchon-a,크루아상,28,False
+2026-02-26,sinchon-a,휘낭시에,16,False
+2026-02-27,sinchon-a,두바이쫀득쿠키,9,False
+2026-02-27,sinchon-a,베이글,15,False
+2026-02-27,sinchon-a,소금빵,32,False
+2026-02-27,sinchon-a,식빵,14,False
+2026-02-27,sinchon-a,아메리카노(HOT),26,False
+2026-02-27,sinchon-a,아이스 아메리카노,17,False
+2026-02-27,sinchon-a,아이스 카페라떼,5,False
+2026-02-27,sinchon-a,에그타르트,11,False
+2026-02-27,sinchon-a,카페라떼(HOT),15,False
+2026-02-27,sinchon-a,크루아상,21,False
+2026-02-27,sinchon-a,휘낭시에,13,False
+2026-02-28,sinchon-a,두바이쫀득쿠키,4,False
+2026-02-28,sinchon-a,베이글,4,False
+2026-02-28,sinchon-a,소금빵,17,False
+2026-02-28,sinchon-a,식빵,11,False
+2026-02-28,sinchon-a,아메리카노(HOT),21,False
+2026-02-28,sinchon-a,아이스 아메리카노,7,False
+2026-02-28,sinchon-a,아이스 카페라떼,3,False
+2026-02-28,sinchon-a,에그타르트,7,False
+2026-02-28,sinchon-a,카페라떼(HOT),10,False
+2026-02-28,sinchon-a,크루아상,11,False
+2026-02-28,sinchon-a,휘낭시에,7,False
+2026-03-01,sinchon-a,두바이쫀득쿠키,7,False
+2026-03-01,sinchon-a,베이글,5,False
+2026-03-01,sinchon-a,소금빵,17,False
+2026-03-01,sinchon-a,식빵,8,False
+2026-03-01,sinchon-a,아메리카노(HOT),24,False
+2026-03-01,sinchon-a,아이스 아메리카노,8,False
+2026-03-01,sinchon-a,아이스 카페라떼,5,False
+2026-03-01,sinchon-a,에그타르트,6,False
+2026-03-01,sinchon-a,카페라떼(HOT),16,False
+2026-03-01,sinchon-a,크루아상,7,False
+2026-03-01,sinchon-a,휘낭시에,8,False
+2026-03-02,sinchon-a,두바이쫀득쿠키,6,False
+2026-03-02,sinchon-a,베이글,17,False
+2026-03-02,sinchon-a,소금빵,41,False
+2026-03-02,sinchon-a,식빵,4,False
+2026-03-02,sinchon-a,아메리카노(HOT),39,False
+2026-03-02,sinchon-a,아이스 아메리카노,27,False
+2026-03-02,sinchon-a,아이스 카페라떼,12,False
+2026-03-02,sinchon-a,에그타르트,12,False
+2026-03-02,sinchon-a,카페라떼(HOT),20,False
+2026-03-02,sinchon-a,크루아상,24,False
+2026-03-02,sinchon-a,휘낭시에,13,False
+2026-03-03,sinchon-a,두바이쫀득쿠키,5,False
+2026-03-03,sinchon-a,베이글,13,False
+2026-03-03,sinchon-a,소금빵,54,False
+2026-03-03,sinchon-a,식빵,7,False
+2026-03-03,sinchon-a,아메리카노(HOT),65,False
+2026-03-03,sinchon-a,아이스 아메리카노,35,False
+2026-03-03,sinchon-a,아이스 카페라떼,14,False
+2026-03-03,sinchon-a,에그타르트,28,False
+2026-03-03,sinchon-a,카페라떼(HOT),25,False
+2026-03-03,sinchon-a,크루아상,44,False
+2026-03-03,sinchon-a,휘낭시에,23,False
+2026-03-04,sinchon-a,두바이쫀득쿠키,6,False
+2026-03-04,sinchon-a,베이글,25,False
+2026-03-04,sinchon-a,소금빵,61,False
+2026-03-04,sinchon-a,식빵,17,False
+2026-03-04,sinchon-a,아메리카노(HOT),53,False
+2026-03-04,sinchon-a,아이스 아메리카노,35,False
+2026-03-04,sinchon-a,아이스 카페라떼,14,False
+2026-03-04,sinchon-a,에그타르트,28,False
+2026-03-04,sinchon-a,카페라떼(HOT),33,False
+2026-03-04,sinchon-a,크루아상,42,False
+2026-03-04,sinchon-a,휘낭시에,26,False
+2026-03-05,sinchon-a,두바이쫀득쿠키,5,False
+2026-03-05,sinchon-a,베이글,25,False
+2026-03-05,sinchon-a,소금빵,40,False
+2026-03-05,sinchon-a,식빵,5,False
+2026-03-05,sinchon-a,아메리카노(HOT),44,False
+2026-03-05,sinchon-a,아이스 아메리카노,26,False
+2026-03-05,sinchon-a,아이스 카페라떼,12,False
+2026-03-05,sinchon-a,에그타르트,16,False
+2026-03-05,sinchon-a,카페라떼(HOT),27,False
+2026-03-05,sinchon-a,크루아상,26,False
+2026-03-05,sinchon-a,휘낭시에,31,False
+2026-03-06,sinchon-a,두바이쫀득쿠키,7,False
+2026-03-06,sinchon-a,베이글,27,False
+2026-03-06,sinchon-a,소금빵,51,False
+2026-03-06,sinchon-a,식빵,8,False
+2026-03-06,sinchon-a,아메리카노(HOT),54,False
+2026-03-06,sinchon-a,아이스 아메리카노,35,False
+2026-03-06,sinchon-a,아이스 카페라떼,17,False
+2026-03-06,sinchon-a,에그타르트,21,False
+2026-03-06,sinchon-a,카페라떼(HOT),29,False
+2026-03-06,sinchon-a,크루아상,21,False
+2026-03-06,sinchon-a,휘낭시에,20,False
+2026-03-07,sinchon-a,두바이쫀득쿠키,1,False
+2026-03-07,sinchon-a,베이글,19,False
+2026-03-07,sinchon-a,소금빵,38,False
+2026-03-07,sinchon-a,식빵,12,False
+2026-03-07,sinchon-a,아메리카노(HOT),48,False
+2026-03-07,sinchon-a,아이스 아메리카노,23,False
+2026-03-07,sinchon-a,아이스 카페라떼,13,False
+2026-03-07,sinchon-a,에그타르트,17,False
+2026-03-07,sinchon-a,카페라떼(HOT),22,False
+2026-03-07,sinchon-a,크루아상,17,False
+2026-03-07,sinchon-a,휘낭시에,10,False
+2026-03-08,sinchon-a,두바이쫀득쿠키,5,False
+2026-03-08,sinchon-a,베이글,11,False
+2026-03-08,sinchon-a,소금빵,36,False
+2026-03-08,sinchon-a,식빵,16,False
+2026-03-08,sinchon-a,아메리카노(HOT),32,False
+2026-03-08,sinchon-a,아이스 아메리카노,18,False
+2026-03-08,sinchon-a,아이스 카페라떼,13,False
+2026-03-08,sinchon-a,에그타르트,14,False
+2026-03-08,sinchon-a,카페라떼(HOT),22,False
+2026-03-08,sinchon-a,크루아상,12,False
+2026-03-08,sinchon-a,휘낭시에,10,False
+2026-03-09,sinchon-a,두바이쫀득쿠키,8,False
+2026-03-09,sinchon-a,베이글,17,False
+2026-03-09,sinchon-a,소금빵,64,False
+2026-03-09,sinchon-a,식빵,10,False
+2026-03-09,sinchon-a,아메리카노(HOT),41,False
+2026-03-09,sinchon-a,아이스 아메리카노,27,False
+2026-03-09,sinchon-a,아이스 카페라떼,18,False
+2026-03-09,sinchon-a,에그타르트,23,False
+2026-03-09,sinchon-a,카페라떼(HOT),15,False
+2026-03-09,sinchon-a,크루아상,31,False
+2026-03-09,sinchon-a,휘낭시에,30,False
+2026-03-10,sinchon-a,두바이쫀득쿠키,5,False
+2026-03-10,sinchon-a,베이글,15,False
+2026-03-10,sinchon-a,소금빵,57,False
+2026-03-10,sinchon-a,식빵,5,False
+2026-03-10,sinchon-a,아메리카노(HOT),24,False
+2026-03-10,sinchon-a,아이스 아메리카노,37,False
+2026-03-10,sinchon-a,아이스 카페라떼,10,False
+2026-03-10,sinchon-a,에그타르트,18,False
+2026-03-10,sinchon-a,카페라떼(HOT),16,False
+2026-03-10,sinchon-a,크루아상,23,False
+2026-03-10,sinchon-a,휘낭시에,22,False
+2026-03-11,sinchon-a,두바이쫀득쿠키,4,False
+2026-03-11,sinchon-a,베이글,25,False
+2026-03-11,sinchon-a,소금빵,52,False
+2026-03-11,sinchon-a,식빵,11,False
+2026-03-11,sinchon-a,아메리카노(HOT),47,False
+2026-03-11,sinchon-a,아이스 아메리카노,62,False
+2026-03-11,sinchon-a,아이스 카페라떼,14,False
+2026-03-11,sinchon-a,에그타르트,22,False
+2026-03-11,sinchon-a,카페라떼(HOT),28,False
+2026-03-11,sinchon-a,크루아상,49,False
+2026-03-11,sinchon-a,휘낭시에,8,False
+2026-03-12,sinchon-a,두바이쫀득쿠키,6,False
+2026-03-12,sinchon-a,베이글,17,False
+2026-03-12,sinchon-a,소금빵,51,False
+2026-03-12,sinchon-a,식빵,12,False
+2026-03-12,sinchon-a,아메리카노(HOT),43,False
+2026-03-12,sinchon-a,아이스 아메리카노,42,False
+2026-03-12,sinchon-a,아이스 카페라떼,11,False
+2026-03-12,sinchon-a,에그타르트,23,False
+2026-03-12,sinchon-a,카페라떼(HOT),28,False
+2026-03-12,sinchon-a,크루아상,33,False
+2026-03-12,sinchon-a,휘낭시에,30,False
+2026-03-13,sinchon-a,두바이쫀득쿠키,2,False
+2026-03-13,sinchon-a,베이글,18,False
+2026-03-13,sinchon-a,소금빵,76,False
+2026-03-13,sinchon-a,식빵,8,False
+2026-03-13,sinchon-a,아메리카노(HOT),47,False
+2026-03-13,sinchon-a,아이스 아메리카노,42,False
+2026-03-13,sinchon-a,아이스 카페라떼,10,False
+2026-03-13,sinchon-a,에그타르트,12,False
+2026-03-13,sinchon-a,카페라떼(HOT),22,False
+2026-03-13,sinchon-a,크루아상,31,False
+2026-03-13,sinchon-a,휘낭시에,14,False
+2026-03-14,sinchon-a,두바이쫀득쿠키,2,False
+2026-03-14,sinchon-a,베이글,16,False
+2026-03-14,sinchon-a,소금빵,46,False
+2026-03-14,sinchon-a,식빵,17,False
+2026-03-14,sinchon-a,아메리카노(HOT),49,False
+2026-03-14,sinchon-a,아이스 아메리카노,26,False
+2026-03-14,sinchon-a,아이스 카페라떼,11,False
+2026-03-14,sinchon-a,에그타르트,19,False
+2026-03-14,sinchon-a,카페라떼(HOT),29,False
+2026-03-14,sinchon-a,크루아상,25,False
+2026-03-14,sinchon-a,휘낭시에,15,False
+2026-03-15,sinchon-a,두바이쫀득쿠키,1,False
+2026-03-15,sinchon-a,베이글,16,False
+2026-03-15,sinchon-a,소금빵,39,False
+2026-03-15,sinchon-a,식빵,7,False
+2026-03-15,sinchon-a,아메리카노(HOT),21,False
+2026-03-15,sinchon-a,아이스 아메리카노,18,False
+2026-03-15,sinchon-a,아이스 카페라떼,10,False
+2026-03-15,sinchon-a,에그타르트,19,False
+2026-03-15,sinchon-a,카페라떼(HOT),25,False
+2026-03-15,sinchon-a,크루아상,21,False
+2026-03-15,sinchon-a,휘낭시에,17,False
+2026-03-16,sinchon-a,두바이쫀득쿠키,4,False
+2026-03-16,sinchon-a,베이글,19,False
+2026-03-16,sinchon-a,소금빵,58,False
+2026-03-16,sinchon-a,식빵,7,False
+2026-03-16,sinchon-a,아메리카노(HOT),37,False
+2026-03-16,sinchon-a,아이스 아메리카노,30,False
+2026-03-16,sinchon-a,아이스 카페라떼,6,False
+2026-03-16,sinchon-a,에그타르트,18,False
+2026-03-16,sinchon-a,카페라떼(HOT),23,False
+2026-03-16,sinchon-a,크루아상,42,False
+2026-03-16,sinchon-a,휘낭시에,17,False
+2026-03-17,sinchon-a,두바이쫀득쿠키,2,False
+2026-03-17,sinchon-a,베이글,14,False
+2026-03-17,sinchon-a,소금빵,71,False
+2026-03-17,sinchon-a,식빵,11,False
+2026-03-17,sinchon-a,아메리카노(HOT),39,False
+2026-03-17,sinchon-a,아이스 아메리카노,40,False
+2026-03-17,sinchon-a,아이스 카페라떼,9,False
+2026-03-17,sinchon-a,에그타르트,19,False
+2026-03-17,sinchon-a,카페라떼(HOT),32,False
+2026-03-17,sinchon-a,크루아상,35,False
+2026-03-17,sinchon-a,휘낭시에,28,False
+2026-03-18,sinchon-a,두바이쫀득쿠키,6,False
+2026-03-18,sinchon-a,베이글,26,False
+2026-03-18,sinchon-a,소금빵,76,False
+2026-03-18,sinchon-a,식빵,8,False
+2026-03-18,sinchon-a,아메리카노(HOT),35,False
+2026-03-18,sinchon-a,아이스 아메리카노,34,False
+2026-03-18,sinchon-a,아이스 카페라떼,19,False
+2026-03-18,sinchon-a,에그타르트,21,False
+2026-03-18,sinchon-a,카페라떼(HOT),17,False
+2026-03-18,sinchon-a,크루아상,35,False
+2026-03-18,sinchon-a,휘낭시에,28,False
+2026-03-19,sinchon-a,두바이쫀득쿠키,2,False
+2026-03-19,sinchon-a,베이글,21,False
+2026-03-19,sinchon-a,소금빵,60,False
+2026-03-19,sinchon-a,식빵,6,False
+2026-03-19,sinchon-a,아메리카노(HOT),52,False
+2026-03-19,sinchon-a,아이스 아메리카노,38,False
+2026-03-19,sinchon-a,아이스 카페라떼,10,False
+2026-03-19,sinchon-a,에그타르트,22,False
+2026-03-19,sinchon-a,카페라떼(HOT),21,False
+2026-03-19,sinchon-a,크루아상,31,False
+2026-03-19,sinchon-a,휘낭시에,20,False
+2026-03-20,sinchon-a,두바이쫀득쿠키,2,False
+2026-03-20,sinchon-a,베이글,16,False
+2026-03-20,sinchon-a,소금빵,36,False
+2026-03-20,sinchon-a,식빵,9,False
+2026-03-20,sinchon-a,아메리카노(HOT),40,False
+2026-03-20,sinchon-a,아이스 아메리카노,17,False
+2026-03-20,sinchon-a,아이스 카페라떼,8,False
+2026-03-20,sinchon-a,에그타르트,21,False
+2026-03-20,sinchon-a,카페라떼(HOT),12,False
+2026-03-20,sinchon-a,크루아상,14,False
+2026-03-20,sinchon-a,휘낭시에,19,False
+2026-03-21,sinchon-a,두바이쫀득쿠키,3,False
+2026-03-21,sinchon-a,베이글,16,False
+2026-03-21,sinchon-a,소금빵,44,False
+2026-03-21,sinchon-a,식빵,16,False
+2026-03-21,sinchon-a,아메리카노(HOT),42,False
+2026-03-21,sinchon-a,아이스 아메리카노,34,False
+2026-03-21,sinchon-a,아이스 카페라떼,10,False
+2026-03-21,sinchon-a,에그타르트,8,False
+2026-03-21,sinchon-a,카페라떼(HOT),16,False
+2026-03-21,sinchon-a,크루아상,17,False
+2026-03-21,sinchon-a,휘낭시에,15,False
+2026-03-22,sinchon-a,두바이쫀득쿠키,1,False
+2026-03-22,sinchon-a,베이글,11,False
+2026-03-22,sinchon-a,소금빵,41,False
+2026-03-22,sinchon-a,식빵,10,False
+2026-03-22,sinchon-a,아메리카노(HOT),33,False
+2026-03-22,sinchon-a,아이스 아메리카노,32,False
+2026-03-22,sinchon-a,아이스 카페라떼,8,False
+2026-03-22,sinchon-a,에그타르트,18,False
+2026-03-22,sinchon-a,카페라떼(HOT),21,False
+2026-03-22,sinchon-a,크루아상,31,False
+2026-03-22,sinchon-a,휘낭시에,9,False
+2026-03-23,sinchon-a,두바이쫀득쿠키,7,False
+2026-03-23,sinchon-a,베이글,12,False
+2026-03-23,sinchon-a,소금빵,65,False
+2026-03-23,sinchon-a,식빵,12,False
+2026-03-23,sinchon-a,아메리카노(HOT),50,False
+2026-03-23,sinchon-a,아이스 아메리카노,39,False
+2026-03-23,sinchon-a,아이스 카페라떼,11,False
+2026-03-23,sinchon-a,에그타르트,26,False
+2026-03-23,sinchon-a,카페라떼(HOT),28,False
+2026-03-23,sinchon-a,크루아상,37,False
+2026-03-23,sinchon-a,휘낭시에,17,False
+2026-03-24,sinchon-a,두바이쫀득쿠키,6,False
+2026-03-24,sinchon-a,베이글,31,False
+2026-03-24,sinchon-a,소금빵,55,False
+2026-03-24,sinchon-a,식빵,12,False
+2026-03-24,sinchon-a,아메리카노(HOT),49,False
+2026-03-24,sinchon-a,아이스 아메리카노,40,False
+2026-03-24,sinchon-a,아이스 카페라떼,17,False
+2026-03-24,sinchon-a,에그타르트,36,True
+2026-03-24,sinchon-a,카페라떼(HOT),29,False
+2026-03-24,sinchon-a,크루아상,34,False
+2026-03-24,sinchon-a,휘낭시에,36,False
+2026-03-25,sinchon-a,두바이쫀득쿠키,2,False
+2026-03-25,sinchon-a,베이글,17,False
+2026-03-25,sinchon-a,소금빵,55,False
+2026-03-25,sinchon-a,식빵,9,False
+2026-03-25,sinchon-a,아메리카노(HOT),34,False
+2026-03-25,sinchon-a,아이스 아메리카노,48,False
+2026-03-25,sinchon-a,아이스 카페라떼,9,False
+2026-03-25,sinchon-a,에그타르트,23,False
+2026-03-25,sinchon-a,카페라떼(HOT),21,False
+2026-03-25,sinchon-a,크루아상,40,False
+2026-03-25,sinchon-a,휘낭시에,22,False
+2026-03-26,sinchon-a,두바이쫀득쿠키,2,False
+2026-03-26,sinchon-a,베이글,19,False
+2026-03-26,sinchon-a,소금빵,42,False
+2026-03-26,sinchon-a,식빵,11,False
+2026-03-26,sinchon-a,아메리카노(HOT),29,False
+2026-03-26,sinchon-a,아이스 아메리카노,50,False
+2026-03-26,sinchon-a,아이스 카페라떼,23,False
+2026-03-26,sinchon-a,에그타르트,31,False
+2026-03-26,sinchon-a,카페라떼(HOT),16,False
+2026-03-26,sinchon-a,크루아상,46,False
+2026-03-26,sinchon-a,휘낭시에,16,False
+2026-03-27,sinchon-a,두바이쫀득쿠키,1,False
+2026-03-27,sinchon-a,베이글,16,False
+2026-03-27,sinchon-a,소금빵,57,False
+2026-03-27,sinchon-a,식빵,7,False
+2026-03-27,sinchon-a,아메리카노(HOT),36,False
+2026-03-27,sinchon-a,아이스 아메리카노,54,False
+2026-03-27,sinchon-a,아이스 카페라떼,28,False
+2026-03-27,sinchon-a,에그타르트,17,False
+2026-03-27,sinchon-a,카페라떼(HOT),22,False
+2026-03-27,sinchon-a,크루아상,26,False
+2026-03-27,sinchon-a,휘낭시에,21,False
+2026-03-28,sinchon-a,두바이쫀득쿠키,2,False
+2026-03-28,sinchon-a,베이글,15,False
+2026-03-28,sinchon-a,소금빵,54,False
+2026-03-28,sinchon-a,식빵,20,False
+2026-03-28,sinchon-a,아메리카노(HOT),43,False
+2026-03-28,sinchon-a,아이스 아메리카노,40,False
+2026-03-28,sinchon-a,아이스 카페라떼,17,False
+2026-03-28,sinchon-a,에그타르트,18,False
+2026-03-28,sinchon-a,카페라떼(HOT),12,False
+2026-03-28,sinchon-a,크루아상,12,False
+2026-03-28,sinchon-a,휘낭시에,14,False
+2026-03-29,sinchon-a,두바이쫀득쿠키,1,False
+2026-03-29,sinchon-a,베이글,18,False
+2026-03-29,sinchon-a,소금빵,30,False
+2026-03-29,sinchon-a,식빵,15,False
+2026-03-29,sinchon-a,아메리카노(HOT),33,False
+2026-03-29,sinchon-a,아이스 아메리카노,33,False
+2026-03-29,sinchon-a,아이스 카페라떼,16,False
+2026-03-29,sinchon-a,에그타르트,15,False
+2026-03-29,sinchon-a,카페라떼(HOT),11,False
+2026-03-29,sinchon-a,크루아상,21,False
+2026-03-29,sinchon-a,휘낭시에,16,False
+2026-03-30,sinchon-a,두바이쫀득쿠키,3,False
+2026-03-30,sinchon-a,베이글,21,False
+2026-03-30,sinchon-a,소금빵,60,False
+2026-03-30,sinchon-a,식빵,8,False
+2026-03-30,sinchon-a,아메리카노(HOT),41,False
+2026-03-30,sinchon-a,아이스 아메리카노,72,False
+2026-03-30,sinchon-a,아이스 카페라떼,20,False
+2026-03-30,sinchon-a,에그타르트,31,False
+2026-03-30,sinchon-a,카페라떼(HOT),14,False
+2026-03-30,sinchon-a,크루아상,36,False
+2026-03-30,sinchon-a,휘낭시에,35,False
+2026-03-31,sinchon-a,두바이쫀득쿠키,5,False
+2026-03-31,sinchon-a,베이글,21,False
+2026-03-31,sinchon-a,소금빵,59,False
+2026-03-31,sinchon-a,식빵,12,False
+2026-03-31,sinchon-a,아메리카노(HOT),27,False
+2026-03-31,sinchon-a,아이스 아메리카노,63,False
+2026-03-31,sinchon-a,아이스 카페라떼,29,False
+2026-03-31,sinchon-a,에그타르트,24,False
+2026-03-31,sinchon-a,카페라떼(HOT),33,False
+2026-03-31,sinchon-a,크루아상,38,False
+2026-03-31,sinchon-a,휘낭시에,21,False
+2026-04-01,sinchon-a,두바이쫀득쿠키,1,False
+2026-04-01,sinchon-a,베이글,18,False
+2026-04-01,sinchon-a,소금빵,55,False
+2026-04-01,sinchon-a,식빵,11,False
+2026-04-01,sinchon-a,아메리카노(HOT),32,False
+2026-04-01,sinchon-a,아이스 아메리카노,53,False
+2026-04-01,sinchon-a,아이스 카페라떼,16,False
+2026-04-01,sinchon-a,에그타르트,25,False
+2026-04-01,sinchon-a,카페라떼(HOT),14,False
+2026-04-01,sinchon-a,크루아상,36,False
+2026-04-01,sinchon-a,휘낭시에,31,False
+2026-04-02,sinchon-a,두바이쫀득쿠키,5,False
+2026-04-02,sinchon-a,베이글,19,False
+2026-04-02,sinchon-a,소금빵,68,False
+2026-04-02,sinchon-a,식빵,9,False
+2026-04-02,sinchon-a,아메리카노(HOT),45,False
+2026-04-02,sinchon-a,아이스 아메리카노,70,False
+2026-04-02,sinchon-a,아이스 카페라떼,29,False
+2026-04-02,sinchon-a,에그타르트,27,False
+2026-04-02,sinchon-a,카페라떼(HOT),18,False
+2026-04-02,sinchon-a,크루아상,45,False
+2026-04-02,sinchon-a,휘낭시에,28,False
+2026-04-03,sinchon-a,두바이쫀득쿠키,2,False
+2026-04-03,sinchon-a,베이글,20,False
+2026-04-03,sinchon-a,소금빵,62,False
+2026-04-03,sinchon-a,식빵,6,False
+2026-04-03,sinchon-a,아메리카노(HOT),32,False
+2026-04-03,sinchon-a,아이스 아메리카노,72,False
+2026-04-03,sinchon-a,아이스 카페라떼,25,False
+2026-04-03,sinchon-a,에그타르트,18,False
+2026-04-03,sinchon-a,카페라떼(HOT),9,False
+2026-04-03,sinchon-a,크루아상,34,False
+2026-04-03,sinchon-a,휘낭시에,23,False
+2026-04-04,sinchon-a,두바이쫀득쿠키,1,False
+2026-04-04,sinchon-a,베이글,15,False
+2026-04-04,sinchon-a,소금빵,31,False
+2026-04-04,sinchon-a,식빵,9,False
+2026-04-04,sinchon-a,아메리카노(HOT),19,False
+2026-04-04,sinchon-a,아이스 아메리카노,43,False
+2026-04-04,sinchon-a,아이스 카페라떼,22,False
+2026-04-04,sinchon-a,에그타르트,16,False
+2026-04-04,sinchon-a,카페라떼(HOT),9,False
+2026-04-04,sinchon-a,크루아상,20,False
+2026-04-04,sinchon-a,휘낭시에,12,False
+2026-04-05,sinchon-a,두바이쫀득쿠키,2,False
+2026-04-05,sinchon-a,베이글,8,False
+2026-04-05,sinchon-a,소금빵,26,False
+2026-04-05,sinchon-a,식빵,5,False
+2026-04-05,sinchon-a,아메리카노(HOT),16,False
+2026-04-05,sinchon-a,아이스 아메리카노,32,False
+2026-04-05,sinchon-a,아이스 카페라떼,8,False
+2026-04-05,sinchon-a,에그타르트,8,False
+2026-04-05,sinchon-a,카페라떼(HOT),6,False
+2026-04-05,sinchon-a,크루아상,19,False
+2026-04-05,sinchon-a,휘낭시에,10,False
+2026-04-06,sinchon-a,두바이쫀득쿠키,2,False
+2026-04-06,sinchon-a,베이글,22,False
+2026-04-06,sinchon-a,소금빵,74,False
+2026-04-06,sinchon-a,식빵,20,False
+2026-04-06,sinchon-a,아메리카노(HOT),40,False
+2026-04-06,sinchon-a,아이스 아메리카노,62,False
+2026-04-06,sinchon-a,아이스 카페라떼,23,False
+2026-04-06,sinchon-a,에그타르트,20,False
+2026-04-06,sinchon-a,카페라떼(HOT),16,False
+2026-04-06,sinchon-a,크루아상,44,False
+2026-04-06,sinchon-a,휘낭시에,38,False
+2026-04-07,sinchon-a,두바이쫀득쿠키,1,False
+2026-04-07,sinchon-a,베이글,19,False
+2026-04-07,sinchon-a,소금빵,52,False
+2026-04-07,sinchon-a,식빵,9,False
+2026-04-07,sinchon-a,아메리카노(HOT),36,False
+2026-04-07,sinchon-a,아이스 아메리카노,55,False
+2026-04-07,sinchon-a,아이스 카페라떼,23,False
+2026-04-07,sinchon-a,에그타르트,21,False
+2026-04-07,sinchon-a,카페라떼(HOT),28,False
+2026-04-07,sinchon-a,크루아상,43,False
+2026-04-07,sinchon-a,휘낭시에,36,False
+2026-04-08,sinchon-a,두바이쫀득쿠키,2,False
+2026-04-08,sinchon-a,베이글,19,False
+2026-04-08,sinchon-a,소금빵,46,False
+2026-04-08,sinchon-a,식빵,11,False
+2026-04-08,sinchon-a,아메리카노(HOT),38,False
+2026-04-08,sinchon-a,아이스 아메리카노,56,False
+2026-04-08,sinchon-a,아이스 카페라떼,13,False
+2026-04-08,sinchon-a,에그타르트,26,False
+2026-04-08,sinchon-a,카페라떼(HOT),27,False
+2026-04-08,sinchon-a,크루아상,34,False
+2026-04-08,sinchon-a,휘낭시에,26,False
+2026-04-09,sinchon-a,두바이쫀득쿠키,1,False
+2026-04-09,sinchon-a,베이글,23,False
+2026-04-09,sinchon-a,소금빵,53,False
+2026-04-09,sinchon-a,식빵,12,False
+2026-04-09,sinchon-a,아메리카노(HOT),29,False
+2026-04-09,sinchon-a,아이스 아메리카노,66,False
+2026-04-09,sinchon-a,아이스 카페라떼,33,False
+2026-04-09,sinchon-a,에그타르트,20,False
+2026-04-09,sinchon-a,카페라떼(HOT),15,False
+2026-04-09,sinchon-a,크루아상,29,False
+2026-04-09,sinchon-a,휘낭시에,22,False
+2026-04-10,sinchon-a,두바이쫀득쿠키,1,False
+2026-04-10,sinchon-a,베이글,29,False
+2026-04-10,sinchon-a,소금빵,55,False
+2026-04-10,sinchon-a,식빵,9,False
+2026-04-10,sinchon-a,아메리카노(HOT),33,False
+2026-04-10,sinchon-a,아이스 아메리카노,64,False
+2026-04-10,sinchon-a,아이스 카페라떼,12,False
+2026-04-10,sinchon-a,에그타르트,26,False
+2026-04-10,sinchon-a,카페라떼(HOT),17,False
+2026-04-10,sinchon-a,크루아상,35,False
+2026-04-10,sinchon-a,휘낭시에,23,False
+2026-04-11,sinchon-a,두바이쫀득쿠키,0,False
+2026-04-11,sinchon-a,베이글,22,False
+2026-04-11,sinchon-a,소금빵,45,False
+2026-04-11,sinchon-a,식빵,17,False
+2026-04-11,sinchon-a,아메리카노(HOT),28,False
+2026-04-11,sinchon-a,아이스 아메리카노,50,False
+2026-04-11,sinchon-a,아이스 카페라떼,11,False
+2026-04-11,sinchon-a,에그타르트,24,False
+2026-04-11,sinchon-a,카페라떼(HOT),12,False
+2026-04-11,sinchon-a,크루아상,27,False
+2026-04-11,sinchon-a,휘낭시에,15,False
+2026-04-12,sinchon-a,두바이쫀득쿠키,0,False
+2026-04-12,sinchon-a,베이글,14,False
+2026-04-12,sinchon-a,소금빵,40,False
+2026-04-12,sinchon-a,식빵,11,False
+2026-04-12,sinchon-a,아메리카노(HOT),10,False
+2026-04-12,sinchon-a,아이스 아메리카노,29,False
+2026-04-12,sinchon-a,아이스 카페라떼,6,False
+2026-04-12,sinchon-a,에그타르트,22,False
+2026-04-12,sinchon-a,카페라떼(HOT),10,False
+2026-04-12,sinchon-a,크루아상,22,False
+2026-04-12,sinchon-a,휘낭시에,13,False
+2026-04-13,sinchon-a,두바이쫀득쿠키,0,False
+2026-04-13,sinchon-a,베이글,14,False
+2026-04-13,sinchon-a,소금빵,51,False
+2026-04-13,sinchon-a,식빵,6,False
+2026-04-13,sinchon-a,아메리카노(HOT),34,False
+2026-04-13,sinchon-a,아이스 아메리카노,45,False
+2026-04-13,sinchon-a,아이스 카페라떼,22,False
+2026-04-13,sinchon-a,에그타르트,22,False
+2026-04-13,sinchon-a,카페라떼(HOT),12,False
+2026-04-13,sinchon-a,크루아상,32,False
+2026-04-13,sinchon-a,휘낭시에,13,False
+2026-04-14,sinchon-a,두바이쫀득쿠키,1,False
+2026-04-14,sinchon-a,베이글,29,False
+2026-04-14,sinchon-a,소금빵,62,False
+2026-04-14,sinchon-a,식빵,8,False
+2026-04-14,sinchon-a,아메리카노(HOT),42,False
+2026-04-14,sinchon-a,아이스 아메리카노,61,False
+2026-04-14,sinchon-a,아이스 카페라떼,22,False
+2026-04-14,sinchon-a,에그타르트,12,False
+2026-04-14,sinchon-a,카페라떼(HOT),19,False
+2026-04-14,sinchon-a,크루아상,41,False
+2026-04-14,sinchon-a,휘낭시에,23,False
+2026-04-15,sinchon-a,두바이쫀득쿠키,2,False
+2026-04-15,sinchon-a,베이글,23,False
+2026-04-15,sinchon-a,소금빵,43,False
+2026-04-15,sinchon-a,식빵,15,False
+2026-04-15,sinchon-a,아메리카노(HOT),41,False
+2026-04-15,sinchon-a,아이스 아메리카노,50,False
+2026-04-15,sinchon-a,아이스 카페라떼,28,False
+2026-04-15,sinchon-a,에그타르트,30,False
+2026-04-15,sinchon-a,카페라떼(HOT),15,False
+2026-04-15,sinchon-a,크루아상,31,False
+2026-04-15,sinchon-a,휘낭시에,25,False
+2026-04-16,sinchon-a,베이글,20,False
+2026-04-16,sinchon-a,소금빵,72,False
+2026-04-16,sinchon-a,식빵,10,False
+2026-04-16,sinchon-a,아메리카노(HOT),26,False
+2026-04-16,sinchon-a,아이스 아메리카노,47,False
+2026-04-16,sinchon-a,아이스 카페라떼,21,False
+2026-04-16,sinchon-a,에그타르트,23,False
+2026-04-16,sinchon-a,카페라떼(HOT),12,False
+2026-04-16,sinchon-a,크루아상,32,False
+2026-04-16,sinchon-a,휘낭시에,27,False
+2026-04-17,sinchon-a,베이글,19,False
+2026-04-17,sinchon-a,소금빵,47,False
+2026-04-17,sinchon-a,식빵,6,False
+2026-04-17,sinchon-a,아메리카노(HOT),34,False
+2026-04-17,sinchon-a,아이스 아메리카노,52,False
+2026-04-17,sinchon-a,아이스 카페라떼,13,False
+2026-04-17,sinchon-a,에그타르트,16,False
+2026-04-17,sinchon-a,카페라떼(HOT),14,False
+2026-04-17,sinchon-a,크루아상,23,False
+2026-04-17,sinchon-a,휘낭시에,21,False
+2026-04-18,sinchon-a,베이글,8,False
+2026-04-18,sinchon-a,소금빵,34,False
+2026-04-18,sinchon-a,식빵,9,False
+2026-04-18,sinchon-a,아메리카노(HOT),10,False
+2026-04-18,sinchon-a,아이스 아메리카노,26,False
+2026-04-18,sinchon-a,아이스 카페라떼,10,False
+2026-04-18,sinchon-a,에그타르트,15,False
+2026-04-18,sinchon-a,카페라떼(HOT),13,False
+2026-04-18,sinchon-a,크루아상,18,False
+2026-04-18,sinchon-a,휘낭시에,10,False
+2026-04-19,sinchon-a,베이글,13,False
+2026-04-19,sinchon-a,소금빵,23,False
+2026-04-19,sinchon-a,식빵,14,False
+2026-04-19,sinchon-a,아메리카노(HOT),11,False
+2026-04-19,sinchon-a,아이스 아메리카노,37,False
+2026-04-19,sinchon-a,아이스 카페라떼,21,False
+2026-04-19,sinchon-a,에그타르트,27,False
+2026-04-19,sinchon-a,카페라떼(HOT),9,False
+2026-04-19,sinchon-a,크루아상,20,False
+2026-04-19,sinchon-a,휘낭시에,18,False
+2026-04-20,sinchon-a,베이글,22,False
+2026-04-20,sinchon-a,소금빵,63,False
+2026-04-20,sinchon-a,식빵,10,False
+2026-04-20,sinchon-a,아메리카노(HOT),41,False
+2026-04-20,sinchon-a,아이스 아메리카노,64,False
+2026-04-20,sinchon-a,아이스 카페라떼,25,False
+2026-04-20,sinchon-a,에그타르트,31,False
+2026-04-20,sinchon-a,카페라떼(HOT),25,False
+2026-04-20,sinchon-a,크루아상,32,False
+2026-04-20,sinchon-a,휘낭시에,30,False
+2026-04-21,sinchon-a,베이글,16,False
+2026-04-21,sinchon-a,소금빵,60,False
+2026-04-21,sinchon-a,식빵,13,False
+2026-04-21,sinchon-a,아메리카노(HOT),37,False
+2026-04-21,sinchon-a,아이스 아메리카노,62,False
+2026-04-21,sinchon-a,아이스 카페라떼,11,False
+2026-04-21,sinchon-a,에그타르트,23,False
+2026-04-21,sinchon-a,카페라떼(HOT),12,False
+2026-04-21,sinchon-a,크루아상,25,False
+2026-04-21,sinchon-a,휘낭시에,17,False
+2026-04-22,sinchon-a,베이글,26,False
+2026-04-22,sinchon-a,소금빵,55,False
+2026-04-22,sinchon-a,식빵,14,False
+2026-04-22,sinchon-a,아메리카노(HOT),66,False
+2026-04-22,sinchon-a,아이스 아메리카노,54,False
+2026-04-22,sinchon-a,아이스 카페라떼,29,False
+2026-04-22,sinchon-a,에그타르트,22,False
+2026-04-22,sinchon-a,카페라떼(HOT),20,False
+2026-04-22,sinchon-a,크루아상,30,False
+2026-04-22,sinchon-a,휘낭시에,30,False
+2026-04-23,sinchon-a,베이글,16,False
+2026-04-23,sinchon-a,소금빵,80,True
+2026-04-23,sinchon-a,식빵,13,False
+2026-04-23,sinchon-a,아메리카노(HOT),45,False
+2026-04-23,sinchon-a,아이스 아메리카노,58,False
+2026-04-23,sinchon-a,아이스 카페라떼,19,False
+2026-04-23,sinchon-a,에그타르트,21,False
+2026-04-23,sinchon-a,카페라떼(HOT),17,False
+2026-04-23,sinchon-a,크루아상,36,False
+2026-04-23,sinchon-a,휘낭시에,27,False
+2026-04-24,sinchon-a,베이글,31,False
+2026-04-24,sinchon-a,소금빵,57,False
+2026-04-24,sinchon-a,식빵,16,False
+2026-04-24,sinchon-a,아메리카노(HOT),38,False
+2026-04-24,sinchon-a,아이스 아메리카노,71,False
+2026-04-24,sinchon-a,아이스 카페라떼,31,False
+2026-04-24,sinchon-a,에그타르트,23,False
+2026-04-24,sinchon-a,카페라떼(HOT),17,False
+2026-04-24,sinchon-a,크루아상,32,False
+2026-04-24,sinchon-a,휘낭시에,10,False
+2026-04-25,sinchon-a,베이글,11,False
+2026-04-25,sinchon-a,소금빵,48,False
+2026-04-25,sinchon-a,식빵,8,False
+2026-04-25,sinchon-a,아메리카노(HOT),30,False
+2026-04-25,sinchon-a,아이스 아메리카노,29,False
+2026-04-25,sinchon-a,아이스 카페라떼,19,False
+2026-04-25,sinchon-a,에그타르트,10,False
+2026-04-25,sinchon-a,카페라떼(HOT),8,False
+2026-04-25,sinchon-a,크루아상,23,False
+2026-04-25,sinchon-a,휘낭시에,12,False
+2026-04-26,sinchon-a,베이글,13,False
+2026-04-26,sinchon-a,소금빵,28,False
+2026-04-26,sinchon-a,식빵,12,False
+2026-04-26,sinchon-a,아메리카노(HOT),23,False
+2026-04-26,sinchon-a,아이스 아메리카노,49,False
+2026-04-26,sinchon-a,아이스 카페라떼,15,False
+2026-04-26,sinchon-a,에그타르트,19,False
+2026-04-26,sinchon-a,카페라떼(HOT),13,False
+2026-04-26,sinchon-a,크루아상,27,False
+2026-04-26,sinchon-a,휘낭시에,12,False
+2026-04-27,sinchon-a,베이글,29,False
+2026-04-27,sinchon-a,소금빵,60,False
+2026-04-27,sinchon-a,식빵,10,False
+2026-04-27,sinchon-a,아메리카노(HOT),32,False
+2026-04-27,sinchon-a,아이스 아메리카노,93,False
+2026-04-27,sinchon-a,아이스 카페라떼,30,False
+2026-04-27,sinchon-a,에그타르트,27,False
+2026-04-27,sinchon-a,카페라떼(HOT),16,False
+2026-04-27,sinchon-a,크루아상,44,False
+2026-04-27,sinchon-a,휘낭시에,28,False
+2026-04-28,sinchon-a,베이글,20,False
+2026-04-28,sinchon-a,소금빵,67,False
+2026-04-28,sinchon-a,식빵,14,False
+2026-04-28,sinchon-a,아메리카노(HOT),42,False
+2026-04-28,sinchon-a,아이스 아메리카노,66,False
+2026-04-28,sinchon-a,아이스 카페라떼,29,False
+2026-04-28,sinchon-a,에그타르트,35,False
+2026-04-28,sinchon-a,카페라떼(HOT),18,False
+2026-04-28,sinchon-a,크루아상,36,False
+2026-04-28,sinchon-a,휘낭시에,21,False
+2026-04-29,sinchon-a,베이글,14,False
+2026-04-29,sinchon-a,소금빵,53,False
+2026-04-29,sinchon-a,식빵,16,False
+2026-04-29,sinchon-a,아메리카노(HOT),33,False
+2026-04-29,sinchon-a,아이스 아메리카노,102,False
+2026-04-29,sinchon-a,아이스 카페라떼,21,False
+2026-04-29,sinchon-a,에그타르트,28,False
+2026-04-29,sinchon-a,카페라떼(HOT),9,False
+2026-04-29,sinchon-a,크루아상,34,False
+2026-04-29,sinchon-a,휘낭시에,20,False
+2026-04-30,sinchon-a,베이글,30,False
+2026-04-30,sinchon-a,소금빵,80,True
+2026-04-30,sinchon-a,식빵,9,False
+2026-04-30,sinchon-a,아메리카노(HOT),45,False
+2026-04-30,sinchon-a,아이스 아메리카노,107,False
+2026-04-30,sinchon-a,아이스 카페라떼,33,False
+2026-04-30,sinchon-a,에그타르트,26,False
+2026-04-30,sinchon-a,카페라떼(HOT),14,False
+2026-04-30,sinchon-a,크루아상,25,False
+2026-04-30,sinchon-a,휘낭시에,31,False
+2026-05-01,sinchon-a,베이글,26,False
+2026-05-01,sinchon-a,소금빵,68,False
+2026-05-01,sinchon-a,식빵,16,False
+2026-05-01,sinchon-a,아메리카노(HOT),19,False
+2026-05-01,sinchon-a,아이스 아메리카노,61,False
+2026-05-01,sinchon-a,아이스 카페라떼,25,False
+2026-05-01,sinchon-a,에그타르트,23,False
+2026-05-01,sinchon-a,카페라떼(HOT),15,False
+2026-05-01,sinchon-a,크루아상,36,False
+2026-05-01,sinchon-a,휘낭시에,27,False
+2026-05-02,sinchon-a,베이글,8,False
+2026-05-02,sinchon-a,소금빵,32,False
+2026-05-02,sinchon-a,식빵,8,False
+2026-05-02,sinchon-a,아메리카노(HOT),27,False
+2026-05-02,sinchon-a,아이스 아메리카노,31,False
+2026-05-02,sinchon-a,아이스 카페라떼,19,False
+2026-05-02,sinchon-a,에그타르트,11,False
+2026-05-02,sinchon-a,카페라떼(HOT),15,False
+2026-05-02,sinchon-a,크루아상,24,False
+2026-05-02,sinchon-a,휘낭시에,12,False
+2026-05-03,sinchon-a,베이글,11,False
+2026-05-03,sinchon-a,소금빵,42,False
+2026-05-03,sinchon-a,식빵,13,False
+2026-05-03,sinchon-a,아메리카노(HOT),23,False
+2026-05-03,sinchon-a,아이스 아메리카노,20,False
+2026-05-03,sinchon-a,아이스 카페라떼,9,False
+2026-05-03,sinchon-a,에그타르트,14,False
+2026-05-03,sinchon-a,카페라떼(HOT),18,False
+2026-05-03,sinchon-a,크루아상,21,False
+2026-05-03,sinchon-a,휘낭시에,16,False
+2026-05-04,sinchon-a,베이글,17,False
+2026-05-04,sinchon-a,소금빵,58,False
+2026-05-04,sinchon-a,식빵,11,False
+2026-05-04,sinchon-a,아메리카노(HOT),40,False
+2026-05-04,sinchon-a,아이스 아메리카노,47,False
+2026-05-04,sinchon-a,아이스 카페라떼,12,False
+2026-05-04,sinchon-a,에그타르트,21,False
+2026-05-04,sinchon-a,카페라떼(HOT),17,False
+2026-05-04,sinchon-a,크루아상,37,False
+2026-05-04,sinchon-a,휘낭시에,20,False
+2026-05-05,sinchon-a,베이글,15,False
+2026-05-05,sinchon-a,소금빵,35,False
+2026-05-05,sinchon-a,식빵,5,False
+2026-05-05,sinchon-a,아메리카노(HOT),13,False
+2026-05-05,sinchon-a,아이스 아메리카노,45,False
+2026-05-05,sinchon-a,아이스 카페라떼,25,False
+2026-05-05,sinchon-a,에그타르트,19,False
+2026-05-05,sinchon-a,카페라떼(HOT),13,False
+2026-05-05,sinchon-a,크루아상,23,False
+2026-05-05,sinchon-a,휘낭시에,13,False
+2026-05-06,sinchon-a,베이글,18,False
+2026-05-06,sinchon-a,소금빵,74,False
+2026-05-06,sinchon-a,식빵,8,False
+2026-05-06,sinchon-a,아메리카노(HOT),31,False
+2026-05-06,sinchon-a,아이스 아메리카노,86,False
+2026-05-06,sinchon-a,아이스 카페라떼,36,False
+2026-05-06,sinchon-a,에그타르트,36,True
+2026-05-06,sinchon-a,카페라떼(HOT),21,False
+2026-05-06,sinchon-a,크루아상,40,False
+2026-05-06,sinchon-a,휘낭시에,33,False
+2026-05-07,sinchon-a,베이글,19,False
+2026-05-07,sinchon-a,소금빵,61,False
+2026-05-07,sinchon-a,식빵,11,False
+2026-05-07,sinchon-a,아메리카노(HOT),18,False
+2026-05-07,sinchon-a,아이스 아메리카노,71,False
+2026-05-07,sinchon-a,아이스 카페라떼,20,False
+2026-05-07,sinchon-a,에그타르트,21,False
+2026-05-07,sinchon-a,카페라떼(HOT),5,False
+2026-05-07,sinchon-a,크루아상,32,False
+2026-05-07,sinchon-a,휘낭시에,27,False
+2026-05-08,sinchon-a,베이글,15,False
+2026-05-08,sinchon-a,소금빵,54,False
+2026-05-08,sinchon-a,식빵,14,False
+2026-05-08,sinchon-a,아메리카노(HOT),35,False
+2026-05-08,sinchon-a,아이스 아메리카노,65,False
+2026-05-08,sinchon-a,아이스 카페라떼,19,False
+2026-05-08,sinchon-a,에그타르트,27,False
+2026-05-08,sinchon-a,카페라떼(HOT),15,False
+2026-05-08,sinchon-a,크루아상,31,False
+2026-05-08,sinchon-a,휘낭시에,15,False
+2026-05-09,sinchon-a,베이글,8,False
+2026-05-09,sinchon-a,소금빵,30,False
+2026-05-09,sinchon-a,식빵,6,False
+2026-05-09,sinchon-a,아메리카노(HOT),17,False
+2026-05-09,sinchon-a,아이스 아메리카노,58,False
+2026-05-09,sinchon-a,아이스 카페라떼,23,False
+2026-05-09,sinchon-a,에그타르트,11,False
+2026-05-09,sinchon-a,카페라떼(HOT),5,False
+2026-05-09,sinchon-a,크루아상,15,False
+2026-05-09,sinchon-a,휘낭시에,13,False
+2026-05-10,sinchon-a,베이글,12,False
+2026-05-10,sinchon-a,소금빵,34,False
+2026-05-10,sinchon-a,식빵,9,False
+2026-05-10,sinchon-a,아메리카노(HOT),18,False
+2026-05-10,sinchon-a,아이스 아메리카노,45,False
+2026-05-10,sinchon-a,아이스 카페라떼,13,False
+2026-05-10,sinchon-a,에그타르트,14,False
+2026-05-10,sinchon-a,카페라떼(HOT),8,False
+2026-05-10,sinchon-a,크루아상,23,False
+2026-05-10,sinchon-a,휘낭시에,8,False
+2026-05-11,sinchon-a,베이글,15,False
+2026-05-11,sinchon-a,소금빵,56,False
+2026-05-11,sinchon-a,식빵,10,False
+2026-05-11,sinchon-a,아메리카노(HOT),14,False
+2026-05-11,sinchon-a,아이스 아메리카노,77,False
+2026-05-11,sinchon-a,아이스 카페라떼,38,False
+2026-05-11,sinchon-a,에그타르트,30,False
+2026-05-11,sinchon-a,카페라떼(HOT),11,False
+2026-05-11,sinchon-a,크루아상,25,False
+2026-05-11,sinchon-a,휘낭시에,16,False
+2026-05-12,sinchon-a,베이글,23,False
+2026-05-12,sinchon-a,소금빵,68,False
+2026-05-12,sinchon-a,식빵,8,False
+2026-05-12,sinchon-a,아메리카노(HOT),31,False
+2026-05-12,sinchon-a,아이스 아메리카노,90,False
+2026-05-12,sinchon-a,아이스 카페라떼,25,False
+2026-05-12,sinchon-a,에그타르트,25,False
+2026-05-12,sinchon-a,카페라떼(HOT),19,False
+2026-05-12,sinchon-a,크루아상,36,False
+2026-05-12,sinchon-a,휘낭시에,27,False
+2026-05-13,sinchon-a,베이글,28,False
+2026-05-13,sinchon-a,소금빵,64,False
+2026-05-13,sinchon-a,식빵,5,False
+2026-05-13,sinchon-a,아메리카노(HOT),39,False
+2026-05-13,sinchon-a,아이스 아메리카노,91,False
+2026-05-13,sinchon-a,아이스 카페라떼,35,False
+2026-05-13,sinchon-a,에그타르트,29,False
+2026-05-13,sinchon-a,카페라떼(HOT),17,False
+2026-05-13,sinchon-a,크루아상,38,False
+2026-05-13,sinchon-a,휘낭시에,15,False
+2026-05-14,sinchon-a,베이글,12,False
+2026-05-14,sinchon-a,소금빵,61,False
+2026-05-14,sinchon-a,식빵,15,False
+2026-05-14,sinchon-a,아메리카노(HOT),42,False
+2026-05-14,sinchon-a,아이스 아메리카노,94,False
+2026-05-14,sinchon-a,아이스 카페라떼,30,False
+2026-05-14,sinchon-a,에그타르트,25,False
+2026-05-14,sinchon-a,카페라떼(HOT),16,False
+2026-05-14,sinchon-a,크루아상,27,False
+2026-05-14,sinchon-a,휘낭시에,29,False
+2026-05-15,sinchon-a,베이글,19,False
+2026-05-15,sinchon-a,소금빵,43,False
+2026-05-15,sinchon-a,식빵,12,False
+2026-05-15,sinchon-a,아메리카노(HOT),22,False
+2026-05-15,sinchon-a,아이스 아메리카노,79,False
+2026-05-15,sinchon-a,아이스 카페라떼,33,False
+2026-05-15,sinchon-a,에그타르트,22,False
+2026-05-15,sinchon-a,카페라떼(HOT),13,False
+2026-05-15,sinchon-a,크루아상,29,False
+2026-05-15,sinchon-a,휘낭시에,14,False
+2026-05-16,sinchon-a,베이글,16,False
+2026-05-16,sinchon-a,소금빵,47,False
+2026-05-16,sinchon-a,식빵,15,False
+2026-05-16,sinchon-a,아메리카노(HOT),27,False
+2026-05-16,sinchon-a,아이스 아메리카노,51,False
+2026-05-16,sinchon-a,아이스 카페라떼,15,False
+2026-05-16,sinchon-a,에그타르트,23,False
+2026-05-16,sinchon-a,카페라떼(HOT),13,False
+2026-05-16,sinchon-a,크루아상,25,False
+2026-05-16,sinchon-a,휘낭시에,12,False
+2026-05-17,sinchon-a,베이글,15,False
+2026-05-17,sinchon-a,소금빵,37,False
+2026-05-17,sinchon-a,식빵,15,False
+2026-05-17,sinchon-a,아메리카노(HOT),19,False
+2026-05-17,sinchon-a,아이스 아메리카노,30,False
+2026-05-17,sinchon-a,아이스 카페라떼,11,False
+2026-05-17,sinchon-a,에그타르트,11,False
+2026-05-17,sinchon-a,카페라떼(HOT),13,False
+2026-05-17,sinchon-a,크루아상,17,False
+2026-05-17,sinchon-a,휘낭시에,11,False
+2026-05-18,sinchon-a,베이글,23,False
+2026-05-18,sinchon-a,소금빵,60,False
+2026-05-18,sinchon-a,식빵,7,False
+2026-05-18,sinchon-a,아메리카노(HOT),40,False
+2026-05-18,sinchon-a,아이스 아메리카노,72,False
+2026-05-18,sinchon-a,아이스 카페라떼,30,False
+2026-05-18,sinchon-a,에그타르트,21,False
+2026-05-18,sinchon-a,카페라떼(HOT),22,False
+2026-05-18,sinchon-a,크루아상,25,False
+2026-05-18,sinchon-a,휘낭시에,36,False
+2026-05-19,sinchon-a,베이글,15,False
+2026-05-19,sinchon-a,소금빵,48,False
+2026-05-19,sinchon-a,식빵,9,False
+2026-05-19,sinchon-a,아메리카노(HOT),31,False
+2026-05-19,sinchon-a,아이스 아메리카노,63,False
+2026-05-19,sinchon-a,아이스 카페라떼,25,False
+2026-05-19,sinchon-a,에그타르트,23,False
+2026-05-19,sinchon-a,카페라떼(HOT),18,False
+2026-05-19,sinchon-a,크루아상,30,False
+2026-05-19,sinchon-a,휘낭시에,29,False
+2026-05-20,sinchon-a,베이글,15,False
+2026-05-20,sinchon-a,소금빵,64,False
+2026-05-20,sinchon-a,식빵,6,False
+2026-05-20,sinchon-a,아메리카노(HOT),32,False
+2026-05-20,sinchon-a,아이스 아메리카노,71,False
+2026-05-20,sinchon-a,아이스 카페라떼,26,False
+2026-05-20,sinchon-a,에그타르트,13,False
+2026-05-20,sinchon-a,카페라떼(HOT),11,False
+2026-05-20,sinchon-a,크루아상,33,False
+2026-05-20,sinchon-a,휘낭시에,22,False
+2026-05-21,sinchon-a,베이글,25,False
+2026-05-21,sinchon-a,소금빵,80,True
+2026-05-21,sinchon-a,식빵,8,False
+2026-05-21,sinchon-a,아메리카노(HOT),32,False
+2026-05-21,sinchon-a,아이스 아메리카노,69,False
+2026-05-21,sinchon-a,아이스 카페라떼,32,False
+2026-05-21,sinchon-a,에그타르트,26,False
+2026-05-21,sinchon-a,카페라떼(HOT),14,False
+2026-05-21,sinchon-a,크루아상,27,False
+2026-05-21,sinchon-a,휘낭시에,24,False
+2026-05-22,sinchon-a,베이글,32,False
+2026-05-22,sinchon-a,소금빵,80,True
+2026-05-22,sinchon-a,식빵,7,False
+2026-05-22,sinchon-a,아메리카노(HOT),34,False
+2026-05-22,sinchon-a,아이스 아메리카노,98,False
+2026-05-22,sinchon-a,아이스 카페라떼,38,False
+2026-05-22,sinchon-a,에그타르트,33,False
+2026-05-22,sinchon-a,카페라떼(HOT),33,False
+2026-05-22,sinchon-a,크루아상,55,False
+2026-05-22,sinchon-a,휘낭시에,35,False
+2026-05-23,sinchon-a,베이글,11,False
+2026-05-23,sinchon-a,소금빵,41,False
+2026-05-23,sinchon-a,식빵,12,False
+2026-05-23,sinchon-a,아메리카노(HOT),20,False
+2026-05-23,sinchon-a,아이스 아메리카노,39,False
+2026-05-23,sinchon-a,아이스 카페라떼,27,False
+2026-05-23,sinchon-a,에그타르트,22,False
+2026-05-23,sinchon-a,카페라떼(HOT),8,False
+2026-05-23,sinchon-a,크루아상,22,False
+2026-05-23,sinchon-a,휘낭시에,21,False
+2026-05-24,sinchon-a,베이글,14,False
+2026-05-24,sinchon-a,소금빵,22,False
+2026-05-24,sinchon-a,식빵,11,False
+2026-05-24,sinchon-a,아메리카노(HOT),18,False
+2026-05-24,sinchon-a,아이스 아메리카노,37,False
+2026-05-24,sinchon-a,아이스 카페라떼,14,False
+2026-05-24,sinchon-a,에그타르트,22,False
+2026-05-24,sinchon-a,카페라떼(HOT),11,False
+2026-05-24,sinchon-a,크루아상,12,False
+2026-05-24,sinchon-a,휘낭시에,7,False
+2026-05-25,sinchon-a,베이글,14,False
+2026-05-25,sinchon-a,소금빵,46,False
+2026-05-25,sinchon-a,식빵,7,False
+2026-05-25,sinchon-a,아메리카노(HOT),21,False
+2026-05-25,sinchon-a,아이스 아메리카노,33,False
+2026-05-25,sinchon-a,아이스 카페라떼,11,False
+2026-05-25,sinchon-a,에그타르트,21,False
+2026-05-25,sinchon-a,카페라떼(HOT),10,False
+2026-05-25,sinchon-a,크루아상,26,False
+2026-05-25,sinchon-a,휘낭시에,18,False
+2026-05-26,sinchon-a,베이글,29,False
+2026-05-26,sinchon-a,소금빵,64,False
+2026-05-26,sinchon-a,식빵,5,False
+2026-05-26,sinchon-a,아메리카노(HOT),29,False
+2026-05-26,sinchon-a,아이스 아메리카노,89,False
+2026-05-26,sinchon-a,아이스 카페라떼,33,False
+2026-05-26,sinchon-a,에그타르트,36,True
+2026-05-26,sinchon-a,카페라떼(HOT),15,False
+2026-05-26,sinchon-a,크루아상,34,False
+2026-05-26,sinchon-a,휘낭시에,21,False
+2026-05-27,sinchon-a,베이글,11,False
+2026-05-27,sinchon-a,소금빵,56,False
+2026-05-27,sinchon-a,식빵,11,False
+2026-05-27,sinchon-a,아메리카노(HOT),18,False
+2026-05-27,sinchon-a,아이스 아메리카노,65,False
+2026-05-27,sinchon-a,아이스 카페라떼,27,False
+2026-05-27,sinchon-a,에그타르트,25,False
+2026-05-27,sinchon-a,카페라떼(HOT),9,False
+2026-05-27,sinchon-a,크루아상,31,False
+2026-05-27,sinchon-a,휘낭시에,19,False
+2026-05-28,sinchon-a,베이글,10,False
+2026-05-28,sinchon-a,소금빵,29,False
+2026-05-28,sinchon-a,식빵,9,False
+2026-05-28,sinchon-a,아메리카노(HOT),21,False
+2026-05-28,sinchon-a,아이스 아메리카노,60,False
+2026-05-28,sinchon-a,아이스 카페라떼,18,False
+2026-05-28,sinchon-a,에그타르트,22,False
+2026-05-28,sinchon-a,카페라떼(HOT),8,False
+2026-05-28,sinchon-a,크루아상,20,False
+2026-05-28,sinchon-a,휘낭시에,16,False
+2026-05-29,sinchon-a,베이글,23,False
+2026-05-29,sinchon-a,소금빵,57,False
+2026-05-29,sinchon-a,식빵,13,False
+2026-05-29,sinchon-a,아메리카노(HOT),25,False
+2026-05-29,sinchon-a,아이스 아메리카노,83,False
+2026-05-29,sinchon-a,아이스 카페라떼,34,False
+2026-05-29,sinchon-a,에그타르트,36,True
+2026-05-29,sinchon-a,카페라떼(HOT),12,False
+2026-05-29,sinchon-a,크루아상,29,False
+2026-05-29,sinchon-a,휘낭시에,23,False
+2026-05-30,sinchon-a,베이글,14,False
+2026-05-30,sinchon-a,소금빵,34,False
+2026-05-30,sinchon-a,식빵,11,False
+2026-05-30,sinchon-a,아메리카노(HOT),20,False
+2026-05-30,sinchon-a,아이스 아메리카노,54,False
+2026-05-30,sinchon-a,아이스 카페라떼,18,False
+2026-05-30,sinchon-a,에그타르트,7,False
+2026-05-30,sinchon-a,카페라떼(HOT),13,False
+2026-05-30,sinchon-a,크루아상,17,False
+2026-05-30,sinchon-a,휘낭시에,19,False
+2026-05-31,sinchon-a,베이글,13,False
+2026-05-31,sinchon-a,소금빵,45,False
+2026-05-31,sinchon-a,식빵,16,False
+2026-05-31,sinchon-a,아메리카노(HOT),18,False
+2026-05-31,sinchon-a,아이스 아메리카노,45,False
+2026-05-31,sinchon-a,아이스 카페라떼,12,False
+2026-05-31,sinchon-a,에그타르트,16,False
+2026-05-31,sinchon-a,카페라떼(HOT),10,False
+2026-05-31,sinchon-a,크루아상,22,False
+2026-05-31,sinchon-a,휘낭시에,10,False
+2026-06-01,sinchon-a,베이글,21,False
+2026-06-01,sinchon-a,소금빵,70,False
+2026-06-01,sinchon-a,식빵,10,False
+2026-06-01,sinchon-a,아메리카노(HOT),12,False
+2026-06-01,sinchon-a,아이스 아메리카노,83,False
+2026-06-01,sinchon-a,아이스 카페라떼,34,False
+2026-06-01,sinchon-a,에그타르트,22,False
+2026-06-01,sinchon-a,카페라떼(HOT),22,False
+2026-06-01,sinchon-a,크루아상,27,False
+2026-06-01,sinchon-a,휘낭시에,31,False
+2026-06-02,sinchon-a,베이글,20,False
+2026-06-02,sinchon-a,소금빵,65,False
+2026-06-02,sinchon-a,식빵,10,False
+2026-06-02,sinchon-a,아메리카노(HOT),20,False
+2026-06-02,sinchon-a,아이스 아메리카노,94,False
+2026-06-02,sinchon-a,아이스 카페라떼,40,False
+2026-06-02,sinchon-a,에그타르트,36,True
+2026-06-02,sinchon-a,카페라떼(HOT),12,False
+2026-06-02,sinchon-a,크루아상,33,False
+2026-06-02,sinchon-a,휘낭시에,26,False
+2026-06-03,sinchon-a,베이글,24,False
+2026-06-03,sinchon-a,소금빵,37,False
+2026-06-03,sinchon-a,식빵,6,False
+2026-06-03,sinchon-a,아메리카노(HOT),22,False
+2026-06-03,sinchon-a,아이스 아메리카노,52,False
+2026-06-03,sinchon-a,아이스 카페라떼,18,False
+2026-06-03,sinchon-a,에그타르트,15,False
+2026-06-03,sinchon-a,카페라떼(HOT),7,False
+2026-06-03,sinchon-a,크루아상,16,False
+2026-06-03,sinchon-a,휘낭시에,16,False
+2026-06-04,sinchon-a,베이글,18,False
+2026-06-04,sinchon-a,소금빵,49,False
+2026-06-04,sinchon-a,식빵,11,False
+2026-06-04,sinchon-a,아메리카노(HOT),35,False
+2026-06-04,sinchon-a,아이스 아메리카노,86,False
+2026-06-04,sinchon-a,아이스 카페라떼,28,False
+2026-06-04,sinchon-a,에그타르트,31,False
+2026-06-04,sinchon-a,카페라떼(HOT),17,False
+2026-06-04,sinchon-a,크루아상,26,False
+2026-06-04,sinchon-a,휘낭시에,26,False
+2026-06-05,sinchon-a,베이글,17,False
+2026-06-05,sinchon-a,소금빵,52,False
+2026-06-05,sinchon-a,식빵,12,False
+2026-06-05,sinchon-a,아메리카노(HOT),19,False
+2026-06-05,sinchon-a,아이스 아메리카노,105,False
+2026-06-05,sinchon-a,아이스 카페라떼,29,False
+2026-06-05,sinchon-a,에그타르트,23,False
+2026-06-05,sinchon-a,카페라떼(HOT),8,False
+2026-06-05,sinchon-a,크루아상,46,False
+2026-06-05,sinchon-a,휘낭시에,29,False
+2026-06-06,sinchon-a,베이글,15,False
+2026-06-06,sinchon-a,소금빵,32,False
+2026-06-06,sinchon-a,식빵,12,False
+2026-06-06,sinchon-a,아메리카노(HOT),14,False
+2026-06-06,sinchon-a,아이스 아메리카노,64,False
+2026-06-06,sinchon-a,아이스 카페라떼,16,False
+2026-06-06,sinchon-a,에그타르트,12,False
+2026-06-06,sinchon-a,카페라떼(HOT),12,False
+2026-06-06,sinchon-a,크루아상,26,False
+2026-06-06,sinchon-a,휘낭시에,10,False
+2026-06-07,sinchon-a,베이글,9,False
+2026-06-07,sinchon-a,소금빵,32,False
+2026-06-07,sinchon-a,식빵,11,False
+2026-06-07,sinchon-a,아메리카노(HOT),19,False
+2026-06-07,sinchon-a,아이스 아메리카노,50,False
+2026-06-07,sinchon-a,아이스 카페라떼,25,False
+2026-06-07,sinchon-a,에그타르트,10,False
+2026-06-07,sinchon-a,카페라떼(HOT),10,False
+2026-06-07,sinchon-a,크루아상,14,False
+2026-06-07,sinchon-a,휘낭시에,14,False
+2026-06-08,sinchon-a,베이글,15,False
+2026-06-08,sinchon-a,소금빵,35,False
+2026-06-08,sinchon-a,식빵,7,False
+2026-06-08,sinchon-a,아메리카노(HOT),39,False
+2026-06-08,sinchon-a,아이스 아메리카노,46,False
+2026-06-08,sinchon-a,아이스 카페라떼,28,False
+2026-06-08,sinchon-a,에그타르트,35,False
+2026-06-08,sinchon-a,카페라떼(HOT),13,False
+2026-06-08,sinchon-a,크루아상,20,False
+2026-06-08,sinchon-a,휘낭시에,35,False
+2026-06-09,sinchon-a,베이글,20,False
+2026-06-09,sinchon-a,소금빵,75,False
+2026-06-09,sinchon-a,식빵,10,False
+2026-06-09,sinchon-a,아메리카노(HOT),22,False
+2026-06-09,sinchon-a,아이스 아메리카노,119,False
+2026-06-09,sinchon-a,아이스 카페라떼,41,False
+2026-06-09,sinchon-a,에그타르트,24,False
+2026-06-09,sinchon-a,카페라떼(HOT),16,False
+2026-06-09,sinchon-a,크루아상,33,False
+2026-06-09,sinchon-a,휘낭시에,33,False
+2026-06-10,sinchon-a,베이글,25,False
+2026-06-10,sinchon-a,소금빵,52,False
+2026-06-10,sinchon-a,식빵,6,False
+2026-06-10,sinchon-a,아메리카노(HOT),21,False
+2026-06-10,sinchon-a,아이스 아메리카노,96,False
+2026-06-10,sinchon-a,아이스 카페라떼,49,False
+2026-06-10,sinchon-a,에그타르트,22,False
+2026-06-10,sinchon-a,카페라떼(HOT),7,False
+2026-06-10,sinchon-a,크루아상,42,False
+2026-06-10,sinchon-a,휘낭시에,24,False
+2026-06-11,sinchon-a,베이글,20,False
+2026-06-11,sinchon-a,소금빵,50,False
+2026-06-11,sinchon-a,식빵,16,False
+2026-06-11,sinchon-a,아메리카노(HOT),35,False
+2026-06-11,sinchon-a,아이스 아메리카노,113,False
+2026-06-11,sinchon-a,아이스 카페라떼,52,False
+2026-06-11,sinchon-a,에그타르트,27,False
+2026-06-11,sinchon-a,카페라떼(HOT),12,False
+2026-06-11,sinchon-a,크루아상,37,False
+2026-06-11,sinchon-a,휘낭시에,28,False
+2026-06-12,sinchon-a,베이글,16,False
+2026-06-12,sinchon-a,소금빵,38,False
+2026-06-12,sinchon-a,식빵,9,False
+2026-06-12,sinchon-a,아메리카노(HOT),20,False
+2026-06-12,sinchon-a,아이스 아메리카노,106,False
+2026-06-12,sinchon-a,아이스 카페라떼,36,False
+2026-06-12,sinchon-a,에그타르트,18,False
+2026-06-12,sinchon-a,카페라떼(HOT),7,False
+2026-06-12,sinchon-a,크루아상,30,False
+2026-06-12,sinchon-a,휘낭시에,15,False
+2026-06-13,sinchon-a,베이글,18,False
+2026-06-13,sinchon-a,소금빵,50,False
+2026-06-13,sinchon-a,식빵,10,False
+2026-06-13,sinchon-a,아메리카노(HOT),27,False
+2026-06-13,sinchon-a,아이스 아메리카노,57,False
+2026-06-13,sinchon-a,아이스 카페라떼,47,False
+2026-06-13,sinchon-a,에그타르트,16,False
+2026-06-13,sinchon-a,카페라떼(HOT),10,False
+2026-06-13,sinchon-a,크루아상,31,False
+2026-06-13,sinchon-a,휘낭시에,29,False
+2026-06-14,sinchon-a,베이글,12,False
+2026-06-14,sinchon-a,소금빵,39,False
+2026-06-14,sinchon-a,식빵,9,False
+2026-06-14,sinchon-a,아메리카노(HOT),6,False
+2026-06-14,sinchon-a,아이스 아메리카노,67,False
+2026-06-14,sinchon-a,아이스 카페라떼,31,False
+2026-06-14,sinchon-a,에그타르트,13,False
+2026-06-14,sinchon-a,카페라떼(HOT),6,False
+2026-06-14,sinchon-a,크루아상,18,False
+2026-06-14,sinchon-a,휘낭시에,13,False
+2026-06-15,sinchon-a,베이글,22,False
+2026-06-15,sinchon-a,소금빵,80,True
+2026-06-15,sinchon-a,식빵,15,False
+2026-06-15,sinchon-a,아메리카노(HOT),24,False
+2026-06-15,sinchon-a,아이스 아메리카노,145,False
+2026-06-15,sinchon-a,아이스 카페라떼,63,False
+2026-06-15,sinchon-a,에그타르트,36,True
+2026-06-15,sinchon-a,카페라떼(HOT),18,False
+2026-06-15,sinchon-a,크루아상,53,False
+2026-06-15,sinchon-a,휘낭시에,36,False
+2026-06-16,sinchon-a,베이글,16,False
+2026-06-16,sinchon-a,소금빵,67,False
+2026-06-16,sinchon-a,식빵,6,False
+2026-06-16,sinchon-a,아메리카노(HOT),28,False
+2026-06-16,sinchon-a,아이스 아메리카노,84,False
+2026-06-16,sinchon-a,아이스 카페라떼,44,False
+2026-06-16,sinchon-a,에그타르트,23,False
+2026-06-16,sinchon-a,카페라떼(HOT),20,False
+2026-06-16,sinchon-a,크루아상,29,False
+2026-06-16,sinchon-a,휘낭시에,41,False
+2026-06-17,sinchon-a,베이글,23,False
+2026-06-17,sinchon-a,소금빵,65,False
+2026-06-17,sinchon-a,식빵,9,False
+2026-06-17,sinchon-a,아메리카노(HOT),37,False
+2026-06-17,sinchon-a,아이스 아메리카노,118,False
+2026-06-17,sinchon-a,아이스 카페라떼,46,False
+2026-06-17,sinchon-a,에그타르트,32,False
+2026-06-17,sinchon-a,카페라떼(HOT),13,False
+2026-06-17,sinchon-a,크루아상,34,False
+2026-06-17,sinchon-a,휘낭시에,27,False
+2026-06-18,sinchon-a,베이글,13,False
+2026-06-18,sinchon-a,소금빵,58,False
+2026-06-18,sinchon-a,식빵,7,False
+2026-06-18,sinchon-a,아메리카노(HOT),18,False
+2026-06-18,sinchon-a,아이스 아메리카노,119,False
+2026-06-18,sinchon-a,아이스 카페라떼,37,False
+2026-06-18,sinchon-a,에그타르트,21,False
+2026-06-18,sinchon-a,카페라떼(HOT),11,False
+2026-06-18,sinchon-a,크루아상,35,False
+2026-06-18,sinchon-a,휘낭시에,23,False
+2026-06-19,sinchon-a,베이글,21,False
+2026-06-19,sinchon-a,소금빵,38,False
+2026-06-19,sinchon-a,식빵,8,False
+2026-06-19,sinchon-a,아메리카노(HOT),25,False
+2026-06-19,sinchon-a,아이스 아메리카노,91,False
+2026-06-19,sinchon-a,아이스 카페라떼,36,False
+2026-06-19,sinchon-a,에그타르트,21,False
+2026-06-19,sinchon-a,카페라떼(HOT),11,False
+2026-06-19,sinchon-a,크루아상,38,False
+2026-06-19,sinchon-a,휘낭시에,12,False
+2026-06-20,sinchon-a,베이글,9,False
+2026-06-20,sinchon-a,소금빵,26,False
+2026-06-20,sinchon-a,식빵,9,False
+2026-06-20,sinchon-a,아메리카노(HOT),13,False
+2026-06-20,sinchon-a,아이스 아메리카노,36,False
+2026-06-20,sinchon-a,아이스 카페라떼,13,False
+2026-06-20,sinchon-a,에그타르트,12,False
+2026-06-20,sinchon-a,카페라떼(HOT),6,False
+2026-06-20,sinchon-a,크루아상,13,False
+2026-06-20,sinchon-a,휘낭시에,9,False
+2026-06-21,sinchon-a,베이글,7,False
+2026-06-21,sinchon-a,소금빵,23,False
+2026-06-21,sinchon-a,식빵,14,False
+2026-06-21,sinchon-a,아메리카노(HOT),6,False
+2026-06-21,sinchon-a,아이스 아메리카노,40,False
+2026-06-21,sinchon-a,아이스 카페라떼,11,False
+2026-06-21,sinchon-a,에그타르트,8,False
+2026-06-21,sinchon-a,카페라떼(HOT),6,False
+2026-06-21,sinchon-a,크루아상,11,False
+2026-06-21,sinchon-a,휘낭시에,12,False
+2026-06-22,sinchon-a,베이글,10,False
+2026-06-22,sinchon-a,소금빵,22,False
+2026-06-22,sinchon-a,식빵,6,False
+2026-06-22,sinchon-a,아메리카노(HOT),16,False
+2026-06-22,sinchon-a,아이스 아메리카노,45,False
+2026-06-22,sinchon-a,아이스 카페라떼,26,False
+2026-06-22,sinchon-a,에그타르트,13,False
+2026-06-22,sinchon-a,카페라떼(HOT),6,False
+2026-06-22,sinchon-a,크루아상,17,False
+2026-06-22,sinchon-a,휘낭시에,14,False
+2026-06-23,sinchon-a,베이글,14,False
+2026-06-23,sinchon-a,소금빵,35,False
+2026-06-23,sinchon-a,식빵,7,False
+2026-06-23,sinchon-a,아메리카노(HOT),12,False
+2026-06-23,sinchon-a,아이스 아메리카노,52,False
+2026-06-23,sinchon-a,아이스 카페라떼,20,False
+2026-06-23,sinchon-a,에그타르트,10,False
+2026-06-23,sinchon-a,카페라떼(HOT),4,False
+2026-06-23,sinchon-a,크루아상,8,False
+2026-06-23,sinchon-a,휘낭시에,12,False
+2026-06-24,sinchon-a,베이글,11,False
+2026-06-24,sinchon-a,소금빵,27,False
+2026-06-24,sinchon-a,식빵,12,False
+2026-06-24,sinchon-a,아메리카노(HOT),9,False
+2026-06-24,sinchon-a,아이스 아메리카노,93,False
+2026-06-24,sinchon-a,아이스 카페라떼,41,False
+2026-06-24,sinchon-a,에그타르트,17,False
+2026-06-24,sinchon-a,카페라떼(HOT),11,False
+2026-06-24,sinchon-a,크루아상,22,False
+2026-06-24,sinchon-a,휘낭시에,9,False
+2026-06-25,sinchon-a,베이글,9,False
+2026-06-25,sinchon-a,소금빵,27,False
+2026-06-25,sinchon-a,식빵,7,False
+2026-06-25,sinchon-a,아메리카노(HOT),8,False
+2026-06-25,sinchon-a,아이스 아메리카노,64,False
+2026-06-25,sinchon-a,아이스 카페라떼,15,False
+2026-06-25,sinchon-a,에그타르트,12,False
+2026-06-25,sinchon-a,카페라떼(HOT),11,False
+2026-06-25,sinchon-a,크루아상,24,False
+2026-06-25,sinchon-a,휘낭시에,16,False
+2026-06-26,sinchon-a,베이글,10,False
+2026-06-26,sinchon-a,소금빵,31,False
+2026-06-26,sinchon-a,식빵,13,False
+2026-06-26,sinchon-a,아메리카노(HOT),11,False
+2026-06-26,sinchon-a,아이스 아메리카노,53,False
+2026-06-26,sinchon-a,아이스 카페라떼,24,False
+2026-06-26,sinchon-a,에그타르트,12,False
+2026-06-26,sinchon-a,카페라떼(HOT),12,False
+2026-06-26,sinchon-a,크루아상,22,False
+2026-06-26,sinchon-a,휘낭시에,15,False
+2026-06-27,sinchon-a,베이글,12,False
+2026-06-27,sinchon-a,소금빵,16,False
+2026-06-27,sinchon-a,식빵,15,False
+2026-06-27,sinchon-a,아메리카노(HOT),8,False
+2026-06-27,sinchon-a,아이스 아메리카노,27,False
+2026-06-27,sinchon-a,아이스 카페라떼,19,False
+2026-06-27,sinchon-a,에그타르트,13,False
+2026-06-27,sinchon-a,카페라떼(HOT),5,False
+2026-06-27,sinchon-a,크루아상,12,False
+2026-06-27,sinchon-a,휘낭시에,9,False
+2026-06-28,sinchon-a,베이글,10,False
+2026-06-28,sinchon-a,소금빵,24,False
+2026-06-28,sinchon-a,식빵,5,False
+2026-06-28,sinchon-a,아메리카노(HOT),7,False
+2026-06-28,sinchon-a,아이스 아메리카노,29,False
+2026-06-28,sinchon-a,아이스 카페라떼,10,False
+2026-06-28,sinchon-a,에그타르트,10,False
+2026-06-28,sinchon-a,카페라떼(HOT),6,False
+2026-06-28,sinchon-a,크루아상,11,False
+2026-06-28,sinchon-a,휘낭시에,9,False
+2026-06-29,sinchon-a,베이글,12,False
+2026-06-29,sinchon-a,소금빵,32,False
+2026-06-29,sinchon-a,식빵,6,False
+2026-06-29,sinchon-a,아메리카노(HOT),15,False
+2026-06-29,sinchon-a,아이스 아메리카노,61,False
+2026-06-29,sinchon-a,아이스 카페라떼,23,False
+2026-06-29,sinchon-a,에그타르트,6,False
+2026-06-29,sinchon-a,카페라떼(HOT),4,False
+2026-06-29,sinchon-a,크루아상,16,False
+2026-06-29,sinchon-a,휘낭시에,12,False
+2026-06-30,sinchon-a,베이글,13,False
+2026-06-30,sinchon-a,소금빵,49,False
+2026-06-30,sinchon-a,식빵,7,False
+2026-06-30,sinchon-a,아메리카노(HOT),16,False
+2026-06-30,sinchon-a,아이스 아메리카노,54,False
+2026-06-30,sinchon-a,아이스 카페라떼,20,False
+2026-06-30,sinchon-a,에그타르트,11,False
+2026-06-30,sinchon-a,카페라떼(HOT),9,False
+2026-06-30,sinchon-a,크루아상,20,False
+2026-06-30,sinchon-a,휘낭시에,20,False
+2026-07-01,sinchon-a,베이글,14,False
+2026-07-01,sinchon-a,소금빵,41,False
+2026-07-01,sinchon-a,식빵,12,False
+2026-07-01,sinchon-a,아메리카노(HOT),16,False
+2026-07-01,sinchon-a,아이스 아메리카노,61,False
+2026-07-01,sinchon-a,아이스 카페라떼,21,False
+2026-07-01,sinchon-a,에그타르트,16,False
+2026-07-01,sinchon-a,카페라떼(HOT),5,False
+2026-07-01,sinchon-a,크루아상,15,False
+2026-07-01,sinchon-a,휘낭시에,12,False
+2026-07-02,sinchon-a,베이글,11,False
+2026-07-02,sinchon-a,소금빵,22,False
+2026-07-02,sinchon-a,식빵,8,False
+2026-07-02,sinchon-a,아메리카노(HOT),15,False
+2026-07-02,sinchon-a,아이스 아메리카노,43,False
+2026-07-02,sinchon-a,아이스 카페라떼,13,False
+2026-07-02,sinchon-a,에그타르트,8,False
+2026-07-02,sinchon-a,카페라떼(HOT),1,False
+2026-07-02,sinchon-a,크루아상,23,False
+2026-07-02,sinchon-a,휘낭시에,13,False
+2026-07-03,sinchon-a,베이글,8,False
+2026-07-03,sinchon-a,소금빵,25,False
+2026-07-03,sinchon-a,식빵,12,False
+2026-07-03,sinchon-a,아메리카노(HOT),7,False
+2026-07-03,sinchon-a,아이스 아메리카노,41,False
+2026-07-03,sinchon-a,아이스 카페라떼,11,False
+2026-07-03,sinchon-a,에그타르트,10,False
+2026-07-03,sinchon-a,카페라떼(HOT),7,False
+2026-07-03,sinchon-a,크루아상,12,False
+2026-07-03,sinchon-a,휘낭시에,13,False
+2026-07-04,sinchon-a,베이글,6,False
+2026-07-04,sinchon-a,소금빵,28,False
+2026-07-04,sinchon-a,식빵,13,False
+2026-07-04,sinchon-a,아메리카노(HOT),15,False
+2026-07-04,sinchon-a,아이스 아메리카노,57,False
+2026-07-04,sinchon-a,아이스 카페라떼,7,False
+2026-07-04,sinchon-a,에그타르트,10,False
+2026-07-04,sinchon-a,카페라떼(HOT),3,False
+2026-07-04,sinchon-a,크루아상,23,False
+2026-07-04,sinchon-a,휘낭시에,14,False
+2026-07-05,sinchon-a,베이글,4,False
+2026-07-05,sinchon-a,소금빵,22,False
+2026-07-05,sinchon-a,식빵,9,False
+2026-07-05,sinchon-a,아메리카노(HOT),8,False
+2026-07-05,sinchon-a,아이스 아메리카노,36,False
+2026-07-05,sinchon-a,아이스 카페라떼,15,False
+2026-07-05,sinchon-a,에그타르트,9,False
+2026-07-05,sinchon-a,카페라떼(HOT),1,False
+2026-07-05,sinchon-a,크루아상,12,False
+2026-07-05,sinchon-a,휘낭시에,5,False
+2026-07-06,sinchon-a,베이글,13,False
+2026-07-06,sinchon-a,소금빵,35,False
+2026-07-06,sinchon-a,식빵,14,False
+2026-07-06,sinchon-a,아메리카노(HOT),12,False
+2026-07-06,sinchon-a,아이스 아메리카노,54,False
+2026-07-06,sinchon-a,아이스 카페라떼,29,False
+2026-07-06,sinchon-a,에그타르트,9,False
+2026-07-06,sinchon-a,카페라떼(HOT),6,False
+2026-07-06,sinchon-a,크루아상,15,False
+2026-07-06,sinchon-a,휘낭시에,8,False
+2026-07-07,sinchon-a,베이글,10,False
+2026-07-07,sinchon-a,소금빵,27,False
+2026-07-07,sinchon-a,식빵,10,False
+2026-07-07,sinchon-a,아메리카노(HOT),10,False
+2026-07-07,sinchon-a,아이스 아메리카노,64,False
+2026-07-07,sinchon-a,아이스 카페라떼,25,False
+2026-07-07,sinchon-a,에그타르트,13,False
+2026-07-07,sinchon-a,카페라떼(HOT),3,False
+2026-07-07,sinchon-a,크루아상,22,False
+2026-07-07,sinchon-a,휘낭시에,14,False
+2026-07-08,sinchon-a,베이글,9,False
+2026-07-08,sinchon-a,소금빵,28,False
+2026-07-08,sinchon-a,식빵,9,False
+2026-07-08,sinchon-a,아메리카노(HOT),14,False
+2026-07-08,sinchon-a,아이스 아메리카노,66,False
+2026-07-08,sinchon-a,아이스 카페라떼,32,False
+2026-07-08,sinchon-a,에그타르트,18,False
+2026-07-08,sinchon-a,카페라떼(HOT),8,False
+2026-07-08,sinchon-a,크루아상,16,False
+2026-07-08,sinchon-a,휘낭시에,13,False
+2026-07-09,sinchon-a,베이글,10,False
+2026-07-09,sinchon-a,소금빵,45,False
+2026-07-09,sinchon-a,식빵,3,False
+2026-07-09,sinchon-a,아메리카노(HOT),15,False
+2026-07-09,sinchon-a,아이스 아메리카노,61,False
+2026-07-09,sinchon-a,아이스 카페라떼,15,False
+2026-07-09,sinchon-a,에그타르트,17,False
+2026-07-09,sinchon-a,카페라떼(HOT),3,False
+2026-07-09,sinchon-a,크루아상,23,False
+2026-07-09,sinchon-a,휘낭시에,8,False
+2026-07-10,sinchon-a,베이글,11,False
+2026-07-10,sinchon-a,소금빵,33,False
+2026-07-10,sinchon-a,식빵,8,False
+2026-07-10,sinchon-a,아메리카노(HOT),11,False
+2026-07-10,sinchon-a,아이스 아메리카노,72,False
+2026-07-10,sinchon-a,아이스 카페라떼,29,False
+2026-07-10,sinchon-a,에그타르트,9,False
+2026-07-10,sinchon-a,카페라떼(HOT),3,False
+2026-07-10,sinchon-a,크루아상,19,False
+2026-07-10,sinchon-a,휘낭시에,8,False
+2026-07-11,sinchon-a,베이글,10,False
+2026-07-11,sinchon-a,소금빵,29,False
+2026-07-11,sinchon-a,식빵,12,False
+2026-07-11,sinchon-a,아메리카노(HOT),13,False
+2026-07-11,sinchon-a,아이스 아메리카노,32,False
+2026-07-11,sinchon-a,아이스 카페라떼,20,False
+2026-07-11,sinchon-a,에그타르트,9,False
+2026-07-11,sinchon-a,카페라떼(HOT),9,False
+2026-07-11,sinchon-a,크루아상,17,False
+2026-07-11,sinchon-a,휘낭시에,10,False
+2026-07-12,sinchon-a,베이글,7,False
+2026-07-12,sinchon-a,소금빵,20,False
+2026-07-12,sinchon-a,식빵,12,False
+2026-07-12,sinchon-a,아메리카노(HOT),8,False
+2026-07-12,sinchon-a,아이스 아메리카노,38,False
+2026-07-12,sinchon-a,아이스 카페라떼,8,False
+2026-07-12,sinchon-a,에그타르트,6,False
+2026-07-12,sinchon-a,카페라떼(HOT),5,False
+2026-07-12,sinchon-a,크루아상,12,False
+2026-07-12,sinchon-a,휘낭시에,2,False
+2026-07-13,sinchon-a,베이글,11,False
+2026-07-13,sinchon-a,소금빵,28,False
+2026-07-13,sinchon-a,식빵,14,False
+2026-07-13,sinchon-a,아메리카노(HOT),11,False
+2026-07-13,sinchon-a,아이스 아메리카노,47,False
+2026-07-13,sinchon-a,아이스 카페라떼,20,False
+2026-07-13,sinchon-a,에그타르트,13,False
+2026-07-13,sinchon-a,카페라떼(HOT),7,False
+2026-07-13,sinchon-a,크루아상,20,False
+2026-07-13,sinchon-a,휘낭시에,12,False
+2026-07-14,sinchon-a,베이글,16,False
+2026-07-14,sinchon-a,소금빵,38,False
+2026-07-14,sinchon-a,식빵,6,False
+2026-07-14,sinchon-a,아메리카노(HOT),17,False
+2026-07-14,sinchon-a,아이스 아메리카노,45,False
+2026-07-14,sinchon-a,아이스 카페라떼,24,False
+2026-07-14,sinchon-a,에그타르트,11,False
+2026-07-14,sinchon-a,카페라떼(HOT),8,False
+2026-07-14,sinchon-a,크루아상,25,False
+2026-07-14,sinchon-a,휘낭시에,20,False
+2026-07-15,sinchon-a,베이글,13,False
+2026-07-15,sinchon-a,소금빵,41,False
+2026-07-15,sinchon-a,식빵,14,False
+2026-07-15,sinchon-a,아메리카노(HOT),21,False
+2026-07-15,sinchon-a,아이스 아메리카노,75,False
+2026-07-15,sinchon-a,아이스 카페라떼,24,False
+2026-07-15,sinchon-a,에그타르트,16,False
+2026-07-15,sinchon-a,카페라떼(HOT),10,False
+2026-07-15,sinchon-a,크루아상,28,False
+2026-07-15,sinchon-a,휘낭시에,13,False
+2026-07-16,sinchon-a,베이글,12,False
+2026-07-16,sinchon-a,소금빵,25,False
+2026-07-16,sinchon-a,식빵,8,False
+2026-07-16,sinchon-a,아메리카노(HOT),12,False
+2026-07-16,sinchon-a,아이스 아메리카노,55,False
+2026-07-16,sinchon-a,아이스 카페라떼,26,False
+2026-07-16,sinchon-a,에그타르트,21,False
+2026-07-16,sinchon-a,카페라떼(HOT),4,False
+2026-07-16,sinchon-a,크루아상,18,False
+2026-07-16,sinchon-a,휘낭시에,6,False
+2026-07-17,sinchon-a,베이글,9,False
+2026-07-17,sinchon-a,소금빵,28,False
+2026-07-17,sinchon-a,식빵,9,False
+2026-07-17,sinchon-a,아메리카노(HOT),25,False
+2026-07-17,sinchon-a,아이스 아메리카노,45,False
+2026-07-17,sinchon-a,아이스 카페라떼,15,False
+2026-07-17,sinchon-a,에그타르트,19,False
+2026-07-17,sinchon-a,카페라떼(HOT),10,False
+2026-07-17,sinchon-a,크루아상,9,False
+2026-07-17,sinchon-a,휘낭시에,27,False
+2026-07-18,sinchon-a,베이글,5,False
+2026-07-18,sinchon-a,소금빵,24,False
+2026-07-18,sinchon-a,식빵,21,False
+2026-07-18,sinchon-a,아메리카노(HOT),9,False
+2026-07-18,sinchon-a,아이스 아메리카노,46,False
+2026-07-18,sinchon-a,아이스 카페라떼,21,False
+2026-07-18,sinchon-a,에그타르트,11,False
+2026-07-18,sinchon-a,카페라떼(HOT),5,False
+2026-07-18,sinchon-a,크루아상,18,False
+2026-07-18,sinchon-a,휘낭시에,7,False
+2026-07-19,sinchon-a,베이글,2,False
+2026-07-19,sinchon-a,소금빵,20,False
+2026-07-19,sinchon-a,식빵,5,False
+2026-07-19,sinchon-a,아메리카노(HOT),7,False
+2026-07-19,sinchon-a,아이스 아메리카노,32,False
+2026-07-19,sinchon-a,아이스 카페라떼,11,False
+2026-07-19,sinchon-a,에그타르트,11,False
+2026-07-19,sinchon-a,카페라떼(HOT),3,False
+2026-07-19,sinchon-a,크루아상,14,False
+2026-07-19,sinchon-a,휘낭시에,11,False
+2026-07-20,sinchon-a,베이글,9,False
+2026-07-20,sinchon-a,소금빵,22,False
+2026-07-20,sinchon-a,식빵,13,False
+2026-07-20,sinchon-a,아메리카노(HOT),11,False
+2026-07-20,sinchon-a,아이스 아메리카노,43,False
+2026-07-20,sinchon-a,아이스 카페라떼,15,False
+2026-07-20,sinchon-a,에그타르트,15,False
+2026-07-20,sinchon-a,카페라떼(HOT),1,False
+2026-07-20,sinchon-a,크루아상,20,False
+2026-07-20,sinchon-a,휘낭시에,13,False
+2026-07-21,sinchon-a,베이글,16,False
+2026-07-21,sinchon-a,소금빵,35,False
+2026-07-21,sinchon-a,식빵,13,False
+2026-07-21,sinchon-a,아메리카노(HOT),14,False
+2026-07-21,sinchon-a,아이스 아메리카노,74,False
+2026-07-21,sinchon-a,아이스 카페라떼,25,False
+2026-07-21,sinchon-a,에그타르트,30,False
+2026-07-21,sinchon-a,카페라떼(HOT),9,False
+2026-07-21,sinchon-a,크루아상,30,False
+2026-07-21,sinchon-a,휘낭시에,11,False
+2026-07-22,sinchon-a,베이글,5,False
+2026-07-22,sinchon-a,소금빵,36,False
+2026-07-22,sinchon-a,식빵,15,False
+2026-07-22,sinchon-a,아메리카노(HOT),10,False
+2026-07-22,sinchon-a,아이스 아메리카노,51,False
+2026-07-22,sinchon-a,아이스 카페라떼,27,False
+2026-07-22,sinchon-a,에그타르트,12,False
+2026-07-22,sinchon-a,카페라떼(HOT),2,False
+2026-07-22,sinchon-a,크루아상,16,False
+2026-07-22,sinchon-a,휘낭시에,9,False
+2026-07-23,sinchon-a,베이글,11,False
+2026-07-23,sinchon-a,소금빵,34,False
+2026-07-23,sinchon-a,식빵,6,False
+2026-07-23,sinchon-a,아메리카노(HOT),12,False
+2026-07-23,sinchon-a,아이스 아메리카노,72,False
+2026-07-23,sinchon-a,아이스 카페라떼,27,False
+2026-07-23,sinchon-a,에그타르트,14,False
+2026-07-23,sinchon-a,카페라떼(HOT),5,False
+2026-07-23,sinchon-a,크루아상,15,False
+2026-07-23,sinchon-a,휘낭시에,6,False
+2026-07-24,sinchon-a,베이글,8,False
+2026-07-24,sinchon-a,소금빵,38,False
+2026-07-24,sinchon-a,식빵,4,False
+2026-07-24,sinchon-a,아메리카노(HOT),6,False
+2026-07-24,sinchon-a,아이스 아메리카노,69,False
+2026-07-24,sinchon-a,아이스 카페라떼,18,False
+2026-07-24,sinchon-a,에그타르트,12,False
+2026-07-24,sinchon-a,카페라떼(HOT),8,False
+2026-07-24,sinchon-a,크루아상,19,False
+2026-07-24,sinchon-a,휘낭시에,12,False
+2026-07-25,sinchon-a,베이글,7,False
+2026-07-25,sinchon-a,소금빵,27,False
+2026-07-25,sinchon-a,식빵,11,False
+2026-07-25,sinchon-a,아메리카노(HOT),6,False
+2026-07-25,sinchon-a,아이스 아메리카노,30,False
+2026-07-25,sinchon-a,아이스 카페라떼,20,False
+2026-07-25,sinchon-a,에그타르트,12,False
+2026-07-25,sinchon-a,카페라떼(HOT),4,False
+2026-07-25,sinchon-a,크루아상,12,False
+2026-07-25,sinchon-a,휘낭시에,9,False
+2026-07-26,sinchon-a,베이글,7,False
+2026-07-26,sinchon-a,소금빵,17,False
+2026-07-26,sinchon-a,식빵,16,False
+2026-07-26,sinchon-a,아메리카노(HOT),7,False
+2026-07-26,sinchon-a,아이스 아메리카노,50,False
+2026-07-26,sinchon-a,아이스 카페라떼,12,False
+2026-07-26,sinchon-a,에그타르트,7,False
+2026-07-26,sinchon-a,카페라떼(HOT),2,False
+2026-07-26,sinchon-a,크루아상,7,False
+2026-07-26,sinchon-a,휘낭시에,7,False
+2026-07-27,sinchon-a,베이글,13,False
+2026-07-27,sinchon-a,소금빵,47,False
+2026-07-27,sinchon-a,식빵,9,False
+2026-07-27,sinchon-a,아메리카노(HOT),3,False
+2026-07-27,sinchon-a,아이스 아메리카노,68,False
+2026-07-27,sinchon-a,아이스 카페라떼,32,False
+2026-07-27,sinchon-a,에그타르트,19,False
+2026-07-27,sinchon-a,카페라떼(HOT),6,False
+2026-07-27,sinchon-a,크루아상,17,False
+2026-07-27,sinchon-a,휘낭시에,12,False
+2026-07-28,sinchon-a,베이글,13,False
+2026-07-28,sinchon-a,소금빵,43,False
+2026-07-28,sinchon-a,식빵,6,False
+2026-07-28,sinchon-a,아메리카노(HOT),8,False
+2026-07-28,sinchon-a,아이스 아메리카노,50,False
+2026-07-28,sinchon-a,아이스 카페라떼,33,False
+2026-07-28,sinchon-a,에그타르트,15,False
+2026-07-28,sinchon-a,카페라떼(HOT),7,False
+2026-07-28,sinchon-a,크루아상,20,False
+2026-07-28,sinchon-a,휘낭시에,4,False
+2026-07-29,sinchon-a,베이글,15,False
+2026-07-29,sinchon-a,소금빵,42,False
+2026-07-29,sinchon-a,식빵,14,False
+2026-07-29,sinchon-a,아메리카노(HOT),14,False
+2026-07-29,sinchon-a,아이스 아메리카노,83,False
+2026-07-29,sinchon-a,아이스 카페라떼,30,False
+2026-07-29,sinchon-a,에그타르트,12,False
+2026-07-29,sinchon-a,카페라떼(HOT),10,False
+2026-07-29,sinchon-a,크루아상,26,False
+2026-07-29,sinchon-a,휘낭시에,11,False
+2026-07-30,sinchon-a,베이글,11,False
+2026-07-30,sinchon-a,소금빵,28,False
+2026-07-30,sinchon-a,식빵,7,False
+2026-07-30,sinchon-a,아메리카노(HOT),8,False
+2026-07-30,sinchon-a,아이스 아메리카노,50,False
+2026-07-30,sinchon-a,아이스 카페라떼,19,False
+2026-07-30,sinchon-a,에그타르트,13,False
+2026-07-30,sinchon-a,카페라떼(HOT),5,False
+2026-07-30,sinchon-a,크루아상,7,False
+2026-07-30,sinchon-a,휘낭시에,14,False
+2026-07-31,sinchon-a,베이글,4,False
+2026-07-31,sinchon-a,소금빵,33,False
+2026-07-31,sinchon-a,식빵,7,False
+2026-07-31,sinchon-a,아메리카노(HOT),16,False
+2026-07-31,sinchon-a,아이스 아메리카노,79,False
+2026-07-31,sinchon-a,아이스 카페라떼,26,False
+2026-07-31,sinchon-a,에그타르트,18,False
+2026-07-31,sinchon-a,카페라떼(HOT),7,False
+2026-07-31,sinchon-a,크루아상,20,False
+2026-07-31,sinchon-a,휘낭시에,24,False
+2026-08-01,sinchon-a,베이글,12,False
+2026-08-01,sinchon-a,소금빵,26,False
+2026-08-01,sinchon-a,식빵,21,False
+2026-08-01,sinchon-a,아메리카노(HOT),10,False
+2026-08-01,sinchon-a,아이스 아메리카노,40,False
+2026-08-01,sinchon-a,아이스 카페라떼,19,False
+2026-08-01,sinchon-a,에그타르트,12,False
+2026-08-01,sinchon-a,카페라떼(HOT),3,False
+2026-08-01,sinchon-a,크루아상,17,False
+2026-08-01,sinchon-a,휘낭시에,15,False
+2026-08-02,sinchon-a,베이글,7,False
+2026-08-02,sinchon-a,소금빵,24,False
+2026-08-02,sinchon-a,식빵,15,False
+2026-08-02,sinchon-a,아메리카노(HOT),4,False
+2026-08-02,sinchon-a,아이스 아메리카노,32,False
+2026-08-02,sinchon-a,아이스 카페라떼,20,False
+2026-08-02,sinchon-a,에그타르트,5,False
+2026-08-02,sinchon-a,카페라떼(HOT),7,False
+2026-08-02,sinchon-a,크루아상,12,False
+2026-08-02,sinchon-a,휘낭시에,9,False
+2026-08-03,sinchon-a,베이글,20,False
+2026-08-03,sinchon-a,소금빵,37,False
+2026-08-03,sinchon-a,식빵,7,False
+2026-08-03,sinchon-a,아메리카노(HOT),17,False
+2026-08-03,sinchon-a,아이스 아메리카노,67,False
+2026-08-03,sinchon-a,아이스 카페라떼,16,False
+2026-08-03,sinchon-a,에그타르트,16,False
+2026-08-03,sinchon-a,카페라떼(HOT),8,False
+2026-08-03,sinchon-a,크루아상,22,False
+2026-08-03,sinchon-a,휘낭시에,14,False
+2026-08-04,sinchon-a,베이글,12,False
+2026-08-04,sinchon-a,소금빵,30,False
+2026-08-04,sinchon-a,식빵,5,False
+2026-08-04,sinchon-a,아메리카노(HOT),15,False
+2026-08-04,sinchon-a,아이스 아메리카노,48,False
+2026-08-04,sinchon-a,아이스 카페라떼,21,False
+2026-08-04,sinchon-a,에그타르트,17,False
+2026-08-04,sinchon-a,카페라떼(HOT),7,False
+2026-08-04,sinchon-a,크루아상,28,False
+2026-08-04,sinchon-a,휘낭시에,19,False
+2026-08-05,sinchon-a,베이글,12,False
+2026-08-05,sinchon-a,소금빵,25,False
+2026-08-05,sinchon-a,식빵,16,False
+2026-08-05,sinchon-a,아메리카노(HOT),19,False
+2026-08-05,sinchon-a,아이스 아메리카노,49,False
+2026-08-05,sinchon-a,아이스 카페라떼,17,False
+2026-08-05,sinchon-a,에그타르트,10,False
+2026-08-05,sinchon-a,카페라떼(HOT),10,False
+2026-08-05,sinchon-a,크루아상,17,False
+2026-08-05,sinchon-a,휘낭시에,18,False
+2026-08-06,sinchon-a,베이글,13,False
+2026-08-06,sinchon-a,소금빵,32,False
+2026-08-06,sinchon-a,식빵,11,False
+2026-08-06,sinchon-a,아메리카노(HOT),21,False
+2026-08-06,sinchon-a,아이스 아메리카노,65,False
+2026-08-06,sinchon-a,아이스 카페라떼,17,False
+2026-08-06,sinchon-a,에그타르트,13,False
+2026-08-06,sinchon-a,카페라떼(HOT),8,False
+2026-08-06,sinchon-a,크루아상,18,False
+2026-08-06,sinchon-a,휘낭시에,9,False
+2026-08-07,sinchon-a,베이글,9,False
+2026-08-07,sinchon-a,소금빵,32,False
+2026-08-07,sinchon-a,식빵,11,False
+2026-08-07,sinchon-a,아메리카노(HOT),13,False
+2026-08-07,sinchon-a,아이스 아메리카노,39,False
+2026-08-07,sinchon-a,아이스 카페라떼,8,False
+2026-08-07,sinchon-a,에그타르트,9,False
+2026-08-07,sinchon-a,카페라떼(HOT),7,False
+2026-08-07,sinchon-a,크루아상,22,False
+2026-08-07,sinchon-a,휘낭시에,14,False
+2026-08-08,sinchon-a,베이글,12,False
+2026-08-08,sinchon-a,소금빵,10,False
+2026-08-08,sinchon-a,식빵,12,False
+2026-08-08,sinchon-a,아메리카노(HOT),4,False
+2026-08-08,sinchon-a,아이스 아메리카노,57,False
+2026-08-08,sinchon-a,아이스 카페라떼,12,False
+2026-08-08,sinchon-a,에그타르트,12,False
+2026-08-08,sinchon-a,카페라떼(HOT),4,False
+2026-08-08,sinchon-a,크루아상,16,False
+2026-08-08,sinchon-a,휘낭시에,10,False
+2026-08-09,sinchon-a,베이글,5,False
+2026-08-09,sinchon-a,소금빵,28,False
+2026-08-09,sinchon-a,식빵,14,False
+2026-08-09,sinchon-a,아메리카노(HOT),8,False
+2026-08-09,sinchon-a,아이스 아메리카노,38,False
+2026-08-09,sinchon-a,아이스 카페라떼,17,False
+2026-08-09,sinchon-a,에그타르트,9,False
+2026-08-09,sinchon-a,카페라떼(HOT),10,False
+2026-08-09,sinchon-a,크루아상,13,False
+2026-08-09,sinchon-a,휘낭시에,13,False
+2026-08-10,sinchon-a,베이글,7,False
+2026-08-10,sinchon-a,소금빵,33,False
+2026-08-10,sinchon-a,식빵,3,False
+2026-08-10,sinchon-a,아메리카노(HOT),18,False
+2026-08-10,sinchon-a,아이스 아메리카노,43,False
+2026-08-10,sinchon-a,아이스 카페라떼,19,False
+2026-08-10,sinchon-a,에그타르트,16,False
+2026-08-10,sinchon-a,카페라떼(HOT),7,False
+2026-08-10,sinchon-a,크루아상,21,False
+2026-08-10,sinchon-a,휘낭시에,17,False
+2026-08-11,sinchon-a,베이글,11,False
+2026-08-11,sinchon-a,소금빵,46,False
+2026-08-11,sinchon-a,식빵,15,False
+2026-08-11,sinchon-a,아메리카노(HOT),20,False
+2026-08-11,sinchon-a,아이스 아메리카노,55,False
+2026-08-11,sinchon-a,아이스 카페라떼,22,False
+2026-08-11,sinchon-a,에그타르트,10,False
+2026-08-11,sinchon-a,카페라떼(HOT),9,False
+2026-08-11,sinchon-a,크루아상,19,False
+2026-08-11,sinchon-a,휘낭시에,16,False
+2026-08-12,sinchon-a,베이글,7,False
+2026-08-12,sinchon-a,소금빵,43,False
+2026-08-12,sinchon-a,식빵,9,False
+2026-08-12,sinchon-a,아메리카노(HOT),19,False
+2026-08-12,sinchon-a,아이스 아메리카노,59,False
+2026-08-12,sinchon-a,아이스 카페라떼,21,False
+2026-08-12,sinchon-a,에그타르트,17,False
+2026-08-12,sinchon-a,카페라떼(HOT),3,False
+2026-08-12,sinchon-a,크루아상,21,False
+2026-08-12,sinchon-a,휘낭시에,16,False
+2026-08-13,sinchon-a,베이글,6,False
+2026-08-13,sinchon-a,소금빵,35,False
+2026-08-13,sinchon-a,식빵,7,False
+2026-08-13,sinchon-a,아메리카노(HOT),19,False
+2026-08-13,sinchon-a,아이스 아메리카노,51,False
+2026-08-13,sinchon-a,아이스 카페라떼,22,False
+2026-08-13,sinchon-a,에그타르트,20,False
+2026-08-13,sinchon-a,카페라떼(HOT),5,False
+2026-08-13,sinchon-a,크루아상,24,False
+2026-08-13,sinchon-a,휘낭시에,12,False
+2026-08-14,sinchon-a,베이글,7,False
+2026-08-14,sinchon-a,소금빵,22,False
+2026-08-14,sinchon-a,식빵,5,False
+2026-08-14,sinchon-a,아메리카노(HOT),14,False
+2026-08-14,sinchon-a,아이스 아메리카노,49,False
+2026-08-14,sinchon-a,아이스 카페라떼,30,False
+2026-08-14,sinchon-a,에그타르트,16,False
+2026-08-14,sinchon-a,카페라떼(HOT),7,False
+2026-08-14,sinchon-a,크루아상,11,False
+2026-08-14,sinchon-a,휘낭시에,10,False
+2026-08-15,sinchon-a,베이글,9,False
+2026-08-15,sinchon-a,소금빵,24,False
+2026-08-15,sinchon-a,식빵,21,False
+2026-08-15,sinchon-a,아메리카노(HOT),14,False
+2026-08-15,sinchon-a,아이스 아메리카노,48,False
+2026-08-15,sinchon-a,아이스 카페라떼,26,False
+2026-08-15,sinchon-a,에그타르트,14,False
+2026-08-15,sinchon-a,카페라떼(HOT),4,False
+2026-08-15,sinchon-a,크루아상,14,False
+2026-08-15,sinchon-a,휘낭시에,14,False
+2026-08-16,sinchon-a,베이글,7,False
+2026-08-16,sinchon-a,소금빵,20,False
+2026-08-16,sinchon-a,식빵,19,False
+2026-08-16,sinchon-a,아메리카노(HOT),5,False
+2026-08-16,sinchon-a,아이스 아메리카노,19,False
+2026-08-16,sinchon-a,아이스 카페라떼,11,False
+2026-08-16,sinchon-a,에그타르트,7,False
+2026-08-16,sinchon-a,카페라떼(HOT),3,False
+2026-08-16,sinchon-a,크루아상,14,False
+2026-08-16,sinchon-a,휘낭시에,3,False
+2026-08-17,sinchon-a,베이글,2,False
+2026-08-17,sinchon-a,소금빵,17,False
+2026-08-17,sinchon-a,식빵,11,False
+2026-08-17,sinchon-a,아메리카노(HOT),9,False
+2026-08-17,sinchon-a,아이스 아메리카노,32,False
+2026-08-17,sinchon-a,아이스 카페라떼,18,False
+2026-08-17,sinchon-a,에그타르트,4,False
+2026-08-17,sinchon-a,카페라떼(HOT),1,False
+2026-08-17,sinchon-a,크루아상,15,False
+2026-08-17,sinchon-a,휘낭시에,8,False
+2026-08-18,sinchon-a,베이글,11,False
+2026-08-18,sinchon-a,소금빵,49,False
+2026-08-18,sinchon-a,식빵,8,False
+2026-08-18,sinchon-a,아메리카노(HOT),11,False
+2026-08-18,sinchon-a,아이스 아메리카노,77,False
+2026-08-18,sinchon-a,아이스 카페라떼,22,False
+2026-08-18,sinchon-a,에그타르트,18,False
+2026-08-18,sinchon-a,카페라떼(HOT),5,False
+2026-08-18,sinchon-a,크루아상,20,False
+2026-08-18,sinchon-a,휘낭시에,14,False
+2026-08-19,sinchon-a,베이글,15,False
+2026-08-19,sinchon-a,소금빵,39,False
+2026-08-19,sinchon-a,식빵,13,False
+2026-08-19,sinchon-a,아메리카노(HOT),17,False
+2026-08-19,sinchon-a,아이스 아메리카노,60,False
+2026-08-19,sinchon-a,아이스 카페라떼,19,False
+2026-08-19,sinchon-a,에그타르트,17,False
+2026-08-19,sinchon-a,카페라떼(HOT),7,False
+2026-08-19,sinchon-a,크루아상,15,False
+2026-08-19,sinchon-a,휘낭시에,13,False
+2026-08-20,sinchon-a,베이글,17,False
+2026-08-20,sinchon-a,소금빵,46,False
+2026-08-20,sinchon-a,식빵,10,False
+2026-08-20,sinchon-a,아메리카노(HOT),15,False
+2026-08-20,sinchon-a,아이스 아메리카노,52,False
+2026-08-20,sinchon-a,아이스 카페라떼,23,False
+2026-08-20,sinchon-a,에그타르트,24,False
+2026-08-20,sinchon-a,카페라떼(HOT),2,False
+2026-08-20,sinchon-a,크루아상,14,False
+2026-08-20,sinchon-a,휘낭시에,18,False
+2026-08-21,sinchon-a,베이글,9,False
+2026-08-21,sinchon-a,소금빵,22,False
+2026-08-21,sinchon-a,식빵,6,False
+2026-08-21,sinchon-a,아메리카노(HOT),7,False
+2026-08-21,sinchon-a,아이스 아메리카노,41,False
+2026-08-21,sinchon-a,아이스 카페라떼,13,False
+2026-08-21,sinchon-a,에그타르트,11,False
+2026-08-21,sinchon-a,카페라떼(HOT),2,False
+2026-08-21,sinchon-a,크루아상,13,False
+2026-08-21,sinchon-a,휘낭시에,11,False
+2026-08-22,sinchon-a,베이글,4,False
+2026-08-22,sinchon-a,소금빵,24,False
+2026-08-22,sinchon-a,식빵,15,False
+2026-08-22,sinchon-a,아메리카노(HOT),20,False
+2026-08-22,sinchon-a,아이스 아메리카노,35,False
+2026-08-22,sinchon-a,아이스 카페라떼,13,False
+2026-08-22,sinchon-a,에그타르트,10,False
+2026-08-22,sinchon-a,카페라떼(HOT),8,False
+2026-08-22,sinchon-a,크루아상,13,False
+2026-08-22,sinchon-a,휘낭시에,13,False
+2026-08-23,sinchon-a,베이글,7,False
+2026-08-23,sinchon-a,소금빵,21,False
+2026-08-23,sinchon-a,식빵,8,False
+2026-08-23,sinchon-a,아메리카노(HOT),6,False
+2026-08-23,sinchon-a,아이스 아메리카노,60,False
+2026-08-23,sinchon-a,아이스 카페라떼,16,False
+2026-08-23,sinchon-a,에그타르트,8,False
+2026-08-23,sinchon-a,카페라떼(HOT),3,False
+2026-08-23,sinchon-a,크루아상,7,False
+2026-08-23,sinchon-a,휘낭시에,4,False
+2026-08-24,sinchon-a,베이글,9,False
+2026-08-24,sinchon-a,소금빵,34,False
+2026-08-24,sinchon-a,식빵,6,False
+2026-08-24,sinchon-a,아메리카노(HOT),10,False
+2026-08-24,sinchon-a,아이스 아메리카노,43,False
+2026-08-24,sinchon-a,아이스 카페라떼,14,False
+2026-08-24,sinchon-a,에그타르트,14,False
+2026-08-24,sinchon-a,카페라떼(HOT),6,False
+2026-08-24,sinchon-a,크루아상,11,False
+2026-08-24,sinchon-a,휘낭시에,20,False
+2026-08-25,sinchon-a,베이글,12,False
+2026-08-25,sinchon-a,소금빵,42,False
+2026-08-25,sinchon-a,식빵,7,False
+2026-08-25,sinchon-a,아메리카노(HOT),16,False
+2026-08-25,sinchon-a,아이스 아메리카노,64,False
+2026-08-25,sinchon-a,아이스 카페라떼,29,False
+2026-08-25,sinchon-a,에그타르트,15,False
+2026-08-25,sinchon-a,카페라떼(HOT),7,False
+2026-08-25,sinchon-a,크루아상,28,False
+2026-08-25,sinchon-a,휘낭시에,21,False
+2026-08-26,sinchon-a,베이글,18,False
+2026-08-26,sinchon-a,소금빵,29,False
+2026-08-26,sinchon-a,식빵,8,False
+2026-08-26,sinchon-a,아메리카노(HOT),8,False
+2026-08-26,sinchon-a,아이스 아메리카노,72,False
+2026-08-26,sinchon-a,아이스 카페라떼,27,False
+2026-08-26,sinchon-a,에그타르트,18,False
+2026-08-26,sinchon-a,카페라떼(HOT),8,False
+2026-08-26,sinchon-a,크루아상,22,False
+2026-08-26,sinchon-a,휘낭시에,14,False
+2026-08-27,sinchon-a,베이글,14,False
+2026-08-27,sinchon-a,소금빵,35,False
+2026-08-27,sinchon-a,식빵,8,False
+2026-08-27,sinchon-a,아메리카노(HOT),16,False
+2026-08-27,sinchon-a,아이스 아메리카노,67,False
+2026-08-27,sinchon-a,아이스 카페라떼,26,False
+2026-08-27,sinchon-a,에그타르트,14,False
+2026-08-27,sinchon-a,카페라떼(HOT),4,False
+2026-08-27,sinchon-a,크루아상,25,False
+2026-08-27,sinchon-a,휘낭시에,10,False
+2026-08-28,sinchon-a,베이글,14,False
+2026-08-28,sinchon-a,소금빵,38,False
+2026-08-28,sinchon-a,식빵,9,False
+2026-08-28,sinchon-a,아메리카노(HOT),9,False
+2026-08-28,sinchon-a,아이스 아메리카노,84,False
+2026-08-28,sinchon-a,아이스 카페라떼,34,False
+2026-08-28,sinchon-a,에그타르트,13,False
+2026-08-28,sinchon-a,카페라떼(HOT),4,False
+2026-08-28,sinchon-a,크루아상,23,False
+2026-08-28,sinchon-a,휘낭시에,16,False
+2026-08-29,sinchon-a,베이글,6,False
+2026-08-29,sinchon-a,소금빵,21,False
+2026-08-29,sinchon-a,식빵,12,False
+2026-08-29,sinchon-a,아메리카노(HOT),9,False
+2026-08-29,sinchon-a,아이스 아메리카노,41,False
+2026-08-29,sinchon-a,아이스 카페라떼,18,False
+2026-08-29,sinchon-a,에그타르트,18,False
+2026-08-29,sinchon-a,카페라떼(HOT),8,False
+2026-08-29,sinchon-a,크루아상,12,False
+2026-08-29,sinchon-a,휘낭시에,8,False
+2026-08-30,sinchon-a,베이글,8,False
+2026-08-30,sinchon-a,소금빵,27,False
+2026-08-30,sinchon-a,식빵,8,False
+2026-08-30,sinchon-a,아메리카노(HOT),6,False
+2026-08-30,sinchon-a,아이스 아메리카노,41,False
+2026-08-30,sinchon-a,아이스 카페라떼,13,False
+2026-08-30,sinchon-a,에그타르트,10,False
+2026-08-30,sinchon-a,카페라떼(HOT),2,False
+2026-08-30,sinchon-a,크루아상,5,False
+2026-08-30,sinchon-a,휘낭시에,11,False
+2026-08-31,sinchon-a,베이글,11,False
+2026-08-31,sinchon-a,소금빵,28,False
+2026-08-31,sinchon-a,식빵,14,False
+2026-08-31,sinchon-a,아메리카노(HOT),13,False
+2026-08-31,sinchon-a,아이스 아메리카노,50,False
+2026-08-31,sinchon-a,아이스 카페라떼,14,False
+2026-08-31,sinchon-a,에그타르트,7,False
+2026-08-31,sinchon-a,카페라떼(HOT),6,False
+2026-08-31,sinchon-a,크루아상,18,False
+2026-08-31,sinchon-a,휘낭시에,16,False
+2026-09-01,sinchon-a,베이글,16,False
+2026-09-01,sinchon-a,소금빵,59,False
+2026-09-01,sinchon-a,식빵,4,False
+2026-09-01,sinchon-a,아메리카노(HOT),34,False
+2026-09-01,sinchon-a,아이스 아메리카노,102,False
+2026-09-01,sinchon-a,아이스 카페라떼,42,False
+2026-09-01,sinchon-a,에그타르트,21,False
+2026-09-01,sinchon-a,카페라떼(HOT),14,False
+2026-09-01,sinchon-a,크루아상,34,False
+2026-09-01,sinchon-a,휘낭시에,18,False
+2026-09-02,sinchon-a,베이글,22,False
+2026-09-02,sinchon-a,소금빵,41,False
+2026-09-02,sinchon-a,식빵,9,False
+2026-09-02,sinchon-a,아메리카노(HOT),37,False
+2026-09-02,sinchon-a,아이스 아메리카노,77,False
+2026-09-02,sinchon-a,아이스 카페라떼,25,False
+2026-09-02,sinchon-a,에그타르트,34,False
+2026-09-02,sinchon-a,카페라떼(HOT),22,False
+2026-09-02,sinchon-a,크루아상,38,False
+2026-09-02,sinchon-a,휘낭시에,24,False
+2026-09-03,sinchon-a,베이글,34,False
+2026-09-03,sinchon-a,소금빵,31,False
+2026-09-03,sinchon-a,식빵,4,False
+2026-09-03,sinchon-a,아메리카노(HOT),18,False
+2026-09-03,sinchon-a,아이스 아메리카노,75,False
+2026-09-03,sinchon-a,아이스 카페라떼,36,False
+2026-09-03,sinchon-a,에그타르트,16,False
+2026-09-03,sinchon-a,카페라떼(HOT),14,False
+2026-09-03,sinchon-a,크루아상,32,False
+2026-09-03,sinchon-a,휘낭시에,32,False
+2026-09-04,sinchon-a,베이글,21,False
+2026-09-04,sinchon-a,소금빵,47,False
+2026-09-04,sinchon-a,식빵,9,False
+2026-09-04,sinchon-a,아메리카노(HOT),22,False
+2026-09-04,sinchon-a,아이스 아메리카노,97,False
+2026-09-04,sinchon-a,아이스 카페라떼,35,False
+2026-09-04,sinchon-a,에그타르트,25,False
+2026-09-04,sinchon-a,카페라떼(HOT),9,False
+2026-09-04,sinchon-a,크루아상,24,False
+2026-09-04,sinchon-a,휘낭시에,17,False
+2026-09-05,sinchon-a,베이글,17,False
+2026-09-05,sinchon-a,소금빵,36,False
+2026-09-05,sinchon-a,식빵,14,False
+2026-09-05,sinchon-a,아메리카노(HOT),10,False
+2026-09-05,sinchon-a,아이스 아메리카노,52,False
+2026-09-05,sinchon-a,아이스 카페라떼,30,False
+2026-09-05,sinchon-a,에그타르트,16,False
+2026-09-05,sinchon-a,카페라떼(HOT),7,False
+2026-09-05,sinchon-a,크루아상,26,False
+2026-09-05,sinchon-a,휘낭시에,8,False
+2026-09-06,sinchon-a,베이글,9,False
+2026-09-06,sinchon-a,소금빵,43,False
+2026-09-06,sinchon-a,식빵,13,False
+2026-09-06,sinchon-a,아메리카노(HOT),17,False
+2026-09-06,sinchon-a,아이스 아메리카노,55,False
+2026-09-06,sinchon-a,아이스 카페라떼,22,False
+2026-09-06,sinchon-a,에그타르트,16,False
+2026-09-06,sinchon-a,카페라떼(HOT),11,False
+2026-09-06,sinchon-a,크루아상,21,False
+2026-09-06,sinchon-a,휘낭시에,17,False
+2026-09-07,sinchon-a,베이글,25,False
+2026-09-07,sinchon-a,소금빵,58,False
+2026-09-07,sinchon-a,식빵,5,False
+2026-09-07,sinchon-a,아메리카노(HOT),23,False
+2026-09-07,sinchon-a,아이스 아메리카노,80,False
+2026-09-07,sinchon-a,아이스 카페라떼,19,False
+2026-09-07,sinchon-a,에그타르트,18,False
+2026-09-07,sinchon-a,카페라떼(HOT),11,False
+2026-09-07,sinchon-a,크루아상,41,False
+2026-09-07,sinchon-a,휘낭시에,27,False
+2026-09-08,sinchon-a,베이글,15,False
+2026-09-08,sinchon-a,소금빵,57,False
+2026-09-08,sinchon-a,식빵,10,False
+2026-09-08,sinchon-a,아메리카노(HOT),30,False
+2026-09-08,sinchon-a,아이스 아메리카노,63,False
+2026-09-08,sinchon-a,아이스 카페라떼,23,False
+2026-09-08,sinchon-a,에그타르트,21,False
+2026-09-08,sinchon-a,카페라떼(HOT),11,False
+2026-09-08,sinchon-a,크루아상,32,False
+2026-09-08,sinchon-a,휘낭시에,20,False
+2026-09-09,sinchon-a,베이글,27,False
+2026-09-09,sinchon-a,소금빵,69,False
+2026-09-09,sinchon-a,식빵,16,False
+2026-09-09,sinchon-a,아메리카노(HOT),41,False
+2026-09-09,sinchon-a,아이스 아메리카노,78,False
+2026-09-09,sinchon-a,아이스 카페라떼,28,False
+2026-09-09,sinchon-a,에그타르트,26,False
+2026-09-09,sinchon-a,카페라떼(HOT),15,False
+2026-09-09,sinchon-a,크루아상,23,False
+2026-09-09,sinchon-a,휘낭시에,24,False
+2026-09-10,sinchon-a,베이글,10,False
+2026-09-10,sinchon-a,소금빵,58,False
+2026-09-10,sinchon-a,식빵,8,False
+2026-09-10,sinchon-a,아메리카노(HOT),28,False
+2026-09-10,sinchon-a,아이스 아메리카노,95,False
+2026-09-10,sinchon-a,아이스 카페라떼,18,False
+2026-09-10,sinchon-a,에그타르트,28,False
+2026-09-10,sinchon-a,카페라떼(HOT),8,False
+2026-09-10,sinchon-a,크루아상,32,False
+2026-09-10,sinchon-a,휘낭시에,22,False
+2026-09-11,sinchon-a,베이글,16,False
+2026-09-11,sinchon-a,소금빵,39,False
+2026-09-11,sinchon-a,식빵,8,False
+2026-09-11,sinchon-a,아메리카노(HOT),20,False
+2026-09-11,sinchon-a,아이스 아메리카노,75,False
+2026-09-11,sinchon-a,아이스 카페라떼,33,False
+2026-09-11,sinchon-a,에그타르트,23,False
+2026-09-11,sinchon-a,카페라떼(HOT),4,False
+2026-09-11,sinchon-a,크루아상,24,False
+2026-09-11,sinchon-a,휘낭시에,17,False
+2026-09-12,sinchon-a,베이글,11,False
+2026-09-12,sinchon-a,소금빵,39,False
+2026-09-12,sinchon-a,식빵,9,False
+2026-09-12,sinchon-a,아메리카노(HOT),20,False
+2026-09-12,sinchon-a,아이스 아메리카노,55,False
+2026-09-12,sinchon-a,아이스 카페라떼,29,False
+2026-09-12,sinchon-a,에그타르트,25,False
+2026-09-12,sinchon-a,카페라떼(HOT),7,False
+2026-09-12,sinchon-a,크루아상,23,False
+2026-09-12,sinchon-a,휘낭시에,8,False
+2026-09-13,sinchon-a,베이글,10,False
+2026-09-13,sinchon-a,소금빵,28,False
+2026-09-13,sinchon-a,식빵,9,False
+2026-09-13,sinchon-a,아메리카노(HOT),8,False
+2026-09-13,sinchon-a,아이스 아메리카노,30,False
+2026-09-13,sinchon-a,아이스 카페라떼,13,False
+2026-09-13,sinchon-a,에그타르트,6,False
+2026-09-13,sinchon-a,카페라떼(HOT),3,False
+2026-09-13,sinchon-a,크루아상,16,False
+2026-09-13,sinchon-a,휘낭시에,14,False
+2026-09-14,sinchon-a,베이글,16,False
+2026-09-14,sinchon-a,소금빵,56,False
+2026-09-14,sinchon-a,식빵,5,False
+2026-09-14,sinchon-a,아메리카노(HOT),25,False
+2026-09-14,sinchon-a,아이스 아메리카노,57,False
+2026-09-14,sinchon-a,아이스 카페라떼,24,False
+2026-09-14,sinchon-a,에그타르트,17,False
+2026-09-14,sinchon-a,카페라떼(HOT),9,False
+2026-09-14,sinchon-a,크루아상,29,False
+2026-09-14,sinchon-a,휘낭시에,22,False
+2026-09-15,sinchon-a,베이글,22,False
+2026-09-15,sinchon-a,소금빵,73,False
+2026-09-15,sinchon-a,식빵,11,False
+2026-09-15,sinchon-a,아메리카노(HOT),22,False
+2026-09-15,sinchon-a,아이스 아메리카노,73,False
+2026-09-15,sinchon-a,아이스 카페라떼,25,False
+2026-09-15,sinchon-a,에그타르트,25,False
+2026-09-15,sinchon-a,카페라떼(HOT),19,False
+2026-09-15,sinchon-a,크루아상,37,False
+2026-09-15,sinchon-a,휘낭시에,32,False
+2026-09-16,sinchon-a,베이글,23,False
+2026-09-16,sinchon-a,소금빵,64,False
+2026-09-16,sinchon-a,식빵,10,False
+2026-09-16,sinchon-a,아메리카노(HOT),34,False
+2026-09-16,sinchon-a,아이스 아메리카노,93,False
+2026-09-16,sinchon-a,아이스 카페라떼,43,False
+2026-09-16,sinchon-a,에그타르트,29,False
+2026-09-16,sinchon-a,카페라떼(HOT),12,False
+2026-09-16,sinchon-a,크루아상,44,False
+2026-09-16,sinchon-a,휘낭시에,27,False
+2026-09-17,sinchon-a,베이글,30,False
+2026-09-17,sinchon-a,소금빵,49,False
+2026-09-17,sinchon-a,식빵,8,False
+2026-09-17,sinchon-a,아메리카노(HOT),17,False
+2026-09-17,sinchon-a,아이스 아메리카노,86,False
+2026-09-17,sinchon-a,아이스 카페라떼,29,False
+2026-09-17,sinchon-a,에그타르트,30,False
+2026-09-17,sinchon-a,카페라떼(HOT),10,False
+2026-09-17,sinchon-a,크루아상,35,False
+2026-09-17,sinchon-a,휘낭시에,21,False
+2026-09-18,sinchon-a,베이글,15,False
+2026-09-18,sinchon-a,소금빵,49,False
+2026-09-18,sinchon-a,식빵,13,False
+2026-09-18,sinchon-a,아메리카노(HOT),32,False
+2026-09-18,sinchon-a,아이스 아메리카노,77,False
+2026-09-18,sinchon-a,아이스 카페라떼,20,False
+2026-09-18,sinchon-a,에그타르트,26,False
+2026-09-18,sinchon-a,카페라떼(HOT),10,False
+2026-09-18,sinchon-a,크루아상,28,False
+2026-09-18,sinchon-a,휘낭시에,14,False
+2026-09-19,sinchon-a,베이글,20,False
+2026-09-19,sinchon-a,소금빵,50,False
+2026-09-19,sinchon-a,식빵,8,False
+2026-09-19,sinchon-a,아메리카노(HOT),18,False
+2026-09-19,sinchon-a,아이스 아메리카노,64,False
+2026-09-19,sinchon-a,아이스 카페라떼,31,False
+2026-09-19,sinchon-a,에그타르트,11,False
+2026-09-19,sinchon-a,카페라떼(HOT),7,False
+2026-09-19,sinchon-a,크루아상,23,False
+2026-09-19,sinchon-a,휘낭시에,10,False
+2026-09-20,sinchon-a,베이글,17,False
+2026-09-20,sinchon-a,소금빵,31,False
+2026-09-20,sinchon-a,식빵,14,False
+2026-09-20,sinchon-a,아메리카노(HOT),14,False
+2026-09-20,sinchon-a,아이스 아메리카노,61,False
+2026-09-20,sinchon-a,아이스 카페라떼,21,False
+2026-09-20,sinchon-a,에그타르트,10,False
+2026-09-20,sinchon-a,카페라떼(HOT),8,False
+2026-09-20,sinchon-a,크루아상,16,False
+2026-09-20,sinchon-a,휘낭시에,16,False
+2026-09-21,sinchon-a,베이글,20,False
+2026-09-21,sinchon-a,소금빵,61,False
+2026-09-21,sinchon-a,식빵,13,False
+2026-09-21,sinchon-a,아메리카노(HOT),31,False
+2026-09-21,sinchon-a,아이스 아메리카노,63,False
+2026-09-21,sinchon-a,아이스 카페라떼,25,False
+2026-09-21,sinchon-a,에그타르트,23,False
+2026-09-21,sinchon-a,카페라떼(HOT),16,False
+2026-09-21,sinchon-a,크루아상,17,False
+2026-09-21,sinchon-a,휘낭시에,24,False
+2026-09-22,sinchon-a,베이글,21,False
+2026-09-22,sinchon-a,소금빵,51,False
+2026-09-22,sinchon-a,식빵,8,False
+2026-09-22,sinchon-a,아메리카노(HOT),32,False
+2026-09-22,sinchon-a,아이스 아메리카노,52,False
+2026-09-22,sinchon-a,아이스 카페라떼,34,False
+2026-09-22,sinchon-a,에그타르트,21,False
+2026-09-22,sinchon-a,카페라떼(HOT),25,False
+2026-09-22,sinchon-a,크루아상,38,False
+2026-09-22,sinchon-a,휘낭시에,23,False
+2026-09-23,sinchon-a,베이글,25,False
+2026-09-23,sinchon-a,소금빵,79,False
+2026-09-23,sinchon-a,식빵,7,False
+2026-09-23,sinchon-a,아메리카노(HOT),35,False
+2026-09-23,sinchon-a,아이스 아메리카노,100,False
+2026-09-23,sinchon-a,아이스 카페라떼,30,False
+2026-09-23,sinchon-a,에그타르트,23,False
+2026-09-23,sinchon-a,카페라떼(HOT),15,False
+2026-09-23,sinchon-a,크루아상,37,False
+2026-09-23,sinchon-a,휘낭시에,31,False
+2026-09-24,sinchon-a,베이글,17,False
+2026-09-24,sinchon-a,소금빵,45,False
+2026-09-24,sinchon-a,식빵,12,False
+2026-09-24,sinchon-a,아메리카노(HOT),27,False
+2026-09-24,sinchon-a,아이스 아메리카노,57,False
+2026-09-24,sinchon-a,아이스 카페라떼,14,False
+2026-09-24,sinchon-a,에그타르트,29,False
+2026-09-24,sinchon-a,카페라떼(HOT),10,False
+2026-09-24,sinchon-a,크루아상,26,False
+2026-09-24,sinchon-a,휘낭시에,15,False
+2026-09-26,sinchon-a,베이글,14,False
+2026-09-26,sinchon-a,소금빵,56,False
+2026-09-26,sinchon-a,식빵,12,False
+2026-09-26,sinchon-a,아메리카노(HOT),25,False
+2026-09-26,sinchon-a,아이스 아메리카노,63,False
+2026-09-26,sinchon-a,아이스 카페라떼,34,False
+2026-09-26,sinchon-a,에그타르트,20,False
+2026-09-26,sinchon-a,카페라떼(HOT),17,False
+2026-09-26,sinchon-a,크루아상,28,False
+2026-09-26,sinchon-a,휘낭시에,12,False
+2026-09-27,sinchon-a,베이글,16,False
+2026-09-27,sinchon-a,소금빵,53,False
+2026-09-27,sinchon-a,식빵,13,False
+2026-09-27,sinchon-a,아메리카노(HOT),25,False
+2026-09-27,sinchon-a,아이스 아메리카노,52,False
+2026-09-27,sinchon-a,아이스 카페라떼,26,False
+2026-09-27,sinchon-a,에그타르트,15,False
+2026-09-27,sinchon-a,카페라떼(HOT),7,False
+2026-09-27,sinchon-a,크루아상,21,False
+2026-09-27,sinchon-a,휘낭시에,14,False
+2026-09-28,sinchon-a,베이글,12,False
+2026-09-28,sinchon-a,소금빵,35,False
+2026-09-28,sinchon-a,식빵,10,False
+2026-09-28,sinchon-a,아메리카노(HOT),15,False
+2026-09-28,sinchon-a,아이스 아메리카노,58,False
+2026-09-28,sinchon-a,아이스 카페라떼,19,False
+2026-09-28,sinchon-a,에그타르트,15,False
+2026-09-28,sinchon-a,카페라떼(HOT),10,False
+2026-09-28,sinchon-a,크루아상,36,False
+2026-09-28,sinchon-a,휘낭시에,19,False
+2026-09-29,sinchon-a,베이글,22,False
+2026-09-29,sinchon-a,소금빵,69,False
+2026-09-29,sinchon-a,식빵,3,False
+2026-09-29,sinchon-a,아메리카노(HOT),50,False
+2026-09-29,sinchon-a,아이스 아메리카노,52,False
+2026-09-29,sinchon-a,아이스 카페라떼,21,False
+2026-09-29,sinchon-a,에그타르트,27,False
+2026-09-29,sinchon-a,카페라떼(HOT),16,False
+2026-09-29,sinchon-a,크루아상,25,False
+2026-09-29,sinchon-a,휘낭시에,32,False
+2026-09-30,sinchon-a,베이글,30,False
+2026-09-30,sinchon-a,소금빵,65,False
+2026-09-30,sinchon-a,식빵,7,False
+2026-09-30,sinchon-a,아메리카노(HOT),40,False
+2026-09-30,sinchon-a,아이스 아메리카노,66,False
+2026-09-30,sinchon-a,아이스 카페라떼,19,False
+2026-09-30,sinchon-a,에그타르트,34,False
+2026-09-30,sinchon-a,카페라떼(HOT),22,False
+2026-09-30,sinchon-a,크루아상,27,False
+2026-09-30,sinchon-a,휘낭시에,24,False
+2026-10-01,sinchon-a,베이글,28,False
+2026-10-01,sinchon-a,소금빵,71,False
+2026-10-01,sinchon-a,식빵,7,False
+2026-10-01,sinchon-a,아메리카노(HOT),29,False
+2026-10-01,sinchon-a,아이스 아메리카노,65,False
+2026-10-01,sinchon-a,아이스 카페라떼,28,False
+2026-10-01,sinchon-a,에그타르트,26,False
+2026-10-01,sinchon-a,카페라떼(HOT),22,False
+2026-10-01,sinchon-a,크루아상,28,False
+2026-10-01,sinchon-a,휘낭시에,17,False
+2026-10-02,sinchon-a,베이글,22,False
+2026-10-02,sinchon-a,소금빵,49,False
+2026-10-02,sinchon-a,식빵,6,False
+2026-10-02,sinchon-a,아메리카노(HOT),34,False
+2026-10-02,sinchon-a,아이스 아메리카노,43,False
+2026-10-02,sinchon-a,아이스 카페라떼,18,False
+2026-10-02,sinchon-a,에그타르트,27,False
+2026-10-02,sinchon-a,카페라떼(HOT),14,False
+2026-10-02,sinchon-a,크루아상,25,False
+2026-10-02,sinchon-a,휘낭시에,19,False
+2026-10-03,sinchon-a,베이글,19,False
+2026-10-03,sinchon-a,소금빵,61,False
+2026-10-03,sinchon-a,식빵,18,False
+2026-10-03,sinchon-a,아메리카노(HOT),24,False
+2026-10-03,sinchon-a,아이스 아메리카노,43,False
+2026-10-03,sinchon-a,아이스 카페라떼,23,False
+2026-10-03,sinchon-a,에그타르트,24,False
+2026-10-03,sinchon-a,카페라떼(HOT),6,False
+2026-10-03,sinchon-a,크루아상,21,False
+2026-10-03,sinchon-a,휘낭시에,16,False
+2026-10-04,sinchon-a,베이글,13,False
+2026-10-04,sinchon-a,소금빵,15,False
+2026-10-04,sinchon-a,식빵,9,False
+2026-10-04,sinchon-a,아메리카노(HOT),18,False
+2026-10-04,sinchon-a,아이스 아메리카노,22,False
+2026-10-04,sinchon-a,아이스 카페라떼,8,False
+2026-10-04,sinchon-a,에그타르트,4,False
+2026-10-04,sinchon-a,카페라떼(HOT),6,False
+2026-10-04,sinchon-a,크루아상,19,False
+2026-10-04,sinchon-a,휘낭시에,5,False
+2026-10-05,sinchon-a,베이글,18,False
+2026-10-05,sinchon-a,소금빵,37,False
+2026-10-05,sinchon-a,식빵,6,False
+2026-10-05,sinchon-a,아메리카노(HOT),28,False
+2026-10-05,sinchon-a,아이스 아메리카노,39,False
+2026-10-05,sinchon-a,아이스 카페라떼,22,False
+2026-10-05,sinchon-a,에그타르트,16,False
+2026-10-05,sinchon-a,카페라떼(HOT),12,False
+2026-10-05,sinchon-a,크루아상,25,False
+2026-10-05,sinchon-a,휘낭시에,19,False
+2026-10-06,sinchon-a,베이글,32,False
+2026-10-06,sinchon-a,소금빵,80,True
+2026-10-06,sinchon-a,식빵,11,False
+2026-10-06,sinchon-a,아메리카노(HOT),54,False
+2026-10-06,sinchon-a,아이스 아메리카노,59,False
+2026-10-06,sinchon-a,아이스 카페라떼,30,False
+2026-10-06,sinchon-a,에그타르트,36,True
+2026-10-06,sinchon-a,카페라떼(HOT),24,False
+2026-10-06,sinchon-a,크루아상,51,False
+2026-10-06,sinchon-a,휘낭시에,30,False
+2026-10-07,sinchon-a,베이글,28,False
+2026-10-07,sinchon-a,소금빵,61,False
+2026-10-07,sinchon-a,식빵,9,False
+2026-10-07,sinchon-a,아메리카노(HOT),38,False
+2026-10-07,sinchon-a,아이스 아메리카노,78,False
+2026-10-07,sinchon-a,아이스 카페라떼,26,False
+2026-10-07,sinchon-a,에그타르트,20,False
+2026-10-07,sinchon-a,카페라떼(HOT),16,False
+2026-10-07,sinchon-a,크루아상,29,False
+2026-10-07,sinchon-a,휘낭시에,25,False
+2026-10-08,sinchon-a,베이글,16,False
+2026-10-08,sinchon-a,소금빵,51,False
+2026-10-08,sinchon-a,식빵,4,False
+2026-10-08,sinchon-a,아메리카노(HOT),38,False
+2026-10-08,sinchon-a,아이스 아메리카노,58,False
+2026-10-08,sinchon-a,아이스 카페라떼,18,False
+2026-10-08,sinchon-a,에그타르트,24,False
+2026-10-08,sinchon-a,카페라떼(HOT),9,False
+2026-10-08,sinchon-a,크루아상,32,False
+2026-10-08,sinchon-a,휘낭시에,23,False
+2026-10-09,sinchon-a,베이글,5,False
+2026-10-09,sinchon-a,소금빵,17,False
+2026-10-09,sinchon-a,식빵,7,False
+2026-10-09,sinchon-a,아메리카노(HOT),19,False
+2026-10-09,sinchon-a,아이스 아메리카노,36,False
+2026-10-09,sinchon-a,아이스 카페라떼,13,False
+2026-10-09,sinchon-a,에그타르트,13,False
+2026-10-09,sinchon-a,카페라떼(HOT),9,False
+2026-10-09,sinchon-a,크루아상,14,False
+2026-10-09,sinchon-a,휘낭시에,6,False
+2026-10-10,sinchon-a,베이글,11,False
+2026-10-10,sinchon-a,소금빵,42,False
+2026-10-10,sinchon-a,식빵,15,False
+2026-10-10,sinchon-a,아메리카노(HOT),21,False
+2026-10-10,sinchon-a,아이스 아메리카노,47,False
+2026-10-10,sinchon-a,아이스 카페라떼,9,False
+2026-10-10,sinchon-a,에그타르트,18,False
+2026-10-10,sinchon-a,카페라떼(HOT),10,False
+2026-10-10,sinchon-a,크루아상,22,False
+2026-10-10,sinchon-a,휘낭시에,16,False
+2026-10-11,sinchon-a,베이글,13,False
+2026-10-11,sinchon-a,소금빵,25,False
+2026-10-11,sinchon-a,식빵,11,False
+2026-10-11,sinchon-a,아메리카노(HOT),16,False
+2026-10-11,sinchon-a,아이스 아메리카노,36,False
+2026-10-11,sinchon-a,아이스 카페라떼,12,False
+2026-10-11,sinchon-a,에그타르트,11,False
+2026-10-11,sinchon-a,카페라떼(HOT),10,False
+2026-10-11,sinchon-a,크루아상,23,False
+2026-10-11,sinchon-a,휘낭시에,16,False
+2026-10-12,sinchon-a,베이글,20,False
+2026-10-12,sinchon-a,소금빵,65,False
+2026-10-12,sinchon-a,식빵,11,False
+2026-10-12,sinchon-a,아메리카노(HOT),36,False
+2026-10-12,sinchon-a,아이스 아메리카노,57,False
+2026-10-12,sinchon-a,아이스 카페라떼,23,False
+2026-10-12,sinchon-a,에그타르트,26,False
+2026-10-12,sinchon-a,카페라떼(HOT),21,False
+2026-10-12,sinchon-a,크루아상,36,False
+2026-10-12,sinchon-a,휘낭시에,23,False
+2026-10-13,sinchon-a,베이글,24,False
+2026-10-13,sinchon-a,소금빵,80,True
+2026-10-13,sinchon-a,식빵,13,False
+2026-10-13,sinchon-a,아메리카노(HOT),30,False
+2026-10-13,sinchon-a,아이스 아메리카노,48,False
+2026-10-13,sinchon-a,아이스 카페라떼,25,False
+2026-10-13,sinchon-a,에그타르트,26,False
+2026-10-13,sinchon-a,카페라떼(HOT),23,False
+2026-10-13,sinchon-a,크루아상,31,False
+2026-10-13,sinchon-a,휘낭시에,30,False
+2026-10-14,sinchon-a,베이글,23,False
+2026-10-14,sinchon-a,소금빵,65,False
+2026-10-14,sinchon-a,식빵,11,False
+2026-10-14,sinchon-a,아메리카노(HOT),27,False
+2026-10-14,sinchon-a,아이스 아메리카노,68,False
+2026-10-14,sinchon-a,아이스 카페라떼,34,False
+2026-10-14,sinchon-a,에그타르트,28,False
+2026-10-14,sinchon-a,카페라떼(HOT),16,False
+2026-10-14,sinchon-a,크루아상,30,False
+2026-10-14,sinchon-a,휘낭시에,24,False
+2026-10-15,sinchon-a,베이글,20,False
+2026-10-15,sinchon-a,소금빵,50,False
+2026-10-15,sinchon-a,식빵,4,False
+2026-10-15,sinchon-a,아메리카노(HOT),32,False
+2026-10-15,sinchon-a,아이스 아메리카노,66,False
+2026-10-15,sinchon-a,아이스 카페라떼,25,False
+2026-10-15,sinchon-a,에그타르트,21,False
+2026-10-15,sinchon-a,카페라떼(HOT),18,False
+2026-10-15,sinchon-a,크루아상,31,False
+2026-10-15,sinchon-a,휘낭시에,29,False
+2026-10-16,sinchon-a,베이글,20,False
+2026-10-16,sinchon-a,소금빵,80,True
+2026-10-16,sinchon-a,식빵,8,False
+2026-10-16,sinchon-a,아메리카노(HOT),31,False
+2026-10-16,sinchon-a,아이스 아메리카노,68,False
+2026-10-16,sinchon-a,아이스 카페라떼,35,False
+2026-10-16,sinchon-a,에그타르트,22,False
+2026-10-16,sinchon-a,카페라떼(HOT),14,False
+2026-10-16,sinchon-a,크루아상,23,False
+2026-10-16,sinchon-a,휘낭시에,16,False
+2026-10-17,sinchon-a,베이글,25,False
+2026-10-17,sinchon-a,소금빵,46,False
+2026-10-17,sinchon-a,식빵,21,False
+2026-10-17,sinchon-a,아메리카노(HOT),22,False
+2026-10-17,sinchon-a,아이스 아메리카노,61,False
+2026-10-17,sinchon-a,아이스 카페라떼,23,False
+2026-10-17,sinchon-a,에그타르트,19,False
+2026-10-17,sinchon-a,카페라떼(HOT),12,False
+2026-10-17,sinchon-a,크루아상,20,False
+2026-10-17,sinchon-a,휘낭시에,20,False
+2026-10-18,sinchon-a,베이글,18,False
+2026-10-18,sinchon-a,소금빵,39,False
+2026-10-18,sinchon-a,식빵,14,False
+2026-10-18,sinchon-a,아메리카노(HOT),23,False
+2026-10-18,sinchon-a,아이스 아메리카노,29,False
+2026-10-18,sinchon-a,아이스 카페라떼,18,False
+2026-10-18,sinchon-a,에그타르트,24,False
+2026-10-18,sinchon-a,카페라떼(HOT),12,False
+2026-10-18,sinchon-a,크루아상,27,False
+2026-10-18,sinchon-a,휘낭시에,13,False
+2026-10-19,sinchon-a,베이글,15,False
+2026-10-19,sinchon-a,소금빵,80,True
+2026-10-19,sinchon-a,식빵,14,False
+2026-10-19,sinchon-a,아메리카노(HOT),40,False
+2026-10-19,sinchon-a,아이스 아메리카노,77,False
+2026-10-19,sinchon-a,아이스 카페라떼,31,False
+2026-10-19,sinchon-a,에그타르트,28,False
+2026-10-19,sinchon-a,카페라떼(HOT),18,False
+2026-10-19,sinchon-a,크루아상,45,False
+2026-10-19,sinchon-a,휘낭시에,27,False
+2026-10-20,sinchon-a,베이글,15,False
+2026-10-20,sinchon-a,소금빵,75,False
+2026-10-20,sinchon-a,식빵,2,False
+2026-10-20,sinchon-a,아메리카노(HOT),30,False
+2026-10-20,sinchon-a,아이스 아메리카노,44,False
+2026-10-20,sinchon-a,아이스 카페라떼,26,False
+2026-10-20,sinchon-a,에그타르트,24,False
+2026-10-20,sinchon-a,카페라떼(HOT),19,False
+2026-10-20,sinchon-a,크루아상,45,False
+2026-10-20,sinchon-a,휘낭시에,19,False
+2026-10-21,sinchon-a,베이글,33,False
+2026-10-21,sinchon-a,소금빵,76,False
+2026-10-21,sinchon-a,식빵,12,False
+2026-10-21,sinchon-a,아메리카노(HOT),40,False
+2026-10-21,sinchon-a,아이스 아메리카노,80,False
+2026-10-21,sinchon-a,아이스 카페라떼,24,False
+2026-10-21,sinchon-a,에그타르트,31,False
+2026-10-21,sinchon-a,카페라떼(HOT),21,False
+2026-10-21,sinchon-a,크루아상,36,False
+2026-10-21,sinchon-a,휘낭시에,35,False
+2026-10-22,sinchon-a,베이글,13,False
+2026-10-22,sinchon-a,소금빵,42,False
+2026-10-22,sinchon-a,식빵,9,False
+2026-10-22,sinchon-a,아메리카노(HOT),34,False
+2026-10-22,sinchon-a,아이스 아메리카노,36,False
+2026-10-22,sinchon-a,아이스 카페라떼,27,False
+2026-10-22,sinchon-a,에그타르트,20,False
+2026-10-22,sinchon-a,카페라떼(HOT),15,False
+2026-10-22,sinchon-a,크루아상,26,False
+2026-10-22,sinchon-a,휘낭시에,30,False
+2026-10-23,sinchon-a,베이글,31,False
+2026-10-23,sinchon-a,소금빵,80,True
+2026-10-23,sinchon-a,식빵,8,False
+2026-10-23,sinchon-a,아메리카노(HOT),43,False
+2026-10-23,sinchon-a,아이스 아메리카노,66,False
+2026-10-23,sinchon-a,아이스 카페라떼,8,False
+2026-10-23,sinchon-a,에그타르트,20,False
+2026-10-23,sinchon-a,카페라떼(HOT),20,False
+2026-10-23,sinchon-a,크루아상,37,False
+2026-10-23,sinchon-a,휘낭시에,30,False
+2026-10-24,sinchon-a,베이글,14,False
+2026-10-24,sinchon-a,소금빵,62,False
+2026-10-24,sinchon-a,식빵,17,False
+2026-10-24,sinchon-a,아메리카노(HOT),31,False
+2026-10-24,sinchon-a,아이스 아메리카노,52,False
+2026-10-24,sinchon-a,아이스 카페라떼,10,False
+2026-10-24,sinchon-a,에그타르트,17,False
+2026-10-24,sinchon-a,카페라떼(HOT),9,False
+2026-10-24,sinchon-a,크루아상,20,False
+2026-10-24,sinchon-a,휘낭시에,14,False
+2026-10-25,sinchon-a,베이글,21,False
+2026-10-25,sinchon-a,소금빵,55,False
+2026-10-25,sinchon-a,식빵,12,False
+2026-10-25,sinchon-a,아메리카노(HOT),34,False
+2026-10-25,sinchon-a,아이스 아메리카노,47,False
+2026-10-25,sinchon-a,아이스 카페라떼,10,False
+2026-10-25,sinchon-a,에그타르트,19,False
+2026-10-25,sinchon-a,카페라떼(HOT),13,False
+2026-10-25,sinchon-a,크루아상,11,False
+2026-10-25,sinchon-a,휘낭시에,18,False
+2026-10-26,sinchon-a,베이글,16,False
+2026-10-26,sinchon-a,소금빵,79,False
+2026-10-26,sinchon-a,식빵,3,False
+2026-10-26,sinchon-a,아메리카노(HOT),34,False
+2026-10-26,sinchon-a,아이스 아메리카노,67,False
+2026-10-26,sinchon-a,아이스 카페라떼,23,False
+2026-10-26,sinchon-a,에그타르트,29,False
+2026-10-26,sinchon-a,카페라떼(HOT),19,False
+2026-10-26,sinchon-a,크루아상,47,False
+2026-10-26,sinchon-a,휘낭시에,23,False
+2026-10-27,sinchon-a,베이글,25,False
+2026-10-27,sinchon-a,소금빵,45,False
+2026-10-27,sinchon-a,식빵,10,False
+2026-10-27,sinchon-a,아메리카노(HOT),34,False
+2026-10-27,sinchon-a,아이스 아메리카노,58,False
+2026-10-27,sinchon-a,아이스 카페라떼,28,False
+2026-10-27,sinchon-a,에그타르트,25,False
+2026-10-27,sinchon-a,카페라떼(HOT),20,False
+2026-10-27,sinchon-a,크루아상,24,False
+2026-10-27,sinchon-a,휘낭시에,40,False
+2026-10-28,sinchon-a,베이글,20,False
+2026-10-28,sinchon-a,소금빵,70,False
+2026-10-28,sinchon-a,식빵,11,False
+2026-10-28,sinchon-a,아메리카노(HOT),37,False
+2026-10-28,sinchon-a,아이스 아메리카노,61,False
+2026-10-28,sinchon-a,아이스 카페라떼,15,False
+2026-10-28,sinchon-a,에그타르트,33,False
+2026-10-28,sinchon-a,카페라떼(HOT),15,False
+2026-10-28,sinchon-a,크루아상,47,False
+2026-10-28,sinchon-a,휘낭시에,20,False
+2026-10-29,sinchon-a,베이글,17,False
+2026-10-29,sinchon-a,소금빵,37,False
+2026-10-29,sinchon-a,식빵,14,False
+2026-10-29,sinchon-a,아메리카노(HOT),39,False
+2026-10-29,sinchon-a,아이스 아메리카노,56,False
+2026-10-29,sinchon-a,아이스 카페라떼,17,False
+2026-10-29,sinchon-a,에그타르트,23,False
+2026-10-29,sinchon-a,카페라떼(HOT),10,False
+2026-10-29,sinchon-a,크루아상,25,False
+2026-10-29,sinchon-a,휘낭시에,9,False
+2026-10-30,sinchon-a,베이글,21,False
+2026-10-30,sinchon-a,소금빵,36,False
+2026-10-30,sinchon-a,식빵,11,False
+2026-10-30,sinchon-a,아메리카노(HOT),35,False
+2026-10-30,sinchon-a,아이스 아메리카노,70,False
+2026-10-30,sinchon-a,아이스 카페라떼,16,False
+2026-10-30,sinchon-a,에그타르트,25,False
+2026-10-30,sinchon-a,카페라떼(HOT),28,False
+2026-10-30,sinchon-a,크루아상,30,False
+2026-10-30,sinchon-a,휘낭시에,21,False
+2026-10-31,sinchon-a,베이글,12,False
+2026-10-31,sinchon-a,소금빵,31,False
+2026-10-31,sinchon-a,식빵,9,False
+2026-10-31,sinchon-a,아메리카노(HOT),25,False
+2026-10-31,sinchon-a,아이스 아메리카노,20,False
+2026-10-31,sinchon-a,아이스 카페라떼,9,False
+2026-10-31,sinchon-a,에그타르트,12,False
+2026-10-31,sinchon-a,카페라떼(HOT),13,False
+2026-10-31,sinchon-a,크루아상,15,False
+2026-10-31,sinchon-a,휘낭시에,14,False

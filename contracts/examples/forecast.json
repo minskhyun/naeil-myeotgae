@@ -1,0 +1,206 @@
+{
+  "store_id": "sinchon-a",
+  "generated_at": "2026-11-15T17:06:41",
+  "rows": [
+    {
+      "date": "2026-11-01",
+      "menu": "베이글",
+      "pred": 11.7,
+      "p10": 7.1,
+      "p90": 16.4,
+      "prep_qty": 12,
+      "model": "M3",
+      "reasons": [
+        {
+          "signal": "rain_mm",
+          "effect_pct": -19.3,
+          "text": "비 예보(9.7mm)로 평소보다 약 19% 적게 예상",
+          "source_url": "https://www.weather.go.kr"
+        }
+      ]
+    },
+    {
+      "date": "2026-11-01",
+      "menu": "소금빵",
+      "pred": 29.6,
+      "p10": 21.9,
+      "p90": 37.3,
+      "prep_qty": 30,
+      "model": "M3",
+      "reasons": [
+        {
+          "signal": "rain_mm",
+          "effect_pct": -19.2,
+          "text": "비 예보(9.7mm)로 평소보다 약 19% 적게 예상",
+          "source_url": "https://www.weather.go.kr"
+        }
+      ]
+    },
+    {
+      "date": "2026-11-01",
+      "menu": "식빵",
+      "pred": 9.0,
+      "p10": 5.1,
+      "p90": 13.9,
+      "prep_qty": 10,
+      "model": "M3",
+      "reasons": [
+        {
+          "signal": "rain_mm",
+          "effect_pct": -18.1,
+          "text": "비 예보(9.7mm)로 평소보다 약 18% 적게 예상",
+          "source_url": "https://www.weather.go.kr"
+        }
+      ]
+    },
+    {
+      "date": "2026-11-01",
+      "menu": "아메리카노(HOT)",
+      "pred": 19.8,
+      "p10": 12.8,
+      "p90": 26.7,
+      "prep_qty": 20,
+      "model": "M3",
+      "reasons": [
+        {
+          "signal": "rain_mm",
+          "effect_pct": -18.6,
+          "text": "비 예보(9.7mm)로 평소보다 약 19% 적게 예상",
+          "source_url": "https://www.weather.go.kr"
+        },
+        {
+          "signal": "temp_diff",
+          "effect_pct": 4.0,
+          "text": "기온이 최근 평균보다 12도 낮아 평소보다 약 4% 많이 예상",
+          "source_url": null
+        }
+      ]
+    },
+    {
+      "date": "2026-11-01",
+      "menu": "아이스 아메리카노",
+      "pred": 24.4,
+      "p10": 16.9,
+      "p90": 32.5,
+      "prep_qty": 25,
+      "model": "M3",
+      "reasons": [
+        {
+          "signal": "rain_mm",
+          "effect_pct": -19.7,
+          "text": "비 예보(9.7mm)로 평소보다 약 20% 적게 예상",
+          "source_url": "https://www.weather.go.kr"
+        },
+        {
+          "signal": "temp_diff",
+          "effect_pct": -16.1,
+          "text": "기온이 최근 평균보다 12도 낮아 평소보다 약 16% 적게 예상",
+          "source_url": null
+        }
+      ]
+    },
+    {
+      "date": "2026-11-01",
+      "menu": "아이스 카페라떼",
+      "pred": 9.4,
+      "p10": 6.3,
+      "p90": 13.0,
+      "prep_qty": 10,
+      "model": "M3",
+      "reasons": [
+        {
+          "signal": "rain_mm",
+          "effect_pct": -19.0,
+          "text": "비 예보(9.7mm)로 평소보다 약 19% 적게 예상",
+          "source_url": "https://www.weather.go.kr"
+        },
+        {
+          "signal": "temp_diff",
+          "effect_pct": -14.4,
+          "text": "기온이 최근 평균보다 12도 낮아 평소보다 약 14% 적게 예상",
+          "source_url": null
+        }
+      ]
+    },
+    {
+      "date": "2026-11-01",
+      "menu": "에그타르트",
+      "pred": 12.6,
+      "p10": 8.5,
+      "p90": 16.4,
+      "prep_qty": 13,
+      "model": "M3",
+      "reasons": [
+        {
+          "signal": "rain_mm",
+          "effect_pct": -18.2,
+          "text": "비 예보(9.7mm)로 평소보다 약 18% 적게 예상",
+          "source_url": "https://www.weather.go.kr"
+        }
+      ]
+    },
+    {
+      "date": "2026-11-01",
+      "menu": "카페라떼(HOT)",
+      "pred": 9.9,
+      "p10": 6.4,
+      "p90": 14.4,
+      "prep_qty": 10,
+      "model": "M3",
+      "reasons": [
+        {
+          "signal": "rain_mm",
+          "effect_pct": -17.8,
+          "text": "비 예보(9.7mm)로 평소보다 약 18% 적게 예상",
+          "source_url": "https://www.weather.go.kr"
+        }
+      ]
+    },
+    {
+      "date": "2026-11-01",
+      "menu": "크루아상",
+      "pred": 16.6,
+      "p10": 11.6,
+      "p90": 21.3,
+      "prep_qty": 17,
+      "model": "M3",
+      "reasons": [
+        {
+          "signal": "rain_mm",
+          "effect_pct": -16.6,
+          "text": "비 예보(9.7mm)로 평소보다 약 17% 적게 예상",
+          "source_url": "https://www.weather.go.kr"
+        }
+      ]
+    },
+    {
+      "date": "2026-11-01",
+      "menu": "휘낭시에",
+      "pred": 13.0,
+      "p10": 9.5,
+      "p90": 16.2,
+      "prep_qty": 14,
+      "model": "M3",
+      "reasons": [
+        {
+          "signal": "rain_mm",
+          "effect_pct": -17.7,
+          "text": "비 예보(9.7mm)로 평소보다 약 18% 적게 예상",
+          "source_url": "https://www.weather.go.kr"
+        }
+      ]
+    }
+  ],
+  "signals_used": [
+    "temp_diff",
+    "rain_mm",
+    "exam_period",
+    "vacation",
+    "festival",
+    "nearby_event",
+    "exam_period_diff",
+    "vacation_diff",
+    "festival_diff"
+  ],
+  "warnings": []
+}

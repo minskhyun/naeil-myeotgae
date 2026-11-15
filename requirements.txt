@@ -1,0 +1,9 @@
+numpy>=2.0
+pandas>=2.2
+catboost>=1.2
+pydantic>=2.6
+openpyxl>=3.1      # 포스 엑셀(.xlsx) 읽기
+statsmodels>=0.14  # ml/report (판매 패턴 리포트)
+matplotlib>=3.8    # ml/report
+pytest>=8
+anthropic>=1.0        # LLM 경고(ml/alerts.py)에서만 사용
