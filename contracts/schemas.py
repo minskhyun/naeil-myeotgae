@@ -3,6 +3,7 @@
 누가 쓰고 누가 읽나
 - SalesRow        ml/ingest.py가 만듦 → ml 전체가 읽음
 - SignalRow       agent/(새얼)가 만듦 → ml/features.py가 읽음
+- CollectionItem  agent/가 모은 원문 → ml/alerts.py가 LLM 경고에 씀
 - Forecast        ml/predict.py가 만듦 → backend/(석현)가 읽어 화면에 보여 줌
 - BacktestResult  ml/evaluate.py가 만듦 → 모델 비교 화면이 읽음
 
@@ -39,6 +40,15 @@ class SignalRow(BaseModel):
     source_url: str
     published_at: dt.datetime                   # 이 값이 '공개된' 시각 → 미래 정보 누수 방지에 씀
     kind: Literal["observed", "forecast", "calendar", "event"]
+
+
+class CollectionItem(BaseModel):
+    """에이전트가 모은 원문 하나 (collection.json의 한 항목). LLM 경고의 재료이고, 모델 변수로는 쓰지 않는다."""
+    date: dt.date                               # 이 자료가 해당하는 날 (예: 행사가 열리는 날)
+    title: str
+    text: str = Field(min_length=1)             # 원문 그대로 (요약하지 않음). 경고의 인용문을 이 글과 대조한다
+    source_url: str
+    published_at: dt.datetime | None = None     # 공개 시각(KST). 있으면 예측 시각 뒤에 나온 글은 쓰지 않는다
 
 
 # ---------------------------------------------------------------- 출력: 내일 예측

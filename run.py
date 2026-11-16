@@ -22,7 +22,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from contracts.schemas import BacktestResult, SignalRow
+from contracts.schemas import BacktestResult, CollectionItem, SignalRow
 from ml.alerts import make_warnings
 from ml.evaluate import ARTIFACTS, ROOT, run_backtest, write_backtest
 from ml.features import DEFAULT_CLOSE_TIME, load_sales, load_signals
@@ -58,7 +58,10 @@ def step_ingest(args, out: Path) -> str:
                                                                          encoding="utf-8")
         shutil.copyfile(src / "signals.csv", out / "signals.csv")
         shutil.copyfile(src / "store.json", out / "store.json")
-        return f"가상 데이터 {sales['date'].nunique()}일, {len(sales)}행"
+        note = f"가상 데이터 {sales['date'].nunique()}일, {len(sales)}행"
+        if args.collection:
+            note += ", " + _import_collection(Path(args.collection), out)
+        return note
 
     if not args.pos:
         raise SystemExit("--demo 또는 --pos <POS 파일> 중 하나가 필요합니다.")
@@ -66,6 +69,8 @@ def step_ingest(args, out: Path) -> str:
     note = ingest_store(Path(args.pos), args.store, out, pos_type=args.pos_type)
     if args.signals and Path(args.signals).resolve() != (out / "signals.csv").resolve():
         note += ", " + _import_signals(Path(args.signals), args.store, out)
+    if args.collection:
+        note += ", " + _import_collection(Path(args.collection), out)
     if not (out / "store.json").exists():                      # 처음이면 기본 설정을 만든다 (나중에 직접 고쳐도 됨)
         (out / "store.json").write_text(json.dumps(
             {"store_id": args.store, "close_time": args.close_time or DEFAULT_CLOSE_TIME, "prep_mode": "균형"},
@@ -83,6 +88,22 @@ def _import_signals(path: Path, store_id: str, out: Path) -> str:
         raise SystemExit(f"{path.name}에 store_id='{store_id}'인 신호가 없습니다 (있는 매장: {sorted(set(sig['store_id']))}).")
     mine.to_csv(out / "signals.csv", index=False, encoding="utf-8")
     return f"신호 {len(mine)}행 ({', '.join(sorted(set(mine['signal'])))})"
+
+
+def _import_collection(path: Path, out: Path) -> str:
+    """원문 모음(.json, CollectionItem 목록) → 형식 검사 → 공개 시각을 한국 시간으로 → out/collection.json."""
+    items = []
+    for i, rec in enumerate(json.loads(path.read_text(encoding="utf-8-sig"))):
+        try:
+            item = CollectionItem.model_validate(rec)
+        except ValueError as e:
+            raise SystemExit(f"{path.name}의 {i}번째 항목 형식이 틀립니다:\n{e}")
+        if item.published_at is not None and item.published_at.tzinfo is not None:
+            item.published_at = (pd.Timestamp(item.published_at).tz_convert("Asia/Seoul")
+                                 .tz_localize(None).to_pydatetime())
+        items.append(item.model_dump(mode="json"))
+    (out / "collection.json").write_text(json.dumps(items, ensure_ascii=False, indent=1), encoding="utf-8")
+    return f"원문 {len(items)}개"
 
 
 def _load(out: Path):
@@ -115,7 +136,8 @@ def step_predict(args, out: Path) -> str:
     if (out / "collection.json").exists():                    # 새얼이 모은 자료가 있으면 LLM 경고 (숫자는 안 바꿈)
         try:
             collection = json.loads((out / "collection.json").read_text(encoding="utf-8"))
-            fc.warnings = make_warnings(fc, collection, out / "llm_cache")
+            fc.warnings = make_warnings(fc, collection, out / "llm_cache",
+                                        close_time=info.get("close_time", DEFAULT_CLOSE_TIME))
             note += f", 경고 {len(fc.warnings)}개"
         except Exception as e:                                # 경고는 부가 기능: 실패해도 예측은 저장
             note += f", 경고 생성 실패({type(e).__name__}) → 경고 없이 저장"
@@ -136,6 +158,7 @@ def parse_args(argv=None):
     p.add_argument("--pos", help="POS 파일 경로 (실데이터)")
     p.add_argument("--pos-type", default="auto", choices=["auto", "toss", "okpos"])
     p.add_argument("--signals", help="외부 신호 파일 (SignalRow 형식 .json 또는 .csv)")
+    p.add_argument("--collection", help="LLM 경고용 원문 모음 (CollectionItem 형식 .json, 선택)")
     p.add_argument("--close-time", help="영업 종료 시각 (store.json이 없을 때만 씀, 기본 21:00)")
     p.add_argument("--from-step", default="ingest", choices=STEPS, help="이 단계부터 실행")
     p.add_argument("--iterations", type=int, help="CatBoost 반복 수 (테스트용, 보통은 비워 둠)")
