@@ -3,8 +3,9 @@
     python -m agent.weather --store seongsu-a --lat 37.5446 --lon 127.0557      # 오늘 17시 발표본 → 내일·모레
 
 - 출처: 공공데이터포털 '기상청_단기예보 조회서비스'. 키는 .env의 DATA_GO_KR_KEY (일반 인증키, 디코딩).
-- ★ API는 최근 3일 발표본만 준다. 학습용 과거 예보(한 달 전)는 이 모듈로 받을 수 없다
-  → docs/LLM_AGENT_CONTEXT.md 11절 '결정 필요' 1번.
+- ★ 단기예보 API는 최근 3일 발표본만 준다. 학습용 과거 기간은 지상 관측(ASOS) 일자료를 '예보 대신' 쓴다
+  (11/16 결정, observed_as_forecast_signals). 예보보다 정확한 값이라 검증 성능이 실제보다 조금 좋게 나온다
+  → 발표·문서에 반드시 밝힌다. 이런 줄은 source_url 끝에 OBSERVED_PROXY 표시가 붙는다.
 - 하루 한 번 17시 발표본을 쓴다 (발표 10분 뒤 공개로 본다). 21시 영업 종료 전에 공개되므로 다음 날 예측에 쓰인다.
 - 하루 값으로 묶는 방법 (모든 기간 같은 규칙):
     temp_mean = 그날 0~23시 시간별 예보 기온(TMP) 평균  (24시간이 다 있는 날만)
@@ -26,6 +27,10 @@ URL = "http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst"  
 SOURCE_URL = "https://www.data.go.kr/data/15084084/openapi.do"                    # 화면 근거 링크 (단기예보 조회서비스)
 BASE_TIME = "1700"
 PUBLISH_DELAY = pd.Timedelta(minutes=10)      # 발표 시각 + 10분에 공개된다고 본다
+
+ASOS_URL = "http://apis.data.go.kr/1360000/AsosDalyInfoService/getWthrDataList"   # 지상(종관) 일자료
+ASOS_STATION = 108                            # 서울(송월동). 성수동에서 약 9km, 서울에서 가장 가까운 종관 관측소
+OBSERVED_PROXY = "#관측값을-예보-대신-사용"     # 이 표시가 붙은 신호는 실제 예보가 아니다 (run.py가 줄 수를 알려 줌)
 
 
 def latlon_to_grid(lat: float, lon: float) -> tuple[int, int]:
@@ -100,6 +105,51 @@ def forecast_signals(store_id: str, lat: float, lon: float, base_date: str, key:
         for signal, value in (("temp_mean", d.temp_mean), ("rain_mm", d.rain_mm)):
             rows.append(SignalRow(date=d.date.date(), store_id=store_id, signal=signal, value=float(value),
                                   source_url=SOURCE_URL, published_at=published.to_pydatetime(), kind="forecast"))
+    return rows
+
+
+def fetch_asos_daily(key: str, start: str, end: str, station: int = ASOS_STATION) -> pd.DataFrame:
+    """ASOS 일자료 → [date, temp_mean(일평균기온), rain_mm(일강수량, 빈 값=0)]. start·end는 YYYYMMDD (어제까지만 있음)."""
+    items, page = [], 1
+    while True:
+        q = dict(serviceKey=key, pageNo=page, numOfRows=999, dataType="JSON", dataCd="ASOS", dateCd="DAY",
+                 startDt=start, endDt=end, stnIds=station)
+        with urllib.request.urlopen(f"{ASOS_URL}?{urllib.parse.urlencode(q)}", timeout=30) as r:
+            body = r.read().decode("utf-8")
+        try:
+            res = json.loads(body)["response"]
+        except (json.JSONDecodeError, KeyError):
+            raise RuntimeError(f"ASOS 응답이 JSON이 아닙니다 (활용신청·키 확인): {body[:200]}")
+        if res["header"]["resultCode"] != "00":
+            raise RuntimeError(f"ASOS API 오류 {res['header']['resultCode']}: {res['header']['resultMsg']}")
+        items += res["body"]["items"]["item"]
+        if len(items) >= int(res["body"]["totalCount"]):
+            break
+        page += 1
+    return asos_daily(items)
+
+
+def asos_daily(items: list[dict]) -> pd.DataFrame:
+    """ASOS 항목 → [date, temp_mean, rain_mm]. 일강수량 빈 값('')은 비가 안 온 날이라 0."""
+    df = pd.DataFrame(items)
+    if df.empty:
+        return pd.DataFrame(columns=["date", "temp_mean", "rain_mm"])
+    return pd.DataFrame({"date": pd.to_datetime(df["tm"]),
+                         "temp_mean": pd.to_numeric(df["avgTa"], errors="coerce"),
+                         "rain_mm": pd.to_numeric(df["sumRn"].replace("", "0"), errors="coerce").fillna(0.0)})
+
+
+def observed_as_forecast_signals(store_id: str, daily: pd.DataFrame) -> list[SignalRow]:
+    """과거 관측값을 '전날 17:10에 나온 예보'처럼 만든다 (학습용 과거 기간 전용, 실제 예보가 없을 때만).
+    kind="forecast", published_at = 전날 17:10 → 예측 시각(전날 영업 종료) 전에 공개된 것으로 쓰인다.
+    source_url 끝의 OBSERVED_PROXY 표시로 진짜 예보와 구분한다."""
+    rows = []
+    for d in daily.dropna(subset=["temp_mean"]).itertuples():
+        published = (d.date - pd.Timedelta(days=1)).normalize() + pd.Timedelta(hours=17) + PUBLISH_DELAY
+        for signal, value in (("temp_mean", d.temp_mean), ("rain_mm", d.rain_mm)):
+            rows.append(SignalRow(date=d.date.date(), store_id=store_id, signal=signal, value=float(value),
+                                  source_url="https://data.kma.go.kr" + OBSERVED_PROXY,
+                                  published_at=published.to_pydatetime(), kind="forecast"))
     return rows
 
 

@@ -22,6 +22,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from agent.weather import OBSERVED_PROXY
 from contracts.schemas import BacktestResult, CollectionItem, SignalRow
 from ml.alerts import make_warnings
 from ml.evaluate import ARTIFACTS, ROOT, run_backtest, write_backtest
@@ -87,7 +88,11 @@ def _import_signals(path: Path, store_id: str, out: Path) -> str:
     if mine.empty:
         raise SystemExit(f"{path.name}에 store_id='{store_id}'인 신호가 없습니다 (있는 매장: {sorted(set(sig['store_id']))}).")
     mine.to_csv(out / "signals.csv", index=False, encoding="utf-8")
-    return f"신호 {len(mine)}행 ({', '.join(sorted(set(mine['signal'])))})"
+    note = f"신호 {len(mine)}행 ({', '.join(sorted(set(mine['signal'])))})"
+    proxy = int(mine["source_url"].str.contains(OBSERVED_PROXY, regex=False).sum())
+    if proxy:                                                   # 실제 예보가 아닌 줄 → 결과를 말할 때 밝혀야 함
+        note += f" ※ 관측값을 예보 대신 쓴 줄 {proxy}행: 검증 성능이 실제보다 조금 좋게 나올 수 있음"
+    return note
 
 
 def _import_collection(path: Path, out: Path) -> str:
