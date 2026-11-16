@@ -50,6 +50,23 @@ def test_pick_combo():
     assert pick_combo({(): none, ("weather",): sc(0.31, [0.31] * 4)}) == []   # 통과 조합 없음 → 신호 없이 M1
 
 
+def test_pick_combo_needs_min_gain_and_prunes_freeloaders():
+    sc = lambda w, folds: dict(wape=w, wape_by_fold=folds)
+    none = sc(0.300, [0.30, 0.30, 0.30, 0.30])
+    tiny = {(): none, ("special",): sc(0.294, [0.29, 0.29, 0.29, 0.31])}       # 2% 개선, 3구간 → 기준 미달
+    assert pick_combo(tiny) == []
+    scores = {(): none,
+              ("weather",): sc(0.270, [0.26, 0.26, 0.26, 0.31]),              # 10% 개선
+              ("special",): sc(0.296, [0.29, 0.29, 0.29, 0.31]),
+              ("weather", "special"): sc(0.264, [0.25, 0.25, 0.25, 0.31])}    # 가장 낮지만 special을 빼도 2%만 차이
+    assert pick_combo(scores) == ["weather"]                                   # 무임승차한 special은 빠짐
+
+
+def test_decide_small_gain_reason():
+    d = decide("special", ["special_day"], _s(0.300, [0.3] * 4), _s(0.294, [0.29, 0.29, 0.29, 0.31]))
+    assert not d["adopted"] and "기준(3%)보다 작아" in d["reason"]
+
+
 def test_model_label():
     assert model_label([]) == "M1"
     assert model_label(["weather"]) == "M2"

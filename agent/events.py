@@ -3,7 +3,8 @@
 두 가지 출처
   A. 서울 열린데이터광장 '문화행사 정보' (.env의 SEOUL_DATA_KEY)
      - 이미 정리된 자료(날짜·장소·좌표·등록일)라 LLM이 필요 없다.
-     - 매장에서 NEAR_KM 안, 기간이 MAX_EVENT_DAYS일 이하인 행사만 (긴 전시·상설 공연은 '그날의 행사'가 아님)
+     - 매장에서 NEAR_KM 안, 기간이 MAX_EVENT_DAYS일 이하인 행사만 숫자 신호로 (긴 전시·상설 팝업은 '그날의 행사'가 아님)
+     - 긴 행사도 '여는 날'에는 원문으로 넘긴다 → AI 주의 안내가 "근처에 큰 팝업이 새로 열림"을 알릴 수 있게
      - 공개 시각 = 등록일(RGSTDATE) 23:59  (정확한 시각을 몰라 보수적으로 그날 끝으로 본다)
   B. 사람이 모은 팝업·공지 글 주소 (data/raw/{store}_event_sources.txt, 한 줄에 '주소 [공개일 YYYY-MM-DD]')
      - 글을 받아 LLM이 날짜·장소·취소 여부만 뽑는다 (구조화 출력). 판매량 숫자는 다루지 않는다.
@@ -86,15 +87,20 @@ def seoul_event_signals(store_id: str, lat: float, lon: float, events: list[dict
         # 좌표가 뒤바뀌어 들어온 행(위도 자리에 경도)도 있어 범위로 바로잡는다
         if elat > 90:
             elat, elon = elon, elat
-        if distance_km(lat, lon, elat, elon) > NEAR_KM or (t - s).days + 1 > MAX_EVENT_DAYS:
-            continue
-        days = _days(s, t, start, end)
-        if not days:
+        if distance_km(lat, lon, elat, elon) > NEAR_KM:
             continue
         url = e.get("ORG_LINK") or e.get("HMPG_ADDR") or SEOUL_SOURCE
         text = (f"{e.get('TITLE', '')}. 장소: {e.get('PLACE', '')} ({e.get('GUNAME', '')}). 기간: {e.get('DATE', '')}. "
                 f"분야: {e.get('CODENAME', '')}. 대상: {e.get('USE_TRGT', '')}. 요금: {e.get('USE_FEE', '')}. "
                 f"{e.get('PROGRAM', '')} {e.get('ETC_DESC', '')}").strip()
+        if (t - s).days + 1 > MAX_EVENT_DAYS:             # 긴 행사: 신호는 없이, 여는 날 원문만
+            if start <= s <= end:
+                items.append(CollectionItem(date=s, title=f"[새로 엶] {e.get('TITLE', '행사')}", text=text,
+                                            source_url=url, published_at=published.to_pydatetime()))
+            continue
+        days = _days(s, t, start, end)
+        if not days:
+            continue
         for d in days:
             if d not in first or published < first[d][0]:
                 first[d] = (published.to_pydatetime(), url)
@@ -226,7 +232,10 @@ def page_event_signals(store_id: str, lat: float, lon: float, sources: list[tupl
             if distance_km(lat, lon, elat, elon) > NEAR_KM:
                 continue
             last = ev.end_date or ev.start_date
-            if (last - ev.start_date).days + 1 > MAX_EVENT_DAYS:
+            if (last - ev.start_date).days + 1 > MAX_EVENT_DAYS:   # 긴 팝업: 신호는 없이, 여는 날 원문만
+                if start <= ev.start_date <= end:
+                    items.append(CollectionItem(date=ev.start_date, title=f"[새로 엶] {ev.title or title}", text=text,
+                                                source_url=url, published_at=published))
                 continue
             for d in _days(ev.start_date, last, start, end):
                 rows.append(_event_rows(store_id, d, 0.0 if ev.cancelled else 1.0, url, published))

@@ -183,32 +183,49 @@ def model_label(groups) -> str:
     return "M2" if groups <= {"weather"} else "M3"
 
 
+MIN_GAIN_PCT = 3.0   # 전체 오차가 이만큼(%) 이상 줄어야 '나아졌다'고 본다.
+# 11/17 리허설: 관계없는 신호(검증 기간 내내 0인 기념일)를 넣기만 해도 나무 모양이 바뀌어 오차가 2%쯤 흔들렸다.
+
+
 def beats(after: dict, before: dict) -> tuple[bool, int, float]:
     """after가 before보다 나은가 → (통과 여부, 개선된 구간 수, 전체 WAPE 변화 %).
-    통과 조건 (TASKS.md §8): 전체 WAPE가 줄고, 검증 구간의 과반에서 WAPE가 줄었을 때."""
+    통과 조건: 전체 WAPE가 MIN_GAIN_PCT% 이상 줄고, 검증 구간의 과반에서 WAPE가 줄었을 때."""
     improved = sum(a < b for a, b in zip(after["wape_by_fold"], before["wape_by_fold"]))
     change = (after["wape"] - before["wape"]) / before["wape"] * 100
-    return change < 0 and improved > len(before["wape_by_fold"]) / 2, improved, change
+    return change <= -MIN_GAIN_PCT and improved > len(before["wape_by_fold"]) / 2, improved, change
 
 
 def pick_combo(scores: dict[tuple, dict]) -> list[str]:
     """{조합(묶음 이름 튜플): 교차검증 점수} → 고른 조합.  () = 신호 없음(M1).
-    신호 없음보다 beats()를 통과한 조합 중 전체 WAPE가 가장 낮은 것. 하나도 없으면 [] (신호 없이 M1)."""
+    1) 신호 없음보다 beats()를 통과한 조합 중 전체 WAPE가 가장 낮은 것
+    2) 그 조합 안의 묶음마다 '빼면 나빠지는가'(beats)를 확인해, 제 몫을 못 하는 묶음을 하나씩 뺀다
+       (빼도 가장 덜 나빠지는 것부터). 남은 조합이 신호 없음보다 낫지 않으면 [] (신호 없이 M1)."""
     passing = [c for c in scores if c and beats(scores[c], scores[()])[0]]
-    return list(min(passing, key=lambda c: scores[c]["wape"])) if passing else []
+    if not passing:
+        return []
+    combo = min(passing, key=lambda c: scores[c]["wape"])
+    without = lambda c, g: tuple(x for x in c if x != g)
+    while combo:
+        weak = [g for g in combo if not beats(scores[combo], scores[without(combo, g)])[0]]
+        if not weak:
+            break
+        combo = without(combo, min(weak, key=lambda g: scores[without(combo, g)]["wape"]))
+        if combo and not beats(scores[combo], scores[()])[0]:
+            return []
+    return list(combo)
 
 
 def decide(group: str, signals: list[str], before: dict | None, after: dict | None,
-           adopted: bool | None = None) -> dict:
+           adopted: bool | None = None, note: str | None = None) -> dict:
     """신호 묶음 하나를 넣기 전(before)·후(after)의 교차검증 점수 → SignalDecision 형식의 dict.
 
     adopted를 주지 않으면 beats()의 조건으로 정한다. 조합 선택(run_backtest)은 채택 여부를 정해서 넘기고,
     이 함수는 그 묶음을 넣었을 때와 뺐을 때의 차이로 이유 문장만 만든다.
     """
     label = GROUP_LABELS.get(group, group)
-    if after is None:                                  # 이 매장에 그 신호 자료가 없음
-        return dict(signal_group=group, signals=[], adopted=False, wape_change_pct=0.0,
-                    folds_improved=0, folds_total=0, reason=f"{label} 신호 자료가 아직 없어 평가하지 못함")
+    if after is None:                                  # 자료가 없거나(note 없음) 평가할 수 없음(note)
+        return dict(signal_group=group, signals=list(signals), adopted=False, wape_change_pct=0.0,
+                    folds_improved=0, folds_total=0, reason=f"{label} 신호 {note or '자료가 아직 없어 평가하지 못함'}")
 
     total = len(before["wape_by_fold"])
     passed, improved, change = beats(after, before)
@@ -218,9 +235,12 @@ def decide(group: str, signals: list[str], before: dict | None, after: dict | No
         reason = f"{label} 신호를 넣으니 검증 {total}개 구간 중 {improved}개에서 오차가 줄어 사용함 (전체 오차 {-change:.1f}% 감소)"
     elif change >= 0:
         reason = f"{label} 신호는 이 매장 판매 예측을 개선하지 못해 쓰지 않음 ({total}개 구간 중 {improved}개만 개선)"
-    else:
+    elif improved <= total / 2:
         reason = (f"{label} 신호는 전체 오차를 {-change:.1f}% 줄였지만 {total}개 구간 중 {improved}개에서만 "
                   f"개선돼 우연일 수 있어 쓰지 않음")
+    else:
+        reason = (f"{label} 신호는 전체 오차를 {-change:.1f}% 줄였지만 기준({MIN_GAIN_PCT:.0f}%)보다 작아 "
+                  f"우연한 흔들림과 구분되지 않아 쓰지 않음")
     return dict(signal_group=group, signals=list(signals), adopted=adopted, wape_change_pct=round(change, 2),
                 folds_improved=improved, folds_total=total, reason=reason)
 
@@ -339,9 +359,16 @@ def run_backtest(sales: pd.DataFrame, signals: pd.DataFrame | None = None,
         return key, cache[key]
 
     # 1) 신호 조합 고르기: 자료가 있는 묶음의 모든 조합(묶음 n개면 2^n가지)을 같은 검증 구간에서 비교한다.
-    #    신호 없음(M1)보다 전체 WAPE가 낮고 검증 구간 과반에서 나은 조합 중 WAPE가 가장 낮은 것을 고른다.
+    #    신호 없음(M1)보다 전체 WAPE가 3% 이상 낮고 검증 구간 과반에서 나은 조합 중 WAPE가 가장 낮은 것을 고르고,
+    #    그 안의 묶음마다 '빼면 나빠지는가'를 다시 확인한다 (pick_combo).
     #    (통과하는 조합이 없으면 신호 없이 M1. 1등만 고르면 우연히 좋게 나온 조합을 고를 위험이 커서 이 조건을 둔다)
-    present = [g for g in SIGNAL_GROUPS if signals_in([g], frame)]
+    # 검증 구간 안에서 값이 한 번도 바뀌지 않는 묶음은 효과를 잴 수 없다 → 평가하지 않는다 (예: 기념일이 없던 기간)
+    in_folds = pd.Series(False, index=frame.index)
+    for start, end in plan.folds:
+        in_folds |= (frame["date"] >= start) & (frame["date"] <= end)
+    flat = {g for g in SIGNAL_GROUPS if signals_in([g], frame)
+            and all(frame.loc[in_folds, c].nunique(dropna=True) <= 1 for c in signals_in([g], frame))}
+    present = [g for g in SIGNAL_GROUPS if signals_in([g], frame) and g not in flat]
     combos = [list(c) for r in range(len(present) + 1) for c in combinations(present, r)]
     scores = {tuple(c): cv(c, model_label(c))[1][1] for c in combos}
     adopted = pick_combo(scores)
@@ -349,6 +376,10 @@ def run_backtest(sales: pd.DataFrame, signals: pd.DataFrame | None = None,
     # 묶음마다 이유: 고른 조합에서 그 묶음을 넣었을 때 vs 뺐을 때
     decisions = []
     for group in SIGNAL_GROUPS:
+        if group in flat:
+            decisions.append(decide(group, signals_in([group], frame), None, None,
+                                    note="자료는 있지만 검증 기간에 값이 한 번도 바뀌지 않아 효과를 평가할 수 없음"))
+            continue
         if group not in present:
             decisions.append(decide(group, [], None, None))
             continue

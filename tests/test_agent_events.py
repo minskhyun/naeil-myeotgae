@@ -33,7 +33,15 @@ def test_seoul_events_rules():
     assert rows[0].source_url == "https://x/근처하루"                       # 같은 날이면 먼저 공개된 행사
     assert rows[0].published_at == dt.datetime(2026, 11, 3, 23, 59)         # 등록일 23:59 (보수적으로)
     assert all(r.kind == "event" and r.signal == "nearby_event" for r in rows)
-    assert sorted(i.title for i in items) == ["근처이틀", "근처이틀", "근처하루", "좌표뒤바뀜"]
+    # 긴전시(61일)는 신호가 없고, 기간 안에 여는 날(11/1)이 있어 '새로 엶' 원문 하나만
+    assert sorted(i.title for i in items) == ["[새로 엶] 긴전시", "근처이틀", "근처이틀", "근처하루", "좌표뒤바뀜"]
+
+
+def test_long_event_goes_to_warnings_on_opening_day_only():
+    """긴 행사(41일): 숫자 신호는 없고, 여는 날 원문 하나만 → AI 주의 안내가 '새로 엶'을 알릴 수 있다."""
+    rows, items = seoul_event_signals("s", *STORE, [_seoul("큰팝업", 37.5450, 127.0560, "2026-11-21", "2026-12-31")],
+                                      D1, D2)
+    assert rows == [] and [(str(i.date), i.title) for i in items] == [("2026-11-21", "[새로 엶] 큰팝업")]
 
 
 PAGE = ("성수 팝업 소식", "11월 20일부터 21일까지 성수동 연무장길에서 ○○ 팝업스토어를 연다. 입장은 무료다.")
@@ -96,3 +104,23 @@ def test_read_sources(tmp_path):
     p = tmp_path / "s.txt"
     p.write_text("# 성수 팝업\nhttps://a 2026-11-05\n\nhttps://b\n", encoding="utf-8")
     assert read_sources(p) == [("https://a", dt.datetime(2026, 11, 5)), ("https://b", None)]
+
+
+def test_geocode_saves_hits_and_misses(tmp_path, monkeypatch):
+    """찾은 주소·못 찾은 주소 모두 파일에 저장 → 두 번째는 지도 서비스를 다시 부르지 않는다. 번지부터 줄여 가며 찾는다."""
+    from agent import geocode as g
+    monkeypatch.setattr(g, "CACHE_PATH", tmp_path / "cache.json")
+    monkeypatch.setattr(g, "_cache", None)
+    calls = []
+
+    def search(q):
+        calls.append(q)
+        return {"lat": "37.5", "lon": "127.0", "display_name": "성수이로"} if q == "서울 성동구 성수이로" else None
+    assert g.geocode("서울 성동구 성수이로 75 도레미약국", search=search)[:2] == (37.5, 127.0)
+    assert calls == ["서울 성동구 성수이로 75 도레미약국", "서울 성동구 성수이로 75", "서울 성동구 성수이로"]
+    with pytest.raises(ValueError):
+        g.geocode("없는 곳", search=lambda q: None)
+    monkeypatch.setattr(g, "_cache", None)                                  # 프로그램을 새로 켠 것처럼
+    assert g.geocode("서울 성동구 성수이로 75 도레미약국", search=search)[:2] == (37.5, 127.0) and len(calls) == 3
+    with pytest.raises(ValueError, match="저장된 결과"):
+        g.geocode("없는 곳", search=search)
