@@ -1,0 +1,141 @@
+{
+  "store_id": "fr-bakery",
+  "generated_at": "2026-11-16T23:17:24",
+  "folds": [
+    [
+      "2022-05-14",
+      "2022-06-10"
+    ],
+    [
+      "2022-06-11",
+      "2022-07-08"
+    ],
+    [
+      "2022-07-09",
+      "2022-08-05"
+    ],
+    [
+      "2022-08-06",
+      "2022-09-02"
+    ]
+  ],
+  "test_period": [
+    "2022-09-03",
+    "2022-09-30"
+  ],
+  "cv_scores": [
+    {
+      "model": "M0",
+      "wape": 0.4081317078711796,
+      "mae": 3.8145826911880545,
+      "bias": -0.01618573360155657,
+      "pinball_p10": 0.7449919517791704,
+      "pinball_p90": 1.4397335525189219,
+      "coverage_80": 0.7591698345833762,
+      "n": 9733,
+      "wape_by_fold": [
+        0.5516114233283633,
+        0.38980437923752365,
+        0.37320188617666594,
+        0.3668897188505032
+      ]
+    },
+    {
+      "model": "M1",
+      "wape": 0.29950166042802717,
+      "mae": 2.7992773602668453,
+      "bias": -0.06637313970568894,
+      "pinball_p10": 0.5493518221066505,
+      "pinball_p90": 0.8129716193992687,
+      "coverage_80": 0.7767389294153909,
+      "n": 9733,
+      "wape_by_fold": [
+        0.41810150329847673,
+        0.2798572336912786,
+        0.2804044997893734,
+        0.25772910172203894
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "signal_group": "weather",
+      "signals": [],
+      "adopted": false,
+      "wape_change_pct": 0.0,
+      "folds_improved": 0,
+      "folds_total": 0,
+      "reason": "날씨 신호 자료가 아직 없어 평가하지 못함"
+    },
+    {
+      "signal_group": "events",
+      "signals": [],
+      "adopted": false,
+      "wape_change_pct": 0.0,
+      "folds_improved": 0,
+      "folds_total": 0,
+      "reason": "학사일정·행사 신호 자료가 아직 없어 평가하지 못함"
+    },
+    {
+      "signal_group": "trend",
+      "signals": [],
+      "adopted": false,
+      "wape_change_pct": 0.0,
+      "folds_improved": 0,
+      "folds_total": 0,
+      "reason": "유행 신호 자료가 아직 없어 평가하지 못함"
+    },
+    {
+      "signal_group": "special",
+      "signals": [],
+      "adopted": false,
+      "wape_change_pct": 0.0,
+      "folds_improved": 0,
+      "folds_total": 0,
+      "reason": "기념일 신호 자료가 아직 없어 평가하지 못함"
+    }
+  ],
+  "chosen_model": "M1",
+  "test_scores": [
+    {
+      "model": "M0",
+      "wape": 0.41178880524402106,
+      "mae": 2.8620751023313753,
+      "bias": 0.1183489527321145,
+      "pinball_p10": 1.0175654030966366,
+      "pinball_p90": 1.1583021890016014,
+      "coverage_80": 0.7346502936465563,
+      "n": 1873,
+      "wape_by_fold": [
+        0.41178880524402106
+      ]
+    },
+    {
+      "model": "M1",
+      "wape": 0.30345514241093235,
+      "mae": 2.10911854986947,
+      "bias": 0.017239502843730412,
+      "pinball_p10": 0.42917352083330607,
+      "pinball_p90": 0.6003708597906527,
+      "coverage_80": 0.7560064068339563,
+      "n": 1873,
+      "wape_by_fold": [
+        0.30345514241093235
+      ]
+    }
+  ],
+  "data_note": "판매 기록 600일. 검증 구간에서 M1의 오차가 M0 대비 -26.6% (95% 구간 -33.2~-19.9%, 우연이라 보기 어려움). 범위 보정이 검사한 3개 구간 중 0개만 개선해 쓰지 않음",
+  "calibration": {
+    "method": "conformal-ratio",
+    "adopted": false,
+    "folds_improved": 0,
+    "folds_total": 3,
+    "reason": "범위 보정이 검사한 3개 구간 중 0개만 개선해 쓰지 않음",
+    "n_rows": 9733,
+    "shifts": {},
+    "test_coverage_before": null,
+    "test_coverage_after": null,
+    "test_below_before": null,
+    "test_below_after": null
+  }
+}

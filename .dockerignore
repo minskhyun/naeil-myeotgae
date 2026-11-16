@@ -1,0 +1,17 @@
+# 이미지에 넣지 않는 것: 개인 환경, 비밀 키, 실제 매장 자료와 결과
+.git
+.env
+.venv
+**/__pycache__
+.pytest_cache
+catboost_info
+data/raw
+data/artifacts
+docs
+tests
+frontend/node_modules
+frontend/dist
+*.zip
+*.pdf
+*.docx
+내일몇개_리포트_분석코드

@@ -53,3 +53,24 @@ def test_run_job_finishes(client, tmp_path):
     assert any("predict" in line for line in status["log"])
     assert client.get("/api/stores/sinchon-a/forecast").json()["rows"][0]["date"] == "2025-12-06"
     assert "sinchon-a" not in main.RUNNING
+
+
+def test_demo_mode_is_read_only(client, monkeypatch):
+    """시연 모드: 보기는 되고, 업로드·실행·설정 변경은 403. 저장소의 시연 결과 폴더가 계약 형식을 지킨다."""
+    monkeypatch.setattr(main, "DEMO_MODE", True)
+    assert client.get("/api/config").json() == {"demo_mode": True}
+    assert client.get("/api/stores/sinchon-a/forecast").status_code == 200
+    assert client.post("/api/stores/sinchon-a/demo").status_code == 403
+    assert client.post("/api/stores/sinchon-a/settings", data={"prep_mode": "균형"}).status_code == 403
+    r = client.post("/api/stores/sinchon-a/run", files={"pos": ("pos.csv", b"x", "text/csv")})
+    assert r.status_code == 403
+
+
+def test_demo_data_follows_contracts():
+    from contracts.schemas import BacktestResult, Forecast
+    folder = Path(main.__file__).resolve().parents[1] / "demo_data"
+    stores = sorted(d.name for d in folder.iterdir() if d.is_dir())
+    assert stores == ["fr-bakery", "sinchon-a"]
+    for s in stores:
+        Forecast.model_validate_json((folder / s / "forecast.json").read_text(encoding="utf-8"))
+        BacktestResult.model_validate_json((folder / s / "backtest.json").read_text(encoding="utf-8"))

@@ -41,7 +41,7 @@ function Notice({ w }: { w: Warning }) {
   )
 }
 
-export function ForecastView({ storeId, prepMode }: { storeId: string; prepMode: string }) {
+export function ForecastView({ storeId, prepMode, readOnly = false }: { storeId: string; prepMode: string; readOnly?: boolean }) {
   const { data, error, isLoading } = useQuery({ queryKey: ['forecast', storeId], queryFn: () => api.forecast(storeId) })
   const [jobId, setJobId] = useState<string | null>(null)
   const [jobError, setJobError] = useState<string | null>(null)
@@ -78,17 +78,20 @@ export function ForecastView({ storeId, prepMode }: { storeId: string; prepMode:
           </p>
         </div>
         <div>
-          <p className="mb-1.5 text-sm text-muted">준비 기준 {changing && <span className="text-accent">· 다시 계산 중</span>}</p>
+          <p className="mb-1.5 text-sm text-muted">
+            준비 기준 {changing && <span className="text-accent">· 다시 계산 중</span>}
+            {readOnly && <span className="text-faint"> · 시연용 화면에서는 바꿀 수 없음</span>}
+          </p>
           <div className="flex border border-ink/80" role="group" aria-label="준비 기준">
             {PREP_MODES.map((m, i) => (
               <button
                 key={m}
-                disabled={changing}
+                disabled={changing || readOnly}
                 onClick={() => choose(m)}
                 aria-pressed={m === prepMode}
                 className={`px-3.5 py-1.5 text-sm ${i > 0 ? 'border-l border-ink/80' : ''} ${
                   m === prepMode ? 'bg-ink font-semibold text-white' : 'bg-sheet hover:bg-paper'
-                } disabled:cursor-wait`}
+                } ${readOnly ? 'disabled:cursor-not-allowed' : 'disabled:cursor-wait'}`}
               >
                 {m}
               </button>

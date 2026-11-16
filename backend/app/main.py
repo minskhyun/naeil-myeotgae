@@ -15,8 +15,14 @@
   GET  /api/jobs/{job_id}                  작업 상태 (running / done / error) + 실행 기록
 
 예측 계산은 run.py를 '별도 프로세스'로 실행한다. 서버가 멈추지 않고, 명령줄에서 돌린 것과 결과가 똑같다.
+
+시연 모드 (클라우드 공개용):  DEMO_MODE=1
+  - 보기 전용: 업로드·실행·설정 변경은 403. 예측도 LLM도 돌리지 않으므로 API 키가 필요 없다.
+  - 결과는 backend/demo_data/ (가상 매장·공개 데이터 결과만, 저장소에 들어 있음)
+  - frontend/dist가 있으면 화면도 이 서버가 함께 보여 준다 → 주소 하나로 끝 (Dockerfile 참고)
 """
 import json
+import os
 import re
 import subprocess
 import sys
@@ -26,12 +32,16 @@ from pathlib import Path
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from contracts.schemas import BacktestResult, Forecast
 from ml.predict import PREP_MODES
 
 ROOT = Path(__file__).resolve().parents[2]
-ARTIFACTS = ROOT / "data" / "artifacts"          # 결과 폴더 (테스트에서 바꿔 끼운다)
+DEMO_MODE = os.environ.get("DEMO_MODE") == "1"   # 보기 전용 (클라우드 공개용)
+# 결과 폴더: 시연 모드면 저장소에 든 시연 결과, 아니면 data/artifacts (테스트에서 바꿔 끼운다)
+ARTIFACTS = ROOT / "backend" / "demo_data" if DEMO_MODE else ROOT / "data" / "artifacts"
+WEB_DIST = ROOT / "frontend" / "dist"            # npm run build 결과 (있으면 화면도 함께 제공)
 UPLOADS = ROOT / "data" / "raw" / "uploads"      # 올린 파일 (실제 매장 자료 → 커밋 안 됨)
 STORE_ID = re.compile(r"^[a-z0-9][a-z0-9-]{0,40}$")   # 폴더 이름으로 쓰므로 안전한 글자만
 
@@ -64,6 +74,12 @@ def health():
     return {"ok": True}
 
 
+@app.get("/api/config")
+def config():
+    """화면이 처음에 물어본다: 시연 모드면 '데이터 올리기'와 준비 방식 바꾸기를 숨긴다."""
+    return {"demo_mode": DEMO_MODE}
+
+
 @app.get("/api/stores")
 def stores():
     out = []
@@ -90,6 +106,8 @@ def backtest(store_id: str):
 
 def _start(store_id: str, args: list[str]) -> dict:
     """run.py를 별도 프로세스로 시작하고 작업 번호를 돌려준다."""
+    if DEMO_MODE:
+        raise HTTPException(403, "시연용 화면에서는 예측을 새로 돌릴 수 없습니다.")
     with LOCK:
         if store_id in RUNNING:
             raise HTTPException(409, f"{store_id}는 이미 실행 중입니다. 끝난 뒤 다시 시도하세요.")
@@ -133,6 +151,8 @@ def run_store(store_id: str, pos: UploadFile = File(..., description="POS 엑셀
               collection: UploadFile | None = File(None, description="LLM 경고용 원문 .json (선택)"),
               close_time: str | None = Form(None, description="영업 종료 시각 HH:MM (처음 한 번만 쓰임)")):
     _store_dir(store_id)
+    if DEMO_MODE:
+        raise HTTPException(403, "시연용 화면에서는 파일을 올릴 수 없습니다.")
     if Path(pos.filename or "").suffix.lower() not in (".xlsx", ".xls", ".xlsm", ".csv"):
         raise HTTPException(400, "POS 파일은 엑셀(.xlsx·.xls) 또는 .csv여야 합니다.")
     folder = UPLOADS / store_id
@@ -159,6 +179,8 @@ def run_demo(store_id: str = "sinchon-a"):
 
 @app.post("/api/stores/{store_id}/settings", status_code=202)
 def settings(store_id: str, prep_mode: str = Form(...)):
+    if DEMO_MODE:
+        raise HTTPException(403, "시연용 화면에서는 설정을 바꿀 수 없습니다.")
     if prep_mode not in PREP_MODES:
         raise HTTPException(400, f"준비 방식은 {list(PREP_MODES)} 중 하나여야 합니다.")
     path = _store_dir(store_id) / "store.json"
@@ -174,3 +196,8 @@ def job(job_id: str):
     if job_id not in JOBS:
         raise HTTPException(404, "그런 작업이 없습니다 (서버를 다시 켜면 작업 기록은 사라집니다).")
     return JOBS[job_id]
+
+
+# 빌드된 화면 (맨 마지막에 둔다: /api/... 가 먼저 처리되고, 나머지 주소는 화면 파일)
+if WEB_DIST.exists():
+    app.mount("/", StaticFiles(directory=WEB_DIST, html=True), name="web")

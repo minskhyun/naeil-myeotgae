@@ -95,6 +95,7 @@ async function call<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  config: () => call<{ demo_mode: boolean }>('/config'),
   stores: () => call<StoreInfo[]>('/stores'),
   forecast: (id: string) => call<Forecast>(`/stores/${id}/forecast`),
   backtest: (id: string) => call<Backtest>(`/stores/${id}/backtest`),
