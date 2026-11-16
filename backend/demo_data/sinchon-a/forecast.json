@@ -1,6 +1,6 @@
 {
   "store_id": "sinchon-a",
-  "generated_at": "2026-11-16T22:57:32",
+  "generated_at": "2026-11-16T23:47:11",
   "rows": [
     {
       "date": "2026-11-01",
@@ -216,18 +216,18 @@
       ],
       "situation_type": "대형행사",
       "direction": "증가",
-      "strength": "중간",
+      "strength": "높음",
       "evidence": [
         {
-          "source_url": "https://example.com/news/sinchon-festival-1101",
+          "source_url": "/sample-news/sinchon-festival-1101.html",
           "quote": "서대문구는 11월 1일 일요일 정오부터 오후 8시까지 신촌 연세로 일대에서 '차 없는 거리' 가을 축제를 연다고 밝혔다."
         },
         {
-          "source_url": "https://example.com/news/sinchon-festival-1101",
-          "quote": "지난해 같은 행사에 약 3만 명이 찾았다고 설명했다."
+          "source_url": "/sample-news/sinchon-festival-1101.html",
+          "quote": "지난해 같은 행사에 약 3만 명이 찾았다고 설명했다"
         }
       ],
-      "message": "내일 정오부터 저녁 8시까지 근처 연세로에서 큰 가을 축제가 열려 손님이 평소보다 많아질 수 있으니, 비 예보만 보고 준비량을 너무 줄이지 않도록 주의해 주세요."
+      "message": "내일 정오부터 저녁 8시까지 신촌 연세로에서 큰 가을 축제가 열려 손님이 평소보다 많이 몰릴 수 있으니 재고와 인력을 넉넉히 준비해 보세요."
     }
   ]
 }
