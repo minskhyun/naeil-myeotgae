@@ -61,15 +61,25 @@ def fetch_text(url: str) -> str:
     return "\n".join(ln for ln in lines if ln)
 
 
+def raw_path(source: dict) -> Path:
+    return RAW_DIR / f"{source['school']}_{source['label']}.txt"
+
+
 def load_raw(source: dict, refresh: bool) -> str:
     """원문 텍스트를 돌려준다. 저장된 파일이 있으면 그것을 쓴다."""
-    path = RAW_DIR / f"{source['school']}_{source['label']}.txt"
+    path = raw_path(source)
     if path.exists() and not refresh:
         return path.read_text(encoding="utf-8")
     text = fetch_text(source["url"])
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text, encoding="utf-8")
     return text
+
+
+def fetched_time(source: dict) -> str:
+    """원문 파일을 저장한 시각. 다시 실행해도 원문이 같으면 바뀌지 않는다."""
+    mtime = raw_path(source).stat().st_mtime
+    return dt.datetime.fromtimestamp(mtime, KST).isoformat(timespec="seconds")
 
 
 def _squash(s: str) -> str:
@@ -81,7 +91,7 @@ def extract(source: dict, text: str):
     lo, hi = (dt.date.fromisoformat(d) for d in source["range"])
     items = llm_json(PROMPT.format(hint=source["hint"], range_start=lo, range_end=hi, text=text[:60000]))
     squashed = _squash(text)
-    now = dt.datetime.now(KST).isoformat(timespec="seconds")
+    now = fetched_time(source)
     events = []
     for it in items:
         try:
