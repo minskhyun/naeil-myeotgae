@@ -80,3 +80,14 @@ def test_payload_tells_what_model_already_reflected():
     fc = FC.model_copy(update=dict(rows=rows, signals_used=["rain_mm", "nearby_event"]))
     p = alerts._payload(fc, ITEMS)
     assert p["model_already_reflected"] == {"rain_mm": "비 -20% (예: b)"}     # nearby_event는 반영된 근거 없음
+
+
+def test_menu_scope_is_cleaned(monkeypatch, tmp_path):
+    """LLM이 영향 메뉴를 비우거나 없는 메뉴를 적으면 전체(["*"])로, 실제 메뉴는 그대로 둔다."""
+    def provider(model, user):
+        ws = [_warning("대규모 거리 축제가 열린다") for _ in range(3)]
+        ws[0]["menu_scope"], ws[1]["menu_scope"], ws[2]["menu_scope"] = [], ["없는메뉴"], ["소금빵", "없는메뉴"]
+        return alerts.WarningList(warnings=ws)
+    monkeypatch.setitem(alerts.PROVIDERS, "fake2", provider)
+    monkeypatch.setenv("LLM_PROVIDER", "fake2")
+    assert [w.menu_scope for w in alerts.make_warnings(FC, ITEMS, tmp_path)] == [["*"], ["*"], ["소금빵"]]

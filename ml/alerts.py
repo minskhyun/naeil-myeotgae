@@ -139,4 +139,8 @@ def make_warnings(forecast: Forecast, collection: list[dict], cache_dir: Path,
         result = PROVIDERS[cfg["LLM_PROVIDER"]](cfg["LLM_MODEL"], user)
         cache.parent.mkdir(parents=True, exist_ok=True)
         cache.write_text(result.model_dump_json(indent=1), encoding="utf-8")
-    return [w for w in result.warnings if _quotes_are_real(w, payload["items"])]
+    kept = [w for w in result.warnings if _quotes_are_real(w, payload["items"])]
+    menus = {r.menu for r in forecast.rows}
+    for w in kept:          # 영향 메뉴: 예측에 있는 메뉴 이름만 남기고, 비면 전체(["*"]) — 계약의 약속
+        w.menu_scope = [m for m in w.menu_scope if m in menus] or ["*"]
+    return kept
