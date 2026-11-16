@@ -9,7 +9,7 @@
   GET  /api/stores/{store_id}/forecast     내일 예측 (contracts.Forecast)
   GET  /api/stores/{store_id}/backtest     모델 비교·신호 채택 (contracts.BacktestResult)
 실행 (오래 걸리므로 작업 번호를 주고, 화면이 상태를 물어본다)
-  POST /api/stores/{store_id}/run          POS 파일(+선택: 신호·원문 파일) 업로드 → run.py 전체 실행
+  POST /api/stores/{store_id}/run          POS 파일 + 매장 주소 → run.py 전체 실행 (날씨는 주소로 자동 수집)
   POST /api/stores/{store_id}/demo         가상 데이터로 전체 실행 (시연용)
   POST /api/stores/{store_id}/settings     준비 방식 바꾸기 → predict 단계만 다시
   GET  /api/jobs/{job_id}                  작업 상태 (running / done / error) + 실행 기록
@@ -149,7 +149,8 @@ def _save(upload: UploadFile, folder: Path, name: str) -> Path:
 def run_store(store_id: str, pos: UploadFile = File(..., description="POS 엑셀·CSV (토스·OKPOS)"),
               signals: UploadFile | None = File(None, description="외부 신호 .json/.csv (선택)"),
               collection: UploadFile | None = File(None, description="LLM 경고용 원문 .json (선택)"),
-              close_time: str | None = Form(None, description="영업 종료 시각 HH:MM (처음 한 번만 쓰임)")):
+              close_time: str | None = Form(None, description="영업 종료 시각 HH:MM (처음 한 번만 쓰임)"),
+              address: str | None = Form(None, description="매장 주소 → 날씨·기념일 자동 수집")):
     _store_dir(store_id)
     if DEMO_MODE:
         raise HTTPException(403, "시연용 화면에서는 파일을 올릴 수 없습니다.")
@@ -164,6 +165,8 @@ def run_store(store_id: str, pos: UploadFile = File(..., description="POS 엑셀
         args += ["--collection", str(_save(collection, folder, "collection"))]
     if close_time:
         args += ["--close-time", close_time]
+    if address and address.strip():
+        args += ["--address", address.strip()]
     return _start(store_id, args)
 
 

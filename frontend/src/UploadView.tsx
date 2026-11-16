@@ -45,9 +45,8 @@ function FileRow({ label, hint, file, onPick, accept, required }: {
 export function UploadView({ onDone }: { onDone: (storeId: string) => void }) {
   const [storeId, setStoreId] = useState('seongsu-a')
   const [closeTime, setCloseTime] = useState('21:00')
+  const [address, setAddress] = useState('')
   const [pos, setPos] = useState<File>()
-  const [signals, setSignals] = useState<File>()
-  const [collection, setCollection] = useState<File>()
   const [jobId, setJobId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const job = useJob(jobId, onDone)
@@ -67,11 +66,20 @@ export function UploadView({ onDone }: { onDone: (storeId: string) => void }) {
       <header className="pb-6">
         <p className="text-sm text-muted">데이터 올리기</p>
         <h2 className="mt-0.5 text-3xl font-bold tracking-tight">판매 기록으로 내일 준비표 만들기</h2>
-        <p className="mt-2 text-muted">포스에서 내려받은 파일을 올리면 정리 → 검증 → 내일 예측까지 한 번에 합니다. 1~2분 걸립니다.</p>
+        <p className="mt-2 text-muted">
+          포스에서 내려받은 파일 하나면 됩니다. 날씨·기념일 같은 주변 정보는 매장 주소로 저희가 찾아 붙입니다. 1~2분 걸립니다.
+        </p>
       </header>
 
       <Step n={1} title="매장 정보">
         <div className="grid gap-4 sm:grid-cols-2">
+          <label className="block sm:col-span-2">
+            <span className="text-sm font-medium">매장 주소</span>
+            <input value={address} onChange={(e) => setAddress(e.target.value)}
+              className="mt-1 w-full border border-rule bg-sheet px-3 py-2 focus:border-ink focus:outline-none"
+              placeholder="서울 성동구 성수이로 113" />
+            <span className="mt-1 block text-sm text-faint">이 위치의 날씨 예보를 가져옵니다. 비워 두면 판매 기록만으로 예측합니다</span>
+          </label>
           <label className="block">
             <span className="text-sm font-medium">매장 ID</span>
             <input value={storeId} onChange={(e) => setStoreId(e.target.value.trim())}
@@ -87,25 +95,21 @@ export function UploadView({ onDone }: { onDone: (storeId: string) => void }) {
         </div>
       </Step>
 
-      <Step n={2} title="파일">
+      <Step n={2} title="판매 기록">
         <div className="space-y-2">
-          <FileRow label="POS 판매 기록" hint="엑셀(.xlsx) 또는 CSV — 끌어다 놓아도 됩니다" file={pos} onPick={setPos} required
+          <FileRow label="POS 판매 기록" hint="토스포스·OKPOS에서 내려받은 엑셀(.xlsx) 또는 CSV — 끌어다 놓아도 됩니다" file={pos} onPick={setPos} required
             accept={{
               'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
               'application/vnd.ms-excel': ['.xls'],
               'text/csv': ['.csv'],
             }} />
-          <FileRow label="주변 정보 신호" hint="signals.json — 날씨·행사" file={signals} onPick={setSignals}
-            accept={{ 'application/json': ['.json'], 'text/csv': ['.csv'] }} />
-          <FileRow label="행사·뉴스 원문" hint="collection.json — AI 주의 안내에 씀" file={collection} onPick={setCollection}
-            accept={{ 'application/json': ['.json'] }} />
         </div>
       </Step>
 
       <Step n={3} title="실행">
         <div className="flex flex-wrap items-center gap-3">
           <button disabled={!pos || running}
-            onClick={() => start(() => api.run(storeId, { pos: pos!, signals, collection }, closeTime))}
+            onClick={() => start(() => api.run(storeId, pos!, { closeTime, address: address.trim() }))}
             className="bg-accent px-5 py-2.5 font-semibold text-white hover:bg-accent/90 disabled:cursor-not-allowed disabled:opacity-40">
             준비표 만들기
           </button>

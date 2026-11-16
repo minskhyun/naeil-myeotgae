@@ -1,10 +1,11 @@
 """run.py 전체 실행 테스트 (TASKS.md §4: 전체 실행 테스트·짧은 데이터 테스트)."""
 import json
+from pathlib import Path
 
 import pandas as pd
 import pytest
 
-from contracts.schemas import BacktestResult, Forecast, SalesRow
+from contracts.schemas import BacktestResult, Forecast, SalesRow, SignalRow
 from run import main
 
 
@@ -48,3 +49,37 @@ def test_demo_short_data(tmp_path):
 def test_missing_previous_step_is_explained(tmp_path):
     with pytest.raises(SystemExit, match="ingest"):
         main(["--store", "nowhere", "--from-step", "evaluate", "--artifacts", str(tmp_path)])
+
+
+def _fake_weather(store_id, lat, lon, start, key):
+    """agent.build.collect 대신: 기간 안의 날마다 '전날 17:10 예보' 기온·강수 (인터넷 없이)."""
+    days = pd.date_range(pd.Timestamp(start), "2026-11-02")
+    return [SignalRow(date=d.date(), store_id=store_id, signal=sig, value=v, source_url="https://test",
+                      published_at=d - pd.Timedelta(hours=6, minutes=50), kind="forecast")
+            for d in days for sig, v in (("temp_mean", 10.0 + d.month), ("rain_mm", float(d.day % 5 == 0) * 3))]
+
+
+def test_address_collects_weather_automatically(tmp_path, monkeypatch):
+    """사장님은 POS와 주소만 준다 → 위치를 찾아 store.json에 적고, 날씨를 자동으로 붙인다."""
+    import agent.build
+    import agent.geocode
+    import ml.alerts
+    monkeypatch.setattr(agent.geocode, "geocode", lambda a: (37.5365, 127.0539, "성수동2가, 성동구, 서울"))
+    monkeypatch.setattr(agent.build, "collect", _fake_weather)
+    monkeypatch.setattr(ml.alerts, "settings", lambda: {"DATA_GO_KR_KEY": "test"})
+    pos = Path(__file__).resolve().parents[1] / "data" / "sample" / "sinchon-a" / "pos_raw.csv"
+    out = main(["--store", "test-a", "--pos", str(pos), "--address", "서울 성동구 성수이로 113",
+                "--iterations", "30", "--artifacts", str(tmp_path)])
+    info = json.loads((out / "store.json").read_text(encoding="utf-8"))
+    assert info["address"] == "서울 성동구 성수이로 113" and info["lat"] == 37.5365
+    sig = pd.read_csv(out / "signals.csv")
+    assert set(sig["signal"]) == {"temp_mean", "rain_mm"} and (sig["store_id"] == "test-a").all()
+    bt = BacktestResult.model_validate_json((out / "backtest.json").read_text(encoding="utf-8"))
+    assert any(d.signal_group == "weather" and d.folds_total > 0 for d in bt.decisions)   # 날씨가 평가에 들어감
+
+
+def test_without_address_runs_without_signals(tmp_path, capsys):
+    pos = Path(__file__).resolve().parents[1] / "data" / "sample" / "sinchon-a" / "pos_raw.csv"
+    out = main(["--store", "test-b", "--pos", str(pos), "--iterations", "30", "--artifacts", str(tmp_path)])
+    assert not (out / "signals.csv").exists() and (out / "forecast.json").exists()
+    assert "주변 정보 없음" in capsys.readouterr().out

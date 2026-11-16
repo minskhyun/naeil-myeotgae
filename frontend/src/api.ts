@@ -106,12 +106,12 @@ export const api = {
     form.append('prep_mode', prepMode)
     return call<Job>(`/stores/${id}/settings`, { method: 'POST', body: form })
   },
-  run: (id: string, files: { pos: File; signals?: File; collection?: File }, closeTime?: string) => {
+  // 사장님은 POS 파일과 주소만 준다. 날씨·기념일은 서버가 주소로 자동 수집한다.
+  run: (id: string, pos: File, opts: { closeTime?: string; address?: string }) => {
     const form = new FormData()
-    form.append('pos', files.pos)
-    if (files.signals) form.append('signals', files.signals)
-    if (files.collection) form.append('collection', files.collection)
-    if (closeTime) form.append('close_time', closeTime)
+    form.append('pos', pos)
+    if (opts.closeTime) form.append('close_time', opts.closeTime)
+    if (opts.address) form.append('address', opts.address)
     return call<Job>(`/stores/${id}/run`, { method: 'POST', body: form })
   },
 }
