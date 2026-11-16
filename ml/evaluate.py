@@ -227,7 +227,7 @@ def decide(group: str, signals: list[str], before: dict | None, after: dict | No
 
 # ---------------------------------------------------------------- 범위 보정
 
-CALIB_TAUS = {"p10": 0.1, "p60": 0.6, "p80": 0.8, "p90": 0.9}   # p50(예상 판매량)은 보정하지 않는다
+CALIB_TAUS = {"p10": 0.1, "p40": 0.4, "p60": 0.6, "p80": 0.8, "p90": 0.9}   # p50(예상 판매량)은 보정하지 않는다
 MIN_CALIB_ROWS = 30
 
 
@@ -255,6 +255,9 @@ def apply_calibration(preds: pd.DataFrame, shifts: dict[str, float]) -> pd.DataF
     out = preds.copy()
     for col, s in shifts.items():
         out[col] = out[col] + s * out["base"]
+    if "p40" in out:                                   # 예전 결과(p40 없음)도 읽을 수 있게
+        out["p40"] = np.minimum(out["p40"], out["p50"])
+        out["p10"] = np.minimum(out["p10"], out["p40"])
     out["p10"] = np.minimum(out["p10"], out["p50"]).clip(lower=0)
     out["p60"] = np.maximum(out["p60"], out["p50"])
     out["p80"] = np.maximum(out["p80"], out["p60"])
@@ -263,7 +266,7 @@ def apply_calibration(preds: pd.DataFrame, shifts: dict[str, float]) -> pd.DataF
 
 
 def quantile_loss(preds: pd.DataFrame) -> float:
-    """보정 대상 분위(p10·p60·p80·p90)의 pinball loss 평균. 범위가 '정직하고 좁을수록' 작다."""
+    """보정 대상 분위(p10·p40·p60·p80·p90)의 pinball loss 평균. 범위가 '정직하고 좁을수록' 작다."""
     d = _scored(preds)
     return float(np.mean([pinball(d["qty"], d[c], tau) for c, tau in CALIB_TAUS.items()]))
 

@@ -24,7 +24,7 @@ from ml.features import (DEFAULT_CLOSE_TIME, DERIVED_SIGNALS, ZERO_FILL_KINDS, a
                          load_sales, load_signals)
 from ml.models import base_level, make_model
 
-PREP_MODES = {"폐기 줄이기": "p60", "균형": "p50", "품절 줄이기": "p80"}
+PREP_MODES = {"폐기 줄이기": "p40", "균형": "p50", "품절 줄이기": "p80"}   # 11/16: 폐기 줄이기 p60 → p40 (예상보다 조금 적게)
 REASON_MIN_PCT = 3.0        # 효과가 이보다 작으면 근거로 보여 주지 않는다
 RECENT_DAYS = 28            # 연속값 신호의 '평소 값' = 최근 28일 중앙값
 ZERO_USUAL = {"rain_mm", "temp_diff"}   # 평소 값이 0인 신호 (비 안 옴, 최근 평균과 같은 기온)
@@ -35,7 +35,7 @@ EVENT_TEXT = {"exam_period": "시험기간이라", "vacation": "방학 기간이
 # ---------------------------------------------------------------- 준비량
 
 def prep_qty(q: pd.DataFrame, mode: str = "균형") -> pd.Series:
-    """준비량 = 고른 방식의 분위를 올림한 정수.  폐기 줄이기=p60, 균형=p50, 품절 줄이기=p80."""
+    """준비량 = 고른 방식의 분위를 올림한 정수.  폐기 줄이기=p40, 균형=p50, 품절 줄이기=p80."""
     if mode not in PREP_MODES:
         raise ValueError(f"준비 방식은 {list(PREP_MODES)} 중 하나여야 합니다: {mode!r}")
     # round(…, 6): 40.0000001 같은 계산 찌꺼기가 41로 올림되지 않게

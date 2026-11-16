@@ -2,7 +2,7 @@
 
 모든 모델은 같은 모양으로 쓴다:
     model = make_model("M1").fit(train_frame)
-    out = model.predict(frame)      # DataFrame[p10, p50, p60, p80, p90, pred], frame과 같은 index
+    out = model.predict(frame)      # DataFrame[p10, p40, p50, p60, p80, p90, pred], frame과 같은 index
                                     # pred = p50 (예상 판매량)
 
 - M0  지난주 같은 요일 그대로. 사장님 감과 비슷한 수준 → 이걸 못 이기면 모델이 의미 없다
@@ -17,8 +17,9 @@ from catboost import CatBoostRegressor
 
 from ml.features import CATEGORICAL_FEATURES, SIGNAL_GROUPS, base_level, feature_columns  # base_level은 다른 파일이 models에서도 가져다 씀
 
-QUANTILES = [0.1, 0.5, 0.6, 0.8, 0.9]
-Q_COLS = ["p10", "p50", "p60", "p80", "p90"]
+# p40·p50·p80 = 준비 방식(폐기 줄이기·균형·품절 줄이기), p10·p90 = 화면의 예상 범위, p60 = 범위 보정용
+QUANTILES = [0.1, 0.4, 0.5, 0.6, 0.8, 0.9]
+Q_COLS = ["p10", "p40", "p50", "p60", "p80", "p90"]
 SHORT_DATA_DAYS = 120          # 학습 기간이 이보다 짧으면 '짧은 데이터 모드' (더 단순한 모델)
 
 
@@ -45,10 +46,11 @@ class BaselineM0:
         # 범위: 지난 4주 같은 요일의 최소~최대 (같은 요일 기록이 없으면 범위 없이 p50 하나)
         p10 = frame["same_wd_min_4"].fillna(p50)
         p90 = frame["same_wd_max_4"].fillna(p50)
-        # p60·p80: p50과 p90 사이를 분위 간격대로 직선으로 채운다 (p60은 1/4 지점, p80은 3/4 지점)
+        # 사이 분위는 분위 간격대로 직선으로 채운다: p40은 p50→p10의 1/4 지점, p60·p80은 p50→p90의 1/4·3/4 지점
+        p40 = p50 - (p50 - p10) * 0.25
         p60 = p50 + (p90 - p50) * 0.25
         p80 = p50 + (p90 - p50) * 0.75
-        return _finalize(np.column_stack([p10, p50, p60, p80, p90]), frame.index)
+        return _finalize(np.column_stack([p10, p40, p50, p60, p80, p90]), frame.index)
 
 
 class CatBoostQuantile:

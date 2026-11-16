@@ -15,9 +15,10 @@ GROUPS = ["weather", "events"]
 # ---------------------------------------------------------------- 준비량·문장 (손 계산)
 
 def test_prep_qty_modes():
-    q = pd.DataFrame({"p50": [40.2, 40.0000001], "p60": [42.0, 41.0], "p80": [47.1, 45.0]})
+    q = pd.DataFrame({"p40": [38.1, 37.0], "p50": [40.2, 40.0000001], "p80": [47.1, 45.0]})
     assert prep_qty(q, "균형").tolist() == [41, 40]           # 올림 (계산 찌꺼기 40.0000001은 40)
-    assert prep_qty(q, "폐기 줄이기").tolist() == [42, 41]
+    assert prep_qty(q, "폐기 줄이기").tolist() == [39, 37]     # 예상보다 조금 적게
+    assert (prep_qty(q, "폐기 줄이기") <= prep_qty(q, "균형")).all()
     assert prep_qty(q, "품절 줄이기").tolist() == [48, 45]
     with pytest.raises(ValueError):
         prep_qty(q, "많이")
@@ -82,7 +83,7 @@ def test_without_signals_has_no_reasons(sample):
 
 def test_calibration_widens_range_but_keeps_pred(sample, forecast):
     sales, signals = sample
-    shifts = {"p10": -0.2, "p60": 0.0, "p80": 0.1, "p90": 0.3}
+    shifts = {"p10": -0.2, "p40": -0.05, "p60": 0.0, "p80": 0.1, "p90": 0.3}
     fc = predict_next_day(sales, signals, GROUPS, "M3", calibration=shifts, iterations=30)
     for a, b in zip(forecast.rows, fc.rows):
         assert b.pred == a.pred and b.p10 <= a.p10 and b.p90 > a.p90

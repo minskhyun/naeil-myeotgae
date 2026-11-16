@@ -65,7 +65,7 @@ def _narrow_preds(n=2000, seed=0):
     return pd.DataFrame({
         # 정수(포아송)면 같은 값이 많아 '실제 ≤ 예측' 비율이 계단처럼 튄다 → 연속값으로
         "qty": rng.normal(20, 5, n).clip(0), "sold_out": False, "base": 20.0,
-        "p10": 18.0, "p50": 20.0, "pred": 20.0, "p60": 20.5, "p80": 21.5, "p90": 22.0,
+        "p10": 18.0, "p40": 19.5, "p50": 20.0, "pred": 20.0, "p60": 20.5, "p80": 21.5, "p90": 22.0,
     })
 
 
@@ -78,7 +78,7 @@ def test_calibration_makes_ranges_honest():
     for col, tau in CALIB_TAUS.items():
         assert below_rates(new)[col] == pytest.approx(tau, abs=0.04)
     assert (new["p50"] == 20).all()                         # 예상 판매량은 그대로
-    q = new[["p10", "p50", "p60", "p80", "p90"]].to_numpy()
+    q = new[["p10", "p40", "p50", "p60", "p80", "p90"]].to_numpy()
     assert (np.diff(q, axis=1) >= 0).all() and (q >= 0).all()
 
 

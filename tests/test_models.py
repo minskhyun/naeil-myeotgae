@@ -28,7 +28,7 @@ def test_m0_by_hand():
     })
     out = make_model("M0").fit(f).predict(f)
     assert out["pred"].tolist() == [50, 40, 33, 0]        # lag_7 → 4주 평균 → 7일 평균 → 0
-    assert out.loc[0, ["p10", "p60", "p80", "p90"]].tolist() == [30, 55, 65, 70]
+    assert out.loc[0, ["p10", "p40", "p60", "p80", "p90"]].tolist() == [30, 45, 55, 65, 70]
     assert (out.loc[2, Q_COLS] == 33).all()               # 같은 요일 기록이 없으면 범위 없이 한 값
 
 
@@ -42,7 +42,7 @@ def test_catboost_output_shape_and_order(frame, name):
     assert out.index.equals(test.index)
     q = out[Q_COLS].to_numpy()
     assert (q >= 0).all()                                 # 음수 없음
-    assert (np.diff(q, axis=1) >= 0).all()                # p10 ≤ p50 ≤ p60 ≤ p80 ≤ p90
+    assert (np.diff(q, axis=1) >= 0).all()                # p10 ≤ p40 ≤ p50 ≤ p60 ≤ p80 ≤ p90
 
 
 def test_feature_sets_differ(frame):
