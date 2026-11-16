@@ -1,9 +1,24 @@
 @import "tailwindcss";
 
+/* 색은 다섯 가지만: 종이(배경)·잉크(글자)·흐린 글자·선·강조(진한 초록). 주의는 호박색. */
 @theme {
-  --font-sans: "Pretendard", "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif;
+  --font-sans: "Pretendard Variable", "Pretendard", "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif;
+  --color-paper: #f7f5f0;
+  --color-sheet: #ffffff;
+  --color-ink: #1d1c1a;
+  --color-muted: #6d6a63;
+  --color-faint: #9c988f;
+  --color-rule: #e3dfd6;
+  --color-accent: #1f5c3f;
+  --color-accent-soft: #e6efe9;
+  --color-warn: #8a5a00;
+  --color-warn-soft: #fbf3e2;
+  --color-down: #2f5d8a;
+  --color-up: #a3402c;
 }
 
 body {
-  @apply bg-stone-50 text-stone-800 antialiased;
+  @apply bg-paper text-ink antialiased;
+  font-feature-settings: "tnum";
+  word-break: keep-all;
 }

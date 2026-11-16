@@ -6,7 +6,7 @@ import { ForecastView } from './ForecastView'
 import { UploadView } from './UploadView'
 
 const TABS = [
-  { id: 'forecast', label: '내일 예측' },
+  { id: 'forecast', label: '내일 준비표' },
   { id: 'backtest', label: '얼마나 맞나' },
   { id: 'upload', label: '데이터 올리기' },
 ] as const
@@ -28,59 +28,56 @@ export default function App() {
 
   return (
     <div className="min-h-screen">
-      <header className="border-b border-stone-200 bg-white">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-4">
-          <div>
-            <h1 className="text-xl font-bold text-stone-900">
-              내일몇개 <span className="font-normal text-stone-400">· 내일 몇 개 만들지</span>
-            </h1>
+      <header className="border-b border-ink/80 bg-sheet">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-end justify-between gap-x-8 gap-y-3 px-5 pt-5">
+          <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2">
+            <h1 className="text-xl font-extrabold tracking-tight">내일몇개</h1>
+            <nav className="flex gap-5" aria-label="화면">
+              {TABS.map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => setTab(t.id)}
+                  aria-current={tab === t.id ? 'page' : undefined}
+                  className={`border-b-2 pb-3 text-[15px] ${
+                    tab === t.id ? 'border-ink font-semibold' : 'border-transparent text-muted hover:text-ink'
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </nav>
           </div>
           {!!stores.data?.length && (
-            <select
-              value={storeId ?? ''}
-              onChange={(e) => setStoreId(e.target.value)}
-              className="rounded-xl border border-stone-300 bg-white px-3 py-2 text-sm"
-            >
-              {stores.data.map((s) => (
-                <option key={s.store_id} value={s.store_id}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
+            <label className="mb-2.5 flex items-center gap-2 text-sm text-muted">
+              매장
+              <select
+                value={storeId ?? ''}
+                onChange={(e) => setStoreId(e.target.value)}
+                className="border border-rule bg-sheet px-2 py-1.5 text-ink focus:border-ink focus:outline-none"
+              >
+                {stores.data.map((s) => (
+                  <option key={s.store_id} value={s.store_id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+            </label>
           )}
         </div>
-        <nav className="mx-auto flex max-w-6xl gap-1 px-4">
-          {TABS.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
-              className={`border-b-2 px-4 py-2.5 text-sm font-medium transition ${
-                tab === t.id ? 'border-orange-500 text-orange-600' : 'border-transparent text-stone-500 hover:text-stone-800'
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
-        </nav>
       </header>
 
-      <main className="mx-auto max-w-6xl px-4 py-8">
+      <main className="mx-auto max-w-6xl px-5 py-10">
         {stores.error && (
-          <p className="mb-6 rounded-xl bg-rose-50 p-4 text-sm text-rose-700">
-            백엔드에 연결하지 못했습니다. 프로젝트 맨 위 폴더에서 <code>uvicorn backend.app.main:app --port 8000</code>을 실행하세요.
+          <p className="mb-8 border-l-4 border-up bg-sheet px-4 py-3 text-sm">
+            백엔드에 연결하지 못했습니다. 프로젝트 맨 위 폴더에서{' '}
+            <code className="bg-paper px-1">.venv\Scripts\python.exe -m uvicorn backend.app.main:app --port 8000</code>을 실행하세요.
           </p>
         )}
         {tab === 'forecast' && storeId && <ForecastView storeId={storeId} prepMode={store?.prep_mode ?? '균형'} />}
         {tab === 'backtest' && storeId && <BacktestView storeId={storeId} />}
-        {tab === 'upload' && (
-          <UploadView
-            onDone={(id) => {
-              setStoreId(id)
-            }}
-          />
-        )}
+        {tab === 'upload' && <UploadView onDone={(id) => setStoreId(id)} />}
         {tab !== 'upload' && !storeId && !stores.isLoading && (
-          <p className="text-stone-500">아직 예측 결과가 없습니다. '데이터 올리기'에서 시작하세요.</p>
+          <p className="text-muted">아직 준비표가 없습니다. '데이터 올리기'에서 시작하세요.</p>
         )}
       </main>
     </div>

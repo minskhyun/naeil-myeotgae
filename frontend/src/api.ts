@@ -135,8 +135,8 @@ export const GROUP_LABELS: Record<string, string> = {
 }
 
 export const MODEL_LABELS: Record<string, string> = {
-  M0: '지난주 같은 요일',
-  M1: '판매 기록만',
-  M2: '+ 날씨',
-  M3: '+ 날씨·행사',
+  M0: '지난주 같은 요일만큼',
+  M1: '판매 기록',
+  M2: '판매 기록 + 날씨',
+  M3: '판매 기록 + 날씨·행사',
 }
