@@ -153,3 +153,6 @@ vite.config.ts.timestamp-*
 __pycache__/
 *.db
 data/private/
+
+# Ignore raw data files
+backend/data/raw/seoul_culture/

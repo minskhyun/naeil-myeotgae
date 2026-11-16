@@ -1,0 +1,50 @@
+{
+  "store_id": "shinchon-cafe-a",
+  "created_at": "2026-11-17T05:43:04+09:00",
+  "method": "llm",
+  "model": "gemini-flash-lite-latest",
+  "nearby_fetched_at": "2026-11-17T05:43:01+09:00",
+  "weather": {
+    "use": true,
+    "reason": "모든 매장 기본"
+  },
+  "academic": [
+    {
+      "school": "ewha",
+      "evidence": "이화여자대학교 대학교회",
+      "distance_m": 138,
+      "reason": "매장 반경 200m 이내에 이화여자대학교 관련 시설들이 밀접해 있어 주 이용객이 이대생일 확률이 매우 높습니다."
+    },
+    {
+      "school": "yonsei",
+      "evidence": "연세대학교 의과대학신관",
+      "distance_m": 228,
+      "reason": "매장 인근에 연세대학교 의과대학 및 관련 시설들이 위치하여 연세대 학생과 교직원의 유입이 기대됩니다."
+    }
+  ],
+  "events": {
+    "radius_m": 500,
+    "evidence": [
+      "신촌문화발전소 공연장",
+      "이화여자대학교 ECC 영산극장",
+      "CGV 신촌아트레온",
+      "연세대학교 100주년기념관 콘서트홀"
+    ],
+    "reason": "반경 500m 이내에 대학가 공연장과 문화시설이 다수 위치하여 문화 행사 시 방문객 수요가 증가할 수 있습니다."
+  },
+  "candidates": [
+    {
+      "source": "세브란스병원 외래 진료 일정 및 병원 스케줄",
+      "evidence": "세브란스병원 응급진료센터",
+      "distance_m": 259,
+      "reason": "인근에 대형 종합병원 시설이 있어 환자 보호자 및 의료진의 방문 패턴을 예측하는 데 도움이 됩니다."
+    },
+    {
+      "source": "신촌 지역 상권 유동인구 데이터",
+      "evidence": "신촌역 경의중앙선",
+      "distance_m": 19,
+      "reason": "지하철역을 이용해 신촌 이대 거리와 대학가를 찾는 전체 유동인구의 변동을 파악할 수 있습니다."
+    }
+  ],
+  "validation_notes": []
+}

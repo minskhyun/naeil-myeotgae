@@ -18,11 +18,11 @@ import requests
 from dotenv import load_dotenv
 
 from collectors.holidays import fetch_holidays
+from collectors.store import get_store, plan_schools
 
 FCST_URL = "http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst"
 KST = dt.timezone(dt.timedelta(hours=9))
 BASE_HOURS = [2, 5, 8, 11, 14, 17, 20, 23]   # 하루 8번 발표, 발표 후 약 10분 뒤 조회 가능
-SINCHON = (37.5597, 126.9423)                 # 신촌 연세로 부근
 
 
 def to_grid(lat: float, lon: float):
@@ -123,11 +123,11 @@ def daily_summary(items: list):
     return result
 
 
-def academic_counts(events_path: Path):
+def academic_counts(events_path: Path, schools):
     if not events_path.exists():
         return {}
     from collectors.academic import daily_counts
-    return daily_counts(json.loads(events_path.read_text(encoding="utf-8")))
+    return daily_counts(json.loads(events_path.read_text(encoding="utf-8")), schools)
 
 
 def update_csv(path: Path, forecast: dict, issued_at: str, holidays: dict, counts: dict):
@@ -174,8 +174,9 @@ def update_csv(path: Path, forecast: dict, issued_at: str, holidays: dict, count
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--lat", type=float, default=SINCHON[0])
-    parser.add_argument("--lon", type=float, default=SINCHON[1])
+    parser.add_argument("--store", default=None)
+    parser.add_argument("--lat", type=float, default=None)
+    parser.add_argument("--lon", type=float, default=None)
     parser.add_argument("--daily", default="data/external_daily.csv")
     parser.add_argument("--events", default="data/events.json")
     args = parser.parse_args()
@@ -188,7 +189,10 @@ def main():
     if not path.exists():
         raise SystemExit(f"{path} 가 없습니다. build_external_daily 를 먼저 실행하세요.")
 
-    nx, ny = to_grid(args.lat, args.lon)
+    store = get_store(args.store)
+    lat = args.lat if args.lat is not None else store["lat"]
+    lon = args.lon if args.lon is not None else store["lon"]
+    nx, ny = to_grid(lat, lon)
     base = latest_base(dt.datetime.now(KST))
     print(f"격자 {nx},{ny} / 발표 {base:%Y-%m-%d %H:%M}", flush=True)
 
@@ -198,7 +202,7 @@ def main():
     days = sorted(forecast)
     holidays = fetch_holidays(dt.date.fromisoformat(days[0]) - dt.timedelta(days=7),
                               dt.date.fromisoformat(days[-1]), key)
-    written = update_csv(path, forecast, base.isoformat(), holidays, academic_counts(Path(args.events)))
+    written = update_csv(path, forecast, base.isoformat(), holidays, academic_counts(Path(args.events), plan_schools(store["store_id"])))
     for d in written:
         w = forecast[d]
         print(f"[ok] {d} 평균 {w['temp_mean']}도 (최저 {w['temp_min']}, 최고 {w['temp_max']}), 강수 {w['rain_mm']}mm")

@@ -18,6 +18,7 @@ import requests
 from bs4 import BeautifulSoup
 
 from collectors.llm import llm_json
+from collectors.store import get_store, plan_schools
 
 HERE = Path(__file__).parent
 SOURCES_FILE = HERE / "academic_sources.json"
@@ -164,20 +165,20 @@ def derive_vacations(events: list):
     return vacations
 
 
-def daily_counts(events: list):
-    """날짜별로 시험·방학·축제 중인 학교 수를 센다."""
+def daily_counts(events: list, schools=None):
+    """날짜별로 시험·방학·축제 중인 학교 수를 센다. schools 가 있으면 그 학교만 센다."""
     type_to_col = {"exam": "exam_period", "vacation": "vacation", "festival": "festival"}
-    schools = {}  # (date, col) -> set(school)
+    active = {}  # (date, col) -> set(school)
     for e in events:
         col = type_to_col.get(e["type"])
-        if not col:
+        if not col or (schools is not None and e.get("school") not in schools):
             continue
         d = dt.date.fromisoformat(e["start_date"])
         end = dt.date.fromisoformat(e["end_date"])
         while d <= end:
-            schools.setdefault((d.isoformat(), col), set()).add(e["school"])
+            active.setdefault((d.isoformat(), col), set()).add(e["school"])
             d += dt.timedelta(days=1)
-    return {k: len(v) for k, v in schools.items()}
+    return {k: len(v) for k, v in active.items()}
 
 
 def update_events_json(path: Path, events: list):
@@ -195,7 +196,7 @@ def update_daily_csv(path: Path, counts: dict):
         return
     with path.open(newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
-        fields = [c for c in reader.fieldnames if c not in DAILY_COLUMNS] + DAILY_COLUMNS
+        fields = list(reader.fieldnames) + [c for c in DAILY_COLUMNS if c not in reader.fieldnames]
         rows = list(reader)
     for row in rows:
         for col in DAILY_COLUMNS:
@@ -211,7 +212,10 @@ def main():
     parser.add_argument("--refresh", action="store_true", help="저장된 원문을 무시하고 다시 내려받기")
     parser.add_argument("--events", default="data/events.json")
     parser.add_argument("--daily", default="data/external_daily.csv")
+    parser.add_argument("--store", default=None)
     args = parser.parse_args()
+    store = get_store(args.store)
+    schools = plan_schools(store["store_id"])
 
     sources = json.loads(SOURCES_FILE.read_text(encoding="utf-8"))
     events = []
@@ -241,8 +245,9 @@ def main():
     events += derive_vacations(events)
 
     update_events_json(Path(args.events), events)
-    update_daily_csv(Path(args.daily), daily_counts(events))
+    update_daily_csv(Path(args.daily), daily_counts(events, schools))
     print(f"saved {args.events}: {len(events)} events")
+    print("  CSV 반영 학교: " + (", ".join(schools) if schools is not None else "전체 (정보원 계획 없음)"))
 
 
 if __name__ == "__main__":
