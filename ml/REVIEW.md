@@ -43,6 +43,10 @@
   - **기념일 신호 요청:** `signal="special_day"`, `kind="calendar"`, `value=1`. 발렌타인·화이트데이·빼빼로데이·크리스마스(이브) 등 해당하는 날만 행을 넣는다 (없는 날은 0으로 처리됨).
   - **`collection.json` 형식을 확정해야 한다.** 지금은 `[{"date", "title", "text", "source_url"}]`로 가정했다. `data/artifacts/{store}/collection.json`에 두면 경고가 만들어진다.
 - 실행 명령: `python run.py --store {id} --demo` 또는 `--pos {파일} --signals {파일}`
+- **웹 실행 (11/16):** 터미널 두 개.
+  - 백엔드: 프로젝트 맨 위 폴더에서 `.venv\Scripts\python.exe -m uvicorn backend.app.main:app --port 8000` (API 설명: http://localhost:8000/docs)
+  - 화면: `cd frontend` → (처음 한 번 `npm install`) → `npm run dev` → http://localhost:5173 (`?store=sinchon-a&tab=backtest`처럼 주소로 매장·탭 지정 가능)
+  - 화면의 '/api' 요청은 vite가 8000으로 넘긴다 (`frontend/vite.config.ts`). 예측 실행은 백엔드가 `run.py`를 별도 프로세스로 돌린다.
 - 원문 모음 `collection.json` 형식을 `contracts.CollectionItem`으로 정함 (date, title, text, source_url, 선택 published_at). `run.py --collection`으로 넣는다 (11/16).
 - 신호 파일은 `.json`(SignalRow 객체 목록)도 받는다 (11/15). `run.py --signals`가 읽을 때 형식을 검사하고 이 매장 줄만 `signals.csv`로 저장한다. `+09:00`·`Z`가 붙은 시각은 한국 시간으로 바꾼다.
 
