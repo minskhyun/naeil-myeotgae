@@ -81,9 +81,9 @@ def step_ingest(args, out: Path) -> str:
     # 행사·뉴스 원문: 직접 주거나, data/raw/{store}_collection.json이 있으면 자동으로 (수집기 events.py는 아직 없음)
     auto_collection = ROOT / "data" / "raw" / f"{args.store}_collection.json"
     if args.collection:
-        note += ", " + _import_collection(Path(args.collection), out)
+        note += ", " + _import_collection(Path(args.collection), out, append=True)
     elif auto_collection.exists():
-        note += ", " + _import_collection(auto_collection, out) + " (data/raw에서 자동)"
+        note += ", " + _import_collection(auto_collection, out, append=True) + " (data/raw에서)"
     return note
 
 
@@ -108,21 +108,40 @@ def _store_setup(args, out: Path) -> tuple[dict, str]:
 
 
 def _auto_signals(store_id: str, out: Path, info: dict) -> str:
-    """매장 위치로 날씨(과거=관측 대용, 앞으로=실제 예보)·기념일을 모아 signals.csv로. 실패해도 예측은 계속."""
+    """매장 위치로 주변 정보를 모아 signals.csv(+원문은 collection.json)로. 출처마다 실패해도 예측은 계속.
+      날씨(과거=관측 대용, 앞으로=실제 예보)·기념일: 공공데이터포털 (DATA_GO_KR_KEY)
+      근처 행사: 서울 문화행사 (SEOUL_DATA_KEY) + data/raw/{store}_event_sources.txt의 글 (LLM이 날짜·장소만 뽑음)"""
     if "lat" not in info or "lon" not in info:
-        return "주변 정보 없음 (매장 위치를 모름: 주소를 넣으면 날씨를 자동으로 붙임)"
+        return "주변 정보 없음 (매장 위치를 모름: 주소를 넣으면 날씨·행사를 자동으로 붙임)"
     from agent.build import collect
+    from agent.events import collect_events
     from ml.alerts import settings
-    key = settings().get("DATA_GO_KR_KEY")
-    if not key:
-        return "주변 정보 없음 (.env에 DATA_GO_KR_KEY가 없음)"
-    start = load_sales(out / "sales_clean.csv")["date"].min() - pd.Timedelta(days=35)   # 기온 '최근 28일 평균'용 여유
-    try:
-        rows = collect(store_id, info["lat"], info["lon"], start.strftime("%Y%m%d"), key)
-    except Exception as e:
-        return f"날씨 자동 수집 실패({type(e).__name__}: {str(e)[:80]}) → 주변 정보 없이 진행"
+    cfg = settings()
+    dates = load_sales(out / "sales_clean.csv")["date"]
+    start = dates.min() - pd.Timedelta(days=35)                 # 기온 '최근 28일 평균'용 여유
+    end = max(dates.max(), pd.Timestamp.today().normalize()) + pd.Timedelta(days=7)
+    rows, notes = [], []
+    if cfg.get("DATA_GO_KR_KEY"):
+        try:
+            weather = collect(store_id, info["lat"], info["lon"], start.strftime("%Y%m%d"), cfg["DATA_GO_KR_KEY"])
+            rows += weather
+            notes.append(f"날씨·기념일 {len(weather)}행")
+        except Exception as e:
+            notes.append(f"날씨 실패({type(e).__name__}: {str(e)[:60]})")
+    else:
+        notes.append("날씨 건너뜀(.env에 DATA_GO_KR_KEY 없음)")
+    ev_rows, ev_items, ev_notes = collect_events(
+        store_id, info["lat"], info["lon"], start.date(), end.date(), seoul_key=cfg.get("SEOUL_DATA_KEY"),
+        sources_path=ROOT / "data" / "raw" / f"{store_id}_event_sources.txt")
+    rows += ev_rows
+    notes += ev_notes
+    if ev_items:
+        _save_collection([i.model_dump(mode="json") for i in ev_items], out, append=False)
+        notes.append(f"행사 원문 {len(ev_items)}개")
+    if not rows:
+        return "주변 정보 없음 (" + "; ".join(notes) + ")"
     sig = pd.DataFrame([r.model_dump() for r in rows])
-    return "날씨·기념일 자동 수집 " + _write_signals(sig, store_id, out, "자동 수집")
+    return "주변 정보 자동 수집 " + _write_signals(sig, store_id, out, "자동 수집") + " [" + "; ".join(notes) + "]"
 
 
 def _import_signals(path: Path, store_id: str, out: Path) -> str:
@@ -144,7 +163,15 @@ def _write_signals(sig: pd.DataFrame, store_id: str, out: Path, source: str) -> 
     return note
 
 
-def _import_collection(path: Path, out: Path) -> str:
+def _save_collection(items: list[dict], out: Path, append: bool) -> int:
+    """원문을 out/collection.json에 저장. append면 이미 있는 것(자동 수집분)에 덧붙인다. 저장된 개수를 돌려준다."""
+    path = out / "collection.json"
+    old = json.loads(path.read_text(encoding="utf-8")) if append and path.exists() else []
+    path.write_text(json.dumps(old + items, ensure_ascii=False, indent=1), encoding="utf-8")
+    return len(old) + len(items)
+
+
+def _import_collection(path: Path, out: Path, append: bool = False) -> str:
     """원문 모음(.json, CollectionItem 목록) → 형식 검사 → 공개 시각을 한국 시간으로 → out/collection.json."""
     items = []
     for i, rec in enumerate(json.loads(path.read_text(encoding="utf-8-sig"))):
@@ -156,7 +183,7 @@ def _import_collection(path: Path, out: Path) -> str:
             item.published_at = (pd.Timestamp(item.published_at).tz_convert("Asia/Seoul")
                                  .tz_localize(None).to_pydatetime())
         items.append(item.model_dump(mode="json"))
-    (out / "collection.json").write_text(json.dumps(items, ensure_ascii=False, indent=1), encoding="utf-8")
+    _save_collection(items, out, append)
     return f"원문 {len(items)}개"
 
 

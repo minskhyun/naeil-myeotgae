@@ -7,7 +7,8 @@
   - 날씨(과거): ASOS 관측값을 예보 대신  (start ~ 어제)        ※ 실제 예보가 아님 → 발표·문서에 밝힐 것
   - 날씨(앞으로): 기상청 단기예보 17시 발표본 (내일·모레)      실제 예보가 있는 날짜는 관측값 대용 줄을 버린다
   - 기념일: special_day
-행사(nearby_event)는 아직 없다 (events.py 예정). 출처를 늘리려면 collect()에 한 줄 추가한다.
+  - 근처 행사: agent/events.py (서울 문화행사 + data/raw/{store}_event_sources.txt의 글) → 원문은 {store}_collection.json
+출처를 늘리려면 collect() 또는 events.collect_events()에 한 줄 추가한다.
 """
 import argparse
 import datetime as dt
@@ -61,6 +62,18 @@ def main(argv=None) -> Path:
     if not key:
         raise SystemExit(".env에 DATA_GO_KR_KEY가 없습니다.")
     rows = collect(a.store, a.lat, a.lon, a.start, key)
+    from agent.events import collect_events
+    ev_rows, ev_items, notes = collect_events(
+        a.store, a.lat, a.lon, dt.datetime.strptime(a.start, "%Y%m%d").date(), dt.date.today() + dt.timedelta(days=7),
+        seoul_key=settings().get("SEOUL_DATA_KEY"), sources_path=ROOT / "data" / "raw" / f"{a.store}_event_sources.txt")
+    rows += ev_rows
+    for n in notes:
+        print("  행사:", n)
+    if ev_items:
+        col = ROOT / "data" / "raw" / f"{a.store}_collection.json"
+        col.write_text(json.dumps([i.model_dump(mode="json") for i in ev_items], ensure_ascii=False, indent=1),
+                       encoding="utf-8")
+        print(f"  원문 {len(ev_items)}개 → {col}")
     out = Path(a.out or ROOT / "data" / "raw" / f"{a.store}_signals.json")
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps([r.model_dump(mode="json") for r in rows], ensure_ascii=False, indent=1), encoding="utf-8")
