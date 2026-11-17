@@ -200,8 +200,12 @@ def main():
     if not forecast:
         raise SystemExit("24시간이 모두 있는 예보 날짜가 없습니다.")
     days = sorted(forecast)
-    holidays = fetch_holidays(dt.date.fromisoformat(days[0]) - dt.timedelta(days=7),
-                              dt.date.fromisoformat(days[-1]), key)
+    try:
+        holidays = fetch_holidays(dt.date.fromisoformat(days[0]) - dt.timedelta(days=7),
+                                  dt.date.fromisoformat(days[-1]), key)
+    except Exception as err:   # 특일 정보 API 활용신청 전 등: 공휴일 없이 예보만 넣는다
+        print(f"  [warn] 공휴일 조회 실패, 공휴일 없이 계속: {type(err).__name__}")
+        holidays = {}
     written = update_csv(path, forecast, base.isoformat(), holidays, academic_counts(Path(args.events), plan_schools(store["store_id"])))
     for d in written:
         w = forecast[d]

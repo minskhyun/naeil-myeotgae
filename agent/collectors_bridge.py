@@ -15,6 +15,7 @@
 """
 import datetime as dt
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -54,8 +55,13 @@ def run_collectors(store_id: str, start: dt.date, end: dt.date) -> tuple[bool, l
     cmd = [sys.executable, "-m", "collectors.run_all", "--store", store_id,
            "--start", start.isoformat(), "--end", end.isoformat()]
     proc = subprocess.run(cmd, cwd=BACKEND, capture_output=True, text=True, encoding="utf-8", errors="replace")
-    lines = [l for l in (proc.stdout + proc.stderr).splitlines() if l.strip()]
+    lines = [hide_keys(l) for l in (proc.stdout + proc.stderr).splitlines() if l.strip()]
     return proc.returncode == 0 and DAILY.exists(), lines[-6:]
+
+
+def hide_keys(text: str) -> str:
+    """오류 문장 속 요청 주소의 API 키를 가린다 (실행 기록이 웹 화면에 그대로 보이므로)."""
+    return re.sub(r"(?i)((?:service)?key|apikey|api_key)=[^&\s'\"]+", r"\1=***", text)
 
 
 # ---------------------------------------------------------------- 결과 → 신호

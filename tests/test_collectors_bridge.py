@@ -63,3 +63,9 @@ def test_event_counts_grow_as_events_are_registered(tmp_path):
                   ("2026-11-19", 1.0, dt.datetime(2026, 11, 1, 23, 59))]
     assert sorted({i.title for i in items}) == ["행사a", "행사b"]            # 긴 행사·다른 매장 제외
     assert all(pd.Timestamp(i.date) >= pd.Timestamp("2026-11-18") for i in items)
+
+
+def test_hide_keys_in_logs():
+    from agent.collectors_bridge import hide_keys
+    line = "403 Forbidden for url: http://apis.data.go.kr/x?serviceKey=abc123SECRET&solYear=2026 KEY=zz"
+    assert "abc123SECRET" not in hide_keys(line) and "serviceKey=***&solYear=2026" in hide_keys(line)
