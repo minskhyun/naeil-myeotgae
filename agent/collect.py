@@ -13,7 +13,7 @@
     public_data   날씨·학사일정·서울 문화행사   backend/collectors (새얼) + agent/collectors_bridge.py
     special_days  기념일                      agent/special_days.py
     event_posts   뉴스·블로그·공지의 행사       agent/naver.py(검색) → agent/events.py(LLM 추출) → agent/geocode.py(거리)
-    menu_trend    메뉴 검색량 변화             agent/naver.py
+    menu_trend    메뉴 검색량 유행             agent/naver.py
 """
 import datetime as dt
 from dataclasses import dataclass, field
@@ -80,11 +80,10 @@ def event_posts(job: CollectJob) -> Result:
 
 
 def menu_trend(job: CollectJob) -> Result:
-    """메뉴 이름의 네이버 검색량이 크게 바뀌었으면 원문 한 건씩 (AI 주의 안내용. 모델 입력으로는 쓰지 않음)."""
+    """메뉴 이름의 네이버 검색량 → 메뉴별 유행 신호(trend_level) + 크게 바뀐 메뉴는 AI 주의 안내 원문."""
     if not (naver.has_keys() and job.target and job.menus):
         return [], [], []
-    items, notes = naver.trend_items(job.menus, job.target)
-    return [], items, notes
+    return naver.menu_trend(job.store.store_id, job.menus, job.start, job.target)
 
 
 SOURCES = [("공공 데이터", public_data), ("기념일", special_days), ("행사 글", event_posts), ("메뉴 검색량", menu_trend)]
@@ -101,7 +100,8 @@ def collect_all(store: StoreConfig, start: dt.date, end: dt.date, work_dir: Path
         try:
             r, i, n = source(job)
         except Exception as e:
-            notes.append(f"{name} 실패({type(e).__name__}) → 이 정보 없이 진행")
+            code = getattr(e, "code", "")                       # HTTP 오류면 상태 코드도 남긴다 (예: 429)
+            notes.append(f"{name} 실패({type(e).__name__}{f' {code}' if code else ''}) → 이 정보 없이 진행")
             continue
         rows, items, notes = rows + r, items + i, notes + n
     return rows, items, notes

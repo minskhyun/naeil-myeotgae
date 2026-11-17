@@ -48,7 +48,8 @@ SIGNAL_GROUPS = {
     # 그 늦음을 모델이 알 수 있게 '기간이 바뀐 지 얼마나 됐는지'를 준다 (11/15: 검증 WAPE 0.279→0.219, bias +5%→+1%)
     "events":  ["exam_period", "vacation", "festival", "nearby_event",
                 "exam_period_diff", "vacation_diff", "festival_diff"],
-    "trend":   ["trend_level", "trend_slope"],  # 아직 이 신호를 만드는 수집기가 없다 (메뉴 유행은 AI 주의 안내로만 전달)
+    # 메뉴별 신호: 그 메뉴 이름의 검색량이 '최근 7일 ÷ 그 전 28일' (1 = 평소와 같음). agent/naver.py가 만든다
+    "trend":   ["trend_level"],
     "special": ["special_day"],                # 기념일(발렌타인·빼빼로데이·크리스마스 등)을 하나로 묶은 표시
 }
 ALL_SIGNALS = {name for names in SIGNAL_GROUPS.values() for name in names}
@@ -142,9 +143,15 @@ def _store_trend(frame: pd.DataFrame) -> pd.DataFrame:
 
 # ---------------------------------------------------------------- 4. 외부 신호
 
+def _latest_wide(s: pd.DataFrame, keys: list[str]) -> pd.DataFrame:
+    """(keys, signal)마다 가장 늦게 공개된 값만 남겨 세로형 → 가로형 (신호 이름이 열이 된다)."""
+    return s.sort_values("published_at").groupby(keys + ["signal"])["value"].last().unstack("signal").reset_index()
+
+
 def attach_signals(frame: pd.DataFrame, signals: pd.DataFrame, signal_names: list[str],
                    close_time: str = DEFAULT_CLOSE_TIME) -> pd.DataFrame:
-    """세로형 신호 → (시점 규칙으로 거른 뒤) 가로형으로 바꿔 frame에 붙인다."""
+    """세로형 신호 → (시점 규칙으로 거른 뒤) 가로형으로 바꿔 frame에 붙인다.
+    매장 전체 신호(menu 칸이 빈 것: 날씨·행사)는 그날의 모든 메뉴에, 메뉴별 신호(검색량)는 그 메뉴에만 붙는다."""
     known = set(signals["signal"])
     missing = [n for n in signal_names if n not in known]
     if missing:
@@ -156,10 +163,13 @@ def attach_signals(frame: pd.DataFrame, signals: pd.DataFrame, signal_names: lis
     s = signals[signals["signal"].isin(names)].copy()
     s["issue"] = s["date"] - pd.Timedelta(days=1) + _close_offset(close_time)   # 그 날짜 예측을 내는 시각
     s = s[s["published_at"] <= s["issue"]]                            # ★ 그때 몰랐던 정보는 버린다
-    s = s.sort_values("published_at").groupby(["store_id", "date", "signal"]).last()   # 가장 늦은 발표본
-    wide = s["value"].unstack("signal").reset_index()                 # 세로형 → 가로형
+    per_menu = s["menu"].notna() if "menu" in s else pd.Series(False, index=s.index)
 
-    out = frame.merge(wide, on=["store_id", "date"], how="left")
+    out = frame
+    if (~per_menu).any():
+        out = out.merge(_latest_wide(s[~per_menu], ["store_id", "date"]), on=["store_id", "date"], how="left")
+    if per_menu.any():
+        out = out.merge(_latest_wide(s[per_menu], ["store_id", "date", "menu"]), on=["store_id", "date", "menu"], how="left")
     kinds = signals.groupby("signal")["kind"].agg(set)
     for n in names:
         if n not in out:                                              # 시점 규칙으로 전부 걸러진 신호
@@ -280,5 +290,7 @@ def load_signals(path) -> pd.DataFrame:
         df = pd.DataFrame(json.loads(path.read_text(encoding="utf-8-sig")))
     else:
         df = pd.read_csv(path)
+    menu = df["menu"].astype(object) if "menu" in df else pd.Series(None, index=df.index, dtype=object)
     return df.assign(date=pd.to_datetime(df["date"]).dt.normalize(),
-                     published_at=pd.to_datetime(df["published_at"].map(to_kst)))
+                     published_at=pd.to_datetime(df["published_at"].map(to_kst)),
+                     menu=menu.where(menu.notna(), None))             # 매장 전체 신호는 None (CSV의 빈 칸)

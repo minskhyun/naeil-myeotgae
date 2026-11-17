@@ -3,7 +3,6 @@ import { api, type ModelScore } from './api'
 import { fmtDate, GROUP_LABELS, MODEL_LABELS, pct1 } from './format'
 
 const base = (m: string) => m.slice(0, 2) // "M3(채택 신호만)" → "M3"
-const name = (m: string) => `${MODEL_LABELS[base(m)] ?? m}`
 
 // 가로 막대 한 줄: 이름 · 막대 · 값. 선택한 방법만 강조색.
 function BarRow({ label, value, max, strong }: { label: string; value: number; max: number; strong: boolean }) {
@@ -28,6 +27,11 @@ export function BacktestView({ storeId }: { storeId: string }) {
   const tChosen = test[chosen]
   const tM0 = test.M0
   const cvMax = Math.max(...data.cv_scores.map((s) => s.wape))
+  // 실제로 쓰는 방법의 줄: 고른 신호 조합이 기본 M1~M3와 다르면 '(채택 신호만)' 줄이 따로 있다
+  const picked = data.cv_scores.find((s) => s.model.includes('채택'))?.model ?? data.chosen_model
+  const used = data.decisions.filter((d) => d.adopted).map((d) => GROUP_LABELS[d.signal_group] ?? d.signal_group)
+  // 화면에 보일 이름: 쓰는 방법은 실제로 채택한 정보로 ("판매 기록 + 날씨·유행"), 나머지는 기본 이름
+  const name = (m: string) => (m === picked && used.length ? `판매 기록 + ${used.join('·')}` : (MODEL_LABELS[base(m)] ?? m))
   const gain = tChosen && tM0 ? Math.round((1 - tChosen.wape / tM0.wape) * 100) : null
   const testDays = data.test_period
     ? Math.round((Date.parse(data.test_period[1]) - Date.parse(data.test_period[0])) / 86400000) + 1
@@ -58,7 +62,7 @@ export function BacktestView({ storeId }: { storeId: string }) {
       <dl className="grid border-y border-rule sm:grid-cols-3 sm:divide-x sm:divide-rule">
         <div className="py-4 sm:pr-6">
           <dt className="text-sm text-muted">쓰는 방법</dt>
-          <dd className="mt-1 text-xl font-semibold">{name(chosen)}</dd>
+          <dd className="mt-1 text-xl font-semibold">{name(picked)}</dd>
         </div>
         <div className="border-t border-rule py-4 sm:border-t-0 sm:px-6">
           <dt className="text-sm text-muted">틀린 양 (시험 기간)</dt>
@@ -77,7 +81,7 @@ export function BacktestView({ storeId }: { storeId: string }) {
         <p className="mt-1 text-sm text-muted">검증 기간 {data.folds.length}구간 합계. 틀린 개수의 합 ÷ 실제 판매량의 합, 짧을수록 좋습니다.</p>
         <div className="mt-4">
           {data.cv_scores.map((s) => (
-            <BarRow key={s.model} label={name(s.model)} value={s.wape} max={cvMax} strong={s.model === data.chosen_model} />
+            <BarRow key={s.model} label={name(s.model)} value={s.wape} max={cvMax} strong={s.model === picked} />
           ))}
         </div>
       </section>

@@ -14,7 +14,7 @@ import datetime as dt  # 'date'라는 필드 이름과 datetime.date 타입이 �
 from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 ModelName = Literal["M0", "M1", "M2", "M3"]
 DEFAULT_CLOSE_TIME = "21:00"
@@ -62,10 +62,17 @@ class SignalRow(BaseModel):
     date: dt.date                               # 신호가 '해당하는' 날짜 (예: 비가 오는 날)
     store_id: str
     signal: str                                 # 예: "rain_mm", "exam_period"
+    menu: str | None = None                     # 메뉴별 신호(예: 메뉴 검색량 trend_level)면 메뉴 이름, 매장 전체 신호면 비움
     value: float
     source_url: str
     published_at: dt.datetime                   # 이 값이 '공개된' 시각 → 미래 정보 누수 방지에 씀
     kind: Literal["observed", "forecast", "calendar", "event"]
+
+    @field_validator("menu", mode="before")
+    @classmethod
+    def _blank_menu_means_whole_store(cls, v):
+        """표(DataFrame·CSV)를 거치면 빈 칸이 NaN이나 ""로 바뀐다 → None(매장 전체 신호)으로 읽는다."""
+        return None if v is None or v == "" or v != v else v      # v != v 는 NaN일 때만 참
 
 
 class CollectionItem(BaseModel):

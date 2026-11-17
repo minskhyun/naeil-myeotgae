@@ -10,7 +10,7 @@ export const SIGNAL_LABELS: Record<string, string> = {
   festival: '축제',
   nearby_event: '근처 행사',
   special_day: '기념일',
-  trend_level: '유행',
+  trend_level: '검색량 유행',
 }
 
 export const GROUP_LABELS: Record<string, string> = {
@@ -24,7 +24,7 @@ export const MODEL_LABELS: Record<string, string> = {
   M0: '지난주 같은 요일만큼',
   M1: '판매 기록',
   M2: '판매 기록 + 날씨',
-  M3: '판매 기록 + 날씨·행사',
+  M3: '판매 기록 + 모든 주변 정보',
 }
 
 // ---- 날짜·숫자 모양

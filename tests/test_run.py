@@ -52,15 +52,19 @@ def test_missing_previous_step_is_explained(tmp_path):
 
 
 def _fake_collect(store, start, end, **kw):
-    """실제 수집 대신: 기간 안의 날마다 '전날 17:10 예보' 기온·강수 (인터넷 없이)."""
+    """실제 수집 대신: 기간 안의 날마다 '전날 17:10 예보' 기온·강수 + 소금빵의 검색량 유행 (인터넷 없이)."""
     days = pd.date_range(pd.Timestamp(start), "2026-11-02")
-    return [SignalRow(date=d.date(), store_id=store.store_id, signal=sig, value=v, source_url="https://test",
-                      published_at=d - pd.Timedelta(hours=6, minutes=50), kind="forecast")
-            for d in days for sig, v in (("temp_mean", 10.0 + d.month), ("rain_mm", float(d.day % 5 == 0) * 3))], [], ["가짜"]
+    weather = [SignalRow(date=d.date(), store_id=store.store_id, signal=sig, value=v, source_url="https://test",
+                         published_at=d - pd.Timedelta(hours=6, minutes=50), kind="forecast")
+               for d in days for sig, v in (("temp_mean", 10.0 + d.month), ("rain_mm", float(d.day % 5 == 0) * 3))]
+    trend = [SignalRow(date=d.date(), store_id=store.store_id, signal="trend_level", menu="소금빵",
+                       value=1.0 + (d.day % 7) / 10, source_url="https://test",
+                       published_at=d - pd.Timedelta(hours=15), kind="observed") for d in days]
+    return weather + trend, [], ["가짜"]
 
 
 def test_address_collects_weather_automatically(tmp_path, monkeypatch):
-    """사장님은 POS와 주소만 준다 → 위치를 찾아 store.json에 적고, 날씨를 자동으로 붙인다."""
+    """사장님은 POS와 주소만 준다 → 위치를 찾아 store.json에 적고, 날씨와 메뉴별 유행 신호를 자동으로 붙인다."""
     import agent.collect
     import agent.geocode
     monkeypatch.setattr(agent.geocode, "geocode", lambda a: (37.5365, 127.0539, "성수동2가, 성동구, 서울"))
@@ -71,9 +75,11 @@ def test_address_collects_weather_automatically(tmp_path, monkeypatch):
     info = json.loads((out / "store.json").read_text(encoding="utf-8"))
     assert info["address"] == "서울 성동구 성수이로 113" and info["lat"] == 37.5365
     sig = pd.read_csv(out / "signals.csv")
-    assert set(sig["signal"]) == {"temp_mean", "rain_mm"} and (sig["store_id"] == "test-a").all()
+    assert set(sig["signal"]) == {"temp_mean", "rain_mm", "trend_level"} and (sig["store_id"] == "test-a").all()
+    assert set(sig.loc[sig["signal"] == "trend_level", "menu"]) == {"소금빵"} and sig.loc[sig["signal"] == "rain_mm", "menu"].isna().all()
     bt = BacktestResult.model_validate_json((out / "backtest.json").read_text(encoding="utf-8"))
-    assert any(d.signal_group == "weather" and d.folds_total > 0 for d in bt.decisions)   # 날씨가 평가에 들어감
+    for group in ("weather", "trend"):                                                    # 날씨와 유행이 평가에 들어감
+        assert any(d.signal_group == group and d.folds_total > 0 for d in bt.decisions), group
 
 
 def test_without_address_runs_without_signals(tmp_path, capsys):

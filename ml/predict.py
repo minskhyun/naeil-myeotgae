@@ -9,7 +9,7 @@
 
 고치기 쉬운 곳
   - 준비 방식과 분위: PREP_MODES
-  - 근거 문장: reason_text, EVENT_TEXT (LLM을 쓰지 않는 고정 문장)
+  - 근거 문장: reason_text, EVENT_TEXT (LLM을 쓰지 않는 고정 문장). 새 신호의 '평소 값'은 FIXED_USUAL
 """
 import datetime as dt
 from pathlib import Path
@@ -27,7 +27,8 @@ from ml.paths import ARTIFACTS
 PREP_MODES = {"폐기 줄이기": "p40", "균형": "p50", "품절 줄이기": "p80"}   # 준비 방식 → 준비량으로 쓸 분위
 REASON_MIN_PCT = 3.0        # 효과가 이보다 작으면 근거로 보여 주지 않는다
 RECENT_DAYS = 28            # 연속값 신호의 '평소 값' = 최근 28일 중앙값
-ZERO_USUAL = {"rain_mm", "temp_diff"}   # 평소 값이 0인 신호 (비 안 옴, 최근 평균과 같은 기온)
+# 평소 값이 정해져 있는 신호: 비 안 옴(0), 최근 평균과 같은 기온(0), 평소와 같은 검색량(1배)
+FIXED_USUAL = {"rain_mm": 0.0, "temp_diff": 0.0, "trend_level": 1.0}
 EVENT_TEXT = {"exam_period": "시험기간이라", "vacation": "방학 기간이라",
               "festival": "축제 기간이라", "nearby_event": "근처 행사가 있어", "special_day": "기념일이라"}
 
@@ -51,6 +52,8 @@ def reason_text(signal: str, value: float, pct: float) -> str:
         head = f"비 예보({value:g}mm)로"
     elif signal == "temp_diff":
         head = f"기온이 최근 평균보다 {abs(value):.0f}도 {'높아' if value > 0 else '낮아'}"
+    elif signal == "trend_level":
+        head = f"이 메뉴 검색량이 그 전 4주보다 {abs(value - 1) * 100:.0f}% {'늘어' if value > 1 else '줄어'}"
     elif signal in EVENT_TEXT:
         head = EVENT_TEXT[signal]
     else:
@@ -59,11 +62,13 @@ def reason_text(signal: str, value: float, pct: float) -> str:
 
 
 def usual_values(train: pd.DataFrame, signal_cols: list[str], kinds: dict[str, set]) -> dict[str, float]:
-    """신호마다 '평소 값'.  비·학사일정·행사 = 0 (없는 날이 평소), 기온 등 연속값 = 최근 28일 중앙값."""
+    """신호마다 '평소 값'.  FIXED_USUAL에 있으면 그 값, 학사일정·행사 = 0 (없는 날이 평소), 그 밖의 연속값 = 최근 28일 중앙값."""
     recent = train[train["date"] > train["date"].max() - pd.Timedelta(days=RECENT_DAYS)].drop_duplicates("date")
     usual = {}
     for c in signal_cols:
-        if c in ZERO_USUAL or kinds.get(c, set()) <= ZERO_FILL_KINDS:
+        if c in FIXED_USUAL:
+            usual[c] = FIXED_USUAL[c]
+        elif kinds.get(c, set()) <= ZERO_FILL_KINDS:
             usual[c] = 0.0
         else:
             usual[c] = round(float(recent[c].median()), 1)

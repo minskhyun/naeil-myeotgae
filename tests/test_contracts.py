@@ -21,6 +21,9 @@ def test_signal_row_requires_known_kind_and_published_at():
     ok = SignalRow(date="2026-11-19", store_id="seongsu-a", signal="rain_mm", value=12.0,
                    source_url="https://www.kma.go.kr", published_at="2026-11-18T17:00:00", kind="forecast")
     assert ok.published_at == dt.datetime(2026, 11, 18, 17, 0)
+    assert ok.menu is None                         # 메뉴 칸이 없으면 매장 전체 신호
+    assert SignalRow(**{**ok.model_dump(), "menu": float("nan")}).menu is None    # 표를 거치며 NaN이 된 빈 칸
+    assert SignalRow(**{**ok.model_dump(), "signal": "trend_level", "menu": "소금빵"}).menu == "소금빵"
     with pytest.raises(ValidationError):           # 정해진 4종류 밖의 kind
         SignalRow(**{**ok.model_dump(), "kind": "rumor"})
     with pytest.raises(ValidationError):           # published_at 빠짐

@@ -104,6 +104,26 @@ def test_late_announced_events_are_not_attached(sales, signals):
     assert (f[f["date"].isin(on_time["date"])]["nearby_event"] == 1).all()
 
 
+def test_menu_signal_attaches_only_to_that_menu_and_obeys_timing():
+    """메뉴별 신호(검색량 유행)는 그 메뉴 행에만 붙고, 매장 전체 신호(비)는 모든 메뉴에 붙는다. 시점 규칙도 같다."""
+    days = pd.date_range("2026-01-01", periods=3)
+    sales = pd.DataFrame([dict(date=d, store_id="s", menu=m, qty=5, sold_out=False) for d in days for m in ("빵", "커피")])
+
+    def sig(date, signal, value, published, menu=None):
+        return dict(date=pd.Timestamp(date), store_id="s", signal=signal, menu=menu, value=value, source_url="u",
+                    published_at=pd.Timestamp(published), kind="observed")
+    signals = pd.DataFrame([
+        sig("2026-01-02", "rain_mm", 7.0, "2026-01-01 17:00"),
+        sig("2026-01-02", "trend_level", 1.5, "2026-01-01 09:00", menu="빵"),
+        sig("2026-01-03", "trend_level", 2.0, "2026-01-02 22:00", menu="빵"),     # 전날 영업 종료(21:00) 뒤 공개 → 못 씀
+    ])
+    f = build_frame(sales, signals, ["rain_mm", "trend_level"]).set_index(["date", "menu"])
+    assert f.loc[("2026-01-02", "빵"), "trend_level"] == 1.5
+    assert np.isnan(f.loc[("2026-01-02", "커피"), "trend_level"])                # 다른 메뉴에는 안 붙음
+    assert np.isnan(f.loc[("2026-01-03", "빵"), "trend_level"])                  # 늦게 공개된 값은 버림
+    assert (f.loc["2026-01-02", "rain_mm"] == 7.0).all()                         # 매장 전체 신호는 두 메뉴 모두
+
+
 # ---------------------------------------------------------------- 신호 이름·예측 행·짧은 데이터
 
 def test_unknown_signal_name_only_warns(sales, signals):

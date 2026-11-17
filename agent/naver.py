@@ -7,20 +7,24 @@
    "{동네} 팝업/행사/축제"를 최신순으로 찾아 글 주소와 게시 시각을 돌려준다.
    글 읽기·행사 추출·근거 대조·거리 확인은 agent/events.page_event_signals가 그대로 한다 (사람이 모은 글과 같은 길).
    게시 시각: 뉴스는 pubDate, 블로그는 작성일 23:59 (시각이 없어 보수적으로)
-2. 메뉴 검색량 유행 → LLM 주의 안내용 원문 (모델 입력으로는 아직 쓰지 않음, 11/17 결정 A안)
-   메뉴 이름으로 데이터랩 검색어 트렌드(날짜별)를 받아 '최근 7일 평균'을 '그 전 4주 평균'과 비교,
-   TREND_ALERT_PCT% 이상 바뀌면 그 사실을 원문 한 건으로 만든다 → ml/alerts.py가 '유행급변' 안내 여부를 판단.
+2. 메뉴 검색량 유행 → 메뉴별 유행 신호 trend_level (모델 입력 후보) + AI 주의 안내용 원문
+   메뉴 이름으로 데이터랩 검색어 트렌드(날짜별)를 받아 날짜마다 '최근 7일 평균 ÷ 그 전 4주 평균'을 만든다.
+   - 신호: 다른 신호와 똑같이, 과거 검증에서 오차를 줄일 때만 모델이 쓴다 (ml/evaluate.py)
+   - 원문: 예측 날짜에 TREND_ALERT_PCT% 이상 바뀐 메뉴 → ml/alerts.py가 '유행급변' 안내 여부를 판단
 """
 import datetime as dt
 import json
 import re
+import time
+import urllib.error
 import urllib.parse
 import urllib.request
 from email.utils import parsedate_to_datetime
 
+import numpy as np
 import pandas as pd
 
-from contracts.schemas import CollectionItem, StoreConfig
+from contracts.schemas import CollectionItem, SignalRow, StoreConfig
 from ml.llm import settings
 
 HOST = "https://naverapihub.apigw.ntruss.com"
@@ -31,9 +35,11 @@ PER_QUERY = 10                          # 검색어마다 최신 글 몇 개
 MAX_ARTICLES = 20                       # 한 번에 읽을 글 수 상한 (글마다 LLM 1번, 같은 글은 캐시)
 EVENT_WORDS = re.compile(r"팝업|오픈|개최|행사|축제|전시|공연|마켓|페스티벌|플리마켓|체험|운영")
 DATE_LIKE = re.compile(r"\d{1,2}\s*월\s*\d{1,2}\s*일|\d{1,2}[./]\d{1,2}|\d{1,2}일(?:부터|까지|~)")
-TREND_ALERT_PCT = 30.0                  # 검색량이 이만큼(%) 넘게 바뀌면 원문으로 넘긴다
-TREND_MIN_LEVEL = 1.0                   # 그 전 4주 평균이 이보다 작으면(거의 안 찾는 말) 건너뜀
-MAX_TREND_MENUS = 10                    # 판매량 상위 메뉴만 (요청 하나에 키워드 묶음 5개까지)
+TREND_LAG_DAYS = 2                      # D일 유행 신호는 D-2일까지의 검색량으로 만든다 (시점 규칙)
+TREND_ALERT_PCT = 30.0                  # 검색량이 이만큼(%) 넘게 바뀌면 AI 주의 안내 원문으로도 넘긴다
+TREND_MIN_LEVEL = 1.0                   # 그 전 4주 평균이 이보다 작으면(거의 안 찾는 말) 신호를 만들지 않음
+MAX_TREND_MENUS = 20                    # 판매량 상위 메뉴만 (메뉴 하나에 요청 한 번)
+RETRIES = 3                             # 요청이 몰려 잠깐 막히면(429·5xx) 쉬었다가 다시 시도하는 횟수
 
 
 def _keys() -> dict[str, str]:
@@ -56,8 +62,14 @@ def _request(path: str, params: dict | None = None, body: dict | None = None) ->
     url = HOST + path + ("?" + urllib.parse.urlencode(params) if params else "")
     data = json.dumps(body).encode("utf-8") if body is not None else None
     headers = dict(_keys(), **({"Content-Type": "application/json"} if body is not None else {}))
-    with urllib.request.urlopen(urllib.request.Request(url, data=data, headers=headers), timeout=30) as r:
-        return json.loads(r.read().decode("utf-8"))
+    for attempt in range(RETRIES):
+        try:
+            with urllib.request.urlopen(urllib.request.Request(url, data=data, headers=headers), timeout=30) as r:
+                return json.loads(r.read().decode("utf-8"))
+        except urllib.error.HTTPError as e:
+            if e.code not in (429, 500, 502, 503, 504) or attempt == RETRIES - 1:
+                raise
+            time.sleep(2 * (attempt + 1))              # 2초, 4초 쉬고 다시
 
 
 # ---------------------------------------------------------------- 1. 뉴스·블로그
@@ -127,43 +139,77 @@ def menu_keyword(menu: str) -> str:
 
 
 def fetch_trend(menus: list[str], start: dt.date, end: dt.date, post=None) -> dict[str, pd.Series]:
-    """메뉴 → 날짜별 검색량(상대값) Series. 요청 하나에 5개씩."""
+    """메뉴 → 날짜별 검색량 Series (start~end, 그 검색어가 가장 많이 찾아진 날 = 100인 상대값).
+    - 검색어 하나당 요청 하나: 여러 검색어를 한 요청에 넣으면 가장 많이 찾는 말 기준으로 눌려 작은 검색어가 뭉개진다.
+    - 검색어가 같은 메뉴(아이스·핫)는 한 번만 받는다.
+    - 가운데 빠진 날은 0(아무도 안 찾음), 아직 집계되지 않은 끝쪽 날짜는 빈 값(NaN).
+    - 요청이 실패한 검색어의 메뉴는 결과에서 빠진다 (나머지 메뉴는 계속)."""
     post = post or (lambda body: _request(TREND, body=body))
+    days = pd.date_range(start, end)
+    by_keyword: dict[str, pd.Series | None] = {}
     out = {}
-    for i in range(0, len(menus), 5):
-        groups = [{"groupName": m, "keywords": [menu_keyword(m)]} for m in menus[i:i + 5] if menu_keyword(m)]
-        if not groups:
+    for menu in menus:
+        kw = menu_keyword(menu)
+        if not kw:
             continue
-        res = post({"startDate": start.isoformat(), "endDate": end.isoformat(), "timeUnit": "date",
-                    "keywordGroups": groups})
-        for r in res.get("results", []):
-            s = pd.Series({pd.Timestamp(d["period"]): float(d["ratio"]) for d in r.get("data", [])}, dtype=float)
-            out[r["title"]] = s.reindex(pd.date_range(start, end), fill_value=0.0)
+        if kw not in by_keyword:
+            try:
+                res = post({"startDate": start.isoformat(), "endDate": end.isoformat(), "timeUnit": "date",
+                            "keywordGroups": [{"groupName": kw, "keywords": [kw]}]})
+            except Exception:
+                by_keyword[kw] = None
+                continue
+            data = (res.get("results") or [{}])[0].get("data", [])
+            got = pd.Series({pd.Timestamp(d["period"]): float(d["ratio"]) for d in data}, dtype=float)
+            full = got.reindex(days, fill_value=0.0)
+            full[days > got.index.max() if len(got) else days >= days[0]] = np.nan
+            by_keyword[kw] = full
+        if by_keyword[kw] is not None:
+            out[menu] = by_keyword[kw]
     return out
 
 
-def trend_items(menus: list[str], target: dt.date, today: dt.date | None = None, post=None,
-                now: dt.datetime | None = None) -> tuple[list[CollectionItem], list[str]]:
-    """메뉴마다 '최근 7일(어제까지) 평균' vs '그 전 28일 평균' → 많이 바뀐 메뉴만 원문 한 건씩 (날짜 = 예측 날짜)."""
+def trend_level(searches: pd.Series, until: dt.date) -> pd.Series:
+    """날짜 D마다 '최근 7일 평균 검색량 ÷ 그 전 28일 평균 검색량' (1 = 평소와 같음, 1.5 = 50% 늘어남).
+    ★ D일 값은 D-2일까지의 검색량만 쓴다 (TREND_LAG_DAYS): D일 예측을 내는 D-1일 저녁에 확실히 볼 수 있는 것은
+      그 전날(D-2)까지의 집계이므로.  최근 7일 = D-8 ~ D-2,  그 전 28일 = D-36 ~ D-9.
+    평소 검색량이 TREND_MIN_LEVEL보다 작은 말(거의 안 찾는 말)은 비율이 크게 튀므로 빈 값으로 둔다."""
+    s = searches.reindex(pd.date_range(searches.index.min(), until))
+    recent = s.rolling(7, min_periods=4).mean().shift(TREND_LAG_DAYS)
+    before = s.rolling(28, min_periods=14).mean().shift(TREND_LAG_DAYS + 7)
+    return (recent / before).where(before >= TREND_MIN_LEVEL)
+
+
+def menu_trend(store_id: str, menus: list[str], start: dt.date, target: dt.date, post=None,
+               today: dt.date | None = None) -> tuple[list[SignalRow], list[CollectionItem], list[str]]:
+    """판매량 상위 메뉴의 검색량 → (유행 신호 줄, 주의 안내 원문, 메모).
+      신호 줄: 메뉴마다 start~target의 날짜별 trend_level (모델 입력 후보. 검증에서 도움이 될 때만 채택됨)
+      원문:   예측 날짜(target)에 검색량이 TREND_ALERT_PCT% 넘게 바뀐 메뉴만 한 건씩 (AI 주의 안내의 재료)
+    공개 시각은 D-1일 09:00으로 적는다 (D-2일까지의 집계가 나온 뒤)."""
     today = today or dt.date.today()
-    end = today - dt.timedelta(days=1)
-    start = end - dt.timedelta(days=34)
-    now = now or dt.datetime.now().replace(microsecond=0)
-    series = fetch_trend(menus[:MAX_TREND_MENUS], start, end, post)
-    items, changed = [], []
-    for menu, s in series.items():
-        recent, before = s.iloc[-7:].mean(), s.iloc[-35:-7].mean()
-        if before < TREND_MIN_LEVEL:
+    first = start - dt.timedelta(days=TREND_LAG_DAYS + 35)                       # 첫날의 '그 전 28일'까지
+    last = min(target - dt.timedelta(days=TREND_LAG_DAYS), today - dt.timedelta(days=1))
+    menus = menus[:MAX_TREND_MENUS]
+    series = fetch_trend(menus, first, last, post)
+    rows, items, changed = [], [], []
+    for menu, searches in series.items():
+        level = trend_level(searches, target)[pd.Timestamp(start):].dropna()
+        for day, value in level.items():
+            published = (day - pd.Timedelta(days=1) + pd.Timedelta(hours=9)).to_pydatetime()
+            rows.append(SignalRow(date=day.date(), store_id=store_id, signal="trend_level", menu=menu,
+                                  value=round(float(value), 3), source_url=TREND_PAGE, published_at=published,
+                                  kind="observed"))
+        now_level = level.get(pd.Timestamp(target))
+        if now_level is None or abs(now_level - 1) * 100 < TREND_ALERT_PCT:
             continue
-        pct = (recent / before - 1) * 100
-        if abs(pct) < TREND_ALERT_PCT:
-            continue
-        kw = menu_keyword(menu)
-        a, b = s.index[-7].date(), s.index[-1].date()
-        text = (f"네이버 데이터랩 검색어 트렌드에서 '{kw}' 검색량은 최근 7일({a}~{b}) 평균이 "
+        pct = (now_level - 1) * 100
+        a, b = target - dt.timedelta(days=TREND_LAG_DAYS + 6), target - dt.timedelta(days=TREND_LAG_DAYS)
+        text = (f"네이버 데이터랩 검색어 트렌드에서 '{menu_keyword(menu)}' 검색량은 최근 7일({a}~{b}) 평균이 "
                 f"그 전 4주 평균보다 {abs(pct):.0f}% {'늘었다' if pct > 0 else '줄었다'}.")
         items.append(CollectionItem(date=target, title=f"검색량 변화: {menu}", text=text, source_url=TREND_PAGE,
-                                    published_at=now))
+                                    published_at=dt.datetime.combine(target - dt.timedelta(days=1), dt.time(9))))
         changed.append(f"{menu} {pct:+.0f}%")
-    note = f"메뉴 검색량 {len(series)}개 확인" + (f", 크게 바뀐 메뉴: {', '.join(changed)}" if changed else ", 크게 바뀐 메뉴 없음")
-    return items, [note]
+    note = (f"메뉴 검색량 {len(series)}개" + (f"(요청 실패 {len(menus) - len(series)}개)" if len(series) < len(menus) else "")
+            + f" → 유행 신호 {len({r.menu for r in rows})}개 메뉴"
+            + (f", 크게 바뀐 메뉴: {', '.join(changed)}" if changed else ", 크게 바뀐 메뉴 없음"))
+    return rows, items, [note]

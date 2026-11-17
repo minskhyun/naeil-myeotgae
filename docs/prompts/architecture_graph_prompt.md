@@ -43,7 +43,7 @@
      - `agent/special_days.py` → 기념일 신호
      - `agent/naver.py` → NAVER API HUB 뉴스·블로그 검색 → 글 주소 목록
      - `agent/events.py` → 글(사람이 적은 `data/raw/{매장}_event_sources.txt` + 네이버 검색 글)을 읽고 LLM(Claude)이 날짜·장소 추출 → `agent/geocode.py`로 거리 확인 → 근처 행사 신호 + 원문
-     - `agent/naver.py` → NAVER API HUB 검색어 트렌드(메뉴 검색량) → '검색량 변화' 원문
+     - `agent/naver.py` → NAVER API HUB 검색어 트렌드(메뉴 검색량) → 메뉴별 유행 신호(`trend_level`, 모델 입력 후보) + '검색량 변화' 원문
   5. 결과 → `data/artifacts/{매장}/signals.csv` (신호), `collection.json` (AI 주의 안내용 원문)
 ### evaluate
 - `ml/evaluate.py` (`run_backtest`) → `ml/features.py`(입력 표 `build_frame`, 시점 규칙) → `ml/models.py`(M0 기준선, CatBoost 다중 분위) → 시간순 교차검증 → 신호 조합 선택(`choose_signals`·`pick_combo`) → 범위 보정(`ml/calibration.py`) → 최종 테스트 1회 → `data/artifacts/{매장}/backtest.json`. 점수 계산은 `ml/metrics.py`

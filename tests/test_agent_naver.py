@@ -1,5 +1,8 @@
-"""agent/naver.py 테스트 (인터넷 없이): 동네 이름, 메뉴 검색어, 뉴스·블로그 게시 시각·중복, 검색량 변화 계산."""
+"""agent/naver.py 테스트 (인터넷 없이): 동네 이름, 메뉴 검색어, 뉴스·블로그 게시 시각·중복, 메뉴별 유행 신호."""
 import datetime as dt
+
+import pandas as pd
+import pytest
 
 from agent import naver
 from contracts.schemas import StoreConfig
@@ -32,22 +35,39 @@ def test_news_sources_times_dedupe_and_order(monkeypatch):
                      ("https://n/1", dt.datetime(2026, 11, 1, 23, 59))]       # 같은 글은 더 이른 게시 시각으로
 
 
-def test_trend_items_flags_big_changes_only():
-    today = dt.date(2026, 11, 17)
-    days = [today - dt.timedelta(days=k) for k in range(35, 0, -1)]            # 10/13 ~ 11/16 (35일)
+def test_trend_level_uses_searches_only_up_to_two_days_before():
+    """검색량이 11/10부터 10 → 20으로 뛰었을 때: 11/11(D)에는 아직 모르고(D-2 = 11/9까지만 봄), 11/12부터 반영된다."""
+    days = pd.date_range("2026-10-01", "2026-11-16")
+    searches = pd.Series([10.0 if d < pd.Timestamp("2026-11-10") else 20.0 for d in days], index=days)
+    level = naver.trend_level(searches, dt.date(2026, 11, 18))
+    assert level["2026-11-11"] == pytest.approx(1.0)                          # 최근 7일 = 11/3~11/9, 모두 10
+    assert level["2026-11-12"] == pytest.approx((6 * 10 + 20) / 7 / 10)       # 최근 7일 = 11/4~11/10, 하루만 20
+    assert level["2026-11-18"] == pytest.approx(2.0)                          # 최근 7일 = 11/10~11/16, 모두 20
+    assert level.index.max() == pd.Timestamp("2026-11-18")                    # 예측 날짜까지 값이 있다
 
-    def series(before, recent):
-        return [dict(period=d.isoformat(), ratio=before if i < 28 else recent) for i, d in enumerate(days)]
 
-    def post(body):
-        data = {"소금빵": series(10, 15), "베이글": series(10, 11), "단팥빵": series(0.5, 5)}
-        return {"results": [dict(title=g["groupName"], data=data[g["groupName"]]) for g in body["keywordGroups"]]}
-    items, notes = naver.trend_items(["소금빵", "베이글", "단팥빵"], dt.date(2026, 11, 18), today=today, post=post,
-                                     now=dt.datetime(2026, 11, 17, 18))
-    assert [i.title for i in items] == ["검색량 변화: 소금빵"]                 # +50%만 (베이글 +10%, 단팥빵은 거의 안 찾음)
+def test_menu_trend_makes_signals_and_flags_big_changes():
+    calls = []
+
+    def post(body):                                                           # 11/10부터 검색량이 바뀌는 가짜 응답
+        kw = body["keywordGroups"][0]["keywords"][0]
+        calls.append(kw)
+        before, recent = {"소금빵": (10, 15), "베이글": (10, 11), "단팥빵": (0.5, 5), "아메리카노": (10, 10)}[kw]
+        days = pd.date_range(body["startDate"], body["endDate"])
+        return {"results": [dict(title=kw, data=[dict(period=str(d.date()), ratio=before if d < pd.Timestamp("2026-11-10")
+                                                      else recent) for d in days])]}
+
+    menus = ["소금빵", "베이글", "단팥빵", "아메리카노(ICE)", "아메리카노(HOT)"]
+    rows, items, notes = naver.menu_trend("s", menus, dt.date(2026, 11, 10), dt.date(2026, 11, 18), post=post,
+                                          today=dt.date(2026, 11, 17))
+    assert calls.count("아메리카노") == 1                                      # 아이스·핫은 검색어가 같아 한 번만 받음
+    assert {r.menu for r in rows} == {"소금빵", "베이글", "아메리카노(ICE)", "아메리카노(HOT)"}   # 단팥빵은 거의 안 찾는 말
+    last = next(r for r in rows if r.menu == "소금빵" and r.date == dt.date(2026, 11, 18))
+    assert (last.signal, last.value, last.kind) == ("trend_level", 1.5, "observed")
+    assert last.published_at == dt.datetime(2026, 11, 17, 9, 0)               # D-1일 아침 (예측 시각보다 앞)
+    assert [i.title for i in items] == ["검색량 변화: 소금빵"]                 # +50%만 주의 안내로 (베이글 +10%)
     assert "50% 늘었다" in items[0].text and items[0].date == dt.date(2026, 11, 18)
     assert "소금빵 +50%" in notes[0]
-
 
 
 def test_place_queries_try_address_and_names_first():
