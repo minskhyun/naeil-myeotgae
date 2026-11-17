@@ -1,0 +1,11 @@
+{
+ "store_id": "fr-bakery",
+ "generated_at": "2026-11-17T14:45:34",
+ "plan": null,
+ "n_nearby": null,
+ "signals": [],
+ "articles": [],
+ "notes": [
+  "공개 실데이터(프랑스 빵집, Kaggle)입니다. 주변 정보는 붙이지 않고 판매 기록만으로 예측했습니다."
+ ]
+}

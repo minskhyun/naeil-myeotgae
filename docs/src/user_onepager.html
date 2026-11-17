@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>내일몇개 사장님 안내</title>
+<style>
+  @page { size: A4; margin: 11mm 13mm; }
+  :root { --ink:#1f2430; --mute:#606878; --line:#dfe3ea; --acc:#d9622b; --acc-bg:#fff3ec; --blue:#2f5fb3; --blue-bg:#eef3fb; --warn:#9a5b00; --warn-bg:#fff7e6; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:"Malgun Gothic","맑은 고딕",sans-serif; color:var(--ink); font-size:9.5pt; line-height:1.44; background:#fff; }
+  h1 { font-size:20pt; margin:0; letter-spacing:-0.5px; }
+  h1 span { color:var(--acc); }
+  .lead { font-size:10.4pt; color:var(--mute); margin:2px 0 9px; }
+  h2 { font-size:11pt; margin:9px 0 5px; padding-left:7px; border-left:4px solid var(--acc); }
+  .steps { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+  .step { background:var(--acc-bg); border-radius:7px; padding:7px 9px; }
+  .step .n { display:inline-block; width:19px; height:19px; border-radius:50%; background:var(--acc); color:#fff; text-align:center; font-weight:700; font-size:9pt; line-height:19px; margin-right:4px; }
+  .step b { font-size:10pt; }
+  .step p { margin:3px 0 0; color:var(--mute); font-size:8.8pt; }
+  .two { display:grid; grid-template-columns: 1.05fr 1fr; gap:12px; }
+  .card { border:1.3px solid var(--line); border-radius:8px; padding:8px 10px; margin-bottom:6px; }
+  .card .menu { font-weight:700; font-size:11pt; }
+  .big { font-size:19pt; font-weight:700; color:var(--blue); }
+  .row { display:flex; gap:14px; align-items:baseline; margin:2px 0 4px; }
+  .pill { display:inline-block; background:var(--blue-bg); color:var(--blue); border-radius:10px; padding:0 7px; font-size:8.6pt; font-weight:700; }
+  .why { font-size:8.8pt; color:var(--ink); margin:2px 0 0; padding-left:12px; }
+  .why li { margin:1px 0; }
+  .src { color:var(--blue); font-size:8.2pt; }
+  .warncard { border-color:#f0c36d; background:var(--warn-bg); }
+  .warncard .t { font-weight:700; color:var(--warn); }
+  .q { font-size:8.6pt; color:var(--mute); margin-top:3px; }
+  .tag { font-size:7.8pt; color:var(--mute); }
+  table { border-collapse:collapse; width:100%; font-size:9pt; }
+  td { padding:4px 6px; border-bottom:1px solid var(--line); vertical-align:top; }
+  td:first-child { font-weight:700; white-space:nowrap; width:31%; }
+  ul.plain { margin:0; padding-left:15px; } ul.plain li { margin:2px 0; }
+  .stat { display:flex; gap:10px; align-items:center; background:var(--blue-bg); border-radius:7px; padding:7px 10px; }
+  .stat .v { white-space:nowrap; font-size:17pt; font-weight:700; color:var(--blue); line-height:1.1; text-align:center; }
+  .stat .v small { display:block; font-size:8pt; font-weight:400; color:var(--mute); }
+  .small { font-size:8.4pt; color:var(--mute); }
+  .foot { margin-top:8px; padding-top:5px; border-top:1px solid var(--line); font-size:8.2pt; color:var(--mute); }
+</style>
+</head>
+<body>
+<h1>내일몇개 · <span>“내일 몇 개 만들까?”</span>를 알려 드려요</h1>
+<div class="lead">가게 판매 기록과 날씨·주변 행사·메뉴 유행을 함께 보고, 내일 메뉴별로 얼마나 팔릴지와 몇 개 준비하면 좋을지 알려 드립니다.</div>
+
+<h2>이렇게 돌아가요</h2>
+<div class="steps">
+  <div class="step"><span class="n">1</span><b>판매 기록과 주소만 주세요</b><p>포스(토스·OKPOS)에서 내려받은 엑셀을 그대로 올리고 가게 주소를 적으시면 됩니다. 다른 준비는 필요 없어요.</p></div>
+  <div class="step"><span class="n">2</span><b>주변 정보는 저희가 찾아요</b><p>가게 주변을 살펴 날씨 예보, 근처 팝업·행사 소식, 학교 시험·방학 일정, 메뉴 검색량(유행)을 자동으로 모읍니다.</p></div>
+  <div class="step"><span class="n">3</span><b>내일 준비표가 나와요</b><p>메뉴마다 내일 예상 판매량, 예상 범위, 준비 권장량과 그 이유를 보여 드립니다.</p></div>
+</div>
+
+<div class="two">
+<div>
+<h2>화면은 이렇게 보여요 <span class="tag">(예시 · 가상 매장)</span></h2>
+<div class="card">
+  <div class="menu">아이스 아메리카노</div>
+  <div class="row"><span>내일 예상 <span class="big">24</span>잔</span><span class="pill">보통 17~33잔 사이</span></div>
+  <div><b>준비 권장 25잔</b> <span class="small">(준비 방식: 균형)</span></div>
+  <ul class="why">
+    <li>비 예보(9.7mm)로 평소보다 약 20% 적게 예상 <span class="src">[출처]</span></li>
+    <li>기온이 최근 평균보다 12도 낮아 평소보다 약 16% 적게 예상</li>
+  </ul>
+</div>
+<div class="card warncard">
+  <div class="t">⚠ 주의 · 큰 행사 · 손님 늘 수 있음</div>
+  <div>내일 근처에서 큰 팝업 행사가 열려 손님이 평소보다 많을 수 있어요.</div>
+  <div class="q">근거: “11월 21일부터 23일까지 성수동 ○○길에서 팝업스토어를 운영합니다” <span class="src">[원문 보기]</span></div>
+</div>
+
+<h2>숫자 읽는 법</h2>
+<table>
+  <tr><td>내일 예상</td><td>가장 그럴듯한 판매량입니다.</td></tr>
+  <tr><td>보통 ○~○ 사이</td><td>실제 판매가 대부분 이 범위 안에 듭니다. 범위가 넓으면 그만큼 내일이 불확실하다는 뜻이에요.</td></tr>
+  <tr><td>이유</td><td>날씨·행사·유행처럼 평소와 다른 점이 예상을 얼마나 바꿨는지입니다. 이 가게의 지난 기록으로 확인해, 예측을 실제로 더 정확하게 만든 정보만 씁니다.</td></tr>
+  <tr><td>⚠ 주의</td><td>숫자에 반영하기 어려운 특별한 소식을 원문과 함께 알려 드립니다. 이 안내는 예상 숫자를 바꾸지 않아요.</td></tr>
+  <tr><td>주변 정보</td><td>이 가게를 위해 어떤 정보를 왜 모았는지, 찾은 행사·뉴스가 무엇인지 따로 보여 드립니다.</td></tr>
+</table>
+</div>
+
+<div>
+<h2>준비 방식은 사장님이 고르세요</h2>
+<table>
+  <tr><td>폐기 줄이기</td><td>남는 게 아까울 때. 예상보다 조금 적게 준비합니다.</td></tr>
+  <tr><td>균형</td><td>예상만큼 준비합니다. 남는 날과 모자라는 날이 비슷해요.</td></tr>
+  <tr><td>품절 줄이기</td><td>품절이 싫을 때. 10번 중 8번은 모자라지 않을 만큼 넉넉히 준비합니다.</td></tr>
+</table>
+
+<h2>얼마나 맞나요?</h2>
+<div class="stat"><div class="v">10번 중<br>7~8번<small>76%</small></div><div>실제 빵집 한 곳의 600일 기록으로 시험했을 때, 실제 판매량이 저희가 보여 드린 <b>“보통 ○~○ 사이”</b> 범위 안에 든 비율입니다. <span class="small">(마지막 4주, 그날그날 전날까지의 기록만 보고 예측)</span></div></div>
+<ul class="plain small" style="margin-top:4px">
+  <li>기록이 한 달뿐이면 범위가 넓어지고, 기록이 쌓일수록 좁고 정확해집니다.</li>
+  <li>모든 가게에서 같은 결과를 약속하지는 않습니다. 가게마다 결과를 따로 확인해서 화면의 ‘얼마나 맞나’에 그대로 보여 드려요.</li>
+</ul>
+
+<h2>이럴 때는 직접 판단해 주세요</h2>
+<ul class="plain">
+  <li>처음 파는 신메뉴 (기록이 며칠 쌓일 때까지는 불안정해요)</li>
+  <li>단체 주문, 가게 앞 공사처럼 저희가 알 수 없는 일</li>
+  <li>성수기가 막 시작되거나 끝날 때</li>
+</ul>
+
+<h2>알려 주시면 더 정확해져요</h2>
+<ul class="plain">
+  <li>영업이 끝나는 시간 · 지금 팔고 있는 메뉴</li>
+  <li>메뉴 이름을 바꾸셨을 때 (예: 아메리카노(ICE) → 아이스 아메리카노)</li>
+  <li>메뉴별로 하루에 굽는 개수 (품절을 더 정확히 알아내요)</li>
+</ul>
+</div>
+</div>
+
+<div class="foot"><b>데이터는 이렇게 다뤄요.</b> 판매 기록은 이 가게의 예측에만 쓰고 외부에 공개하지 않습니다. 주변 정보를 찾을 때 가게 주소와 메뉴 이름은 지도·검색 서비스로, 가게 이름·업종·주변 시설 목록과 메뉴별 예상 요약·주변 소식은 AI 서비스로 전달됩니다. 판매 기록 자체는 전달하지 않으며, AI는 판매량 숫자를 만들거나 바꾸지 않습니다.</div>
+</body>
+</html>

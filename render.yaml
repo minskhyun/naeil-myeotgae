@@ -1,0 +1,13 @@
+# Render 설정 (Blueprint): 저장소를 연결하면 이 파일대로 만든다.
+# 시연 모드(보기 전용)라서 API 키를 넣지 않는다.
+services:
+  - type: web
+    name: naeil-myeotgae
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    branch: ml-engine
+    healthCheckPath: /api/health
+    envVars:
+      - key: DEMO_MODE
+        value: "1"

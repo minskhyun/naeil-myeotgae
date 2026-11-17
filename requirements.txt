@@ -1,0 +1,15 @@
+# 프로젝트 전체가 쓰는 파이썬 패키지 (예측 엔진, 수집기, 웹 API, 테스트)
+#   pip install -r requirements.txt
+numpy>=2.0
+pandas>=2.2
+catboost>=1.2             # 예측 모델 (ml/models.py)
+pydantic>=2.6             # 팀 공통 데이터 형식 (contracts/schemas.py)
+openpyxl>=3.1             # POS 엑셀(.xlsx) 읽기
+anthropic>=1.0            # Claude: 정보원 선택, 학사일정·행사 글 추출, AI 주의 안내
+requests>=2.32            # 공공 데이터 수집기 (backend/collectors)
+python-dotenv>=1.0        # 수집기가 맨 위 .env를 읽을 때
+fastapi>=0.115            # 웹 API (backend/app)
+uvicorn>=0.30             # 웹 서버 실행
+python-multipart>=0.0.9   # 파일 업로드
+httpx>=0.27               # 웹 API 테스트 (TestClient)
+pytest>=8
