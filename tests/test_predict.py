@@ -25,9 +25,9 @@ def test_prep_qty_modes():
 
 
 def test_reason_text():
-    assert reason_text("rain_mm", 12.0, 0.0, -13.4) == "비 예보(12mm)로 평소보다 약 13% 적게 예상"
-    assert reason_text("nearby_event", 1.0, 0.0, 18.0) == "근처 행사가 있어 평소보다 약 18% 많이 예상"
-    assert reason_text("temp_diff", -11.9, 0.0, -14.2) == "기온이 최근 평균보다 12도 낮아 평소보다 약 14% 적게 예상"
+    assert reason_text("rain_mm", 12.0, -13.4) == "비 예보(12mm)로 평소보다 약 13% 적게 예상"
+    assert reason_text("nearby_event", 1.0, 18.0) == "근처 행사가 있어 평소보다 약 18% 많이 예상"
+    assert reason_text("temp_diff", -11.9, -14.2) == "기온이 최근 평균보다 12도 낮아 평소보다 약 14% 적게 예상"
 
 
 # ---------------------------------------------------------------- 내일 예측

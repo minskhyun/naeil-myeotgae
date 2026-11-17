@@ -90,3 +90,19 @@ def test_examples_follow_contracts():
         SignalRow.model_validate(rec)
     BacktestResult.model_validate_json((EXAMPLES / "backtest.json").read_text(encoding="utf-8"))
     Forecast.model_validate_json((EXAMPLES / "forecast.json").read_text(encoding="utf-8"))
+
+
+# ---------------------------------------------------------------- 매장 설정 (store.json)
+
+def test_store_config_defaults_and_keeps_unknown_fields(tmp_path):
+    """store.json은 사람이 직접 고칠 수 있다: 빠진 칸은 기본값, 모르는 칸은 다시 저장해도 그대로 남는다."""
+    import json
+    from contracts.schemas import StoreConfig
+    path = tmp_path / "store.json"
+    path.write_text('{"store_id": "s", "memo": "사장님 메모"}', encoding="utf-8")
+    store = StoreConfig.read(path)
+    assert (store.close_time, store.prep_mode, store.menus, store.lat) == ("21:00", "균형", None, None)
+    store.prep_mode = "품절 줄이기"
+    store.write(path)
+    saved = json.loads(path.read_text(encoding="utf-8"))
+    assert saved["memo"] == "사장님 메모" and saved["prep_mode"] == "품절 줄이기" and "lat" not in saved

@@ -28,7 +28,7 @@
 ### ingest
 - `ml/ingest.py`: POS 엑셀·CSV → `data/artifacts/{매장}/sales_clean.csv` (머리글 찾기, 메뉴명 정리, 0개 판매 채우기, 휴무 제외, 품절 추정)
 - 매장 설정 `data/artifacts/{매장}/store.json` 만들기·고치기. 주소 → 좌표는 `agent/geocode.py` (카카오 → 안 되면 OpenStreetMap)
-- 주변 정보 자동 수집: `agent/collectors_bridge.py`의 `collect_all`
+- 주변 정보 자동 수집: `agent/collect.py`의 `collect_all` (정보원 목록 `SOURCES`를 차례로 실행: public_data → special_days → event_posts → menu_trend). 아래 1~3은 public_data가 `agent/collectors_bridge.py`를 통해 하는 일
   1. 매장별 수집 폴더 `data/artifacts/{매장}/collectors/`에 `stores.json`(이 매장 하나) 쓰기
   2. 공공 데이터 수집기 실행: `python -m collectors.run_all` (backend/에서, 별도 프로세스, 환경 변수 `COLLECTORS_WORK_DIR`=위 폴더 → 결과가 모두 그 폴더에 생김). `run_all.py`가 순서대로 부름:
      - `kakao.py` → 카카오 로컬 API → `{매장}_nearby.json` (주변 시설)
@@ -46,14 +46,14 @@
      - `agent/naver.py` → NAVER API HUB 검색어 트렌드(메뉴 검색량) → '검색량 변화' 원문
   5. 결과 → `data/artifacts/{매장}/signals.csv` (신호), `collection.json` (AI 주의 안내용 원문)
 ### evaluate
-- `ml/evaluate.py` (`run_backtest`) → `ml/features.py`(입력 표 `build_frame`, 시점 규칙) → `ml/models.py`(M0 기준선, CatBoost 다중 분위) → 시간순 교차검증 → 신호 조합 선택(`pick_combo`) → 범위 보정 → 최종 테스트 1회 → `data/artifacts/{매장}/backtest.json`
+- `ml/evaluate.py` (`run_backtest`) → `ml/features.py`(입력 표 `build_frame`, 시점 규칙) → `ml/models.py`(M0 기준선, CatBoost 다중 분위) → 시간순 교차검증 → 신호 조합 선택(`choose_signals`·`pick_combo`) → 범위 보정(`ml/calibration.py`) → 최종 테스트 1회 → `data/artifacts/{매장}/backtest.json`. 점수 계산은 `ml/metrics.py`
 ### predict
 - `ml/predict.py` (`predict_from_backtest`) → `features.py`·`models.py`로 다시 학습 → 내일 예측, 근거 문장, 준비량 → `ml/alerts.py` (`collection.json` + Claude → AI 주의 안내, 인용문 원문 대조) → `data/artifacts/{매장}/forecast.json`
 - `ml/llm.py`: `.env` 설정 읽기(`settings`) + Claude 호출·응답 저장(`ask`). `ml/alerts.py`와 `agent/events.py`가 LLM을 부를 때, `agent/geocode.py`·`agent/naver.py`가 키를 읽을 때 씀
 
 ## 공통·기타
-- `contracts/schemas.py`: 팀 공통 데이터 형식 (SalesRow, SignalRow, CollectionItem, Forecast, BacktestResult, Warning). ml·agent·backend가 모두 씀 → 그림 B에서는 노드 하나로 두고 '형식 사용' 점선만 몇 개 그리세요 (모든 파일에 연결하면 복잡해짐)
-- `ml/calendar_kr.py`: 공휴일 목록 (`features.py`가 씀), `ml/sample_data.py`: 가상 매장 생성 → `data/sample/sinchon-a/`
+- `contracts/schemas.py`: 팀 공통 데이터 형식 (StoreConfig = store.json, SalesRow, SignalRow, CollectionItem, Forecast, BacktestResult, Warning). ml·agent·backend가 모두 씀 → 그림 B에서는 노드 하나로 두고 '형식 사용' 점선만 몇 개 그리세요 (모든 파일에 연결하면 복잡해짐)
+- `ml/calendar_kr.py`: 공휴일 목록 (`features.py`가 씀), `ml/sample_data.py`: 가상 매장 생성 → `data/sample/sinchon-a/`, `ml/paths.py`: 폴더 위치(ROOT·SAMPLE·RAW·ARTIFACTS, 여러 파일이 가져다 씀 → 그림에는 그리지 않고 표에만)
 - 시연 배포: `Dockerfile`이 화면을 빌드해 `backend/app/main.py`가 함께 제공. `DEMO_MODE=1`이면 보기 전용, 결과는 `backend/demo_data/`. `render.yaml`로 Render에 배포
 - 키: 맨 위 `.env` 하나 (Claude, 공공데이터포털, 서울 열린데이터, 카카오, 네이버 API HUB)
 
@@ -83,12 +83,12 @@ contracts/
 - examples/: backtest.json·forecast.json·sales.csv·signals.csv (화면·백엔드 개발용 예시 파일)
 
 ml/
-- ingest.py, features.py, models.py, evaluate.py, predict.py, alerts.py, llm.py (위 흐름 참고)
-- calendar_kr.py: 공휴일 목록 / sample_data.py: 가상 매장 만들기 / __init__.py
+- ingest.py, features.py, models.py, metrics.py, calibration.py, evaluate.py, predict.py, alerts.py, llm.py (위 흐름 참고)
+- calendar_kr.py: 공휴일 목록 / sample_data.py: 가상 매장 만들기 / paths.py: 폴더 위치 / __init__.py
 - TASKS.md: 예측 엔진 개발 명세 / REVIEW.md: 판단·확인 목록, 진행 기록
 
 agent/
-- collectors_bridge.py: 공공 데이터 수집기 실행 + 결과 변환 / events.py: 행사 글 LLM 추출 / naver.py: 네이버 검색·검색어 트렌드
+- collect.py: 주변 정보 수집의 입구(정보원 목록 SOURCES) / collectors_bridge.py: 공공 데이터 수집기 실행 + 결과 변환 / events.py: 행사 글 LLM 추출 / naver.py: 네이버 검색·검색어 트렌드
 - geocode.py: 주소·장소 → 좌표 / special_days.py: 기념일 / __init__.py
 
 backend/
@@ -103,7 +103,7 @@ backend/
 frontend/
 - index.html: 화면 시작 페이지(제목·글꼴) / vite.config.ts: /api 프록시
 - package.json·package-lock.json: 화면 패키지 / tsconfig.json·tsconfig.app.json·tsconfig.node.json: 타입 검사 설정 / eslint.config.js: 코드 검사 / .gitignore
-- src/: main.tsx, App.tsx, api.ts, useJob.ts, format.ts, ForecastView.tsx, BacktestView.tsx, UploadView.tsx, index.css(색·글꼴)
+- src/: main.tsx, App.tsx, api.ts(타입·요청), useJob.ts, format.ts(이름표·날짜·퍼센트), ForecastView.tsx, BacktestView.tsx, UploadView.tsx, index.css(색·글꼴)
 - public/favicon.svg: 아이콘 / public/sample-news/: 시연용 가상 기사 4개
 
 data/
@@ -112,7 +112,7 @@ data/
 - artifacts/{매장}/ (커밋 안 함): store.json, sales_clean.csv, ingest_log.json(읽기 기록), menu_merge_candidates.json(메뉴명 통일 후보), collectors/(수집기 결과: stores.json, external_daily.csv, events.json, {매장}_nearby.json, {매장}_sources.json), signals.csv, collection.json, backtest.json, forecast.json, llm_cache/(AI 주의 안내 응답 저장)
 
 tests/
-- test_*.py 19개 + fixtures/(시험용 POS 파일): 모듈마다 자동 테스트. 그림에는 그리지 않고 표에만 한 줄
+- test_*.py 16개 + fixtures/(시험용 POS 파일): 모듈마다 자동 테스트. 그림에는 그리지 않고 표에만 한 줄
 </전체 파일 목록>
 
 <그리는 규칙>

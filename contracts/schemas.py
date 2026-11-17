@@ -1,23 +1,49 @@
-"""팀 공통 데이터 형식 (파트 사이에 주고받는 데이터의 '계약').
+"""팀 공통 데이터 형식 (파트 사이에 주고받는 데이터의 '계약'). 파일 하나 = 클래스 하나.
 
-누가 쓰고 누가 읽나
-- SalesRow        ml/ingest.py가 만듦 → ml 전체가 읽음
-- SignalRow       agent/(새얼)가 만듦 → ml/features.py가 읽음
-- CollectionItem  agent/가 모은 원문 → ml/alerts.py가 LLM 경고에 씀
-- Forecast        ml/predict.py가 만듦 → backend/(석현)가 읽어 화면에 보여 줌
-- BacktestResult  ml/evaluate.py가 만듦 → 모델 비교 화면이 읽음
+    파일 (data/artifacts/{매장}/)   형식            만드는 곳                    읽는 곳
+    store.json                     StoreConfig     run.py, 웹의 준비 기준 변경    run.py, 웹 API
+    sales_clean.csv                SalesRow        ml/ingest.py                  ml 전체
+    signals.csv                    SignalRow       agent/ (주변 정보 수집)        ml/features.py
+    collection.json                CollectionItem  agent/ (행사·뉴스 원문)        ml/alerts.py
+    backtest.json                  BacktestResult  ml/evaluate.py                웹 '얼마나 맞나'
+    forecast.json                  Forecast        ml/predict.py + ml/alerts.py  웹 '내일 준비표'
 
-이 파일을 바꾸면 반드시 팀에 공유한다. 한쪽만 바꾸면 다른 쪽 코드가 깨진다.
-
-※ 로컬 개발용으로 다시 만든 버전이다. 기존 SalesRow·SignalRow·Reason·ForecastRow·Forecast는
-  PROJECT_CONTEXT.md의 설명을 보고 복원했으므로, 팀 저장소의 원본과 필드가 다를 수 있다.
+이 파일을 바꾸면 화면(frontend/src/api.ts)의 타입과 contracts/examples/ 예시도 같이 고친다.
 """
 import datetime as dt  # 'date'라는 필드 이름과 datetime.date 타입이 부딪히지 않게 모듈째로 가져온다
+from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 ModelName = Literal["M0", "M1", "M2", "M3"]
+DEFAULT_CLOSE_TIME = "21:00"
+DEFAULT_PREP_MODE = "균형"
+
+
+# ---------------------------------------------------------------- 매장 설정
+
+class StoreConfig(BaseModel):
+    """매장 하나의 설정 → store.json. 사람이 직접 열어 고쳐도 되는 파일이다 (모르는 칸은 지우지 않고 그대로 둔다)."""
+    model_config = ConfigDict(extra="allow")
+
+    store_id: str
+    name: str | None = None                     # 화면에 보일 이름 (없으면 store_id)
+    close_time: str = DEFAULT_CLOSE_TIME        # 영업 종료 시각 "HH:MM" → 이 시각까지 공개된 정보만 내일 예측에 씀
+    prep_mode: str = DEFAULT_PREP_MODE          # 준비 기준: "폐기 줄이기" / "균형" / "품절 줄이기"
+    address: str | None = None                  # 주소 → 위도·경도를 찾아 주변 정보를 모음
+    lat: float | None = None
+    lon: float | None = None
+    category: str = "카페"                       # 업종 (정보원 선택 에이전트에게 알려 줌)
+    menus: list[str] | None = None              # 지금 파는 메뉴 (없으면 최근 14일 안에 팔린 메뉴 전부)
+    area_keywords: list[str] | None = None      # 뉴스 검색에 쓸 동네 이름 (없으면 주소에서 뽑음)
+
+    @classmethod
+    def read(cls, path) -> "StoreConfig":
+        return cls.model_validate_json(Path(path).read_text(encoding="utf-8"))
+
+    def write(self, path) -> None:
+        Path(path).write_text(self.model_dump_json(indent=1, exclude_none=True), encoding="utf-8")
 
 
 # ---------------------------------------------------------------- 입력: 판매·신호
@@ -32,7 +58,7 @@ class SalesRow(BaseModel):
 
 
 class SignalRow(BaseModel):
-    """외부 신호 한 줄 (세로형: 신호 하나당 한 행)."""
+    """외부 신호 한 줄 (세로형: 신호 하나당 한 행). 신호 이름은 ml/features.py의 SIGNAL_GROUPS에 있는 것만 모델이 쓴다."""
     date: dt.date                               # 신호가 '해당하는' 날짜 (예: 비가 오는 날)
     store_id: str
     signal: str                                 # 예: "rain_mm", "exam_period"
@@ -43,7 +69,7 @@ class SignalRow(BaseModel):
 
 
 class CollectionItem(BaseModel):
-    """에이전트가 모은 원문 하나 (collection.json의 한 항목). LLM 경고의 재료이고, 모델 변수로는 쓰지 않는다."""
+    """모은 원문 하나 (collection.json의 한 항목). AI 주의 안내의 재료이고, 모델 변수로는 쓰지 않는다."""
     date: dt.date                               # 이 자료가 해당하는 날 (예: 행사가 열리는 날)
     title: str
     text: str = Field(min_length=1)             # 원문 그대로 (요약하지 않음). 경고의 인용문을 이 글과 대조한다
@@ -68,7 +94,7 @@ class ForecastRow(BaseModel):
     pred: float = Field(ge=0)                   # 예상 판매량 (= p50)
     p10: float = Field(ge=0)                    # 10%의 날은 이보다 적게 팔림
     p90: float = Field(ge=0)                    # 90%의 날은 이보다 적게 팔림
-    prep_qty: int | None = Field(default=None, ge=0)   # 권장 준비량 (준비량 기능 전에는 None)
+    prep_qty: int | None = Field(default=None, ge=0)   # 권장 준비량
     model: ModelName
     reasons: list[Reason] = Field(default_factory=list)
 
@@ -85,7 +111,7 @@ class Evidence(BaseModel):
 
 
 class Warning(BaseModel):  # noqa: A001  (파이썬 내장 Warning과 이름이 같음, TASKS.md 명세를 따름)
-    """LLM이 만드는 특수 상황 경고. 숫자는 바꾸지 않고 '주의하라'는 말만 한다."""
+    """LLM이 만드는 특수 상황 경고 = 화면의 'AI 주의 안내'. 숫자는 바꾸지 않고 '주의하라'는 말만 한다."""
     date: dt.date
     menu_scope: list[str]                       # 영향 받는 메뉴, 전체면 ["*"]
     situation_type: Literal["유행급변", "대형행사", "기상특보", "휴무가능성", "데이터이상"]
@@ -137,7 +163,7 @@ class SignalDecision(BaseModel):
 class Calibration(BaseModel):
     """범위 보정 (분위별 conformal 보정). 검증 구간의 예측 오차로 분위마다 '평소 수준 대비' 이동량을 정한다.
     신호처럼 검증으로 채택한다: 앞 구간들로 보정 → 다음 구간에 적용해 pinball이 과반에서 줄 때만 쓴다.
-    ※ TASKS.md에 없던 추가 형식. predict.py는 adopted=True일 때만 shifts를 적용한다."""
+    predict.py는 adopted=True일 때만 shifts를 적용한다."""
     method: str                                 # "conformal-ratio"
     adopted: bool
     folds_improved: int = Field(ge=0)           # 검사한 구간 중 보정으로 pinball이 줄어든 수
@@ -162,4 +188,4 @@ class BacktestResult(BaseModel):
     chosen_model: str
     test_scores: list[ModelScore]               # 최종 테스트 (M0 vs 채택 모델), 한 번만 계산
     data_note: str                              # 예: "판매 기록 34일. 검증 구간이 짧아 결과의 변동이 큼"
-    calibration: Calibration | None = None      # 범위 보정 (TASKS.md에 없던 추가 필드, 없어도 됨)
+    calibration: Calibration | None = None      # 범위 보정 (없어도 됨)

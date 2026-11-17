@@ -15,14 +15,12 @@ import numpy as np
 import pandas as pd
 from catboost import CatBoostRegressor
 
-from ml.features import CATEGORICAL_FEATURES, SIGNAL_GROUPS, base_level, feature_columns  # base_level은 다른 파일이 models에서도 가져다 씀
+from ml.features import ALL_SIGNALS, CATEGORICAL_FEATURES, base_level, feature_columns
 
 # p40·p50·p80 = 준비 방식(폐기 줄이기·균형·품절 줄이기), p10·p90 = 화면의 예상 범위, p60 = 범위 보정용
 QUANTILES = [0.1, 0.4, 0.5, 0.6, 0.8, 0.9]
 Q_COLS = ["p10", "p40", "p50", "p60", "p80", "p90"]
-SHORT_DATA_DAYS = 120          # 학습 기간이 이보다 짧으면 '짧은 데이터 모드' (더 단순한 모델)
-
-
+SHORT_DATA_DAYS = 120          # 판매 기록이 이보다 짧으면 '짧은 데이터 모드' (더 단순한 모델, 더 짧은 검증 구간)
 
 
 def _finalize(q: np.ndarray, index) -> pd.DataFrame:
@@ -54,7 +52,7 @@ class BaselineM0:
 
 
 class CatBoostQuantile:
-    """CatBoost 하나로 모든 매장·메뉴를 함께 학습하고, 다섯 분위를 한 번에 예측한다.
+    """CatBoost 하나로 모든 메뉴를 함께 학습하고, 여섯 분위(QUANTILES)를 한 번에 예측한다.
 
     목표는 판매량 자체가 아니라 '평소 대비 비율'이다:
         base = mean_28 → mean_7 → lag_1 (처음으로 값이 있는 것), 1 미만이면 1
@@ -82,11 +80,9 @@ class CatBoostQuantile:
         self.short = short
         self.n_seeds = n_seeds                  # 시드만 다른 모델 n개의 평균 (우연한 흔들림 줄이기)
 
-    _base = staticmethod(base_level)
-
     def fit(self, train: pd.DataFrame) -> "CatBoostQuantile":
         self.features = feature_columns(self.name, train, self.groups)
-        self.signal_cols = [c for c in self.features if c in {n for v in SIGNAL_GROUPS.values() for n in v}]
+        self.signal_cols = [c for c in self.features if c in ALL_SIGNALS]     # 근거 문장을 만들 때 쓴다 (predict.py)
 
         usable = train["qty"].notna()
         sold_out = train["sold_out"].astype("boolean").fillna(False).astype(bool)
@@ -103,7 +99,7 @@ class CatBoostQuantile:
         depth = self.depth or preset["depth"]
 
         X = rows[self.features]
-        y = rows["qty"] / self._base(rows)
+        y = rows["qty"] / base_level(rows)
         self.models = [CatBoostRegressor(
             loss_function="MultiQuantile:alpha=" + ",".join(map(str, QUANTILES)),
             iterations=iterations, depth=depth, learning_rate=self.learning_rate,
@@ -113,16 +109,13 @@ class CatBoostQuantile:
             one_hot_max_size=255,
             verbose=False, allow_writing_files=False,
         ).fit(X, y) for k in range(self.n_seeds)]
-
-        # 학습 기간 신호의 중앙값 = '평소 값' (나중에 예측 근거를 계산할 때 비교 기준으로 씀)
-        self.signal_medians = rows[self.signal_cols].median().to_dict()
-        self.n_train, self.n_train_days, self.short_mode = len(rows), n_days, short
+        self.n_train, self.short_mode = len(rows), short
         return self
 
     def predict(self, frame: pd.DataFrame) -> pd.DataFrame:
         X = frame[self.features]
-        ratio = np.mean([m.predict(X) for m in self.models], axis=0)   # (행 수, 5) 비율 예측, 시드 평균
-        q = ratio * self._base(frame).to_numpy()[:, None]   # 비율 × 평소 수준 = 판매량
+        ratio = np.mean([m.predict(X) for m in self.models], axis=0)   # (행 수, 분위 수) 비율 예측, 시드 평균
+        q = ratio * base_level(frame).to_numpy()[:, None]   # 비율 × 평소 수준 = 판매량
         return _finalize(q, frame.index)
 
 

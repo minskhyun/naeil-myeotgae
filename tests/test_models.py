@@ -49,7 +49,7 @@ def test_feature_sets_differ(frame):
     m1 = make_model("M1", iterations=10).fit(frame)
     m2 = make_model("M2", iterations=10).fit(frame)
     assert "rain_mm" not in m1.features and "rain_mm" in m2.features
-    assert set(m2.signal_medians) == {"temp_diff", "rain_mm"}
+    assert set(m2.signal_cols) == {"temp_diff", "rain_mm"}
 
 
 def test_sold_out_rows_are_not_used_for_training(frame):

@@ -20,7 +20,8 @@ from email.utils import parsedate_to_datetime
 
 import pandas as pd
 
-from contracts.schemas import CollectionItem
+from contracts.schemas import CollectionItem, StoreConfig
+from ml.llm import settings
 
 HOST = "https://naverapihub.apigw.ntruss.com"
 NEWS, BLOG, TREND = "/search/v1/news", "/search/v1/blog", "/search-trend/v1/search"
@@ -36,7 +37,6 @@ MAX_TREND_MENUS = 10                    # 판매량 상위 메뉴만 (요청 하
 
 
 def _keys() -> dict[str, str]:
-    from ml.llm import settings
     cfg = settings()
     cid, secret = cfg.get("NAVER_CLIENT_ID"), cfg.get("NAVER_CLIENT_SECRET")
     if not cid or not secret:
@@ -62,12 +62,12 @@ def _request(path: str, params: dict | None = None, body: dict | None = None) ->
 
 # ---------------------------------------------------------------- 1. 뉴스·블로그
 
-def area_keywords(info: dict) -> list[str]:
+def area_keywords(store: StoreConfig) -> list[str]:
     """매장 설정의 area_keywords, 없으면 주소에서 도로·구 이름을 뽑는다 ('서울숲2길' → '서울숲', '성동구' → '성동')."""
-    if info.get("area_keywords"):
-        return list(info["area_keywords"])
+    if store.area_keywords:
+        return list(store.area_keywords)
     out = []
-    for tok in str(info.get("address", "")).split():
+    for tok in (store.address or "").split():
         m = re.fullmatch(r"(.+?)\d*(?:길|로)", tok) or re.fullmatch(r"(.+?)(?:구|동)", tok)
         if m and len(m.group(1)) >= 2 and m.group(1) not in out:
             out.append(m.group(1))

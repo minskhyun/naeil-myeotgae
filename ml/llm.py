@@ -16,7 +16,8 @@ from typing import TypeVar
 
 from pydantic import BaseModel
 
-ROOT = Path(__file__).resolve().parents[1]
+from ml.paths import ROOT
+
 DEFAULTS = {"LLM_PROVIDER": "anthropic", "LLM_MODEL": "claude-opus-5-5"}
 KEY_NAMES = ("ANTHROPIC_API_KEY", "DATA_GO_KR_KEY", "SEOUL_DATA_KEY", "KAKAO_REST_KEY",
              "NAVER_CLIENT_ID", "NAVER_CLIENT_SECRET")           # .env에 넣는 키 이름 (README '키 준비' 참고)

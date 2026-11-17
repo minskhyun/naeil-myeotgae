@@ -1,4 +1,33 @@
-import { SIGNAL_LABELS, type Reason } from './api'
+// 화면 표시용: 이름표(신호·모델 이름을 쉬운 말로)와 날짜·퍼센트 모양
+import type { Reason } from './api'
+
+// ---- 이름표: 코드 속 이름 → 화면에 보여 줄 말. 새 신호를 추가하면 여기에도 한 줄
+export const SIGNAL_LABELS: Record<string, string> = {
+  temp_diff: '기온',
+  rain_mm: '비',
+  exam_period: '시험기간',
+  vacation: '방학',
+  festival: '축제',
+  nearby_event: '근처 행사',
+  special_day: '기념일',
+  trend_level: '유행',
+}
+
+export const GROUP_LABELS: Record<string, string> = {
+  weather: '날씨',
+  events: '학사일정·행사',
+  trend: '유행',
+  special: '기념일',
+}
+
+export const MODEL_LABELS: Record<string, string> = {
+  M0: '지난주 같은 요일만큼',
+  M1: '판매 기록',
+  M2: '판매 기록 + 날씨',
+  M3: '판매 기록 + 날씨·행사',
+}
+
+// ---- 날짜·숫자 모양
 
 const DAYS = '일월화수목금토'
 
@@ -20,4 +49,5 @@ export const signedPct = (v: number) => `${v > 0 ? '+' : '−'}${Math.abs(Math.r
 // 근거 한 줄을 표에 들어갈 짧은 말로: "비 −16%"
 export const shortReason = (r: Reason) => `${SIGNAL_LABELS[r.signal] ?? r.signal} ${signedPct(r.effect_pct)}`
 
+// 0.191 → "19.1%"
 export const pct1 = (v: number) => `${(v * 100).toFixed(1)}%`

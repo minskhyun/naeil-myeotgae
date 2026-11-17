@@ -6,6 +6,7 @@ import json
 import pandas as pd
 
 from agent.collectors_bridge import OBSERVED_PROXY, ensure_store, signals_from_collectors
+from contracts.schemas import StoreConfig
 
 DAILY = """date,dow,is_weekend,is_holiday,holiday_name,temp_mean,temp_min,temp_max,rain_mm,weather_kind,weather_issued_at,exam_period,vacation,festival,nearby_event
 2026-11-16,0,0,0,,9.1,5.0,13.0,0.0,observed,,1,0,0,0
@@ -66,12 +67,13 @@ def test_event_counts_grow_as_events_are_registered(tmp_path):
 
 def test_store_file_is_per_store_and_replans_when_address_changes(tmp_path):
     work = tmp_path / "collectors"
-    ensure_store("s", dict(address="서울 성동구 서울숲2길 12-7", lat=37.5, lon=127.0), work)
+    here = StoreConfig(store_id="s", address="서울 성동구 서울숲2길 12-7", lat=37.5, lon=127.0)
+    ensure_store(here, work)
     assert [s["store_id"] for s in json.loads((work / "stores.json").read_text(encoding="utf-8"))] == ["s"]
     (work / "s_sources.json").write_text("{}", encoding="utf-8")
-    ensure_store("s", dict(address="서울 성동구 서울숲2길 12-7", lat=37.5, lon=127.0), work)
+    ensure_store(here, work)
     assert (work / "s_sources.json").exists()                               # 같은 주소 → 계획 그대로
-    ensure_store("s", dict(address="서울 서대문구 연세로 50", lat=37.56, lon=126.94), work)
+    ensure_store(StoreConfig(store_id="s", address="서울 서대문구 연세로 50", lat=37.56, lon=126.94), work)
     assert not (work / "s_sources.json").exists()                           # 주소가 바뀜 → 다시 고르게 지움
 
 

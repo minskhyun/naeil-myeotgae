@@ -13,7 +13,6 @@ backend 폴더에서 실행 (collectors.kakao 다음에):
 import argparse
 import datetime as dt
 import json
-import os
 from pathlib import Path
 
 from collectors.llm import llm_json, model_name

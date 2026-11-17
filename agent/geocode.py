@@ -19,13 +19,15 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
-from pathlib import Path
+
+from ml.llm import settings
+from ml.paths import RAW
 
 URL = "https://nominatim.openstreetmap.org/search"
 USER_AGENT = "naeil-myeotgae/0.1 (hackathon prototype)"
 MIN_GAP = 1.1                         # 호출 사이 최소 간격(초)
 RETRIES = 3                           # 일시적 실패 때 다시 시도하는 횟수
-CACHE_PATH = Path(__file__).resolve().parents[1] / "data" / "raw" / "geocode_cache.json"
+CACHE_PATH = RAW / "geocode_cache.json"
 _last_call = 0.0
 _cache: dict[str, list | None] | None = None      # 주소 → [위도, 경도, 이름] 또는 None(못 찾음)
 
@@ -72,11 +74,7 @@ KAKAO = "https://dapi.kakao.com/v2/local"
 
 def _kakao(query: str) -> list | None:
     """카카오 로컬: 주소 검색 → 키워드 검색. 키가 없으면 None. 찾으면 [위도, 경도, 이름]."""
-    try:
-        from ml.llm import settings
-        key = settings().get("KAKAO_REST_KEY")
-    except Exception:
-        key = None
+    key = settings().get("KAKAO_REST_KEY")
     if not key:
         return None
     for path in ("/search/address.json", "/search/keyword.json"):

@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
-import { api, PREP_MODES, SIGNAL_LABELS, type ForecastRow, type Warning } from './api'
-import { fmtDate, fmtTime, shortReason } from './format'
+import { api, PREP_MODES, type ForecastRow, type Warning } from './api'
+import { fmtDate, fmtTime, shortReason, SIGNAL_LABELS } from './format'
 import { useJob } from './useJob'
 
-// 예상 범위: 가는 선 위에 범위(굵은 선)와 예상값(눈금)
+// 예상 범위 그림: 가는 선 위에 범위(굵은 선)와 예상값(눈금)
 function Range({ row, max }: { row: ForecastRow; max: number }) {
   const x = (v: number) => `${Math.min(100, (v / max) * 100)}%`
   return (
@@ -21,6 +21,7 @@ function Range({ row, max }: { row: ForecastRow; max: number }) {
   )
 }
 
+// AI 주의 안내 한 건: 상황 · 안내 문장 · 원문 인용과 링크
 function Notice({ w }: { w: Warning }) {
   const scope = w.menu_scope.includes('*') ? '전체 메뉴' : w.menu_scope.join(', ')
   return (

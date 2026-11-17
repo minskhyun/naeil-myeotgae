@@ -1,4 +1,4 @@
-"""evaluate.py 테스트 (5-2): 신호 채택 규칙, 범위 보정, 전체 백테스트."""
+"""evaluate.py·calibration.py 테스트: 신호 채택 규칙, 범위 보정, 전체 백테스트."""
 from pathlib import Path
 
 import numpy as np
@@ -6,8 +6,9 @@ import pandas as pd
 import pytest
 
 from contracts.schemas import BacktestResult
-from ml.evaluate import (CALIB_TAUS, apply_calibration, below_rates, bootstrap_wape_change, check_calibration,
-                         decide, fit_calibration, model_label, pick_combo, run_backtest, write_backtest)
+from ml.calibration import CALIB_TAUS, apply_calibration, below_rates, check_calibration, fit_calibration
+from ml.evaluate import decide, model_label, pick_combo, run_backtest, write_backtest
+from ml.metrics import bootstrap_wape_change
 from ml.features import load_sales, load_signals
 
 SAMPLE = Path(__file__).resolve().parents[1] / "data" / "sample" / "sinchon-a"

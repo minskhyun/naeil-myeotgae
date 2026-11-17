@@ -1,10 +1,11 @@
-"""evaluate.py 테스트 (5-1): 지표 손 계산, 검증 구간 나누기, 교차검증의 시점."""
+"""metrics.py·evaluate.py 테스트: 지표 손 계산, 검증 구간 나누기, 교차검증의 시점."""
 from pathlib import Path
 
 import pandas as pd
 import pytest
 
-from ml.evaluate import bias, coverage, cross_val_predict, mae, pinball, plan_folds, score, wape
+from ml.evaluate import cross_val_predict, plan_folds
+from ml.metrics import bias, coverage, mae, pinball, score, wape
 from ml.features import build_frame, load_sales
 
 SAMPLE = Path(__file__).resolve().parents[1] / "data" / "sample" / "sinchon-a"

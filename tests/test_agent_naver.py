@@ -2,11 +2,12 @@
 import datetime as dt
 
 from agent import naver
+from contracts.schemas import StoreConfig
 
 
 def test_area_keywords():
-    assert naver.area_keywords({"address": "서울 성동구 서울숲2길 12-7"}) == ["성동", "서울숲"]
-    assert naver.area_keywords({"address": "x", "area_keywords": ["성수", "서울숲"]}) == ["성수", "서울숲"]
+    assert naver.area_keywords(StoreConfig(store_id="s", address="서울 성동구 서울숲2길 12-7")) == ["성동", "서울숲"]
+    assert naver.area_keywords(StoreConfig(store_id="s", address="x", area_keywords=["성수", "서울숲"])) == ["성수", "서울숲"]
 
 
 def test_menu_keyword():

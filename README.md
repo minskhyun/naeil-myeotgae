@@ -141,19 +141,25 @@ cd frontend && npm run build && npm run lint
 
 ```
 .
-├── run.py                  한 매장 전체 실행: ingest → evaluate → predict
+├── run.py                  한 매장 전체 실행: ingest → evaluate → predict (웹도 이 파일을 실행)
 ├── contracts/              팀 공통 데이터 형식 (schemas.py)과 예시 파일
 ├── ml/                     예측 엔진
 │   ├── ingest.py           POS 파일 → 판매 기록
-│   ├── features.py         모델 입력 표 (시점 규칙)
+│   ├── features.py         모델 입력 표 (시점 규칙, 신호 이름 목록)
 │   ├── models.py           M0 기준선, CatBoost 분위 예측
+│   ├── metrics.py          지표 (WAPE, 범위 적중 등)
+│   ├── calibration.py      예측 범위 보정
 │   ├── evaluate.py         시간순 검증, 신호 조합 선택 → backtest.json
 │   ├── predict.py          내일 예측·근거·준비량 → forecast.json
 │   ├── alerts.py           AI 주의 안내
 │   ├── llm.py              .env 설정 읽기, Claude 호출과 응답 저장
+│   ├── paths.py            폴더 위치
+│   ├── calendar_kr.py      공휴일 목록
+│   ├── sample_data.py      가상 매장 만들기
 │   └── REVIEW.md           판단 기록, 알려진 한계, 코드 지도
-├── agent/                  주변 정보 수집의 연결부와 그 밖의 정보원
-│   ├── collectors_bridge.py   수집기 실행 + 결과를 예측 엔진 입력으로 변환
+├── agent/                  주변 정보 수집
+│   ├── collect.py          입구: 정보원 목록(SOURCES)을 차례로 실행해 합침
+│   ├── collectors_bridge.py   공공 데이터 수집기 실행 + 결과를 예측 엔진 입력으로 변환
 │   ├── events.py           뉴스·블로그·공지 글에서 행사 추출
 │   ├── naver.py            네이버 뉴스·블로그 검색, 메뉴 검색량
 │   ├── geocode.py          주소·장소 → 좌표
@@ -184,6 +190,19 @@ cd frontend && npm run build && npm run lint
 | `forecast.json` | 메뉴별 내일 예측, 근거, 준비량, AI 주의 안내 |
 
 형식은 모두 [contracts/schemas.py](contracts/schemas.py)에 정의되어 있습니다.
+
+### 고칠 때 볼 곳
+
+| 하고 싶은 일 | 고칠 곳 |
+|---|---|
+| 새 POS 형식 받기 | `ml/ingest.py`의 `COLUMN_MAP`에 열 이름 추가 |
+| 새 정보원 추가 | `agent/collect.py`에 함수 하나 + `SOURCES`에 한 줄 |
+| 새 신호를 모델에 넣기 | `ml/features.py`의 `SIGNAL_GROUPS`에 이름 추가 (화면 이름은 `frontend/src/format.ts`) |
+| 신호 채택 기준 바꾸기 | `ml/evaluate.py`의 `MIN_GAIN_PCT`, `beats` |
+| 준비 방식·근거 문장 바꾸기 | `ml/predict.py`의 `PREP_MODES`, `reason_text` |
+| AI 주의 안내의 규칙 바꾸기 | `ml/alerts.py`의 `SYSTEM` |
+| 매장 설정 칸 추가 | `contracts/schemas.py`의 `StoreConfig` |
+| LLM 모델·제공자 바꾸기 | `.env`의 `LLM_MODEL`, `ml/llm.py`의 `PROVIDERS` |
 
 ## 공공 데이터 수집기 (backend/collectors)
 
@@ -294,6 +313,6 @@ python -m collectors.run_all --refresh-events # 서울시 행사 목록 새로 �
 | 이름 | 역할 |
 |---|---|
 | 영찬 | PM, 데이터 형식·평가 기준 설계, 발표 |
-| 혜윤 | 데이터 수집 에이전트 |
+| 새얼 | 데이터 수집 에이전트 |
 | 동환 | 예측 엔진, LLM 판단 |
 | 석현 | 프론트엔드, 배포 |

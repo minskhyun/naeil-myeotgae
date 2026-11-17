@@ -179,21 +179,37 @@
   - 화면: Vite 기본 템플릿이 남긴 파일(`App.css`, `assets/`, `icons.svg`, `frontend/README.md`)과 안 쓰는 패키지(`recharts`, `papaparse`) 삭제.
   - 확인: 테스트 110개 통과, 화면 빌드·린트 통과, PLAD 서울숲 주소로 실제 수집 1회(날씨 67일, 서울 문화행사 근처 20일, 네이버 글 20개) → 저장소 파일 변화 없음.
 
+- 11/17 **두 번째 정리: 읽기 쉽고 고치기 쉽게** (동작은 그대로. 정리 전후 네 가지 실행의 결과 파일이 모두 같은지 비교함)
+  - `ml/evaluate.py`(480줄)를 셋으로: 지표는 `ml/metrics.py`, 범위 보정은 `ml/calibration.py`, 검증 절차만 `evaluate.py`에. `run_backtest`는 단계 함수(`choose_signals`·`comparison_table`·`final_test`·`data_note`)를 차례로 부른다.
+  - `ml/predict.py`: 근거 계산을 `explain()`으로 분리. `python -m ml.evaluate`·`ml.predict` 실행 코드는 `run.py`와 겹쳐 삭제.
+  - `agent/collect.py` 신설: 정보원 하나 = 함수 하나, 목록은 `SOURCES`. 새 정보원은 함수 하나와 한 줄. 정보원 하나가 실패해도 나머지로 계속(전에는 행사 글 단계의 예외가 실행 전체를 멈출 수 있었다).
+  - 매장 설정을 `contracts.StoreConfig` 하나로 (전에는 `info.get("close_time", 기본값)`이 여러 파일에 흩어져 있었다). 폴더 위치는 `ml/paths.py` 하나로.
+  - `ml/calendar_kr.py`는 공휴일 목록만 (가상 매장의 휴무·학사일정은 `sample_data.py`로). 2026-12-25, 2027-01-01 추가.
+  - 안 쓰던 것 삭제: 매장별 영업 종료 시각 dict, `--lat/--lon`, 모델의 `signal_medians`, 웹 API의 신호·원문 파일 올리기(화면에서는 이미 없앴음), 매장 목록의 안 쓰는 칸.
+  - `load_signals`: 시간대가 붙은 시각과 안 붙은 시각이 한 파일에 섞여 있어도 줄마다 한국 시간으로 바꾼다 (전에는 하나라도 붙어 있으면 전부 UTC로 읽었다).
+  - 화면: 이름표(`SIGNAL_LABELS` 등)를 `format.ts`로, `UploadView`의 입력 칸을 `Field` 하나로.
+
 ## F. 코드 지도 (공부 순서대로)
+
+읽는 순서: `contracts/schemas.py`(주고받는 형식) → `run.py`(전체 흐름) → `ml/`(아래 표 순서) → `agent/collect.py`(주변 정보) → `backend/app/main.py` → `frontend/src/`
 
 | 파일 | 한 줄 요약 | 알아야 할 것 |
 |---|---|---|
-| `contracts/schemas.py` | 팀 공통 데이터 형식 | pydantic `BaseModel`, `Field(ge=0)`, `Literal`, `model_validator` |
+| `contracts/schemas.py` | 팀 공통 데이터 형식 (파일 하나 = 클래스 하나) | pydantic `BaseModel`, `Field(ge=0)`, `Literal`, `model_validator`. `StoreConfig` = store.json |
+| `ml/paths.py` | 폴더 위치 | `ROOT`·`SAMPLE`·`RAW`·`ARTIFACTS` |
 | `ml/sample_data.py` | 효과를 심어 둔 가상 매장 1년치 | 난수 시드, 감마-포아송 잡음 |
 | `ml/ingest.py` | POS 파일 → 판매 기록 | 머리글 자동 찾기, 0개 판매 채우기, 품절 '쌓임' 판정, `difflib`, 자모 분해(NFD) |
 | `ml/features.py` | 모델 입력 표 | **시점 규칙(issue_time)**, `shift(1)` 후 `rolling`, 신호의 '가장 늦은 발표본', 파생 신호(`DERIVED_SIGNALS`: 목표가 '최근 평균 대비'라 신호도 '최근 평균 대비') |
 | `ml/models.py` | M0 + CatBoost 다중 분위 | 비율 목표(qty/평소 수준), MultiQuantile, 원-핫 vs target statistics, 시드 평균(분산 줄이기) |
-| `ml/evaluate.py` | 검증 → backtest.json | WAPE·pinball, 시간순 교차검증, 신호 조합 선택(`pick_combo`·`beats`), 범위 보정(conformal)과 그 채택 검사, 블록 부트스트랩 |
-| `ml/predict.py` | 내일 예측 → forecast.json | 반사실 근거(신호를 평소 값으로 바꿔 다시 예측), 준비량(p50/p60/p80 올림) |
+| `ml/metrics.py` | 지표 | WAPE·pinball·coverage, 품절 행 제외(`scored`), 블록 부트스트랩 |
+| `ml/calibration.py` | 예측 범위 보정 | conformal(평소 수준 대비 이동량)과 그 채택 검사 |
+| `ml/evaluate.py` | 검증 → backtest.json | 시간순 교차검증(`plan_folds`·`cross_val_predict`), 신호 조합 선택(`choose_signals`·`pick_combo`·`beats`), 최종 테스트 한 번 |
+| `ml/predict.py` | 내일 예측 → forecast.json | 반사실 근거(`explain`: 신호를 평소 값으로 바꿔 다시 예측), 준비량(p40/p50/p80 올림) |
 | `ml/alerts.py` | AI 주의 안내 (LLM 특수 상황 경고) | 시점 규칙으로 원문 거르기, 인용 검증, 영향 메뉴 정리 |
 | `ml/llm.py` | `.env` 설정 읽기 + Claude 호출 | structured outputs(`messages.parse`), 입력 해시 캐시, 제공자 사전(`PROVIDERS`) |
-| `run.py` | 한 매장 전체 실행 | `argparse`, `--from-step`, 함수 사전 |
-| `agent/collectors_bridge.py` | 수집기 실행 + 결과 → 신호·원문 | `subprocess`, 공개 시각 붙이는 규칙(관측값은 '전날 17:10 예보'처럼), 행사 수가 등록될 때마다 늘어나는 줄 |
+| `run.py` | 한 매장 전체 실행 | `argparse`, `--from-step`, 단계 함수(`step_ingest`·`step_evaluate`·`step_predict`) |
+| `agent/collect.py` | 주변 정보 수집의 입구 | 정보원 하나 = 함수 하나(`SOURCES`), 모두 (신호, 원문, 메모)를 돌려줌 |
+| `agent/collectors_bridge.py` | 공공 데이터 수집기 실행 + 결과 → 신호·원문 | `subprocess`, 공개 시각 붙이는 규칙(관측값은 '전날 17:10 예보'처럼), 행사 수가 등록될 때마다 늘어나는 줄 |
 | `agent/events.py` | 뉴스·블로그·공지 글 → 행사 신호 | LLM은 날짜·장소만, 근거 문장 대조, 거리(haversine), 취소는 value 0 |
 | `agent/naver.py` | 네이버 검색, 메뉴 검색량 | 게시 시각을 읽은 시각 이하로, 최근 7일 vs 그 전 28일 |
 | `agent/geocode.py` | 주소·장소 → 좌표 | 카카오 → OpenStreetMap, 결과 저장(못 찾은 것도) |
@@ -212,7 +228,9 @@
 8. 일부러 고장 내기: `features.py`의 `past = qty.shift(1)`을 `qty`로 바꾸고 `pytest`를 돌려 누수 테스트가 실패하는지 본다 (확인 후 되돌리기).
 
 **늘릴 때 고칠 곳 (확장 지점)**
-- 새 외부 신호: `features.SIGNAL_GROUPS`에 이름 추가 (새얼과 합의한 이름)
+- 새 정보원: `agent/collect.py`에 함수 하나 + `SOURCES`에 한 줄
+- 새 외부 신호: `features.SIGNAL_GROUPS`에 이름 추가, 화면 이름은 `frontend/src/format.ts`의 `SIGNAL_LABELS`
+- 매장 설정 칸: `contracts.StoreConfig`
 - 새 파생 신호: `features.DERIVED_SIGNALS`에 한 줄 추가
 - 새 POS 형식: `ingest.COLUMN_MAP`에 열 이름 후보 추가
 - 새 LLM 제공자: `ml/llm.py`의 `PROVIDERS`에 함수 하나 추가

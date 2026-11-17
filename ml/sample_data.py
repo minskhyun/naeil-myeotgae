@@ -19,12 +19,34 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from contracts.schemas import SalesRow, SignalRow
-from ml.calendar_kr import CLOSED, HOLIDAYS, period_of
+from contracts.schemas import SalesRow, SignalRow, StoreConfig
+from ml.calendar_kr import HOLIDAYS
+from ml.paths import SAMPLE
 
 STORE_ID = "sinchon-a"
 CLOSE_TIME = "21:00"
-OUT_DIR = Path(__file__).resolve().parents[1] / "data" / "sample" / STORE_ID
+OUT_DIR = SAMPLE / STORE_ID
+
+# ---------------------------------------------------------------- 가상 매장의 달력
+CLOSED = pd.to_datetime(["2026-01-01", "2026-02-17", "2026-09-25"])     # 쉬는 날 (신정, 설날, 추석)
+
+
+def period_of(d) -> str:
+    """날짜 → "학기" / "시험기간" / "방학" / "축제" (연세대 일정과 비슷하게 잡은 가상 학사일정)."""
+    d = pd.Timestamp(d)
+
+    def between(a, b):
+        return pd.Timestamp(a) <= d <= pd.Timestamp(b)
+
+    if between("2026-05-22", "2026-05-22") or between("2026-09-25", "2026-09-26"):
+        return "축제"
+    if between("2025-12-08", "2025-12-19") or between("2026-04-20", "2026-04-24") \
+            or between("2026-06-08", "2026-06-19") or between("2026-10-19", "2026-10-23"):
+        return "시험기간"
+    if between("2025-12-20", "2026-03-01") or between("2026-06-20", "2026-08-31"):
+        return "방학"
+    return "학기"
+
 
 # ---------------------------------------------------------------- 심어 둔 효과
 # base: 학기 중 평일, 맑은 날, 15도일 때 하루 기대 판매량
@@ -210,9 +232,7 @@ def generate(out_dir: Path = OUT_DIR, seed: int = 20261113) -> None:
     demand = pd.DataFrame(demand_rows, columns=["date", "menu", "demand"])
     demand.assign(date=fmt_date(demand["date"])).to_csv(out_dir / "demand_true.csv", index=False, encoding="utf-8-sig")
 
-    with open(out_dir / "store.json", "w", encoding="utf-8") as f:
-        json.dump({"store_id": STORE_ID, "name": "신촌 A 베이커리카페 (가상)", "close_time": CLOSE_TIME},
-                  f, ensure_ascii=False, indent=1)
+    StoreConfig(store_id=STORE_ID, name="신촌 A 베이커리카페 (가상)", close_time=CLOSE_TIME).write(out_dir / "store.json")
     truth = dict(
         weekday_main=WEEKDAY.tolist(), weekday_resident=WEEKDAY_RESIDENT.tolist(),
         period_main=PERIOD, period_resident=PERIOD_RESIDENT, holiday=HOLIDAY_F,

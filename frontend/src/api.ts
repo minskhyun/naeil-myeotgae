@@ -1,4 +1,5 @@
-// 백엔드(backend/app/main.py)와 주고받는 데이터. 형식은 contracts/schemas.py와 같다.
+// 백엔드(backend/app/main.py)와 주고받는 데이터와 요청 함수.
+// 타입은 contracts/schemas.py와 같다 → 그쪽 형식을 바꾸면 여기도 같이 고친다.
 
 export type Reason = { signal: string; effect_pct: number; text: string; source_url: string | null }
 
@@ -66,15 +67,10 @@ export type Backtest = {
   calibration?: { adopted: boolean; reason: string } | null
 }
 
-export type StoreInfo = {
-  store_id: string
-  name: string
-  prep_mode: string
-  close_time: string | null
-  has_backtest: boolean
-  running: boolean
-}
+// 매장 목록의 한 줄 (GET /api/stores)
+export type StoreInfo = { store_id: string; name: string; prep_mode: string }
 
+// 실행 작업 (예측 돌리기). 화면은 useJob.ts로 상태를 물어본다
 export type Job = {
   job_id: string
   store_id: string
@@ -106,7 +102,7 @@ export const api = {
     form.append('prep_mode', prepMode)
     return call<Job>(`/stores/${id}/settings`, { method: 'POST', body: form })
   },
-  // 사장님은 POS 파일과 주소만 준다. 날씨·기념일은 서버가 주소로 자동 수집한다.
+  // 사장님은 POS 파일과 주소만 준다. 주변 정보는 서버가 주소로 자동 수집한다.
   run: (id: string, pos: File, opts: { closeTime?: string; address?: string }) => {
     const form = new FormData()
     form.append('pos', pos)
@@ -114,30 +110,4 @@ export const api = {
     if (opts.address) form.append('address', opts.address)
     return call<Job>(`/stores/${id}/run`, { method: 'POST', body: form })
   },
-}
-
-// 화면에 보여 줄 이름
-export const SIGNAL_LABELS: Record<string, string> = {
-  temp_diff: '기온',
-  rain_mm: '비',
-  exam_period: '시험기간',
-  vacation: '방학',
-  festival: '축제',
-  nearby_event: '근처 행사',
-  special_day: '기념일',
-  trend_level: '유행',
-}
-
-export const GROUP_LABELS: Record<string, string> = {
-  weather: '날씨',
-  events: '학사일정·행사',
-  trend: '유행',
-  special: '기념일',
-}
-
-export const MODEL_LABELS: Record<string, string> = {
-  M0: '지난주 같은 요일만큼',
-  M1: '판매 기록',
-  M2: '판매 기록 + 날씨',
-  M3: '판매 기록 + 날씨·행사',
 }

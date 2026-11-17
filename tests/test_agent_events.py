@@ -3,7 +3,6 @@ import datetime as dt
 
 import pytest
 
-from agent import events
 from agent.events import EventInfo, EventList, distance_km, page_event_signals, read_sources
 from ml import llm
 

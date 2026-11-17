@@ -1,30 +1,30 @@
-"""내일 예측 + 근거 문장 + 준비량 → forecast.json  (TASKS.md §9·§10)
+"""내일 예측 + 근거 문장 + 준비량 → forecast.json
 
-순서
+순서 (predict_next_day)
   1) backtest.json에서 채택된 신호 묶음·모델·범위 보정을 읽는다 (evaluate.py가 정한 것을 그대로 따름)
   2) 전체 판매 기록(최종 테스트 기간 포함)으로 다시 학습
   3) 마지막 판매일 다음 날을 예측 (issue_time 시점 규칙은 features.py가 그대로 지킴)
   4) 근거(반사실 방식): 신호 하나를 '평소 값'으로 바꿔 다시 예측 → 차이가 3% 이상이면 문장으로
   5) 준비량: 사장님이 고른 방식의 분위를 올림
 
-실행:  python -m ml.predict [매장 폴더]      (먼저 python -m ml.evaluate 로 backtest.json을 만들어야 함)
-       → data/artifacts/{store_id}/forecast.json
+고치기 쉬운 곳
+  - 준비 방식과 분위: PREP_MODES
+  - 근거 문장: reason_text, EVENT_TEXT (LLM을 쓰지 않는 고정 문장)
 """
 import datetime as dt
-import json
-import sys
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-from contracts.schemas import BacktestResult, Forecast, ForecastRow, Reason
-from ml.evaluate import ARTIFACTS, ROOT, apply_calibration
-from ml.features import (DEFAULT_CLOSE_TIME, DERIVED_SIGNALS, ZERO_FILL_KINDS, available_signals, build_frame, issue_time,
-                         load_sales, load_signals)
-from ml.models import base_level, make_model
+from contracts.schemas import DEFAULT_PREP_MODE, BacktestResult, Forecast, ForecastRow, Reason
+from ml.calibration import apply_calibration
+from ml.features import (DEFAULT_CLOSE_TIME, DERIVED_SIGNALS, ZERO_FILL_KINDS, available_signals, base_level,
+                         build_frame, issue_time)
+from ml.models import make_model
+from ml.paths import ARTIFACTS
 
-PREP_MODES = {"폐기 줄이기": "p40", "균형": "p50", "품절 줄이기": "p80"}   # 11/16: 폐기 줄이기 p60 → p40 (예상보다 조금 적게)
+PREP_MODES = {"폐기 줄이기": "p40", "균형": "p50", "품절 줄이기": "p80"}   # 준비 방식 → 준비량으로 쓸 분위
 REASON_MIN_PCT = 3.0        # 효과가 이보다 작으면 근거로 보여 주지 않는다
 RECENT_DAYS = 28            # 연속값 신호의 '평소 값' = 최근 28일 중앙값
 ZERO_USUAL = {"rain_mm", "temp_diff"}   # 평소 값이 0인 신호 (비 안 옴, 최근 평균과 같은 기온)
@@ -34,7 +34,7 @@ EVENT_TEXT = {"exam_period": "시험기간이라", "vacation": "방학 기간이
 
 # ---------------------------------------------------------------- 준비량
 
-def prep_qty(q: pd.DataFrame, mode: str = "균형") -> pd.Series:
+def prep_qty(q: pd.DataFrame, mode: str = DEFAULT_PREP_MODE) -> pd.Series:
     """준비량 = 고른 방식의 분위를 올림한 정수.  폐기 줄이기=p40, 균형=p50, 품절 줄이기=p80."""
     if mode not in PREP_MODES:
         raise ValueError(f"준비 방식은 {list(PREP_MODES)} 중 하나여야 합니다: {mode!r}")
@@ -44,8 +44,8 @@ def prep_qty(q: pd.DataFrame, mode: str = "균형") -> pd.Series:
 
 # ---------------------------------------------------------------- 근거 문장
 
-def reason_text(signal: str, value: float, usual: float, pct: float) -> str:
-    """근거 한 줄 (템플릿, LLM 사용 안 함)."""
+def reason_text(signal: str, value: float, pct: float) -> str:
+    """근거 한 줄 (템플릿, LLM 사용 안 함).  value = 내일 그 신호의 값, pct = 그 때문에 달라진 정도(%)."""
     tail = f"평소보다 약 {abs(pct):.0f}% {'많이' if pct > 0 else '적게'} 예상"
     if signal == "rain_mm":
         head = f"비 예보({value:g}mm)로"
@@ -77,11 +77,37 @@ def signal_sources(signals: pd.DataFrame, store_id: str, date, close_time: str) 
     return s.sort_values("published_at").groupby("signal")["source_url"].last().to_dict()
 
 
+def explain(model, rows: pd.DataFrame, p50: pd.Series, usual: dict[str, float],
+            sources: dict[str, str]) -> list[list[Reason]]:
+    """메뉴(행)마다 근거 목록.  반사실 방식: 신호 하나를 '평소 값'으로 바꿔 다시 예측한 p50과 실제 예측을 비교한다.
+
+    원재료도 모델 변수인 파생 신호(예: vacation → vacation_diff)는 따로 근거를 내지 않고 원재료와 함께 바꾼다.
+    원재료가 평소 값이었다면 파생값(오늘 − 최근 평균)도 그만큼 달라진다: diff + (평소 값 − 오늘 값)
+    """
+    linked = {s: [d for d, (src, _) in DERIVED_SIGNALS.items() if src == s and d in model.signal_cols]
+              for s in model.signal_cols}
+    folded = {d for ds in linked.values() for d in ds}
+    reasons = [[] for _ in range(len(rows))]
+    for sig in model.signal_cols:
+        value = rows[sig]
+        if sig in folded or value.isna().all() or (value == usual[sig]).all():   # 자료가 없거나 이미 평소 값
+            continue
+        cf_rows = rows.assign(**{sig: usual[sig]}, **{d: rows[d] + (usual[sig] - value) for d in linked[sig]})
+        cf = model.predict(cf_rows)["p50"]                                      # '평소였다면'의 예측
+        pct = (p50 - cf) / cf.where(cf > 0) * 100
+        for i in range(len(rows)):
+            if pd.notna(pct[i]) and pd.notna(value[i]) and abs(pct[i]) >= REASON_MIN_PCT:
+                reasons[i].append(Reason(signal=sig, effect_pct=round(float(pct[i]), 1),
+                                         text=reason_text(sig, float(value[i]), float(pct[i])),
+                                         source_url=sources.get(sig)))
+    return [sorted(r, key=lambda x: -abs(x.effect_pct)) for r in reasons]       # 효과가 큰 것부터
+
+
 # ---------------------------------------------------------------- 내일 예측
 
 def predict_next_day(sales: pd.DataFrame, signals: pd.DataFrame | None, groups: list[str], model_name: str,
                      calibration: dict[str, float] | None = None, close_time: str = DEFAULT_CLOSE_TIME,
-                     prep_mode: str = "균형", target_date=None, menus: list[str] | None = None,
+                     prep_mode: str = DEFAULT_PREP_MODE, target_date=None, menus: list[str] | None = None,
                      **model_kwargs) -> Forecast:
     """판매 기록 + 신호 → 다음 날(또는 target_date) Forecast.
 
@@ -112,41 +138,19 @@ def predict_next_day(sales: pd.DataFrame, signals: pd.DataFrame | None, groups: 
     if rows.empty:
         raise ValueError(f"{target.date()}에 예측할 메뉴가 없습니다 (최근 14일 안에 팔린 메뉴가 없음).")
 
-    # 1) 전체 기록으로 다시 학습 → 예측 (+ 채택된 범위 보정)
+    # 전체 기록으로 다시 학습 → 예측 (+ 채택된 범위 보정)
     model = make_model(model_name, groups=groups, **model_kwargs).fit(train)
     q = model.predict(rows)
     if calibration:
         q = apply_calibration(q.assign(base=base_level(rows)), calibration)
 
-    # 2) 근거: 신호 하나씩 '평소 값'으로 바꿔 다시 예측한 p50과 비교
-    usual = usual_values(train, model.signal_cols, kinds)
-    sources = signal_sources(signals, store_id, target, close_time) if names else {}
-    reasons = [[] for _ in range(len(rows))]
-    # 원재료도 모델 변수인 파생 신호(예: vacation → vacation_diff)는 따로 근거를 내지 않고 원재료와 함께 바꾼다.
-    # 원재료가 평소 값이었다면 파생값(오늘 − 최근 평균)도 그만큼 달라진다: diff + (평소 값 − 오늘 값)
-    linked = {s: [d for d, (src, _) in DERIVED_SIGNALS.items() if src == s and d in model.signal_cols]
-              for s in model.signal_cols}
-    folded = {d for ds in linked.values() for d in ds}
-    for sig in model.signal_cols:
-        value = rows[sig]
-        if sig in folded or value.isna().all() or (value == usual[sig]).all():   # 자료가 없거나 이미 평소 값
-            continue
-        cf_rows = rows.assign(**{sig: usual[sig]}, **{d: rows[d] + (usual[sig] - value) for d in linked[sig]})
-        cf = model.predict(cf_rows)["p50"]
-        pct = (q["p50"] - cf) / cf.where(cf > 0) * 100
-        for i in range(len(rows)):
-            if pd.notna(pct[i]) and pd.notna(value[i]) and abs(pct[i]) >= REASON_MIN_PCT:
-                reasons[i].append(Reason(signal=sig, effect_pct=round(float(pct[i]), 1),
-                                         text=reason_text(sig, float(value[i]), usual[sig], float(pct[i])),
-                                         source_url=sources.get(sig)))
-
-    # 3) 준비량 + 결과 정리
+    reasons = explain(model, rows, q["p50"], usual_values(train, model.signal_cols, kinds),
+                      signal_sources(signals, store_id, target, close_time) if names else {})
     prep = prep_qty(q, prep_mode)
     out_rows = [
         ForecastRow(date=target.date(), menu=rows.at[i, "menu"],
                     pred=round(float(q.at[i, "p50"]), 1), p10=round(float(q.at[i, "p10"]), 1),
-                    p90=round(float(q.at[i, "p90"]), 1), prep_qty=int(prep[i]), model=model_name,
-                    reasons=sorted(reasons[i], key=lambda r: -abs(r.effect_pct)))
+                    p90=round(float(q.at[i, "p90"]), 1), prep_qty=int(prep[i]), model=model_name, reasons=reasons[i])
         for i in range(len(rows))
     ]
     return Forecast(store_id=store_id, generated_at=dt.datetime.now().replace(microsecond=0),
@@ -166,30 +170,3 @@ def write_forecast(fc: Forecast, out_root: Path = ARTIFACTS) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(fc.model_dump_json(indent=2), encoding="utf-8")
     return path
-
-
-def main(store_dir: str | None = None) -> Path:
-    sys.stdout.reconfigure(encoding="utf-8")
-    store_dir = Path(store_dir or ROOT / "data" / "sample" / "sinchon-a")
-    info = json.loads((store_dir / "store.json").read_text(encoding="utf-8"))
-    bt_path = ARTIFACTS / info["store_id"] / "backtest.json"
-    if not bt_path.exists():
-        raise SystemExit(f"{bt_path}가 없습니다. 먼저 python -m ml.evaluate {store_dir} 를 실행하세요.")
-    backtest = BacktestResult.model_validate_json(bt_path.read_text(encoding="utf-8"))
-
-    sales = load_sales(store_dir / "sales.csv")
-    signals = load_signals(store_dir / "signals.csv") if (store_dir / "signals.csv").exists() else None
-    fc = predict_from_backtest(sales, signals, backtest, close_time=info.get("close_time", DEFAULT_CLOSE_TIME),
-                               prep_mode=info.get("prep_mode", "균형"))
-    path = write_forecast(fc)
-
-    print(f"[{fc.store_id}] {fc.rows[0].date} 예측 ({fc.rows[0].model}, 신호: {', '.join(fc.signals_used) or '없음'})")
-    for r in fc.rows:
-        why = " / ".join(x.text for x in r.reasons)
-        print(f"  {r.menu:<10} {r.pred:5.1f}개 ({r.p10:.0f}~{r.p90:.0f})  준비 {r.prep_qty}  {why}")
-    print("  저장:", path)
-    return path
-
-
-if __name__ == "__main__":
-    main(sys.argv[1] if len(sys.argv) > 1 else None)

@@ -51,20 +51,20 @@ def test_missing_previous_step_is_explained(tmp_path):
         main(["--store", "nowhere", "--from-step", "evaluate", "--artifacts", str(tmp_path)])
 
 
-def _fake_collect(store_id, info, start, end, sources_path=None, **kw):
+def _fake_collect(store, start, end, **kw):
     """실제 수집 대신: 기간 안의 날마다 '전날 17:10 예보' 기온·강수 (인터넷 없이)."""
     days = pd.date_range(pd.Timestamp(start), "2026-11-02")
-    return [SignalRow(date=d.date(), store_id=store_id, signal=sig, value=v, source_url="https://test",
+    return [SignalRow(date=d.date(), store_id=store.store_id, signal=sig, value=v, source_url="https://test",
                       published_at=d - pd.Timedelta(hours=6, minutes=50), kind="forecast")
             for d in days for sig, v in (("temp_mean", 10.0 + d.month), ("rain_mm", float(d.day % 5 == 0) * 3))], [], ["가짜"]
 
 
 def test_address_collects_weather_automatically(tmp_path, monkeypatch):
     """사장님은 POS와 주소만 준다 → 위치를 찾아 store.json에 적고, 날씨를 자동으로 붙인다."""
-    import agent.collectors_bridge
+    import agent.collect
     import agent.geocode
     monkeypatch.setattr(agent.geocode, "geocode", lambda a: (37.5365, 127.0539, "성수동2가, 성동구, 서울"))
-    monkeypatch.setattr(agent.collectors_bridge, "collect_all", _fake_collect)
+    monkeypatch.setattr(agent.collect, "collect_all", _fake_collect)
     pos = Path(__file__).resolve().parents[1] / "data" / "sample" / "sinchon-a" / "pos_raw.csv"
     out = main(["--store", "test-a", "--pos", str(pos), "--address", "서울 성동구 성수이로 113",
                 "--iterations", "30", "--artifacts", str(tmp_path)])

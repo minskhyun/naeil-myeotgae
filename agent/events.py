@@ -19,6 +19,7 @@ from pathlib import Path
 import pandas as pd
 from pydantic import BaseModel
 
+from agent.geocode import geocode as find_place
 from contracts.schemas import CollectionItem, SignalRow
 from ml.llm import ask
 
@@ -123,11 +124,10 @@ def read_sources(path: Path) -> list[tuple[str, dt.datetime | None]]:
 
 
 def page_event_signals(store_id: str, lat: float, lon: float, sources: list[tuple[str, dt.datetime | None]],
-                       start: dt.date, end: dt.date, cache_dir: Path, fetch=fetch_page, geocode=None,
+                       start: dt.date, end: dt.date, cache_dir: Path, fetch=fetch_page, geocode=find_place,
                        now: dt.datetime | None = None) -> tuple[list[SignalRow], list[CollectionItem], list[str]]:
-    """글 주소들 → (nearby_event 줄, 원문, 메모). 취소 공지는 value=0 줄 (가장 늦게 공개된 값이 쓰이므로 취소가 반영됨)."""
-    if geocode is None:
-        from agent.geocode import geocode
+    """글 주소들 → (nearby_event 줄, 원문, 메모). 취소 공지는 value=0 줄 (가장 늦게 공개된 값이 쓰이므로 취소가 반영됨).
+    fetch·geocode·now는 테스트에서 바꿔 끼우는 자리다 (인터넷 없이 시험)."""
     now = now or dt.datetime.now().replace(microsecond=0)
     rows, items, notes = [], [], []
     for url, pub in sources:

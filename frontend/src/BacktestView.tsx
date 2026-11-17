@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import { api, GROUP_LABELS, MODEL_LABELS, type ModelScore } from './api'
-import { fmtDate, pct1 } from './format'
+import { api, type ModelScore } from './api'
+import { fmtDate, GROUP_LABELS, MODEL_LABELS, pct1 } from './format'
 
 const base = (m: string) => m.slice(0, 2) // "M3(채택 신호만)" → "M3"
 const name = (m: string) => `${MODEL_LABELS[base(m)] ?? m}`

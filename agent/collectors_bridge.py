@@ -7,6 +7,7 @@
       → {work_dir}/{store_id}_sources.json      정보원 계획 (Claude가 고른 학교·행사 반경과 그 이유)
     work_dir = data/artifacts/{store_id}/collectors (run.py가 정함, 커밋 안 됨)
     이 파일이 하는 일: 위 결과 → SignalRow(시점 규칙용 공개 시각 포함) + CollectionItem(AI 주의 안내 원문)
+    부르는 곳: agent/collect.py의 public_data
 
 공개 시각을 붙이는 규칙
   - 날씨 관측값: '전날 17:10 예보'처럼 (실제 예보가 아님 → source_url 끝에 OBSERVED_PROXY, 결과를 말할 때 밝힐 것)
@@ -26,10 +27,10 @@ from pathlib import Path
 
 import pandas as pd
 
-from contracts.schemas import CollectionItem, SignalRow
+from contracts.schemas import CollectionItem, SignalRow, StoreConfig
 from ml.features import to_kst
+from ml.paths import ROOT
 
-ROOT = Path(__file__).resolve().parents[1]
 BACKEND = ROOT / "backend"
 DAILY, EVENTS, STORES = "external_daily.csv", "events.json", "stores.json"      # work_dir 안의 파일 이름
 
@@ -42,17 +43,17 @@ MAX_EVENT_DAYS = 14                            # 수집기(seoul_events)와 같�
 
 # ---------------------------------------------------------------- 수집기 실행
 
-def ensure_store(store_id: str, info: dict, work_dir: Path) -> None:
+def ensure_store(store: StoreConfig, work_dir: Path) -> None:
     """수집기가 읽을 매장 목록({work_dir}/stores.json)을 이 매장 하나로 쓴다 (이름·주소·좌표).
     주소가 바뀌었으면 주변 시설·정보원 계획을 지워 다시 고르게 한다 (옛 동네의 학교·반경을 쓰지 않도록)."""
     work_dir.mkdir(parents=True, exist_ok=True)
     path = work_dir / STORES
-    entry = dict(store_id=store_id, name=info.get("name", store_id), category=info.get("category", "카페"),
-                 address=info.get("address", ""), lat=info.get("lat"), lon=info.get("lon"))
+    entry = dict(store_id=store.store_id, name=store.name or store.store_id, category=store.category,
+                 address=store.address or "", lat=store.lat, lon=store.lon)
     if path.exists():
         old = json.loads(path.read_text(encoding="utf-8"))
         if old and old[0].get("address") != entry["address"]:
-            for name in (f"{store_id}_nearby.json", f"{store_id}_sources.json"):
+            for name in (f"{store.store_id}_nearby.json", f"{store.store_id}_sources.json"):
                 (work_dir / name).unlink(missing_ok=True)
     path.write_text(json.dumps([entry], ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
@@ -156,53 +157,4 @@ def signals_from_collectors(store_id: str, lo: dt.date, hi: dt.date, work_dir: P
     ev_rows, items = event_rows(store_id, events, lo, hi)
     rows += ev_rows
     notes.append(f"서울 문화행사 근처 {len({r.date for r in ev_rows})}일")
-    return rows, items, notes
-
-
-# ---------------------------------------------------------------- 한 번에 (run.py가 부름)
-
-def collect_all(store_id: str, info: dict, start: dt.date, end: dt.date, work_dir: Path,
-                sources_path: Path | None = None, target: dt.date | None = None, menus: list[str] | None = None
-                ) -> tuple[list[SignalRow], list[CollectionItem], list[str]]:
-    """매장 하나의 주변 정보를 모두 모은다. 출처마다 실패해도 나머지는 계속.
-      1. 공공 데이터 수집기: 날씨(관측·예보), 학사일정, 서울 문화행사  (결과 파일은 work_dir에)
-      2. 기념일 (agent/special_days.py)
-      3. 행사 글: 네이버 뉴스·블로그 자동 검색 + 사람이 모은 주소(sources_path) → LLM이 날짜·장소 추출 (agent/events.py)
-      4. 메뉴 검색량 유행: 네이버 데이터랩 → 예측 날짜 target의 AI 주의 안내 원문 (agent/naver.py)"""
-    from agent import naver
-    from agent.events import page_event_signals, read_sources
-    from agent.special_days import special_day_signals
-    rows, items, notes = [], [], []
-    work_dir = Path(work_dir)
-    ensure_store(store_id, info, work_dir)
-    yesterday = dt.date.today() - dt.timedelta(days=1)
-    ok, tail = run_collectors(store_id, start, yesterday, work_dir)
-    if ok:
-        r, i, n = signals_from_collectors(store_id, start, end, work_dir)
-        rows, items, notes = rows + r, items + i, notes + n
-    else:
-        notes.append("공공 데이터 수집 실패 → 날씨·학사일정·서울 행사 없이 진행: " + " / ".join(tail[-2:]))
-    rows += special_day_signals(store_id, start, end)
-    sources = read_sources(sources_path) if sources_path and Path(sources_path).exists() else []
-    if naver.has_keys():
-        try:
-            found, n = naver.news_sources(naver.area_keywords(info))
-            known = {u for u, _ in sources}
-            sources += [s for s in found if s[0] not in known]
-            notes += n
-        except Exception as e:
-            notes.append(f"네이버 검색 실패({type(e).__name__})")
-    else:
-        notes.append("네이버 검색 건너뜀(.env에 NAVER_CLIENT_ID·SECRET 없음)")
-    if sources:
-        r, i, n = page_event_signals(store_id, info["lat"], info["lon"], sources, start, end,
-                                     ROOT / "data" / "raw" / "llm_cache_events")
-        rows, items, notes = rows + r, items + i, notes + n
-        notes.append(f"행사 글 {len(sources)}개에서 행사 {len({x.date for x in r})}일")
-    if naver.has_keys() and target and menus:
-        try:
-            i, n = naver.trend_items(menus, target)
-            items, notes = items + i, notes + n
-        except Exception as e:
-            notes.append(f"메뉴 검색량 실패({type(e).__name__})")
     return rows, items, notes
