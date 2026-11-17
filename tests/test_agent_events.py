@@ -95,3 +95,20 @@ def test_geocode_saves_hits_and_misses(tmp_path, monkeypatch):
     assert g.geocode("서울 성동구 성수이로 75 도레미약국", search=search)[:2] == (37.5, 127.0) and len(calls) == 3
     with pytest.raises(ValueError, match="저장된 결과"):
         g.geocode("없는 곳", search=search)
+
+
+def test_extraction_uses_light_model(monkeypatch, tmp_path):
+    """글마다 부르는 행사 추출은 가벼운 모델(LLM_MODEL_LIGHT), 그 밖의 ask()는 LLM_MODEL을 쓴다."""
+    from agent.events import extract_events
+    used = []
+
+    def provider(model, **_):
+        used.append(model)
+        return EventList(events=[])
+    monkeypatch.setitem(llm.PROVIDERS, "fake", provider)
+    monkeypatch.setenv("LLM_PROVIDER", "fake")
+    monkeypatch.setenv("LLM_MODEL", "big")
+    monkeypatch.setenv("LLM_MODEL_LIGHT", "small")
+    extract_events(*PAGE, dt.datetime(2026, 11, 5), tmp_path)
+    llm.ask("규칙", "자료", EventList, tmp_path)
+    assert used == ["small", "big"]

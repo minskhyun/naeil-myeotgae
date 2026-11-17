@@ -67,7 +67,7 @@ EXTRACT_SYSTEM = """당신은 카페·베이커리 수요 예측 서비스의 '�
 주어진 글에서 매장 손님 수에 영향을 줄 만한 행사(팝업스토어, 축제, 공연, 대형 모임, 도로 통제·공사 등)만 뽑습니다.
 규칙:
 - 날짜는 글에 적힌 것만 씁니다. '이번 주말'처럼 날짜를 확정할 수 없으면 그 행사는 뽑지 않습니다. 연도가 없으면 글의 공개일을 기준으로 정합니다.
-- place는 글에 적힌 장소 이름·주소를 그대로 씁니다. 지어내지 않습니다.
+- place는 글에 적힌 장소 이름·주소를 그대로 씁니다. 글에 주소가 있으면 주소까지 함께 적습니다. 지어내지 않습니다.
 - quote에는 날짜와 장소가 적힌 문장을 원문에서 글자 그대로 복사합니다.
 - 판매량·손님 수 같은 숫자를 추정하지 않습니다.
 - 해당하는 행사가 없으면 빈 목록을 돌려줍니다."""
@@ -106,7 +106,7 @@ def fetch_page(url: str) -> tuple[str, str]:
 def extract_events(title: str, text: str, published: dt.datetime, cache_dir: Path) -> list[EventInfo]:
     """글 하나 → 행사 목록 (같은 글은 다시 부르지 않는다). 근거 문장이 글에 그대로 없으면 버린다."""
     user = json.dumps(dict(title=title, published_at=str(published.date()), text=text), ensure_ascii=False)
-    result = ask(EXTRACT_SYSTEM, user, EventList, cache_dir, max_tokens=8000)
+    result = ask(EXTRACT_SYSTEM, user, EventList, cache_dir, max_tokens=8000, light=True)   # 글마다 한 번 → 가벼운 모델
     return [e for e in result.events
             if e.is_event and e.start_date and e.quote and e.quote in (title + "\n" + text)]
 

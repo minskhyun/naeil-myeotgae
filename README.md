@@ -120,7 +120,8 @@ SEOUL_DATA_KEY=서울 열린데이터광장 인증키
 KAKAO_REST_KEY=카카오 디벨로퍼스 REST API 키 (카카오맵 사용 설정)
 NAVER_CLIENT_ID=NAVER API HUB Client ID
 NAVER_CLIENT_SECRET=NAVER API HUB Client Secret
-LLM_MODEL=claude-opus-5-5          # 선택 (기본값)
+LLM_MODEL=claude-opus-5-5          # 선택 (기본값): AI 주의 안내, 정보원 선택, 학사일정
+LLM_MODEL_LIGHT=claude-haiku-5-5   # 선택 (기본값): 행사 글 추출 (글마다 한 번이라 가벼운 모델)
 ```
 
 | 키 | 쓰는 곳 | 신청할 것 |
@@ -205,7 +206,7 @@ cd frontend && npm run build && npm run lint
 | 준비 방식·근거 문장 바꾸기 | `ml/predict.py`의 `PREP_MODES`, `reason_text` |
 | AI 주의 안내의 규칙 바꾸기 | `ml/alerts.py`의 `SYSTEM` |
 | 매장 설정 칸 추가 | `contracts/schemas.py`의 `StoreConfig` |
-| LLM 모델·제공자 바꾸기 | `.env`의 `LLM_MODEL`, `ml/llm.py`의 `PROVIDERS` |
+| LLM 모델·제공자 바꾸기 | `.env`의 `LLM_MODEL`·`LLM_MODEL_LIGHT`, `ml/llm.py`의 `PROVIDERS` |
 
 ## 공공 데이터 수집기 (backend/collectors)
 
