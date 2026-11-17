@@ -16,7 +16,7 @@ import json
 import os
 from pathlib import Path
 
-from collectors.llm import llm_json
+from collectors.llm import llm_json, model_name
 from collectors.store import STORE_DIR, get_store, nearby_path, plan_path
 
 KST = dt.timezone(dt.timedelta(hours=9))
@@ -158,7 +158,7 @@ def main():
         "store_id": store["store_id"],
         "created_at": dt.datetime.now(KST).isoformat(timespec="seconds"),
         "method": method,
-        "model": os.environ.get("GEMINI_MODEL", "") if method == "llm" else "",
+        "model": model_name() if method == "llm" else "",
         "nearby_fetched_at": nearby.get("fetched_at"),
         "weather": {"use": True, "reason": "모든 매장 기본"},
         "academic": academic,

@@ -58,7 +58,11 @@ def main():
     end = dt.date.fromisoformat(args.end)
 
     weather = fetch_observed(start, end, key)
-    holidays = fetch_holidays(start, end, key)
+    try:
+        holidays = fetch_holidays(start, end, key)
+    except Exception as err:   # 특일 정보 API 활용신청 전 등: 공휴일 없이 계속 (예측 엔진은 자체 공휴일 목록도 있음)
+        print(f"  [warn] 공휴일 조회 실패, 공휴일 없이 계속: {str(err)[:120]}")
+        holidays = {}
     rows = build_rows(start, end, weather, holidays)
 
     out = Path(args.out)

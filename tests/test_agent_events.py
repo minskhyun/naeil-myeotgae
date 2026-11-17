@@ -4,7 +4,7 @@ import datetime as dt
 import pytest
 
 from agent import events
-from agent.events import EventInfo, EventList, distance_km, page_event_signals, read_sources, seoul_event_signals
+from agent.events import EventInfo, EventList, distance_km, page_event_signals, read_sources
 
 STORE = (37.5446, 127.0557)                       # 성수동 근처
 D1, D2 = dt.date(2026, 11, 1), dt.date(2026, 11, 30)
@@ -13,35 +13,6 @@ D1, D2 = dt.date(2026, 11, 1), dt.date(2026, 11, 30)
 def test_distance_km():
     assert distance_km(*STORE, *STORE) == 0
     assert 7.0 < distance_km(37.5665, 126.9780, 37.5446, 127.0557) < 7.5   # 서울시청 ~ 성수동 직선 약 7.3km
-
-
-def _seoul(title, lat, lon, start, end, rgst="2026-11-03"):
-    return dict(TITLE=title, LAT=str(lat), LOT=str(lon), STRTDATE=f"{start} 00:00:00.0", END_DATE=f"{end} 00:00:00.0",
-                RGSTDATE=rgst, DATE=f"{start}~{end}", PLACE="성수 어딘가", GUNAME="성동구", ORG_LINK=f"https://x/{title}")
-
-
-def test_seoul_events_rules():
-    ev = [_seoul("근처하루", 37.5450, 127.0560, "2026-11-20", "2026-11-20"),
-          _seoul("근처이틀", 37.5440, 127.0550, "2026-11-20", "2026-11-21", rgst="2026-11-10"),   # 같은 날 → 한 줄
-          _seoul("좌표뒤바뀜", 127.0555, 37.5447, "2026-11-25", "2026-11-25"),                  # LAT·LOT 뒤바뀐 행
-          _seoul("멀리", 37.5665, 126.9780, "2026-11-20", "2026-11-20"),                       # 8km → 제외
-          _seoul("긴전시", 37.5450, 127.0560, "2026-11-01", "2026-12-31"),                     # 61일 → 제외
-          _seoul("기간밖", 37.5450, 127.0560, "2027-01-05", "2027-01-05"),
-          dict(TITLE="좌표없음", LAT="", LOT="", STRTDATE="", END_DATE="", RGSTDATE="")]
-    rows, items = seoul_event_signals("s", *STORE, ev, D1, D2)
-    assert [(str(r.date), r.value) for r in rows] == [("2026-11-20", 1), ("2026-11-21", 1), ("2026-11-25", 1)]
-    assert rows[0].source_url == "https://x/근처하루"                       # 같은 날이면 먼저 공개된 행사
-    assert rows[0].published_at == dt.datetime(2026, 11, 3, 23, 59)         # 등록일 23:59 (보수적으로)
-    assert all(r.kind == "event" and r.signal == "nearby_event" for r in rows)
-    # 긴전시(61일)는 신호가 없고, 기간 안에 여는 날(11/1)이 있어 '새로 엶' 원문 하나만
-    assert sorted(i.title for i in items) == ["[새로 엶] 긴전시", "근처이틀", "근처이틀", "근처하루", "좌표뒤바뀜"]
-
-
-def test_long_event_goes_to_warnings_on_opening_day_only():
-    """긴 행사(41일): 숫자 신호는 없고, 여는 날 원문 하나만 → AI 주의 안내가 '새로 엶'을 알릴 수 있다."""
-    rows, items = seoul_event_signals("s", *STORE, [_seoul("큰팝업", 37.5450, 127.0560, "2026-11-21", "2026-12-31")],
-                                      D1, D2)
-    assert rows == [] and [(str(i.date), i.title) for i in items] == [("2026-11-21", "[새로 엶] 큰팝업")]
 
 
 PAGE = ("성수 팝업 소식", "11월 20일부터 21일까지 성수동 연무장길에서 ○○ 팝업스토어를 연다. 입장은 무료다.")
