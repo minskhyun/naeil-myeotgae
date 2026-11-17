@@ -36,7 +36,7 @@ MAX_TREND_MENUS = 10                    # 판매량 상위 메뉴만 (요청 하
 
 
 def _keys() -> dict[str, str]:
-    from ml.alerts import settings
+    from ml.llm import settings
     cfg = settings()
     cid, secret = cfg.get("NAVER_CLIENT_ID"), cfg.get("NAVER_CLIENT_SECRET")
     if not cid or not secret:

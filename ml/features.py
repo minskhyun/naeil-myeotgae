@@ -272,6 +272,12 @@ def load_sales(path) -> pd.DataFrame:
     return pd.read_csv(path, parse_dates=["date"])
 
 
+def to_kst(t) -> pd.Timestamp:
+    """시각 하나 → 한국 시간(시간대 표시 없음). '2026-10-20T10:00:00+09:00'·'...Z'처럼 시간대가 붙어 오면 KST로 바꾼 뒤 뗀다."""
+    t = pd.Timestamp(t)
+    return t.tz_convert("Asia/Seoul").tz_localize(None) if t.tzinfo is not None else t
+
+
 def _kst(s: pd.Series) -> pd.Series:
     """시각 열 → 한국 시간(시간대 표시 없음). '2026-11-17T17:00:00+09:00'처럼 시간대가 붙어 오면 KST로 바꾼 뒤 뗀다."""
     t = pd.to_datetime(s, utc=s.astype(str).str.contains(r"[+-]\d\d:\d\d$|Z$").any(), format="ISO8601")

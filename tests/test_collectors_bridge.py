@@ -1,11 +1,11 @@
-"""agent/collectors_bridge.py 테스트: 새얼 수집기 결과(external_daily.csv, events.json) → SignalRow·CollectionItem.
+"""agent/collectors_bridge.py 테스트: 수집기 결과(external_daily.csv, events.json) → SignalRow·CollectionItem.
 수집기 자체(인터넷·LLM)는 부르지 않고, 작은 결과 파일로 변환 규칙만 확인한다."""
 import datetime as dt
 import json
 
 import pandas as pd
 
-from agent.collectors_bridge import OBSERVED_PROXY, signals_from_collectors
+from agent.collectors_bridge import OBSERVED_PROXY, ensure_store, signals_from_collectors
 
 DAILY = """date,dow,is_weekend,is_holiday,holiday_name,temp_mean,temp_min,temp_max,rain_mm,weather_kind,weather_issued_at,exam_period,vacation,festival,nearby_event
 2026-11-16,0,0,0,,9.1,5.0,13.0,0.0,observed,,1,0,0,0
@@ -21,17 +21,16 @@ def _event(eid, start, end, reg, store="s", source="seoul_culture"):
 
 
 def _files(tmp_path, plan=True):
-    (tmp_path / "daily.csv").write_text(DAILY, encoding="utf-8")
+    (tmp_path / "external_daily.csv").write_text(DAILY, encoding="utf-8")
     events = [_event("a", "2026-11-18", "2026-11-19", "2026-11-01T00:00:00+09:00"),
               _event("b", "2026-11-18", "2026-11-18", "2026-11-10T00:00:00+09:00"),
               _event("long", "2026-11-01", "2026-12-31", "2026-10-01T00:00:00+09:00"),    # 61일 → 제외
               _event("other", "2026-11-18", "2026-11-18", "2026-11-01T00:00:00+09:00", store="x"),   # 다른 매장
               dict(source="academic", source_url="https://univ/calendar", start_date="2026-11-16", end_date="2026-11-16")]
     (tmp_path / "events.json").write_text(json.dumps(events), encoding="utf-8")
-    (tmp_path / "plans").mkdir()
     if plan:
-        (tmp_path / "plans" / "s_sources.json").write_text("{}", encoding="utf-8")
-    return dict(daily_path=tmp_path / "daily.csv", events_path=tmp_path / "events.json", plan_dir=tmp_path / "plans")
+        (tmp_path / "s_sources.json").write_text("{}", encoding="utf-8")
+    return dict(work_dir=tmp_path)                                         # 수집기가 매장별 폴더에 남기는 모양 그대로
 
 
 def test_weather_publish_times(tmp_path):
@@ -63,6 +62,17 @@ def test_event_counts_grow_as_events_are_registered(tmp_path):
                   ("2026-11-19", 1.0, dt.datetime(2026, 11, 1, 23, 59))]
     assert sorted({i.title for i in items}) == ["행사a", "행사b"]            # 긴 행사·다른 매장 제외
     assert all(pd.Timestamp(i.date) >= pd.Timestamp("2026-11-18") for i in items)
+
+
+def test_store_file_is_per_store_and_replans_when_address_changes(tmp_path):
+    work = tmp_path / "collectors"
+    ensure_store("s", dict(address="서울 성동구 서울숲2길 12-7", lat=37.5, lon=127.0), work)
+    assert [s["store_id"] for s in json.loads((work / "stores.json").read_text(encoding="utf-8"))] == ["s"]
+    (work / "s_sources.json").write_text("{}", encoding="utf-8")
+    ensure_store("s", dict(address="서울 성동구 서울숲2길 12-7", lat=37.5, lon=127.0), work)
+    assert (work / "s_sources.json").exists()                               # 같은 주소 → 계획 그대로
+    ensure_store("s", dict(address="서울 서대문구 연세로 50", lat=37.56, lon=126.94), work)
+    assert not (work / "s_sources.json").exists()                           # 주소가 바뀜 → 다시 고르게 지움
 
 
 def test_hide_keys_in_logs():

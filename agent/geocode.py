@@ -73,7 +73,7 @@ KAKAO = "https://dapi.kakao.com/v2/local"
 def _kakao(query: str) -> list | None:
     """카카오 로컬: 주소 검색 → 키워드 검색. 키가 없으면 None. 찾으면 [위도, 경도, 이름]."""
     try:
-        from ml.alerts import settings
+        from ml.llm import settings
         key = settings().get("KAKAO_REST_KEY")
     except Exception:
         key = None

@@ -1,15 +1,28 @@
-"""매장 설정과 매장별 정보원 계획을 읽고 쓰는 공통 함수.
+"""매장 설정과 매장별 정보원 계획을 읽고 쓰는 공통 함수. 결과 파일 위치도 여기서 정한다.
 
-매장 목록: collectors/stores.json
-주변 시설: data/stores/{store_id}_nearby.json   (collectors.kakao)
-정보원 계획: data/stores/{store_id}_sources.json (collectors.agent)
+수집기만 따로 실행할 때 (backend 폴더에서, 저장소에 든 신촌 예시 매장)
+    매장 목록: collectors/stores.json
+    주변 시설: data/stores/{store_id}_nearby.json   (collectors.kakao)
+    정보원 계획: data/stores/{store_id}_sources.json (collectors.agent)
+    수집 결과: data/external_daily.csv, data/events.json
+
+예측 엔진이 실행할 때 (run.py → agent/collectors_bridge.py)
+    환경 변수 COLLECTORS_WORK_DIR=<매장별 폴더>를 주면 위 파일이 모두 그 폴더에 생긴다
+    (stores.json, {store_id}_nearby.json, {store_id}_sources.json, external_daily.csv, events.json).
+    → 실제 매장 결과가 저장소의 예시 파일을 덮어쓰지 않고, 매장끼리도 섞이지 않는다.
+학사일정 원문(data/raw/academic)과 서울시 행사 원본(data/raw/seoul_culture)은 매장과 상관없어 늘 backend/data 에 둔다.
 """
 import json
 import math
+import os
 from pathlib import Path
 
-STORES_FILE = Path(__file__).parent / "stores.json"
-STORE_DIR = Path("data/stores")
+WORK_DIR = Path(os.environ["COLLECTORS_WORK_DIR"]) if os.environ.get("COLLECTORS_WORK_DIR") else None
+STORES_FILE = WORK_DIR / "stores.json" if WORK_DIR else Path(__file__).parent / "stores.json"
+STORE_DIR = WORK_DIR or Path("data/stores")
+DAILY_FILE = str(WORK_DIR / "external_daily.csv") if WORK_DIR else "data/external_daily.csv"
+EVENTS_FILE = str(WORK_DIR / "events.json") if WORK_DIR else "data/events.json"
+ENV_HINT = "프로젝트 맨 위 .env"          # 키가 없을 때 안내 문구에 쓴다
 DEFAULT_EVENT_RADIUS_M = 1000
 
 

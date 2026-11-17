@@ -4,7 +4,7 @@ import datetime as dt
 import pytest
 
 from contracts.schemas import Forecast, ForecastRow
-from ml import alerts
+from ml import alerts, llm
 
 D = dt.date(2026, 11, 1)
 FC = Forecast(store_id="s", generated_at="2026-10-31T21:00:00", signals_used=["rain_mm"],
@@ -23,11 +23,11 @@ def _warning(quote):
 def fake(monkeypatch):
     calls = []
 
-    def provider(model, user):
+    def provider(user, **_):
         calls.append(user)
         return alerts.WarningList(warnings=[_warning("대규모 거리 축제가 열린다"),     # 원문에 있음
                                             _warning("10만 명이 몰린다")])           # 원문에 없음 → 버림
-    monkeypatch.setitem(alerts.PROVIDERS, "fake", provider)
+    monkeypatch.setitem(llm.PROVIDERS, "fake", provider)
     monkeypatch.setenv("LLM_PROVIDER", "fake")
     return calls
 
@@ -84,10 +84,10 @@ def test_payload_tells_what_model_already_reflected():
 
 def test_menu_scope_is_cleaned(monkeypatch, tmp_path):
     """LLM이 영향 메뉴를 비우거나 없는 메뉴를 적으면 전체(["*"])로, 실제 메뉴는 그대로 둔다."""
-    def provider(model, user):
+    def provider(user, **_):
         ws = [_warning("대규모 거리 축제가 열린다") for _ in range(3)]
         ws[0]["menu_scope"], ws[1]["menu_scope"], ws[2]["menu_scope"] = [], ["없는메뉴"], ["소금빵", "없는메뉴"]
         return alerts.WarningList(warnings=ws)
-    monkeypatch.setitem(alerts.PROVIDERS, "fake2", provider)
+    monkeypatch.setitem(llm.PROVIDERS, "fake2", provider)
     monkeypatch.setenv("LLM_PROVIDER", "fake2")
     assert [w.menu_scope for w in alerts.make_warnings(FC, ITEMS, tmp_path)] == [["*"], ["*"], ["소금빵"]]

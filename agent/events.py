@@ -1,19 +1,17 @@
-"""팝업·공지 글 → nearby_event 신호 + LLM 주의 안내용 원문(collection).  (새얼 수집기에 없는 우리 추가 기능)
+"""팝업·공지 글 → nearby_event 신호 + AI 주의 안내용 원문(collection).
 
-서울 문화행사·날씨·학사일정은 새얼 수집기(backend/collectors)가 맡는다 → agent/collectors_bridge.py
-이 파일: 사람이 모은 팝업·공지 글 주소 (data/raw/{store}_event_sources.txt, 한 줄에 '주소 [공개일 YYYY-MM-DD]')
+서울 문화행사·날씨·학사일정은 공공 데이터 수집기(backend/collectors)가 맡는다 → agent/collectors_bridge.py
+이 파일이 읽는 글: 네이버 뉴스·블로그 검색 결과(agent/naver.py)
+                 + 사람이 모은 글 주소 (data/raw/{store}_event_sources.txt, 한 줄에 '주소 [공개일 YYYY-MM-DD]')
   - 글을 받아 LLM이 날짜·장소·취소 여부만 뽑는다 (구조화 출력). 판매량 숫자는 다루지 않는다.
   - 코드가 거르는 것: 근거 문장이 글에 그대로 없으면 버림, 장소를 좌표로 바꿔 NEAR_KM 밖이면 버림
   - MAX_EVENT_DAYS일 넘는 긴 팝업은 신호 없이 '여는 날' 원문만 (AI 주의 안내가 새 대형 팝업을 알릴 수 있게)
   - 공개일을 안 적으면 '지금'으로 본다 → 과거 학습에는 안 쓰이고 앞으로의 예측에만 쓰인다 (누수 방지)
 """
 import datetime as dt
-import hashlib
 import json
 import math
-import os
 import re
-import urllib.parse
 import urllib.request
 from html.parser import HTMLParser
 from pathlib import Path
@@ -22,8 +20,8 @@ import pandas as pd
 from pydantic import BaseModel
 
 from contracts.schemas import CollectionItem, SignalRow
+from ml.llm import ask
 
-ROOT = Path(__file__).resolve().parents[1]
 NEAR_KM = 1.0              # 매장에서 이 거리 안이면 '근처' (걸어서 15분 안팎)
 MAX_EVENT_DAYS = 7         # 이보다 긴 행사는 신호로 쓰지 않는다
 MAX_PAGE_CHARS = 6000      # 글은 앞 6000자까지만 LLM에 넘긴다
@@ -43,12 +41,12 @@ def _days(start: dt.date, end: dt.date, lo: dt.date, hi: dt.date) -> list[dt.dat
     return [d.date() for d in pd.date_range(max(start, lo), min(end, hi))]
 
 
-def _event_rows(store_id: str, day: dt.date, value: float, url: str, published: dt.datetime) -> SignalRow:
+def _event_row(store_id: str, day: dt.date, value: float, url: str, published: dt.datetime) -> SignalRow:
     return SignalRow(date=day, store_id=store_id, signal="nearby_event", value=value, source_url=url,
                      published_at=published, kind="event")
 
 
-# ---------------------------------------------------------------- B. 팝업·공지 글 (LLM이 날짜·장소만 뽑음)
+# ---------------------------------------------------------------- LLM이 날짜·장소만 뽑음
 
 class EventInfo(BaseModel):
     is_event: bool          # 매장 손님 수에 영향을 줄 만한 행사·팝업·공사·통제 등인가
@@ -104,32 +102,10 @@ def fetch_page(url: str) -> tuple[str, str]:
     return (re.sub(r"\s+", " ", title.group(1)).strip() if title else url), text[:MAX_PAGE_CHARS]
 
 
-def _extract_anthropic(model: str, user: str) -> EventList:
-    import anthropic
-    from ml.alerts import settings
-    if "ANTHROPIC_API_KEY" not in os.environ and (key := settings().get("ANTHROPIC_API_KEY")):
-        os.environ["ANTHROPIC_API_KEY"] = key
-    r = anthropic.Anthropic().messages.parse(model=model, max_tokens=8000, system=EXTRACT_SYSTEM,
-                                             messages=[{"role": "user", "content": user}], output_format=EventList)
-    return r.parsed_output
-
-
-EXTRACTORS = {"anthropic": _extract_anthropic}   # 제공자 이름 → 함수(model, user) -> EventList (ml.alerts와 같은 설정)
-
-
 def extract_events(title: str, text: str, published: dt.datetime, cache_dir: Path) -> list[EventInfo]:
     """글 하나 → 행사 목록 (같은 글은 다시 부르지 않는다). 근거 문장이 글에 그대로 없으면 버린다."""
-    from ml.alerts import settings
-    cfg = settings()
     user = json.dumps(dict(title=title, published_at=str(published.date()), text=text), ensure_ascii=False)
-    key = hashlib.sha256(f"{cfg['LLM_PROVIDER']}|{cfg['LLM_MODEL']}|{EXTRACT_SYSTEM}|{user}".encode()).hexdigest()[:16]
-    cache = Path(cache_dir) / f"{key}.json"
-    if cache.exists():
-        result = EventList.model_validate_json(cache.read_text(encoding="utf-8"))
-    else:
-        result = EXTRACTORS[cfg["LLM_PROVIDER"]](cfg["LLM_MODEL"], user)
-        cache.parent.mkdir(parents=True, exist_ok=True)
-        cache.write_text(result.model_dump_json(indent=1), encoding="utf-8")
+    result = ask(EXTRACT_SYSTEM, user, EventList, cache_dir, max_tokens=8000)
     return [e for e in result.events
             if e.is_event and e.start_date and e.quote and e.quote in (title + "\n" + text)]
 
@@ -176,7 +152,7 @@ def page_event_signals(store_id: str, lat: float, lon: float, sources: list[tupl
                                                 source_url=url, published_at=published))
                 continue
             for d in _days(ev.start_date, last, start, end):
-                rows.append(_event_rows(store_id, d, 0.0 if ev.cancelled else 1.0, url, published))
+                rows.append(_event_row(store_id, d, 0.0 if ev.cancelled else 1.0, url, published))
                 items.append(CollectionItem(date=d, title=ev.title or title, text=text, source_url=url,
                                             published_at=published))
     return rows, items, notes

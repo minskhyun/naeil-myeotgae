@@ -18,7 +18,7 @@ import requests
 from dotenv import load_dotenv
 
 from collectors.holidays import fetch_holidays
-from collectors.store import get_store, plan_schools
+from collectors.store import DAILY_FILE, ENV_HINT, EVENTS_FILE, get_store, plan_schools
 
 FCST_URL = "http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst"
 KST = dt.timezone(dt.timedelta(hours=9))
@@ -177,14 +177,14 @@ def main():
     parser.add_argument("--store", default=None)
     parser.add_argument("--lat", type=float, default=None)
     parser.add_argument("--lon", type=float, default=None)
-    parser.add_argument("--daily", default="data/external_daily.csv")
-    parser.add_argument("--events", default="data/events.json")
+    parser.add_argument("--daily", default=DAILY_FILE)
+    parser.add_argument("--events", default=EVENTS_FILE)
     args = parser.parse_args()
 
     load_dotenv()
     key = os.environ.get("DATA_GO_KR_KEY")
     if not key:
-        raise SystemExit("backend/.env 에 DATA_GO_KR_KEY 가 없습니다.")
+        raise SystemExit(f"{ENV_HINT} 에 DATA_GO_KR_KEY 가 없습니다.")
     path = Path(args.daily)
     if not path.exists():
         raise SystemExit(f"{path} 가 없습니다. build_external_daily 를 먼저 실행하세요.")

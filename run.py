@@ -3,17 +3,21 @@
     python run.py --store sinchon-a --demo                          # 가상 데이터로 끝까지
     python run.py --store sinchon-a --demo --demo-days 35           # 가상 데이터를 35일로 잘라 '짧은 데이터 모드' 시연
     python run.py --store seongsu-a --pos data/raw/seongsu-a.xlsx \\
-                  --address "서울 성동구 성수이로 113"              # 실데이터: 주소로 날씨·기념일 자동 수집
+                  --address "서울 성동구 서울숲2길 12-7"            # 실데이터: 주소로 주변 정보를 자동 수집
     python run.py --store seongsu-a --pos data/raw/seongsu-a.xlsx \\
                   --signals data/raw/seongsu-a_signals.json        # 신호 파일을 직접 줄 때 (자동 수집 안 함)
     python run.py --store seongsu-a --from-step predict             # 앞 단계 결과 파일을 그대로 쓰고 predict만
 
 결과는 모두 data/artifacts/{store_id}/ 에 쌓인다 (이 폴더는 .gitignore 대상, 커밋되지 않음).
-    store.json         매장 설정 (영업 종료 시각, 준비 방식, 주소·위도·경도, 선택: 지금 파는 메뉴 목록 "menus")
+    store.json         매장 설정 (영업 종료 시각, 준비 방식, 주소·위도·경도, 선택: 지금 파는 메뉴 목록 "menus",
+                       선택: 뉴스 검색에 쓸 동네 이름 "area_keywords")
     sales_clean.csv    ingest 결과 (SalesRow 형식)
+    collectors/        공공 데이터 수집기 결과 (날씨·학사일정·행사 원본, 주변 시설, 정보원 계획)
     signals.csv        외부 신호 (있으면)
+    collection.json    AI 주의 안내에 쓸 행사·뉴스 원문 (있으면)
     backtest.json      evaluate 결과 (BacktestResult)
     forecast.json      predict 결과 (Forecast)
+    llm_cache/         AI 주의 안내 응답 저장 (같은 입력은 다시 부르지 않음)
 """
 import argparse
 import json
@@ -28,7 +32,7 @@ from agent.collectors_bridge import OBSERVED_PROXY
 from contracts.schemas import BacktestResult, CollectionItem, SignalRow
 from ml.alerts import make_warnings
 from ml.evaluate import ARTIFACTS, ROOT, run_backtest, write_backtest
-from ml.features import DEFAULT_CLOSE_TIME, load_sales, load_signals
+from ml.features import DEFAULT_CLOSE_TIME, load_sales, load_signals, to_kst
 from ml.predict import predict_from_backtest, write_forecast
 
 SAMPLE_ROOT = ROOT / "data" / "sample"
@@ -68,7 +72,7 @@ def step_ingest(args, out: Path) -> str:
 
     if not args.pos:
         raise SystemExit("--demo 또는 --pos <POS 파일> 중 하나가 필요합니다.")
-    from ml.ingest import ingest_store                         # 실데이터에서만 필요 (다음 단계에서 구현)
+    from ml.ingest import ingest_store                         # 실데이터에서만 필요
     note = ingest_store(Path(args.pos), args.store, out, pos_type=args.pos_type)
     info, where = _store_setup(args, out)
     if where:
@@ -78,12 +82,8 @@ def step_ingest(args, out: Path) -> str:
         note += ", " + _import_signals(Path(args.signals), args.store, out)
     elif not args.signals:
         note += ", " + _auto_signals(args.store, out, info)
-    # 행사·뉴스 원문: 직접 주거나, data/raw/{store}_collection.json이 있으면 자동으로 (수집기 events.py는 아직 없음)
-    auto_collection = ROOT / "data" / "raw" / f"{args.store}_collection.json"
-    if args.collection:
+    if args.collection:                                        # 직접 준 원문은 자동 수집분 뒤에 덧붙인다
         note += ", " + _import_collection(Path(args.collection), out, append=True)
-    elif auto_collection.exists():
-        note += ", " + _import_collection(auto_collection, out, append=True) + " (data/raw에서)"
     return note
 
 
@@ -109,9 +109,7 @@ def _store_setup(args, out: Path) -> tuple[dict, str]:
 
 def _auto_signals(store_id: str, out: Path, info: dict) -> str:
     """매장 위치로 주변 정보를 모아 signals.csv(+원문은 collection.json)로. 출처마다 실패해도 예측은 계속.
-      새얼 수집기(backend/collectors): 날씨(과거=관측 대용, 앞으로=실제 예보)·학사일정·서울 문화행사
-      우리 추가 기능: 기념일, data/raw/{store}_event_sources.txt의 팝업 글 (LLM이 날짜·장소만 뽑음)
-      키는 맨 위 .env 하나: DATA_GO_KR_KEY, SEOUL_DATA_KEY, KAKAO_REST_KEY, ANTHROPIC_API_KEY"""
+    무엇을 모으는지는 agent/collectors_bridge.collect_all 참고. 키는 맨 위 .env 하나 (README '키 준비')."""
     if "lat" not in info or "lon" not in info:
         return "주변 정보 없음 (매장 위치를 모름: 주소를 넣으면 날씨·행사를 자동으로 붙임)"
     from agent.collectors_bridge import collect_all
@@ -121,7 +119,7 @@ def _auto_signals(store_id: str, out: Path, info: dict) -> str:
     end = max(dates.max(), pd.Timestamp.today().normalize()) + pd.Timedelta(days=7)
     target = (dates.max() + pd.Timedelta(days=1)).date()        # 내일 = 예측 날짜 (메뉴 검색량 안내를 붙일 날)
     menus = sales.groupby("menu")["qty"].sum().sort_values(ascending=False).index.tolist()   # 판매량 많은 순
-    rows, items, notes = collect_all(store_id, info, start.date(), end.date(),
+    rows, items, notes = collect_all(store_id, info, start.date(), end.date(), work_dir=out / "collectors",
                                      sources_path=ROOT / "data" / "raw" / f"{store_id}_event_sources.txt",
                                      target=target, menus=menus)
     if items:
@@ -168,9 +166,8 @@ def _import_collection(path: Path, out: Path, append: bool = False) -> str:
             item = CollectionItem.model_validate(rec)
         except ValueError as e:
             raise SystemExit(f"{path.name}의 {i}번째 항목 형식이 틀립니다:\n{e}")
-        if item.published_at is not None and item.published_at.tzinfo is not None:
-            item.published_at = (pd.Timestamp(item.published_at).tz_convert("Asia/Seoul")
-                                 .tz_localize(None).to_pydatetime())
+        if item.published_at is not None:
+            item.published_at = to_kst(item.published_at).to_pydatetime()
         items.append(item.model_dump(mode="json"))
     _save_collection(items, out, append)
     return f"원문 {len(items)}개"
@@ -203,7 +200,7 @@ def step_predict(args, out: Path) -> str:
         missing = sorted(set(menus) - {r.menu for r in fc.rows})
         if missing:
             note += f", menus 중 예측 못 한 메뉴(최근 14일 판매 기록 없음·오타?): {', '.join(missing)}"
-    if (out / "collection.json").exists():                    # 새얼이 모은 자료가 있으면 LLM 경고 (숫자는 안 바꿈)
+    if (out / "collection.json").exists():                    # 모은 원문이 있으면 AI 주의 안내 (숫자는 안 바꿈)
         try:
             collection = json.loads((out / "collection.json").read_text(encoding="utf-8"))
             fc.warnings = make_warnings(fc, collection, out / "llm_cache",
@@ -227,7 +224,7 @@ def parse_args(argv=None):
     p.add_argument("--demo-days", type=int, help="가상 데이터를 앞 N일로 잘라 실행 (짧은 데이터 모드 시연)")
     p.add_argument("--pos", help="POS 파일 경로 (실데이터)")
     p.add_argument("--pos-type", default="auto", choices=["auto", "toss", "okpos"])
-    p.add_argument("--address", help="매장 주소 → 위치를 찾아 날씨·기념일을 자동 수집 (store.json에 저장)")
+    p.add_argument("--address", help="매장 주소 → 위치를 찾아 날씨·행사·뉴스를 자동 수집 (store.json에 저장)")
     p.add_argument("--lat", type=float, help="매장 위도 (주소 대신)")
     p.add_argument("--lon", type=float, help="매장 경도 (주소 대신)")
     p.add_argument("--signals", help="외부 신호 파일 (SignalRow 형식 .json 또는 .csv). 주면 자동 수집을 하지 않음")

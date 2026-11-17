@@ -20,7 +20,7 @@ from pathlib import Path
 import requests
 from dotenv import load_dotenv
 
-from collectors.store import distance_m, get_store, plan_event_radius
+from collectors.store import DAILY_FILE, ENV_HINT, EVENTS_FILE, distance_m, get_store, plan_event_radius
 
 API = "http://openapi.seoul.go.kr:8088/{key}/json/culturalEventInfo/{start}/{end}/"
 RAW_FILE = Path("data/raw/seoul_culture/culturalEventInfo.json")
@@ -167,14 +167,14 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--store", default=None)
     parser.add_argument("--refresh", action="store_true")
-    parser.add_argument("--events", default="data/events.json")
-    parser.add_argument("--daily", default="data/external_daily.csv")
+    parser.add_argument("--events", default=EVENTS_FILE)
+    parser.add_argument("--daily", default=DAILY_FILE)
     args = parser.parse_args()
 
     load_dotenv()
     key = os.environ.get("SEOUL_DATA_KEY")
     if not key:
-        raise SystemExit("backend/.env 에 SEOUL_DATA_KEY 가 없습니다.")
+        raise SystemExit(f"{ENV_HINT} 에 SEOUL_DATA_KEY 가 없습니다.")
 
     store = get_store(args.store)
     radius = plan_event_radius(store["store_id"])

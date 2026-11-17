@@ -18,7 +18,7 @@ import requests
 from bs4 import BeautifulSoup
 
 from collectors.llm import llm_json
-from collectors.store import get_store, plan_schools
+from collectors.store import DAILY_FILE, EVENTS_FILE, get_store, plan_schools
 
 HERE = Path(__file__).parent
 SOURCES_FILE = HERE / "academic_sources.json"
@@ -210,8 +210,8 @@ def update_daily_csv(path: Path, counts: dict):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--refresh", action="store_true", help="저장된 원문을 무시하고 다시 내려받기")
-    parser.add_argument("--events", default="data/events.json")
-    parser.add_argument("--daily", default="data/external_daily.csv")
+    parser.add_argument("--events", default=EVENTS_FILE)
+    parser.add_argument("--daily", default=DAILY_FILE)
     parser.add_argument("--store", default=None)
     args = parser.parse_args()
     store = get_store(args.store)

@@ -12,6 +12,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from collectors.holidays import fetch_holidays
+from collectors.store import DAILY_FILE, ENV_HINT
 from collectors.weather import fetch_observed
 
 COLUMNS = [
@@ -46,13 +47,13 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--start", required=True, help="YYYY-MM-DD")
     parser.add_argument("--end", required=True, help="YYYY-MM-DD")
-    parser.add_argument("--out", default="data/external_daily.csv")
+    parser.add_argument("--out", default=DAILY_FILE)
     args = parser.parse_args()
 
     load_dotenv()
     key = os.environ.get("DATA_GO_KR_KEY")
     if not key:
-        raise SystemExit("backend/.env 에 DATA_GO_KR_KEY 가 없습니다.")
+        raise SystemExit(f"{ENV_HINT} 에 DATA_GO_KR_KEY 가 없습니다.")
 
     start = dt.date.fromisoformat(args.start)
     end = dt.date.fromisoformat(args.end)

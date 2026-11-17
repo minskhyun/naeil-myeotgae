@@ -15,7 +15,7 @@ import os
 import requests
 from dotenv import load_dotenv
 
-from collectors.store import STORE_DIR, get_store, load_stores, nearby_path, save_stores
+from collectors.store import ENV_HINT, STORE_DIR, get_store, load_stores, nearby_path, save_stores
 
 BASE = "https://dapi.kakao.com/v2/local"
 KST = dt.timezone(dt.timedelta(hours=9))
@@ -89,7 +89,7 @@ def main():
     load_dotenv()
     key = os.environ.get("KAKAO_REST_KEY")
     if not key:
-        raise SystemExit("backend/.env 에 KAKAO_REST_KEY 가 없습니다.")
+        raise SystemExit(f"{ENV_HINT} 에 KAKAO_REST_KEY 가 없습니다.")
 
     store = get_store(args.store)
     if store.get("address"):

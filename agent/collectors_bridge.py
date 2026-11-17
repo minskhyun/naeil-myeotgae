@@ -1,20 +1,24 @@
-"""새얼 수집기(backend/collectors) 실행 + 결과를 예측 엔진 입력으로 바꾸기.
+"""공공 데이터 수집기(backend/collectors, 새얼 담당) 실행 + 결과를 예측 엔진 입력으로 바꾸기.
 
-    새얼 수집기: python -m collectors.run_all (backend/ 에서)
-      → backend/data/external_daily.csv  날짜당 한 줄 (날씨 관측·예보, 학사 기간 수, 근처 행사 수)
-      → backend/data/events.json         행사·학사일정 목록 (출처, 게시 시각, 매장과의 거리)
-    이 파일이 하는 일: 위 두 파일 → SignalRow(시점 규칙용 공개 시각 포함) + CollectionItem(LLM 주의 안내 원문)
+    수집기: python -m collectors.run_all (backend/ 에서 실행, 결과는 매장별 폴더 work_dir에)
+      → {work_dir}/external_daily.csv           날짜당 한 줄 (날씨 관측·예보, 학사 기간 수, 근처 행사 수)
+      → {work_dir}/events.json                  행사·학사일정 목록 (출처, 게시 시각, 매장과의 거리)
+      → {work_dir}/{store_id}_nearby.json       카카오로 찾은 주변 시설
+      → {work_dir}/{store_id}_sources.json      정보원 계획 (Claude가 고른 학교·행사 반경과 그 이유)
+    work_dir = data/artifacts/{store_id}/collectors (run.py가 정함, 커밋 안 됨)
+    이 파일이 하는 일: 위 결과 → SignalRow(시점 규칙용 공개 시각 포함) + CollectionItem(AI 주의 안내 원문)
 
 공개 시각을 붙이는 규칙
   - 날씨 관측값: '전날 17:10 예보'처럼 (실제 예보가 아님 → source_url 끝에 OBSERVED_PROXY, 결과를 말할 때 밝힐 것)
-  - 날씨 예보: 새얼이 적은 발표 시각(weather_issued_at)
+  - 날씨 예보: 수집기가 적은 발표 시각(weather_issued_at)
   - 학사 기간(exam_period·vacation·festival): 학사일정은 학기 전에 공개되므로 그 해 1월 1일 공개로 본다
-    ※ 정보원 계획(어느 학교를 쓸지)이 없으면 새얼 수집기가 신촌 3개 대학을 모두 세므로, 계획이 없으면 쓰지 않는다
+    ※ 정보원 계획(어느 학교를 쓸지)이 없으면 수집기가 신촌 3개 대학을 모두 세므로, 계획이 없으면 쓰지 않는다
   - 근처 행사(nearby_event): events.json의 서울 문화행사를 다시 세어, 등록될 때마다 그날 행사 수를 한 줄씩
     (등록일 23:59 공개로 본다, 보수적). 예측 시각에는 그때까지 등록된 행사 수가 쓰인다
 """
 import datetime as dt
 import json
+import os
 import re
 import subprocess
 import sys
@@ -23,40 +27,46 @@ from pathlib import Path
 import pandas as pd
 
 from contracts.schemas import CollectionItem, SignalRow
+from ml.features import to_kst
 
 ROOT = Path(__file__).resolve().parents[1]
 BACKEND = ROOT / "backend"
-DAILY = BACKEND / "data" / "external_daily.csv"
-EVENTS = BACKEND / "data" / "events.json"
-STORES = BACKEND / "collectors" / "stores.json"
-PLAN_DIR = BACKEND / "data" / "stores"
+DAILY, EVENTS, STORES = "external_daily.csv", "events.json", "stores.json"      # work_dir 안의 파일 이름
 
 OBSERVED_PROXY = "#관측값을-예보-대신-사용"     # 이 표시가 붙은 신호는 실제 예보가 아니다 (run.py가 줄 수를 알려 줌)
 KMA_OBSERVED = "https://data.kma.go.kr"
 KMA_FORECAST = "https://www.data.go.kr/data/15084084/openapi.do"
 ACADEMIC_COLS = ["exam_period", "vacation", "festival"]
-MAX_EVENT_DAYS = 14                            # 새얼 수집기와 같은 기준 (이보다 긴 상설 전시는 신호가 안 됨)
+MAX_EVENT_DAYS = 14                            # 수집기(seoul_events)와 같은 기준 (이보다 긴 상설 전시는 신호가 안 됨)
 
 
 # ---------------------------------------------------------------- 수집기 실행
 
-def ensure_store(store_id: str, info: dict) -> None:
-    """새얼 수집기의 매장 목록(stores.json)에 이 매장을 넣거나 고친다 (이름·주소·좌표)."""
-    stores = json.loads(STORES.read_text(encoding="utf-8"))
+def ensure_store(store_id: str, info: dict, work_dir: Path) -> None:
+    """수집기가 읽을 매장 목록({work_dir}/stores.json)을 이 매장 하나로 쓴다 (이름·주소·좌표).
+    주소가 바뀌었으면 주변 시설·정보원 계획을 지워 다시 고르게 한다 (옛 동네의 학교·반경을 쓰지 않도록)."""
+    work_dir.mkdir(parents=True, exist_ok=True)
+    path = work_dir / STORES
     entry = dict(store_id=store_id, name=info.get("name", store_id), category=info.get("category", "카페"),
                  address=info.get("address", ""), lat=info.get("lat"), lon=info.get("lon"))
-    stores = [s for s in stores if s["store_id"] != store_id] + [entry]
-    STORES.write_text(json.dumps(stores, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    if path.exists():
+        old = json.loads(path.read_text(encoding="utf-8"))
+        if old and old[0].get("address") != entry["address"]:
+            for name in (f"{store_id}_nearby.json", f"{store_id}_sources.json"):
+                (work_dir / name).unlink(missing_ok=True)
+    path.write_text(json.dumps([entry], ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
-def run_collectors(store_id: str, start: dt.date, end: dt.date) -> tuple[bool, list[str]]:
-    """python -m collectors.run_all 을 backend/에서 실행. 돌려주는 값: (성공 여부, 출력 마지막 몇 줄)."""
-    DAILY.unlink(missing_ok=True)          # 실패했을 때 다른 매장의 옛 결과를 쓰지 않도록 먼저 지운다
+def run_collectors(store_id: str, start: dt.date, end: dt.date, work_dir: Path) -> tuple[bool, list[str]]:
+    """python -m collectors.run_all 을 backend/에서 실행 (결과는 work_dir에). 돌려주는 값: (성공 여부, 출력 마지막 몇 줄)."""
+    work_dir = Path(work_dir).resolve()        # 수집기는 backend/에서 돌므로 절대 경로로 넘긴다
+    (work_dir / DAILY).unlink(missing_ok=True)  # 실패했을 때 지난번 결과를 이번 것으로 착각하지 않도록 먼저 지운다
     cmd = [sys.executable, "-m", "collectors.run_all", "--store", store_id,
            "--start", start.isoformat(), "--end", end.isoformat()]
-    proc = subprocess.run(cmd, cwd=BACKEND, capture_output=True, text=True, encoding="utf-8", errors="replace")
+    proc = subprocess.run(cmd, cwd=BACKEND, capture_output=True, text=True, encoding="utf-8", errors="replace",
+                          env={**os.environ, "COLLECTORS_WORK_DIR": str(work_dir)})
     lines = [hide_keys(l) for l in (proc.stdout + proc.stderr).splitlines() if l.strip()]
-    return proc.returncode == 0 and DAILY.exists(), lines[-6:]
+    return proc.returncode == 0 and (work_dir / DAILY).exists(), lines[-6:]
 
 
 def hide_keys(text: str) -> str:
@@ -66,11 +76,6 @@ def hide_keys(text: str) -> str:
 
 # ---------------------------------------------------------------- 결과 → 신호
 
-def _kst(t) -> dt.datetime:
-    t = pd.Timestamp(t)
-    return (t.tz_convert("Asia/Seoul").tz_localize(None) if t.tzinfo is not None else t).to_pydatetime()
-
-
 def weather_rows(store_id: str, daily: pd.DataFrame) -> list[SignalRow]:
     rows = []
     for r in daily.itertuples():
@@ -78,7 +83,7 @@ def weather_rows(store_id: str, daily: pd.DataFrame) -> list[SignalRow]:
             continue
         day = pd.Timestamp(r.date)
         if r.weather_kind == "forecast" and isinstance(r.weather_issued_at, str):
-            published, url = _kst(r.weather_issued_at), KMA_FORECAST
+            published, url = to_kst(r.weather_issued_at).to_pydatetime(), KMA_FORECAST
         else:                                               # 관측값 → 전날 17:10 예보처럼
             published, url = (day - pd.Timedelta(days=1) + pd.Timedelta(hours=17, minutes=10)).to_pydatetime(), \
                 KMA_OBSERVED + OBSERVED_PROXY
@@ -116,7 +121,7 @@ def event_rows(store_id: str, events: list[dict], lo: dt.date, hi: dt.date
         if (t - s).days + 1 > MAX_EVENT_DAYS:
             continue
         reg = e.get("published_at")
-        published = (pd.Timestamp(_kst(reg)).normalize() + pd.Timedelta(hours=23, minutes=59)).to_pydatetime() \
+        published = (to_kst(reg).normalize() + pd.Timedelta(hours=23, minutes=59)).to_pydatetime() \
             if reg else dt.datetime.now().replace(microsecond=0)
         text = (f"{e['title']}. 장소: {e.get('place', '')} (매장에서 약 {e.get('distance_m', '?')}m). "
                 f"기간: {e['start_date']} ~ {e['end_date']}. 분야: {e.get('category', '')}.")
@@ -134,14 +139,15 @@ def event_rows(store_id: str, events: list[dict], lo: dt.date, hi: dt.date
     return rows, items
 
 
-def signals_from_collectors(store_id: str, lo: dt.date, hi: dt.date, daily_path: Path = DAILY,
-                            events_path: Path = EVENTS, plan_dir: Path = PLAN_DIR
+def signals_from_collectors(store_id: str, lo: dt.date, hi: dt.date, work_dir: Path
                             ) -> tuple[list[SignalRow], list[CollectionItem], list[str]]:
-    daily = pd.read_csv(daily_path)
-    events = json.loads(Path(events_path).read_text(encoding="utf-8")) if Path(events_path).exists() else []
+    """work_dir의 수집 결과 → (신호 줄, 행사 원문, 메모)."""
+    work_dir = Path(work_dir)
+    daily = pd.read_csv(work_dir / DAILY)
+    events = json.loads((work_dir / EVENTS).read_text(encoding="utf-8")) if (work_dir / EVENTS).exists() else []
     rows, notes = weather_rows(store_id, daily), []
     notes.append(f"날씨 {len(rows) // 2}일")
-    if (Path(plan_dir) / f"{store_id}_sources.json").exists():
+    if (work_dir / f"{store_id}_sources.json").exists():
         ac = academic_rows(store_id, daily, events)
         rows += ac
         notes.append(f"학사일정 {len({r.date for r in ac})}일")
@@ -155,24 +161,27 @@ def signals_from_collectors(store_id: str, lo: dt.date, hi: dt.date, daily_path:
 
 # ---------------------------------------------------------------- 한 번에 (run.py가 부름)
 
-def collect_all(store_id: str, info: dict, start: dt.date, end: dt.date, sources_path: Path | None = None,
-                target: dt.date | None = None, menus: list[str] | None = None
+def collect_all(store_id: str, info: dict, start: dt.date, end: dt.date, work_dir: Path,
+                sources_path: Path | None = None, target: dt.date | None = None, menus: list[str] | None = None
                 ) -> tuple[list[SignalRow], list[CollectionItem], list[str]]:
-    """새얼 수집기 + 우리 추가 기능. 출처마다 실패해도 나머지는 계속.
-      우리 추가 기능: 기념일, 행사 글(사람이 모은 주소 + 네이버 뉴스·블로그 자동 검색 → LLM이 날짜·장소 추출),
-                      메뉴 검색량 유행(네이버 데이터랩 → 예측 날짜 target의 LLM 주의 안내 원문)"""
+    """매장 하나의 주변 정보를 모두 모은다. 출처마다 실패해도 나머지는 계속.
+      1. 공공 데이터 수집기: 날씨(관측·예보), 학사일정, 서울 문화행사  (결과 파일은 work_dir에)
+      2. 기념일 (agent/special_days.py)
+      3. 행사 글: 네이버 뉴스·블로그 자동 검색 + 사람이 모은 주소(sources_path) → LLM이 날짜·장소 추출 (agent/events.py)
+      4. 메뉴 검색량 유행: 네이버 데이터랩 → 예측 날짜 target의 AI 주의 안내 원문 (agent/naver.py)"""
     from agent import naver
     from agent.events import page_event_signals, read_sources
     from agent.special_days import special_day_signals
     rows, items, notes = [], [], []
-    ensure_store(store_id, info)
+    work_dir = Path(work_dir)
+    ensure_store(store_id, info, work_dir)
     yesterday = dt.date.today() - dt.timedelta(days=1)
-    ok, tail = run_collectors(store_id, start, yesterday)
+    ok, tail = run_collectors(store_id, start, yesterday, work_dir)
     if ok:
-        r, i, n = signals_from_collectors(store_id, start, end)
+        r, i, n = signals_from_collectors(store_id, start, end, work_dir)
         rows, items, notes = rows + r, items + i, notes + n
     else:
-        notes.append("새얼 수집기 실패 → 날씨·학사일정·서울 행사 없이 진행: " + " / ".join(tail[-2:]))
+        notes.append("공공 데이터 수집 실패 → 날씨·학사일정·서울 행사 없이 진행: " + " / ".join(tail[-2:]))
     rows += special_day_signals(store_id, start, end)
     sources = read_sources(sources_path) if sources_path and Path(sources_path).exists() else []
     if naver.has_keys():

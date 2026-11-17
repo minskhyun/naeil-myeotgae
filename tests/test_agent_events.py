@@ -5,6 +5,7 @@ import pytest
 
 from agent import events
 from agent.events import EventInfo, EventList, distance_km, page_event_signals, read_sources
+from ml import llm
 
 STORE = (37.5446, 127.0557)                       # 성수동 근처
 D1, D2 = dt.date(2026, 11, 1), dt.date(2026, 11, 30)
@@ -22,7 +23,7 @@ PAGE = ("성수 팝업 소식", "11월 20일부터 21일까지 성수동 연무�
 def fake_llm(monkeypatch):
     calls = []
 
-    def extractor(model, user):
+    def extractor(user, **_):
         calls.append(user)
         return EventList(events=[
             EventInfo(is_event=True, title="○○ 팝업", start_date=dt.date(2026, 11, 20), end_date=dt.date(2026, 11, 21),
@@ -32,8 +33,8 @@ def fake_llm(monkeypatch):
             EventInfo(is_event=True, title="먼 행사", start_date=dt.date(2026, 11, 23), end_date=None,
                       place="서울시청", cancelled=False, quote="입장은 무료다"),               # 8km → 버림
         ])
-    monkeypatch.setitem(events.EXTRACTORS, "fake", extractor)
-    monkeypatch.setattr("ml.alerts.settings", lambda: {"LLM_PROVIDER": "fake", "LLM_MODEL": "m"})
+    monkeypatch.setitem(llm.PROVIDERS, "fake", extractor)
+    monkeypatch.setenv("LLM_PROVIDER", "fake")
     return calls
 
 
@@ -52,11 +53,11 @@ def test_page_events_keep_only_grounded_near(fake_llm, tmp_path):
 
 
 def test_cancelled_event_is_zero_and_unknown_time_is_now(monkeypatch, tmp_path):
-    def extractor(model, user):
+    def extractor(user, **_):
         return EventList(events=[EventInfo(is_event=True, title="취소", start_date=dt.date(2026, 11, 20), end_date=None,
                                            place="성수동 연무장길", cancelled=True, quote="입장은 무료다")])
-    monkeypatch.setitem(events.EXTRACTORS, "fake", extractor)
-    monkeypatch.setattr("ml.alerts.settings", lambda: {"LLM_PROVIDER": "fake", "LLM_MODEL": "m"})
+    monkeypatch.setitem(llm.PROVIDERS, "fake", extractor)
+    monkeypatch.setenv("LLM_PROVIDER", "fake")
     now = dt.datetime(2026, 11, 16, 12)
     rows, _, _ = page_event_signals("s", *STORE, [("https://n/2", None)], D1, D2, tmp_path,
                                     fetch=lambda u: PAGE, geocode=_geocode, now=now)

@@ -13,7 +13,7 @@ import datetime as dt
 import subprocess
 import sys
 
-from collectors.store import get_store, nearby_path, plan_path
+from collectors.store import DAILY_FILE, EVENTS_FILE, get_store, nearby_path, plan_path
 
 
 def run(module, *args, required=True):
@@ -47,7 +47,7 @@ def main():
     run("forecast", *sid, required=False)
     run("academic", *sid)
     run("seoul_events", *sid, *(["--refresh"] if args.refresh_events else []), required=False)
-    print("\n완료: data/external_daily.csv, data/events.json")
+    print(f"\n완료: {DAILY_FILE}, {EVENTS_FILE}")
 
 
 if __name__ == "__main__":
