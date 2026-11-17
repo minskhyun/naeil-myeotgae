@@ -148,17 +148,22 @@ vite.config.ts.timestamp-*
 # Turbo Repo
 .turbo
 
-# ---------------------------------------------------------------- Python (ml/, contracts/, tests/)
+# ---------------------------------------------------------------- Python (ml/, contracts/, tests/, backend/)
 .venv/
 __pycache__/
 .pytest_cache/
 catboost_info/
+*.db
 
-# 실제 매장 데이터와 그 결과물은 절대 커밋하지 않는다
-data/raw/
-data/artifacts/
-data/*.csv
+# 실제 매장 데이터와 그 결과물은 절대 커밋하지 않는다 (맨 위 data/ 폴더만. backend/data/는 새얼 수집기 결과)
+/data/raw/
+/data/artifacts/
+/data/*.csv
 llm_cache/
+data/private/
+
+# 새얼 수집기: 서울시 행사 원본은 크고 매번 다시 받으므로 올리지 않음 (학사일정 원문은 올림)
+backend/data/raw/seoul_culture/
 
 # 코드가 아닌 개인 파일 (루트)
 /*.zip
