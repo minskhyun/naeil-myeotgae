@@ -115,11 +115,15 @@ def _auto_signals(store_id: str, out: Path, info: dict) -> str:
     if "lat" not in info or "lon" not in info:
         return "주변 정보 없음 (매장 위치를 모름: 주소를 넣으면 날씨·행사를 자동으로 붙임)"
     from agent.collectors_bridge import collect_all
-    dates = load_sales(out / "sales_clean.csv")["date"]
+    sales = load_sales(out / "sales_clean.csv")
+    dates = sales["date"]
     start = dates.min() - pd.Timedelta(days=35)                 # 기온 '최근 28일 평균'용 여유
     end = max(dates.max(), pd.Timestamp.today().normalize()) + pd.Timedelta(days=7)
+    target = (dates.max() + pd.Timedelta(days=1)).date()        # 내일 = 예측 날짜 (메뉴 검색량 안내를 붙일 날)
+    menus = sales.groupby("menu")["qty"].sum().sort_values(ascending=False).index.tolist()   # 판매량 많은 순
     rows, items, notes = collect_all(store_id, info, start.date(), end.date(),
-                                     sources_path=ROOT / "data" / "raw" / f"{store_id}_event_sources.txt")
+                                     sources_path=ROOT / "data" / "raw" / f"{store_id}_event_sources.txt",
+                                     target=target, menus=menus)
     if items:
         _save_collection([i.model_dump(mode="json") for i in items], out, append=False)
         notes.append(f"행사 원문 {len(items)}개")

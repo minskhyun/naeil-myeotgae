@@ -1,5 +1,9 @@
 """매장·행사 주소 → 위도·경도.
 
+- 카카오 로컬(.env의 KAKAO_REST_KEY)을 먼저 쓴다: 주소 검색 → 안 되면 키워드 검색('올리브영 뷰티 맨션 성수' 같은 건물 이름).
+  '한섬 EQL 성수, 서울 성동구 연무장15길 11'처럼 쉼표로 이어지면 부분마다 찾는다.
+  카카오 키가 없거나 못 찾으면 아래 OpenStreetMap 방식으로.
+
 - OpenStreetMap Nominatim (무료, 키 없음). 사용 규칙: 1초에 1번 이하, 앱 이름을 User-Agent로 밝힌다.
   → 모든 호출 사이를 MIN_GAP초 이상 띄운다. 일시적 실패(요청 너무 많음·서버 오류·시간 초과)는 잠깐 쉬고 다시 시도한다.
 - 찾은 결과(못 찾은 것도)는 data/raw/geocode_cache.json에 저장 → 두 번째부터는 거의 바로 끝난다.
@@ -10,6 +14,7 @@
 - 외부로 나가는 것은 가게·행사 주소뿐이다 (공개된 정보).
 """
 import json
+import re
 import time
 import urllib.error
 import urllib.parse
@@ -62,8 +67,53 @@ def _search(query: str) -> dict | None:
     return None
 
 
-def geocode(address: str, search=_search) -> tuple[float, float, str]:
-    """주소 → (위도, 경도, 찾은 이름). 끝까지 못 찾으면 ValueError."""
+KAKAO = "https://dapi.kakao.com/v2/local"
+
+
+def _kakao(query: str) -> list | None:
+    """카카오 로컬: 주소 검색 → 키워드 검색. 키가 없으면 None. 찾으면 [위도, 경도, 이름]."""
+    try:
+        from ml.alerts import settings
+        key = settings().get("KAKAO_REST_KEY")
+    except Exception:
+        key = None
+    if not key:
+        return None
+    for path in ("/search/address.json", "/search/keyword.json"):
+        q = urllib.parse.urlencode({"query": query, "size": 1})
+        req = urllib.request.Request(f"{KAKAO}{path}?{q}", headers={"Authorization": f"KakaoAK {key}"})
+        with urllib.request.urlopen(req, timeout=15) as r:
+            docs = json.loads(r.read().decode("utf-8"))["documents"]
+        if docs:
+            d = docs[0]
+            return [float(d["y"]), float(d["x"]), d.get("place_name") or d.get("address_name", "")]
+    return None
+
+
+def place_queries(place: str) -> list[str]:
+    """LLM이 적은 장소 → 카카오에 넣어 볼 검색어들 (정확한 것부터).
+    "서울 성수동 '플레임그라운드(Flameground by BURGER KING)'" → ['플레임그라운드', ..., '서울 성수동 플레임그라운드', ...]
+    '한섬 EQL 성수, 서울 성동구 연무장15길 11' → ['서울 성동구 연무장15길 11', ...]  (주소처럼 생긴 부분이 가장 정확)"""
+    unparen = lambda s: re.sub(r"\([^)]*\)", " ", s)                                       # 괄호 안 설명 빼기
+    out = []
+    road = r"(?:서울(?:특별시)?\s+)?(?:[가-힣]+(?:시|구)\s+)*[가-힣0-9]+(?:로|길)\s*\d+(?:-\d+)?"
+    for m in re.finditer(road, place):                                                       # 도로명 주소
+        out.append(m.group(0))
+    quoted = re.findall(r"['‘\"“]([^'’\"”]+)['’\"”]", place)                             # 따옴표 안 이름
+    out += [unparen(q) for q in quoted] + quoted
+    cleaned = " ".join(re.sub(r"['‘’\"“”]", " ", unparen(place)).split())
+    out += [cleaned] + [p.strip() for p in cleaned.split(",") if p.strip()] + [place]
+    seen = []
+    for q in out:
+        q = " ".join(re.sub(r"['‘’\"“”]", " ", q).split())
+        if len(q) >= 2 and q not in seen:
+            seen.append(q)
+    return seen
+
+
+def geocode(address: str, search=None) -> tuple[float, float, str]:
+    """주소 → (위도, 경도, 찾은 이름). 끝까지 못 찾으면 ValueError.
+    search를 주면(테스트) 카카오는 건너뛰고 그 함수로 OpenStreetMap 방식만 쓴다."""
     address = " ".join(address.split())
     cache = _load()
     if address in cache:
@@ -71,6 +121,17 @@ def geocode(address: str, search=_search) -> tuple[float, float, str]:
             raise ValueError(f"주소를 찾지 못했습니다(저장된 결과): {address!r}")
         lat, lon, name = cache[address]
         return lat, lon, name
+    if search is None:
+        search = _search
+        for part in place_queries(address):
+            try:
+                hit = _kakao(part)
+            except Exception:
+                hit = None                                 # 카카오 오류면 OpenStreetMap으로
+            if hit:
+                cache[address] = hit
+                _save()
+                return tuple(hit)
     words = address.split()
     for n in range(len(words), 1, -1):                   # 최소 두 단어 (예: "서울 성동구")
         hit = search(" ".join(words[:n]))

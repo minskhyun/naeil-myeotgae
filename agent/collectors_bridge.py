@@ -155,9 +155,13 @@ def signals_from_collectors(store_id: str, lo: dt.date, hi: dt.date, daily_path:
 
 # ---------------------------------------------------------------- 한 번에 (run.py가 부름)
 
-def collect_all(store_id: str, info: dict, start: dt.date, end: dt.date, sources_path: Path | None = None
+def collect_all(store_id: str, info: dict, start: dt.date, end: dt.date, sources_path: Path | None = None,
+                target: dt.date | None = None, menus: list[str] | None = None
                 ) -> tuple[list[SignalRow], list[CollectionItem], list[str]]:
-    """새얼 수집기 + 우리 추가 기능(기념일, 팝업 글 LLM 추출). 출처마다 실패해도 나머지는 계속."""
+    """새얼 수집기 + 우리 추가 기능. 출처마다 실패해도 나머지는 계속.
+      우리 추가 기능: 기념일, 행사 글(사람이 모은 주소 + 네이버 뉴스·블로그 자동 검색 → LLM이 날짜·장소 추출),
+                      메뉴 검색량 유행(네이버 데이터랩 → 예측 날짜 target의 LLM 주의 안내 원문)"""
+    from agent import naver
     from agent.events import page_event_signals, read_sources
     from agent.special_days import special_day_signals
     rows, items, notes = [], [], []
@@ -170,9 +174,26 @@ def collect_all(store_id: str, info: dict, start: dt.date, end: dt.date, sources
     else:
         notes.append("새얼 수집기 실패 → 날씨·학사일정·서울 행사 없이 진행: " + " / ".join(tail[-2:]))
     rows += special_day_signals(store_id, start, end)
-    if sources_path and Path(sources_path).exists():
-        r, i, n = page_event_signals(store_id, info["lat"], info["lon"], read_sources(sources_path), start, end,
+    sources = read_sources(sources_path) if sources_path and Path(sources_path).exists() else []
+    if naver.has_keys():
+        try:
+            found, n = naver.news_sources(naver.area_keywords(info))
+            known = {u for u, _ in sources}
+            sources += [s for s in found if s[0] not in known]
+            notes += n
+        except Exception as e:
+            notes.append(f"네이버 검색 실패({type(e).__name__})")
+    else:
+        notes.append("네이버 검색 건너뜀(.env에 NAVER_CLIENT_ID·SECRET 없음)")
+    if sources:
+        r, i, n = page_event_signals(store_id, info["lat"], info["lon"], sources, start, end,
                                      ROOT / "data" / "raw" / "llm_cache_events")
         rows, items, notes = rows + r, items + i, notes + n
-        notes.append(f"팝업 글에서 행사 {len({x.date for x in r})}일")
+        notes.append(f"행사 글 {len(sources)}개에서 행사 {len({x.date for x in r})}일")
+    if naver.has_keys() and target and menus:
+        try:
+            i, n = naver.trend_items(menus, target)
+            items, notes = items + i, notes + n
+        except Exception as e:
+            notes.append(f"메뉴 검색량 실패({type(e).__name__})")
     return rows, items, notes

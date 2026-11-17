@@ -51,7 +51,7 @@ def test_missing_previous_step_is_explained(tmp_path):
         main(["--store", "nowhere", "--from-step", "evaluate", "--artifacts", str(tmp_path)])
 
 
-def _fake_collect(store_id, info, start, end, sources_path=None):
+def _fake_collect(store_id, info, start, end, sources_path=None, **kw):
     """새얼 수집기 대신: 기간 안의 날마다 '전날 17:10 예보' 기온·강수 (인터넷 없이)."""
     days = pd.date_range(pd.Timestamp(start), "2026-11-02")
     return [SignalRow(date=d.date(), store_id=store_id, signal=sig, value=v, source_url="https://test",
