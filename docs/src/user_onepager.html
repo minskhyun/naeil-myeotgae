@@ -7,10 +7,10 @@
   @page { size: A4; margin: 11mm 13mm; }
   :root { --ink:#1f2430; --mute:#606878; --line:#dfe3ea; --acc:#d9622b; --acc-bg:#fff3ec; --blue:#2f5fb3; --blue-bg:#eef3fb; --warn:#9a5b00; --warn-bg:#fff7e6; }
   * { box-sizing:border-box; }
-  body { margin:0; font-family:"Malgun Gothic","맑은 고딕",sans-serif; color:var(--ink); font-size:9.6pt; line-height:1.45; background:#fff; }
+  body { margin:0; font-family:"Malgun Gothic","맑은 고딕",sans-serif; color:var(--ink); font-size:9.5pt; line-height:1.44; background:#fff; }
   h1 { font-size:20pt; margin:0; letter-spacing:-0.5px; }
   h1 span { color:var(--acc); }
-  .lead { font-size:10.5pt; color:var(--mute); margin:2px 0 9px; }
+  .lead { font-size:10.4pt; color:var(--mute); margin:2px 0 9px; }
   h2 { font-size:11pt; margin:9px 0 5px; padding-left:7px; border-left:4px solid var(--acc); }
   .steps { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
   .step { background:var(--acc-bg); border-radius:7px; padding:7px 9px; }
@@ -35,20 +35,21 @@
   td:first-child { font-weight:700; white-space:nowrap; width:31%; }
   ul.plain { margin:0; padding-left:15px; } ul.plain li { margin:2px 0; }
   .stat { display:flex; gap:10px; align-items:center; background:var(--blue-bg); border-radius:7px; padding:7px 10px; }
-  .stat .v { white-space:nowrap; font-size:20pt; font-weight:700; color:var(--blue); line-height:1; }
+  .stat .v { white-space:nowrap; font-size:17pt; font-weight:700; color:var(--blue); line-height:1.1; text-align:center; }
+  .stat .v small { display:block; font-size:8pt; font-weight:400; color:var(--mute); }
   .small { font-size:8.4pt; color:var(--mute); }
   .foot { margin-top:8px; padding-top:5px; border-top:1px solid var(--line); font-size:8.2pt; color:var(--mute); }
 </style>
 </head>
 <body>
-<h1>내일몇개 · <span>“내일 몇 개 만들까?”</span>를 매일 밤 알려 드려요</h1>
-<div class="lead">가게 판매 기록과 날씨·주변 행사 정보를 함께 보고, 내일 메뉴별로 얼마나 팔릴지와 몇 개 준비하면 좋을지 알려 드립니다.</div>
+<h1>내일몇개 · <span>“내일 몇 개 만들까?”</span>를 알려 드려요</h1>
+<div class="lead">가게 판매 기록과 날씨·주변 행사·메뉴 유행을 함께 보고, 내일 메뉴별로 얼마나 팔릴지와 몇 개 준비하면 좋을지 알려 드립니다.</div>
 
 <h2>이렇게 돌아가요</h2>
 <div class="steps">
-  <div class="step"><span class="n">1</span><b>판매 기록 올리기</b><p>포스(토스·OKPOS)에서 내려받은 엑셀을 그대로 올리시면 됩니다. 처음 한 번, 이후에는 기록을 이어서 올려 주세요.</p></div>
-  <div class="step"><span class="n">2</span><b>주변 정보 모으기</b><p>날씨 예보, 근처 팝업·행사, 학교 시험·방학 일정을 저희가 자동으로 모읍니다.</p></div>
-  <div class="step"><span class="n">3</span><b>영업이 끝나면 내일 예상</b><p>메뉴마다 내일 예상 판매량, 대략의 범위, 준비 권장량과 그 이유를 보여 드립니다.</p></div>
+  <div class="step"><span class="n">1</span><b>판매 기록과 주소만 주세요</b><p>포스(토스·OKPOS)에서 내려받은 엑셀을 그대로 올리고 가게 주소를 적으시면 됩니다. 다른 준비는 필요 없어요.</p></div>
+  <div class="step"><span class="n">2</span><b>주변 정보는 저희가 찾아요</b><p>가게 주변을 살펴 날씨 예보, 근처 팝업·행사 소식, 학교 시험·방학 일정, 메뉴 검색량(유행)을 자동으로 모읍니다.</p></div>
+  <div class="step"><span class="n">3</span><b>내일 준비표가 나와요</b><p>메뉴마다 내일 예상 판매량, 예상 범위, 준비 권장량과 그 이유를 보여 드립니다.</p></div>
 </div>
 
 <div class="two">
@@ -72,9 +73,10 @@
 <h2>숫자 읽는 법</h2>
 <table>
   <tr><td>내일 예상</td><td>가장 그럴듯한 판매량입니다.</td></tr>
-  <tr><td>보통 ○~○ 사이</td><td>10번 중 8번쯤은 실제 판매가 이 범위 안에 듭니다. 범위가 넓으면 그만큼 내일이 불확실하다는 뜻이에요.</td></tr>
-  <tr><td>이유</td><td>날씨·행사처럼 평소와 다른 점이 예상을 얼마나 바꿨는지입니다. 실제로 이 가게 예측을 더 정확하게 만든 정보만 씁니다.</td></tr>
+  <tr><td>보통 ○~○ 사이</td><td>실제 판매가 대부분 이 범위 안에 듭니다. 범위가 넓으면 그만큼 내일이 불확실하다는 뜻이에요.</td></tr>
+  <tr><td>이유</td><td>날씨·행사·유행처럼 평소와 다른 점이 예상을 얼마나 바꿨는지입니다. 이 가게의 지난 기록으로 확인해, 예측을 실제로 더 정확하게 만든 정보만 씁니다.</td></tr>
   <tr><td>⚠ 주의</td><td>숫자에 반영하기 어려운 특별한 소식을 원문과 함께 알려 드립니다. 이 안내는 예상 숫자를 바꾸지 않아요.</td></tr>
+  <tr><td>주변 정보</td><td>이 가게를 위해 어떤 정보를 왜 모았는지, 찾은 행사·뉴스가 무엇인지 따로 보여 드립니다.</td></tr>
 </table>
 </div>
 
@@ -87,10 +89,10 @@
 </table>
 
 <h2>얼마나 맞나요?</h2>
-<div class="stat"><div class="v">약 27%</div><div>실제 빵집 한 곳의 600일 기록으로 시험했을 때, <b>“지난주 같은 요일만큼”</b> 준비하는 방식보다 틀리는 양이 이만큼 적었습니다.</div></div>
+<div class="stat"><div class="v">10번 중<br>7~8번<small>76%</small></div><div>실제 빵집 한 곳의 600일 기록으로 시험했을 때, 실제 판매량이 저희가 보여 드린 <b>“보통 ○~○ 사이”</b> 범위 안에 든 비율입니다. <span class="small">(마지막 4주, 그날그날 전날까지의 기록만 보고 예측)</span></div></div>
 <ul class="plain small" style="margin-top:4px">
-  <li>기록이 한 달뿐이면 차이가 작고, 기록이 쌓일수록 좋아집니다.</li>
-  <li>모든 가게에서 같은 결과를 약속하지는 않습니다. 가게마다 결과를 따로 확인해서 보여 드려요.</li>
+  <li>기록이 한 달뿐이면 범위가 넓어지고, 기록이 쌓일수록 좁고 정확해집니다.</li>
+  <li>모든 가게에서 같은 결과를 약속하지는 않습니다. 가게마다 결과를 따로 확인해서 화면의 ‘얼마나 맞나’에 그대로 보여 드려요.</li>
 </ul>
 
 <h2>이럴 때는 직접 판단해 주세요</h2>
@@ -109,6 +111,6 @@
 </div>
 </div>
 
-<div class="foot"><b>데이터는 이렇게 다뤄요.</b> 판매 기록은 이 가게의 예측에만 쓰고 외부에 공개하지 않습니다. ⚠ 주의 안내를 만들 때는 메뉴별 예상 요약과 주변 소식이 AI 서비스로 전달되며, AI는 판매량 숫자를 만들거나 바꾸지 않습니다.</div>
+<div class="foot"><b>데이터는 이렇게 다뤄요.</b> 판매 기록은 이 가게의 예측에만 쓰고 외부에 공개하지 않습니다. 주변 정보를 찾을 때는 가게 주소와 메뉴 이름만 지도·검색 서비스에 보냅니다. ⚠ 주의 안내를 만들 때는 메뉴별 예상 요약과 주변 소식이 AI 서비스로 전달되며, AI는 판매량 숫자를 만들거나 바꾸지 않습니다.</div>
 </body>
 </html>

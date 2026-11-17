@@ -2,85 +2,92 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<title>내일몇개 예측 엔진 개발자 요약</title>
+<title>내일몇개 개발자 요약</title>
 <style>
-  @page { size: A4; margin: 10mm 11mm; }
-  :root { --ink:#1d2330; --mute:#5b6475; --line:#d6dbe4; --acc:#2f5fb3; --acc-bg:#eef3fb; --warn:#9a5b00; --warn-bg:#fff6e5; --ok:#1f7a4d; }
+  @page { size: A4; margin: 9mm 10mm; }
+  :root { --ink:#1d2330; --mute:#5b6475; --line:#d6dbe4; --acc:#2f5fb3; --acc-bg:#eef3fb; --warn:#9a5b00; --warn-bg:#fff6e5; --ok:#1f7a4d; --llm:#8a3fa8; }
   * { box-sizing: border-box; }
-  body { margin:0; font-family:"Malgun Gothic","맑은 고딕",sans-serif; color:var(--ink); font-size:7.9pt; line-height:1.32; background:#fff; }
-  h1 { font-size:15pt; margin:0; letter-spacing:-0.3px; }
-  .sub { color:var(--mute); font-size:8pt; margin:2px 0 7px; }
-  h2 { font-size:9.4pt; margin:6px 0 3px; color:var(--acc); border-bottom:1.2px solid var(--acc); padding-bottom:1px; }
+  body { margin:0; font-family:"Malgun Gothic","맑은 고딕",sans-serif; color:var(--ink); font-size:7.6pt; line-height:1.3; background:#fff; }
+  h1 { font-size:14.5pt; margin:0; letter-spacing:-0.3px; }
+  .sub { color:var(--mute); font-size:7.8pt; margin:2px 0 6px; }
+  h2 { font-size:9.2pt; margin:5px 0 3px; color:var(--acc); border-bottom:1.2px solid var(--acc); padding-bottom:1px; }
   .grid { display:grid; grid-template-columns: 1fr 1fr; gap:0 12px; }
-  code, .mono { font-family:Consolas,"Malgun Gothic",monospace; font-size:7.6pt; }
+  code, .mono { font-family:Consolas,"Malgun Gothic",monospace; font-size:7.3pt; }
   code { background:#f2f4f8; padding:0 2px; border-radius:2px; }
   ul { margin:0; padding-left:13px; } li { margin:1px 0; }
-  table { border-collapse:collapse; width:100%; font-size:7.7pt; }
+  table { border-collapse:collapse; width:100%; font-size:7.4pt; }
   th, td { border:1px solid var(--line); padding:2px 4px; text-align:left; vertical-align:top; }
   th { background:#f2f4f8; font-weight:700; white-space:nowrap; }
   td.k { white-space:nowrap; }
   .num { text-align:right; font-variant-numeric:tabular-nums; }
-  /* 흐름도 */
-  .flow { display:grid; grid-template-columns: repeat(4, 1fr); gap:4px 14px; margin-top:3px; position:relative; }
-  .box { border:1.2px solid var(--acc); border-radius:4px; padding:3px 5px; background:var(--acc-bg); position:relative; min-height:58px; }
-  .box.in { background:#fff; border-style:dashed; min-height:0; }
+  .flow { display:grid; grid-template-columns: repeat(4, 1fr); gap:4px 14px; margin-top:3px; }
+  .box { border:1.2px solid var(--acc); border-radius:4px; padding:3px 5px; background:var(--acc-bg); position:relative; }
+  .box.in { background:#fff; border-style:dashed; }
   .box.out { background:#eaf6ef; border-color:var(--ok); }
-  .box b { display:block; font-size:8.4pt; }
-  .box .f { color:var(--mute); font-size:7.2pt; }
+  .box > b:first-child { display:block; font-size:8.1pt; }
+  .box .f { color:var(--mute); font-size:7pt; }
   .arrow::after { content:"▶"; position:absolute; right:-12px; top:40%; color:var(--acc); font-size:8pt; }
+  .llm { color:var(--llm); font-weight:700; }
   .note { background:var(--warn-bg); border-left:3px solid var(--warn); padding:3px 6px; margin-top:4px; }
   .key li b { color:var(--acc); }
-  .foot { margin-top:6px; color:var(--mute); font-size:7.2pt; border-top:1px solid var(--line); padding-top:3px; }
+  .foot { margin-top:5px; color:var(--mute); font-size:7pt; border-top:1px solid var(--line); padding-top:3px; }
 </style>
 </head>
 <body>
-<h1>내일몇개 예측 엔진 · 개발자용 한 장 요약</h1>
-<div class="sub">매장 POS 판매 기록 + 외부 신호 → <b>다음 날 메뉴별 판매량 범위(p10·p50·p90)와 준비량</b>. LLM은 숫자를 만들지 않고 경고 문장만 쓴다. · 저장소 <code>naeil-myeotgae</code> 브랜치 <code>ml-engine</code> · 2026-11-16 기준</div>
+<h1>내일몇개 · 개발자용 한 장 요약</h1>
+<div class="sub">POS 판매 기록 + 매장 주소 → 주변 정보 자동 수집 → <b>내일 메뉴별 판매량 범위(p10·p50·p90)와 준비량</b>. 숫자는 CatBoost가 만들고, <span class="llm">★Claude</span>는 정보를 고르고·뽑고·주의 문장만 쓴다(4곳). · 저장소 <code>naeil-myeotgae</code> 브랜치 <code>ml-engine</code> · 2026-11-17 기준</div>
 
-<h2>1. 데이터 흐름 (<code>python run.py</code> 한 번 = ingest → evaluate → predict)</h2>
+<h2>1. 데이터 흐름 (<code>python run.py</code> 한 번 = ingest → evaluate → predict, 웹도 같은 파일을 실행)</h2>
 <div class="flow">
-  <div class="box in"><b>POS 엑셀·CSV</b><span class="f">토스·OKPOS, 영수증/일별</span></div>
-  <div class="box in"><b>signals.json</b><span class="f">새얼(agent/) · SignalRow 목록</span></div>
-  <div class="box in"><b>collection.json</b><span class="f">새얼 · 행사·뉴스 원문</span></div>
-  <div class="box in"><b>store.json</b><span class="f">영업 종료 시각·준비 방식·메뉴 목록</span></div>
+  <div class="box in"><b>입력: POS 엑셀·CSV + 매장 주소</b><span class="f">토스·OKPOS. 주소 → 좌표(<code>agent/geocode.py</code>) → <code>store.json</code></span></div>
+  <div class="box arrow"><b>agent/collect.py</b>정보원 목록 <code>SOURCES</code>를 차례로 실행. 하나가 실패해도 나머지는 계속<br><span class="f">정보원 하나 = 함수 하나 → (신호, 원문, 메모)</span></div>
+  <div class="box arrow"><b>정보원 4개</b>공공 데이터: 날씨·학사일정<span class="llm">★</span>·서울 행사 + 정보원 선택 에이전트<span class="llm">★</span> (<code>backend/collectors</code>) · 기념일 · 행사 글: 네이버 검색 → 추출<span class="llm">★</span> → 거리 확인 · 메뉴 검색량(유행)</div>
+  <div class="box out"><b>수집 결과</b><code>signals.csv</code> 모델 입력 후보<br><code>collection.json</code> 주의 안내용 원문<br><code>sources_report.json</code> 무엇을 왜 모았나</div>
 
-  <div class="box arrow"><b>ingest.py</b>머리글 자동 찾기 → 날짜×메뉴 합산 → 0개 판매 채우기 → 휴무 제외 → 품절 추정<br><span class="f">→ sales_clean.csv (SalesRow)</span></div>
-  <div class="box arrow"><b>features.py</b>이력(lag·평균)·<b>비율 이력</b>·매장 흐름·달력 + 신호를 <b>시점 규칙</b>으로 붙임, 파생 신호(<code>*_diff</code>)</div>
-  <div class="box arrow"><b>models.py</b>M0: 지난주 같은 요일<br>M1~M3: CatBoost 다중 분위, <b>목표 = 판매/평소 수준</b>, 시드 3개 평균</div>
-  <div class="box out"><b>evaluate.py</b>시간순 교차검증 → 신호 조합 전부 비교 → 범위 보정 → 최종 테스트 1회<br><span class="f">→ backtest.json</span></div>
+  <div class="box arrow"><b>ml/ingest.py</b>머리글 자동 찾기 → 날짜×메뉴 합산 → 0개 판매 채우기 → 휴무 제외 → 품절 추정<br><span class="f">→ sales_clean.csv</span></div>
+  <div class="box arrow"><b>ml/features.py</b>이력(lag·평균)·<b>비율 이력</b>·매장 흐름·달력 + 신호를 <b>시점 규칙</b>으로 붙임 (매장 전체 / 메뉴별), 파생 신호(<code>*_diff</code>)</div>
+  <div class="box arrow"><b>ml/models.py</b>M0: 지난주 같은 요일<br>M1~M3: CatBoost 다중 분위, <b>목표 = 판매 ÷ 평소 수준</b>, 시드 3개 평균</div>
+  <div class="box out"><b>ml/evaluate.py</b>시간순 교차검증 → 신호 조합 전부 비교 → 범위 보정 → 최종 테스트 1회<br><span class="f">지표 <code>metrics.py</code>, 보정 <code>calibration.py</code> → backtest.json</span></div>
 
-  <div class="box" style="grid-column: 3 / span 1"><b>predict.py</b>전체 기록으로 재학습 → 다음 날 예측 → 반사실 근거 문장 → 준비량</div>
-  <div class="box out" style="grid-column: 4 / span 1"><b>alerts.py</b>예측 ±1일 원문 + signals_used → LLM → Warning (인용이 원문에 없으면 버림, 캐시)<br><span class="f">→ forecast.json → backend → 화면</span></div>
+  <div class="box arrow" style="grid-column: 2 / span 1"><b>ml/predict.py</b>전체 기록으로 재학습 → 내일 예측 → 반사실 근거 문장(<code>explain</code>) → 준비량</div>
+  <div class="box arrow"><b>ml/alerts.py <span class="llm">★</span></b>예측 ±1일 원문 → Claude → 주의 안내. 인용이 원문에 없으면 버림<br><span class="f">→ forecast.json</span></div>
+  <div class="box out"><b>backend/app/main.py → frontend/src</b>FastAPI가 결과 JSON 제공, run.py를 별도 프로세스로 실행<br><span class="f">탭: 내일 준비표 · 얼마나 맞나 · 주변 정보 · 데이터 올리기</span></div>
 </div>
 
 <div class="grid">
 <div>
 <h2>2. 깨지면 안 되는 규칙</h2>
 <ul class="key">
-  <li><b>시점 규칙</b>: D일 예측은 D−1일 영업 종료(<code>issue_time</code>)에 낸다. 판매 이력은 <code>shift(1)</code> 뒤 계산, 신호는 <code>published_at ≤ issue_time</code> 중 가장 늦은 값. 누수 테스트 2개가 지킨다.</li>
+  <li><b>시점 규칙</b>: D일 예측은 D−1일 영업 종료(<code>issue_time</code>)에 낸다. 판매 이력은 <code>shift(1)</code> 뒤 계산, 신호는 <code>published_at ≤ issue_time</code> 중 가장 늦은 값. 검색량 유행은 D−2일까지만 쓴다.</li>
   <li><b>비율 목표</b>: <code>y = qty / base_level</code> (mean_28→mean_7→lag_1, 최소 1). 예측 = 비율 × base. 이력 변수도 같은 단위(<code>r_*</code>).</li>
   <li><b>학습 제외</b>: 품절일(정답이 수요의 하한), 메뉴 첫날(base 없음).</li>
-  <li><b>신호 채택</b>: 자료 있는 묶음의 모든 조합 중 M1보다 전체 WAPE↓ <i>그리고</i> 검증 구간 과반 개선 → 그중 WAPE 최저 (<code>pick_combo</code>).</li>
+  <li><b>신호 채택</b>: 자료 있는 묶음의 모든 조합 중 M1보다 전체 WAPE 3% 이상↓ <i>그리고</i> 검증 구간 과반 개선 → 그중 WAPE 최저 → 빼도 나빠지지 않는 묶음은 뺌 (<code>pick_combo</code>).</li>
   <li><b>최종 테스트</b>: 모든 결정 후 딱 한 번. 결과를 보고 고치지 않는다.</li>
   <li><b>짧은 데이터</b>(120일 미만): 검증 2×7일 + 테스트 7일, 작은 모델. <code>data_note</code>에 자동으로 밝힌다.</li>
-  <li><b>LLM</b>: 판매량 숫자 생성·수정 금지. 인용은 코드가 원문 대조.</li>
+  <li><b>LLM</b>: 판매량 숫자 생성·수정 금지. 근거·인용은 코드가 원문과 대조. 같은 입력은 저장된 응답 사용.</li>
+  <li><b>커밋 금지</b>: <code>.env</code>, <code>data/raw/</code>(실제 POS), <code>data/artifacts/</code>(매장별 결과).</li>
 </ul>
 
 <h2>3. 실행</h2>
 <div class="mono">pip install -r requirements.txt<br>
-python run.py --store sinchon-a --demo&nbsp;&nbsp;&nbsp;&nbsp;# 가상 1년, 약 40초<br>
-python run.py --store seongsu-a --pos data/raw/x.xlsx --signals data/raw/x_signals.json<br>
-python run.py --store seongsu-a --from-step predict&nbsp;# 앞 단계 결과 재사용<br>
-python -m pytest -q&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# 79개, 약 1분</div>
-<div class="f" style="color:var(--mute)">결과: <code>data/artifacts/{store}/</code> (커밋 안 함). 실데이터는 <code>data/raw/</code>에만.</div>
+python run.py --store sinchon-a --demo&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# 가상 1년, 약 40초<br>
+python run.py --store s --pos pos.xlsx --address "주소"<br>
+python run.py --store s --from-step predict&nbsp;&nbsp;&nbsp;# 예측만 다시<br>
+uvicorn backend.app.main:app --port 8000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# 웹 API<br>
+cd frontend &amp;&amp; npm run dev&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# 화면<br>
+python -m pytest -q&nbsp;&nbsp;&nbsp;&nbsp;# 117개, 약 1분 30초 (인터넷·키 없이)</div>
+<div class="f" style="color:var(--mute)">키는 맨 위 <code>.env</code> 하나 (Claude, 공공데이터포털, 서울 열린데이터, 카카오, NAVER API HUB). 없는 정보원은 건너뛴다.</div>
 
-<h2>4. 계약 (<code>contracts/schemas.py</code>, 바꾸면 팀 공유)</h2>
+<h2>4. 계약 (<code>contracts/schemas.py</code>, 파일 하나 = 클래스 하나)</h2>
 <table>
-  <tr><th>형식</th><th>만드는 곳 → 읽는 곳</th><th>핵심 필드</th></tr>
-  <tr><td>SalesRow</td><td>ingest → ml</td><td>date, store_id, menu, qty, sold_out</td></tr>
-  <tr><td>SignalRow</td><td>agent → features</td><td>date, signal, value, source_url, <b>published_at</b>(KST), kind</td></tr>
-  <tr><td>Forecast</td><td>predict → backend</td><td>rows[pred·p10·p90·prep_qty·reasons], signals_used, warnings</td></tr>
-  <tr><td>BacktestResult</td><td>evaluate → 비교 화면</td><td>cv_scores, decisions, chosen_model, test_scores, data_note</td></tr>
+  <tr><th>파일</th><th>형식</th><th>핵심 필드</th></tr>
+  <tr><td class="k">store.json</td><td>StoreConfig</td><td>close_time, prep_mode, address, lat·lon, menus</td></tr>
+  <tr><td class="k">sales_clean.csv</td><td>SalesRow</td><td>date, store_id, menu, qty, sold_out</td></tr>
+  <tr><td class="k">signals.csv</td><td>SignalRow</td><td>date, signal, menu, value, <b>published_at</b>, kind</td></tr>
+  <tr><td class="k">collection.json</td><td>CollectionItem</td><td>date, title, text(원문), source_url</td></tr>
+  <tr><td class="k">backtest.json</td><td>BacktestResult</td><td>cv_scores, decisions, test_scores, data_note</td></tr>
+  <tr><td class="k">forecast.json</td><td>Forecast</td><td>rows[pred·p10·p90·prep_qty·reasons], warnings</td></tr>
+  <tr><td class="k">sources_report.json</td><td>SourceReport</td><td>plan(에이전트의 선택·이유), signals, articles</td></tr>
 </table>
 </div>
 
@@ -91,33 +98,36 @@ python -m pytest -q&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&
   <tr><td class="k">M0</td><td>7일 전 같은 요일 판매량 그대로 (기준선)</td></tr>
   <tr><td class="k">M1</td><td>판매 이력 + 비율 이력 + 매장 흐름 + 요일·공휴일 + 메뉴·온도 표기</td></tr>
   <tr><td class="k">M2</td><td>M1 + 날씨 <code>temp_diff</code>(기온−최근 28일 평균), <code>rain_mm</code></td></tr>
-  <tr><td class="k">M3</td><td>+ 학사일정·행사(<code>exam_period</code>·<code>vacation</code>·<code>festival</code>·<code>nearby_event</code>·<code>*_diff</code>), 유행, 기념일</td></tr>
+  <tr><td class="k">M3</td><td>+ 학사일정·행사(<code>exam_period</code>·<code>vacation</code>·<code>festival</code>·<code>nearby_event</code>·<code>*_diff</code>), 유행(<code>trend_level</code> = 메뉴 검색량 최근 7일 ÷ 그 전 28일), 기념일(<code>special_day</code>)</td></tr>
 </table>
 <div class="f" style="color:var(--mute)">이름 규칙: 채택 없음=M1, 날씨만=M2, 그 외 하나라도=M3. 실제 쓴 신호는 <code>signals_used</code>·<code>decisions</code>.</div>
 
-<h2>6. 현재 성능 (WAPE = Σ|실제−예측| / Σ실제, 낮을수록 좋음)</h2>
+<h2>6. 현재 성능 (최종 테스트 28일 · WAPE = 틀린 양 ÷ 판매량)</h2>
 <table>
-  <tr><th>데이터</th><th>선택</th><th class="num">M0 검증·테스트</th><th class="num">모델 검증·테스트</th></tr>
-  <tr><td>가상 매장 1년 (메뉴 10)</td><td class="k">M3</td><td class="num k">0.338 / 0.297</td><td class="num k"><b>0.218 / 0.191</b></td></tr>
-  <tr><td>프랑스 빵집 실데이터 600일<br>(메뉴 149, 신호 없음)</td><td>M1</td><td class="num k">0.408 / 0.412</td><td class="num k"><b>0.299 / 0.300</b></td></tr>
-  <tr><td>35일 구간 21개 평균 (가상·빵집)</td><td>M1</td><td class="num k">0.321 · 0.408</td><td class="num k">0.275 · 0.357</td></tr>
+  <tr><th>데이터</th><th>선택</th><th class="num">범위 적중</th><th class="num">WAPE (M0)</th></tr>
+  <tr><td class="k">가상 매장 1년</td><td class="k">M3 날씨+학사·행사</td><td class="num k"><b>75%</b></td><td class="num k"><b>0.191</b> (0.297)</td></tr>
+  <tr><td class="k">프랑스 빵집 600일(실데이터)</td><td class="k">M1</td><td class="num k"><b>76%</b></td><td class="num k"><b>0.303</b> (0.412)</td></tr>
 </table>
-<div class="note"><b>한계</b> · 가장 강한 단순 규칙(같은 요일 4주 평균×최근 흐름) 대비로는 가상 −20%, 빵집 −10%. · 80% 범위 적중 0.75 (목표 0.80). · 빵집 테스트 구간은 한 번 본 뒤 고침 → 독립 확인 아님. · 짧은 데이터는 신호 채택이 흔들림. · LLM 경고는 실제 API로 호출해 본 적 없음.</div>
+<div class="note"><b>한계</b> · 범위 적중 목표는 80%. · 가상 매장은 우리가 만든 효과라 실제보다 쉽다. · 빵집 테스트 구간은 한 번 본 뒤 고침 → 독립 확인 아님. · 가장 강한 단순 규칙(같은 요일 4주 평균×최근 흐름) 대비로는 가상 −20%, 빵집 −10%. · 과거 날씨는 그때의 예보가 아니라 관측값을 대신 씀. · 유행(검색량)과 팝업·뉴스 신호의 효과는 실매장 데이터로 아직 검증하지 못함. · 한 달치 데이터에서는 신호 채택이 어렵고 흔들린다.</div>
 
-<h2>7. 늘릴 때 고칠 곳</h2>
+<h2>7. 고칠 때 볼 곳</h2>
 <table>
   <tr><th>하고 싶은 것</th><th>고칠 곳</th></tr>
-  <tr><td class="k">새 외부 신호</td><td><code>features.SIGNAL_GROUPS</code>에 이름 추가 (새얼과 합의한 이름)</td></tr>
+  <tr><td class="k">새 POS 열 이름</td><td><code>ml/ingest.py</code>의 <code>COLUMN_MAP</code></td></tr>
+  <tr><td class="k">새 정보원</td><td><code>agent/collect.py</code>에 함수 하나 + <code>SOURCES</code>에 한 줄</td></tr>
+  <tr><td class="k">새 신호를 모델에</td><td><code>features.SIGNAL_GROUPS</code>에 이름 (화면 이름: <code>frontend/src/format.ts</code>)</td></tr>
   <tr><td class="k">새 파생 신호</td><td><code>features.DERIVED_SIGNALS</code>에 한 줄</td></tr>
-  <tr><td class="k">새 POS 열 이름</td><td><code>ingest.COLUMN_MAP</code></td></tr>
+  <tr><td class="k">신호 채택 기준</td><td><code>evaluate.MIN_GAIN_PCT</code>, <code>beats</code></td></tr>
+  <tr><td class="k">준비 방식·근거 문장</td><td><code>predict.PREP_MODES</code>(p40·p50·p80), <code>reason_text</code>, <code>FIXED_USUAL</code></td></tr>
+  <tr><td class="k">주의 안내 규칙</td><td><code>alerts.SYSTEM</code></td></tr>
+  <tr><td class="k">매장 설정 칸</td><td><code>contracts.StoreConfig</code></td></tr>
   <tr><td class="k">메뉴 이름 통일·단종</td><td><code>menu_map.json</code> / <code>store.json</code>의 <code>menus</code></td></tr>
-  <tr><td class="k">LLM 제공자·모델</td><td><code>alerts.PROVIDERS</code>, <code>.env</code>의 <code>LLM_MODEL</code></td></tr>
-  <tr><td class="k">근거 문장</td><td><code>predict.reason_text</code>, <code>EVENT_TEXT</code></td></tr>
-  <tr><td class="k">준비 방식</td><td><code>predict.PREP_MODES</code> (폐기 줄이기 p40 · 균형 p50 · 품절 줄이기 p80)</td></tr>
+  <tr><td class="k">LLM 모델·제공자</td><td><code>.env</code>의 <code>LLM_MODEL</code>, <code>ml/llm.py</code>의 <code>PROVIDERS</code></td></tr>
+  <tr><td class="k">폴더 위치</td><td><code>ml/paths.py</code></td></tr>
 </table>
 </div>
 </div>
 
-<div class="foot">판단·확인 목록과 진행 기록: <code>ml/REVIEW.md</code> · 개발 명세: <code>ml/TASKS.md</code> · 데이터 형식: <code>contracts/schemas.py</code>, 예시 <code>contracts/examples/</code></div>
+<div class="foot">읽는 순서: <code>contracts/schemas.py</code> → <code>run.py</code> → <code>ml/</code> → <code>agent/collect.py</code> → <code>backend/app/main.py</code> → <code>frontend/src/</code> · 판단 기록과 한계: <code>ml/REVIEW.md</code> · 실행 방법과 폴더 구조: <code>README.md</code></div>
 </body>
 </html>
