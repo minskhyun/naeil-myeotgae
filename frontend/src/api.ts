@@ -67,6 +67,27 @@ export type Backtest = {
   calibration?: { adopted: boolean; reason: string } | null
 }
 
+// 정보원 선택 에이전트의 계획 (backend/collectors/agent.py가 만든 것 그대로)
+export type SourcePlan = {
+  method?: string // "llm" = AI가 고름, 그 밖 = 거리 규칙
+  model?: string
+  weather?: { use: boolean; reason: string }
+  academic?: { school: string; evidence: string; distance_m: number; reason: string }[]
+  events?: { radius_m: number; evidence: string[]; reason: string } | null
+  candidates?: { source: string; evidence: string; distance_m: number; reason: string }[]
+}
+
+// 주변 정보를 어디서 왜 무엇을 모았는지 (contracts.SourceReport)
+export type SourceReport = {
+  store_id: string
+  generated_at: string
+  plan: SourcePlan | null
+  n_nearby: number | null
+  signals: { signal: string; n_days: number; first_date: string; last_date: string; n_menus: number; source_url: string | null; note: string | null }[]
+  articles: { title: string; source_url: string; first_date: string; last_date: string; published_at: string | null }[]
+  notes: string[]
+}
+
 // 매장 목록의 한 줄 (GET /api/stores)
 export type StoreInfo = { store_id: string; name: string; prep_mode: string }
 
@@ -95,6 +116,7 @@ export const api = {
   stores: () => call<StoreInfo[]>('/stores'),
   forecast: (id: string) => call<Forecast>(`/stores/${id}/forecast`),
   backtest: (id: string) => call<Backtest>(`/stores/${id}/backtest`),
+  sources: (id: string) => call<SourceReport>(`/stores/${id}/sources`),
   job: (jobId: string) => call<Job>(`/jobs/${jobId}`),
   demo: () => call<Job>('/stores/sinchon-a/demo', { method: 'POST' }),
   setPrepMode: (id: string, prepMode: string) => {

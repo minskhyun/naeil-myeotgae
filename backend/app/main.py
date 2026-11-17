@@ -9,6 +9,7 @@
   GET  /api/stores                         결과가 있는 매장 목록
   GET  /api/stores/{store_id}/forecast     내일 예측 (contracts.Forecast)
   GET  /api/stores/{store_id}/backtest     모델 비교·신호 채택 (contracts.BacktestResult)
+  GET  /api/stores/{store_id}/sources      주변 정보를 어디서 왜 무엇을 모았는지 (contracts.SourceReport)
 실행 (오래 걸리므로 작업 번호를 주고, 화면이 상태를 물어본다)
   POST /api/stores/{store_id}/run          POS 파일 + 매장 주소 → run.py 전체 실행 (주변 정보는 주소로 자동 수집)
   POST /api/stores/{store_id}/demo         가상 데이터로 전체 실행 (시연용)
@@ -35,7 +36,7 @@ from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from contracts.schemas import BacktestResult, Forecast, StoreConfig
+from contracts.schemas import BacktestResult, Forecast, SourceReport, StoreConfig
 from ml import paths
 from ml.predict import PREP_MODES
 
@@ -106,6 +107,11 @@ def forecast(store_id: str):
 @app.get("/api/stores/{store_id}/backtest", response_model=BacktestResult)
 def backtest(store_id: str):
     return BacktestResult.model_validate_json(_read(store_id, "backtest.json"))
+
+
+@app.get("/api/stores/{store_id}/sources", response_model=SourceReport)
+def sources(store_id: str):
+    return SourceReport.model_validate_json(_read(store_id, "sources_report.json"))
 
 
 # ---------------------------------------------------------------- 실행

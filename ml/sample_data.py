@@ -11,6 +11,11 @@
 - truth.json       심어 둔 효과 (정답지)
 - demand_true.csv  품절로 잘리기 전의 '진짜 수요' (품절 보정이 맞는지 확인용)
 
+이 파일이 만들지 않는 것 (한 번 만들어 저장소에 넣어 둔 파일)
+- collection.json  AI 주의 안내 시연용 가상 기사 4건 (원문 페이지는 frontend/public/sample-news/)
+- collectors/      정보원 선택 에이전트를 신촌의 실제 좌표(37.5597, 126.9423)로 한 번 실행한 결과
+                   (카카오 주변 시설 + Claude가 고른 정보원과 이유). 화면의 '주변 정보' 탭 시연용
+
 실행: 프로젝트 최상위 폴더에서  python -m ml.sample_data
 """
 import json

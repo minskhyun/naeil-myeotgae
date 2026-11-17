@@ -8,6 +8,7 @@
 
 단계마다 하는 일 (함수 이름 = step_단계)
     ingest     POS 파일 → sales_clean.csv,  매장 설정 → store.json,  주변 정보 → signals.csv·collection.json
+               + 무엇을 왜 모았는지 요약 → sources_report.json
     evaluate   과거 기록으로 검증: 모델 비교, 쓸 신호 고르기 → backtest.json
     predict    내일 예측·근거·준비량 + AI 주의 안내 → forecast.json
 
@@ -17,6 +18,7 @@
     collectors/        공공 데이터 수집기 결과 (날씨·학사일정·행사 원본, 주변 시설, 정보원 계획)
     signals.csv        외부 신호 (있으면)
     collection.json    AI 주의 안내에 쓸 행사·뉴스 원문 (있으면)
+    sources_report.json  주변 정보 수집 요약 (화면의 '주변 정보' 탭)
     backtest.json      검증 결과
     forecast.json      내일 예측
     llm_cache/         AI 주의 안내 응답 저장 (같은 입력은 다시 부르지 않음)
@@ -32,6 +34,7 @@ import pandas as pd
 
 from agent import collect, geocode
 from agent.collectors_bridge import OBSERVED_PROXY
+from agent.report import write_report
 from contracts.schemas import BacktestResult, CollectionItem, SignalRow, StoreConfig
 from ml.alerts import make_warnings
 from ml.evaluate import run_backtest, write_backtest
@@ -80,9 +83,12 @@ def _ingest_demo(args, out: Path) -> str:
     sales.assign(date=sales["date"].dt.strftime("%Y-%m-%d")).to_csv(out / "sales_clean.csv", index=False, encoding="utf-8")
     shutil.copyfile(src / "signals.csv", out / "signals.csv")
     shutil.copyfile(src / "store.json", out / "store.json")
+    if (src / "collectors").exists():                     # 정보원 선택 에이전트를 미리 돌려 둔 결과 (sample_data.py 참고)
+        shutil.copytree(src / "collectors", out / "collectors", dirs_exist_ok=True)
     note = f"가상 데이터 {sales['date'].nunique()}일, {len(sales)}행"
     if args.collection:
         note += ", " + _import_collection(Path(args.collection), out, append=False)
+    write_report(args.store, out, ["가상 매장입니다. 판매 기록·날씨·학사일정·근처 행사와 기사는 모두 가상으로 만든 것입니다."])
     return note
 
 
@@ -91,12 +97,16 @@ def _ingest_pos(args, out: Path) -> str:
     notes = [ingest_store(Path(args.pos), args.store, out, pos_type=args.pos_type)]
     store, where = _store_setup(args, out)
     notes.append(where)
+    collected = []                                         # 정보원별 수집 메모 (sources_report.json에 남긴다)
     if args.signals:                                       # 신호 파일을 직접 주면 자동 수집을 하지 않는다
         notes.append(_write_signals(load_signals(args.signals), args.store, out, Path(args.signals).name))
+        collected.append(f"신호 파일을 직접 받음: {Path(args.signals).name}")
     else:
-        notes.append(_auto_collect(store, out))
+        summary, collected = _auto_collect(store, out)
+        notes.append(summary)
     if args.collection:                                    # 직접 준 원문은 자동 수집분 뒤에 덧붙인다
         notes.append(_import_collection(Path(args.collection), out, append=True))
+    write_report(args.store, out, collected)
     return ", ".join(n for n in notes if n)
 
 
@@ -117,11 +127,13 @@ def _store_setup(args, out: Path) -> tuple[StoreConfig, str]:
     return store, note
 
 
-def _auto_collect(store: StoreConfig, out: Path) -> str:
+def _auto_collect(store: StoreConfig, out: Path) -> tuple[str, list[str]]:
     """매장 위치로 주변 정보를 모아 signals.csv(+원문은 collection.json)로. 정보원마다 실패해도 예측은 계속.
-    무엇을 모으는지는 agent/collect.py의 SOURCES 참고. 키는 맨 위 .env 하나 (README '키 준비')."""
+    무엇을 모으는지는 agent/collect.py의 SOURCES 참고. 키는 맨 위 .env 하나 (README '키 준비').
+    돌려주는 값: (실행 기록에 찍을 한 줄, 정보원별 메모)"""
     if store.lat is None or store.lon is None:
-        return "주변 정보 없음 (매장 위치를 모름: 주소를 넣으면 날씨·행사를 자동으로 붙임)"
+        note = "주변 정보 없음 (매장 위치를 모름: 주소를 넣으면 날씨·행사를 자동으로 붙임)"
+        return note, [note]
     sales = load_sales(out / "sales_clean.csv")
     dates = sales["date"]
     start = dates.min() - pd.Timedelta(days=35)                 # 기온 '최근 28일 평균'용 여유
@@ -135,9 +147,10 @@ def _auto_collect(store: StoreConfig, out: Path) -> str:
         _save_collection([i.model_dump(mode="json") for i in items], out, append=False)
         notes.append(f"행사 원문 {len(items)}개")
     if not rows:
-        return "주변 정보 없음 (" + "; ".join(notes) + ")"
+        return "주변 정보 없음 (" + "; ".join(notes) + ")", notes
     signals = pd.DataFrame([r.model_dump() for r in rows])
-    return "주변 정보 자동 수집 " + _write_signals(signals, store.store_id, out, "자동 수집") + " [" + "; ".join(notes) + "]"
+    summary = "주변 정보 자동 수집 " + _write_signals(signals, store.store_id, out, "자동 수집") + " [" + "; ".join(notes) + "]"
+    return summary, notes
 
 
 def _write_signals(signals: pd.DataFrame, store_id: str, out: Path, source: str) -> str:

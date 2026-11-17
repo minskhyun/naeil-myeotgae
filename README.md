@@ -23,7 +23,7 @@ POS 파일 + 매장 주소
    ├─ 4. 내일 예측           메뉴별 판매량 범위, 근거, 준비량 (폐기 줄이기 / 균형 / 품절 줄이기)
    └─ 5. AI 주의 안내        모델이 모르는 특별한 상황(새 팝업, 유행 급변 등)을 원문 인용과 함께 알림
    │
-웹 화면: 내일 준비표 · 얼마나 맞나 · 데이터 올리기
+웹 화면: 내일 준비표 · 얼마나 맞나 · 주변 정보 · 데이터 올리기
 ```
 
 ### AI를 쓰는 곳
@@ -161,6 +161,7 @@ cd frontend && npm run build && npm run lint
 ├── agent/                  주변 정보 수집
 │   ├── collect.py          입구: 정보원 목록(SOURCES)을 차례로 실행해 합침
 │   ├── collectors_bridge.py   공공 데이터 수집기 실행 + 결과를 예측 엔진 입력으로 변환
+│   ├── report.py           수집 결과 요약 → sources_report.json (화면 '주변 정보')
 │   ├── events.py           뉴스·블로그·공지 글에서 행사 추출
 │   ├── naver.py            네이버 뉴스·블로그 검색, 메뉴 검색량
 │   ├── geocode.py          주소·장소 → 좌표
@@ -187,6 +188,7 @@ cd frontend && npm run build && npm run lint
 | `collectors/` | 수집기 결과: 주변 시설, 정보원 계획과 그 이유, 날씨·행사 원본 |
 | `signals.csv` | 모델에 넣는 외부 신호 (날짜, 신호 이름, 메뉴(메뉴별 신호만), 값, 출처, 공개 시각) |
 | `collection.json` | AI 주의 안내에 쓰는 행사·뉴스 원문 |
+| `sources_report.json` | 주변 정보 수집 요약: AI가 고른 정보원과 이유, 모은 신호, 찾은 행사·뉴스 (화면 '주변 정보') |
 | `backtest.json` | 모델 비교와 신호 채택 결과 |
 | `forecast.json` | 메뉴별 내일 예측, 근거, 준비량, AI 주의 안내 |
 
@@ -241,7 +243,7 @@ python -m collectors.run_all --refresh-events # 서울시 행사 목록 새로 �
 - 지금은 수집할 수 없지만 중요해 보이는 정보원(다른 대학, 경기장 일정 등)은 `candidates`에 남겨 다음 수집기 후보로 씁니다.
 - LLM 호출이 실패하면 거리 규칙(2km 안 캠퍼스, 반경 1000m)으로 대신 정합니다. `python -m collectors.agent --rule`로 직접 쓸 수도 있습니다.
 
-결과는 `{store_id}_sources.json`에 근거, 이유, 검증 메모와 함께 저장됩니다.
+결과는 `{store_id}_sources.json`에 근거, 이유, 검증 메모와 함께 저장되고, 웹 화면의 '주변 정보' 탭에서 볼 수 있습니다.
 
 학사일정 원문은 `backend/data/raw/academic/{학교}_{학기}.txt`에 저장되고, 파일이 있으면 다시 내려받지 않습니다. 자동으로 못 가져오는 학기는 페이지를 복사해 같은 이름으로 저장하고 `collectors/academic_sources.json`에 학기와 날짜 범위를 추가하면 됩니다.
 

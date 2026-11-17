@@ -3,6 +3,7 @@ import type { Reason } from './api'
 
 // ---- 이름표: 코드 속 이름 → 화면에 보여 줄 말. 새 신호를 추가하면 여기에도 한 줄
 export const SIGNAL_LABELS: Record<string, string> = {
+  temp_mean: '기온',
   temp_diff: '기온',
   rain_mm: '비',
   exam_period: '시험기간',
@@ -19,6 +20,8 @@ export const GROUP_LABELS: Record<string, string> = {
   trend: '유행',
   special: '기념일',
 }
+
+export const SCHOOL_LABELS: Record<string, string> = { yonsei: '연세대', sogang: '서강대', ewha: '이화여대' }
 
 export const MODEL_LABELS: Record<string, string> = {
   M0: '지난주 같은 요일만큼',

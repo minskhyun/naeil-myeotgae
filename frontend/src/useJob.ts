@@ -18,6 +18,7 @@ export function useJob(jobId: string | null, onDone?: (storeId: string) => void)
       qc.invalidateQueries({ queryKey: ['stores'] })
       qc.invalidateQueries({ queryKey: ['forecast', storeId] })
       qc.invalidateQueries({ queryKey: ['backtest', storeId] })
+      qc.invalidateQueries({ queryKey: ['sources', storeId] })
       onDone?.(storeId)
     }
     // onDone은 매번 새로 만들어지므로 상태가 바뀔 때만 실행한다

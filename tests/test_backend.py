@@ -15,7 +15,7 @@ EXAMPLES = Path(__file__).resolve().parents[1] / "contracts" / "examples"
 def client(tmp_path, monkeypatch):
     store = tmp_path / "sinchon-a"
     store.mkdir()
-    for name in ("forecast.json", "backtest.json"):
+    for name in ("forecast.json", "backtest.json", "sources_report.json"):
         shutil.copyfile(EXAMPLES / name, store / name)
     (store / "store.json").write_text('{"store_id": "sinchon-a", "close_time": "21:00"}', encoding="utf-8")
     monkeypatch.setattr(main, "ARTIFACTS", tmp_path)
@@ -29,6 +29,7 @@ def test_read_endpoints(client):
     fc = client.get("/api/stores/sinchon-a/forecast").json()
     assert fc["store_id"] == "sinchon-a" and fc["rows"]
     assert client.get("/api/stores/sinchon-a/backtest").json()["chosen_model"]
+    assert client.get("/api/stores/sinchon-a/sources").json()["signals"]
 
 
 def test_bad_inputs(client):
@@ -67,10 +68,11 @@ def test_demo_mode_is_read_only(client, monkeypatch):
 
 
 def test_demo_data_follows_contracts():
-    from contracts.schemas import BacktestResult, Forecast
+    from contracts.schemas import BacktestResult, Forecast, SourceReport
     folder = Path(main.__file__).resolve().parents[1] / "demo_data"
     stores = sorted(d.name for d in folder.iterdir() if d.is_dir())
     assert stores == ["fr-bakery", "sinchon-a"]
     for s in stores:
         Forecast.model_validate_json((folder / s / "forecast.json").read_text(encoding="utf-8"))
+        SourceReport.model_validate_json((folder / s / "sources_report.json").read_text(encoding="utf-8"))
         BacktestResult.model_validate_json((folder / s / "backtest.json").read_text(encoding="utf-8"))

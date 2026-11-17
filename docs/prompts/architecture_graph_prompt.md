@@ -20,7 +20,7 @@
 ## 진입점 (실행이 시작되는 곳)
 - `run.py`: 한 매장 전체 실행. 단계 = ingest → evaluate → predict
 - `backend/app/main.py` (FastAPI 웹 API): 업로드를 받으면 `run.py`를 별도 프로세스로 실행, 준비 방식을 바꾸면 `run.py --from-step predict` 실행. 결과 JSON을 화면에 돌려줌
-- `frontend/src/` (React 화면): `main.tsx`(시작) → `App.tsx` → `ForecastView.tsx`(내일 준비표), `BacktestView.tsx`(얼마나 맞나), `UploadView.tsx`(데이터 올리기). 모두 `api.ts`로 `/api/...` 호출, 실행 상태는 `useJob.ts`가 1.5초마다 확인, 날짜·퍼센트 표시는 `format.ts`
+- `frontend/src/` (React 화면): `main.tsx`(시작) → `App.tsx` → `ForecastView.tsx`(내일 준비표), `BacktestView.tsx`(얼마나 맞나), `SourcesView.tsx`(주변 정보), `UploadView.tsx`(데이터 올리기). 모두 `api.ts`로 `/api/...` 호출, 실행 상태는 `useJob.ts`가 1.5초마다 확인, 날짜·퍼센트 표시는 `format.ts`
 - `frontend/vite.config.ts`: 개발 중 화면(5173)의 `/api` 요청을 백엔드(8000)로 넘김. 배포 때는 백엔드가 빌드된 화면을 직접 제공
 - `frontend/public/sample-news/*.html`: 시연용 가상 기사 4개. 화면의 '원문' 링크가 여기로 감
 
@@ -45,6 +45,7 @@
      - `agent/events.py` → 글(사람이 적은 `data/raw/{매장}_event_sources.txt` + 네이버 검색 글)을 읽고 LLM(Claude)이 날짜·장소 추출 → `agent/geocode.py`로 거리 확인 → 근처 행사 신호 + 원문
      - `agent/naver.py` → NAVER API HUB 검색어 트렌드(메뉴 검색량) → 메뉴별 유행 신호(`trend_level`, 모델 입력 후보) + '검색량 변화' 원문
   5. 결과 → `data/artifacts/{매장}/signals.csv` (신호), `collection.json` (AI 주의 안내용 원문)
+  6. `agent/report.py` → 위 결과와 정보원 계획을 요약해 `sources_report.json` (화면 '주변 정보' 탭이 읽음)
 ### evaluate
 - `ml/evaluate.py` (`run_backtest`) → `ml/features.py`(입력 표 `build_frame`, 시점 규칙) → `ml/models.py`(M0 기준선, CatBoost 다중 분위) → 시간순 교차검증 → 신호 조합 선택(`choose_signals`·`pick_combo`) → 범위 보정(`ml/calibration.py`) → 최종 테스트 1회 → `data/artifacts/{매장}/backtest.json`. 점수 계산은 `ml/metrics.py`
 ### predict
@@ -80,7 +81,7 @@
 
 contracts/
 - schemas.py: 팀 공통 데이터 형식 / __init__.py
-- examples/: backtest.json·forecast.json·sales.csv·signals.csv (화면·백엔드 개발용 예시 파일)
+- examples/: backtest.json·forecast.json·sources_report.json·sales.csv·signals.csv (화면·백엔드 개발용 예시 파일)
 
 ml/
 - ingest.py, features.py, models.py, metrics.py, calibration.py, evaluate.py, predict.py, alerts.py, llm.py (위 흐름 참고)
@@ -88,7 +89,7 @@ ml/
 - TASKS.md: 예측 엔진 개발 명세 / REVIEW.md: 판단·확인 목록, 진행 기록
 
 agent/
-- collect.py: 주변 정보 수집의 입구(정보원 목록 SOURCES) / collectors_bridge.py: 공공 데이터 수집기 실행 + 결과 변환 / events.py: 행사 글 LLM 추출 / naver.py: 네이버 검색·검색어 트렌드
+- collect.py: 주변 정보 수집의 입구(정보원 목록 SOURCES) / report.py: 수집 결과 요약 / collectors_bridge.py: 공공 데이터 수집기 실행 + 결과 변환 / events.py: 행사 글 LLM 추출 / naver.py: 네이버 검색·검색어 트렌드
 - geocode.py: 주소·장소 → 좌표 / special_days.py: 기념일 / __init__.py
 
 backend/
@@ -98,18 +99,18 @@ backend/
 - collectors/stores.json: 수집기만 따로 실행할 때의 매장 목록 (신촌 예시 매장)
 - data/external_daily.csv, data/events.json, data/stores/shinchon-cafe-a_nearby.json·_sources.json: 수집기만 따로 실행한 신촌 예시 결과 (실제 매장 결과는 data/artifacts/{매장}/collectors/에 생김)
 - data/raw/academic/: 학사일정 원문 텍스트 8개 / data/raw/seoul_culture/ (커밋 안 함): 서울 행사 원본 / data/llm_cache/ (커밋 안 함): 수집기 LLM 응답 저장
-- demo_data/sinchon-a/·fr-bakery/: 시연 사이트용 미리 계산한 결과 (forecast.json, backtest.json, store.json)
+- demo_data/sinchon-a/·fr-bakery/: 시연 사이트용 미리 계산한 결과 (forecast.json, backtest.json, sources_report.json, store.json)
 
 frontend/
 - index.html: 화면 시작 페이지(제목·글꼴) / vite.config.ts: /api 프록시
 - package.json·package-lock.json: 화면 패키지 / tsconfig.json·tsconfig.app.json·tsconfig.node.json: 타입 검사 설정 / eslint.config.js: 코드 검사 / .gitignore
-- src/: main.tsx, App.tsx, api.ts(타입·요청), useJob.ts, format.ts(이름표·날짜·퍼센트), ForecastView.tsx, BacktestView.tsx, UploadView.tsx, index.css(색·글꼴)
+- src/: main.tsx, App.tsx, api.ts(타입·요청), useJob.ts, format.ts(이름표·날짜·퍼센트), ForecastView.tsx, BacktestView.tsx, SourcesView.tsx, UploadView.tsx, index.css(색·글꼴)
 - public/favicon.svg: 아이콘 / public/sample-news/: 시연용 가상 기사 4개
 
 data/
-- sample/sinchon-a/: 가상 매장 1년치 — sales.csv(판매), pos_raw.csv(POS 원본 모양), signals.csv(신호), store.json(설정), truth.json(심어 둔 정답 효과), demand_true.csv(품절 전 실제 수요), collection.json(시험용 가상 기사)
+- sample/sinchon-a/: 가상 매장 1년치 — sales.csv(판매), pos_raw.csv(POS 원본 모양), signals.csv(신호), store.json(설정), truth.json(심어 둔 정답 효과), demand_true.csv(품절 전 실제 수요), collection.json(시험용 가상 기사), collectors/(신촌 좌표로 정보원 선택 에이전트를 한 번 실행한 결과)
 - raw/ (커밋 안 함): 실매장 POS 파일, {매장}_event_sources.txt(사람이 모은 행사 글 주소), geocode_cache.json(주소 → 좌표 저장), llm_cache_events/(행사 글 LLM 응답 저장), uploads/(웹으로 올린 파일)
-- artifacts/{매장}/ (커밋 안 함): store.json, sales_clean.csv, ingest_log.json(읽기 기록), menu_merge_candidates.json(메뉴명 통일 후보), collectors/(수집기 결과: stores.json, external_daily.csv, events.json, {매장}_nearby.json, {매장}_sources.json), signals.csv, collection.json, backtest.json, forecast.json, llm_cache/(AI 주의 안내 응답 저장)
+- artifacts/{매장}/ (커밋 안 함): store.json, sales_clean.csv, ingest_log.json(읽기 기록), menu_merge_candidates.json(메뉴명 통일 후보), collectors/(수집기 결과: stores.json, external_daily.csv, events.json, {매장}_nearby.json, {매장}_sources.json), signals.csv, collection.json, sources_report.json(주변 정보 수집 요약), backtest.json, forecast.json, llm_cache/(AI 주의 안내 응답 저장)
 
 tests/
 - test_*.py 16개 + fixtures/(시험용 POS 파일): 모듈마다 자동 테스트. 그림에는 그리지 않고 표에만 한 줄

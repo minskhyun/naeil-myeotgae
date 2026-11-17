@@ -198,6 +198,12 @@
   - **한계:** 효과는 아직 검증하지 못했다. 가상 판매는 실제 검색량과 무관하고 프랑스 베이커리는 한국 검색량과 무관하다. 실데이터에서 채택 여부를 그대로 보고한다. 메뉴 이름이 '아메리카노'처럼 흔한 말이면 검색량은 이 매장의 유행이 아니라 전체 관심의 흐름이다.
   - 기존 결과는 그대로다(유행 자료가 없는 네 가지 실행의 결과 파일이 전과 같음).
 
+- 11/17 **'주변 정보' 화면** (무엇을 왜 모았는지 보여 주기)
+  - `agent/report.py`가 수집이 끝난 뒤 `sources_report.json`(계약 `SourceReport`)을 쓴다: 정보원 선택 에이전트의 계획과 이유, 살펴본 주변 시설 수, 신호별 일수·기간·출처, 찾은 행사·뉴스 목록, 수집 메모. 새로 계산하는 것은 없고 이미 있는 파일을 요약만 한다.
+  - 웹 API `GET /api/stores/{id}/sources`, 화면 `frontend/src/SourcesView.tsx`.
+  - 시연 사이트: 가상 매장의 정보원 계획은 신촌의 실제 좌표로 에이전트를 한 번 실행한 결과다(`data/sample/sinchon-a/collectors/`, 주변 시설 213곳 → 이화·연세 학사일정, 행사 반경 1km). 판매·신호·기사는 가상이라고 화면에 적었다.
+  - 시연 사이트의 예측·검증 결과는 현재 코드로 다시 계산해도 같았다(11/16 결과와 `backtest.json` 동일).
+
 ## F. 코드 지도 (공부 순서대로)
 
 읽는 순서: `contracts/schemas.py`(주고받는 형식) → `run.py`(전체 흐름) → `ml/`(아래 표 순서) → `agent/collect.py`(주변 정보) → `backend/app/main.py` → `frontend/src/`
@@ -219,6 +225,7 @@
 | `run.py` | 한 매장 전체 실행 | `argparse`, `--from-step`, 단계 함수(`step_ingest`·`step_evaluate`·`step_predict`) |
 | `agent/collect.py` | 주변 정보 수집의 입구 | 정보원 하나 = 함수 하나(`SOURCES`), 모두 (신호, 원문, 메모)를 돌려줌 |
 | `agent/collectors_bridge.py` | 공공 데이터 수집기 실행 + 결과 → 신호·원문 | `subprocess`, 공개 시각 붙이는 규칙(관측값은 '전날 17:10 예보'처럼), 행사 수가 등록될 때마다 늘어나는 줄 |
+| `agent/report.py` | 수집 결과 요약 → sources_report.json | 화면 '주변 정보'의 재료. 계산 없이 파일 요약만 |
 | `agent/events.py` | 뉴스·블로그·공지 글 → 행사 신호 | LLM은 날짜·장소만, 근거 문장 대조, 거리(haversine), 취소는 value 0 |
 | `agent/naver.py` | 네이버 검색, 메뉴 유행 신호 | 게시 시각을 읽은 시각 이하로, `trend_level`(최근 7일 ÷ 그 전 28일, D−2일까지만) |
 | `agent/geocode.py` | 주소·장소 → 좌표 | 카카오 → OpenStreetMap, 결과 저장(못 찾은 것도) |

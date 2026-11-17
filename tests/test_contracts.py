@@ -6,7 +6,7 @@ import pytest
 from pydantic import ValidationError
 
 from contracts.schemas import (BacktestResult, Evidence, Forecast, ForecastRow, ModelScore, Reason,
-                               SalesRow, SignalDecision, SignalRow, Warning)
+                               SalesRow, SignalDecision, SignalRow, SourceReport, Warning)
 
 
 def test_sales_row_accepts_valid_and_rejects_negative_qty():
@@ -93,6 +93,8 @@ def test_examples_follow_contracts():
         SignalRow.model_validate(rec)
     BacktestResult.model_validate_json((EXAMPLES / "backtest.json").read_text(encoding="utf-8"))
     Forecast.model_validate_json((EXAMPLES / "forecast.json").read_text(encoding="utf-8"))
+    report = SourceReport.model_validate_json((EXAMPLES / "sources_report.json").read_text(encoding="utf-8"))
+    assert report.plan and report.signals and report.articles
 
 
 # ---------------------------------------------------------------- 매장 설정 (store.json)

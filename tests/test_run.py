@@ -80,6 +80,10 @@ def test_address_collects_weather_automatically(tmp_path, monkeypatch):
     bt = BacktestResult.model_validate_json((out / "backtest.json").read_text(encoding="utf-8"))
     for group in ("weather", "trend"):                                                    # 날씨와 유행이 평가에 들어감
         assert any(d.signal_group == group and d.folds_total > 0 for d in bt.decisions), group
+    report = json.loads((out / "sources_report.json").read_text(encoding="utf-8"))        # 화면 '주변 정보'용 요약
+    by_signal = {s["signal"]: s for s in report["signals"]}
+    assert set(by_signal) == {"temp_mean", "rain_mm", "trend_level"} and report["notes"] == ["가짜"]
+    assert by_signal["trend_level"]["n_menus"] == 1 and by_signal["rain_mm"]["n_menus"] == 0
 
 
 def test_without_address_runs_without_signals(tmp_path, capsys):

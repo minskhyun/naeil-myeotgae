@@ -5,6 +5,7 @@
     sales_clean.csv                SalesRow        ml/ingest.py                  ml 전체
     signals.csv                    SignalRow       agent/ (주변 정보 수집)        ml/features.py
     collection.json                CollectionItem  agent/ (행사·뉴스 원문)        ml/alerts.py
+    sources_report.json            SourceReport    agent/report.py               웹 '주변 정보'
     backtest.json                  BacktestResult  ml/evaluate.py                웹 '얼마나 맞나'
     forecast.json                  Forecast        ml/predict.py + ml/alerts.py  웹 '내일 준비표'
 
@@ -82,6 +83,39 @@ class CollectionItem(BaseModel):
     text: str = Field(min_length=1)             # 원문 그대로 (요약하지 않음). 경고의 인용문을 이 글과 대조한다
     source_url: str
     published_at: dt.datetime | None = None     # 공개 시각(KST). 있으면 예측 시각 뒤에 나온 글은 쓰지 않는다
+
+
+# ---------------------------------------------------------------- 출력: 주변 정보 수집 요약
+
+class SignalSummary(BaseModel):
+    """모은 신호 하나의 요약 (signals.csv를 신호 이름별로 묶은 것)."""
+    signal: str
+    n_days: int = Field(ge=0)                   # 값이 있는 날짜 수
+    first_date: dt.date
+    last_date: dt.date
+    n_menus: int = Field(default=0, ge=0)       # 메뉴별 신호면 메뉴 수, 매장 전체 신호면 0
+    source_url: str | None = None
+    note: str | None = None                     # 밝혀야 할 점 (예: 관측값을 예보 대신 씀)
+
+
+class ArticleSummary(BaseModel):
+    """찾은 행사·뉴스 글 하나 (collection.json에서 본문을 뺀 것)."""
+    title: str
+    source_url: str
+    first_date: dt.date                         # 이 글의 행사가 해당하는 첫날
+    last_date: dt.date                          # 마지막 날
+    published_at: dt.datetime | None = None
+
+
+class SourceReport(BaseModel):
+    """한 매장의 주변 정보를 어디서 왜 무엇을 모았는지 → sources_report.json"""
+    store_id: str
+    generated_at: dt.datetime
+    plan: dict | None = None                    # 정보원 선택 에이전트의 결과 그대로 (형식: backend/collectors/agent.py)
+    n_nearby: int | None = None                 # 에이전트가 살펴본 주변 시설 수
+    signals: list[SignalSummary] = Field(default_factory=list)
+    articles: list[ArticleSummary] = Field(default_factory=list)
+    notes: list[str] = Field(default_factory=list)   # 수집 기록 (무엇을 몇 건, 왜 건너뛰었는지)
 
 
 # ---------------------------------------------------------------- 출력: 내일 예측

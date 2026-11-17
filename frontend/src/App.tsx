@@ -3,11 +3,13 @@ import { useState } from 'react'
 import { api } from './api'
 import { BacktestView } from './BacktestView'
 import { ForecastView } from './ForecastView'
+import { SourcesView } from './SourcesView'
 import { UploadView } from './UploadView'
 
 const TABS = [
   { id: 'forecast', label: '내일 준비표' },
   { id: 'backtest', label: '얼마나 맞나' },
+  { id: 'sources', label: '주변 정보' },
   { id: 'upload', label: '데이터 올리기' },
 ] as const
 type Tab = (typeof TABS)[number]['id']
@@ -78,6 +80,7 @@ export default function App() {
         )}
         {tab === 'forecast' && storeId && <ForecastView storeId={storeId} prepMode={store?.prep_mode ?? '균형'} readOnly={demo} />}
         {tab === 'backtest' && storeId && <BacktestView storeId={storeId} />}
+        {tab === 'sources' && storeId && <SourcesView storeId={storeId} />}
         {tab === 'upload' && <UploadView onDone={(id) => setStoreId(id)} />}
         {tab !== 'upload' && !storeId && !stores.isLoading && (
           <p className="text-muted">아직 준비표가 없습니다. '데이터 올리기'에서 시작하세요.</p>
