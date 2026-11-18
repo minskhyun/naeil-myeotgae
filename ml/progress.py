@@ -22,23 +22,29 @@
     article   읽은 글               title, url
     special   기념일               date, name
     trend     메뉴 검색량            menu, pct
+    trial     검증 중 시험 한 번     groups[정보 묶음], wape
     decision  정보를 쓸지 판정        group, adopted, reason
     scores    검증 결과             model, wape, base_wape, coverage, test_days
     forecast  내일 예측             date, menus, top[{menu, prep, pred}], warnings[문장]
 """
 import json
 import os
+import sys
+import threading
 from pathlib import Path
 
 PREFIX = "@@EVENT "                  # 이 글자로 시작하는 출력 줄이 알림이다 (backend/app/main.py가 골라낸다)
 EVENTS: list[dict] = []              # 이번 실행에서 알린 것 전부
+_LOCK = threading.Lock()             # 정보원 여러 개가 동시에 알려도 한 줄씩 온전히 나가게
 
 
 def emit(kind: str, **data) -> None:
     event = {"kind": kind, **{k: v for k, v in data.items() if v is not None}}
-    EVENTS.append(event)
-    if os.environ.get("NM_PROGRESS") == "1":
-        print(PREFIX + json.dumps(event, ensure_ascii=True, default=str), flush=True)    # 영문자만 → 글자 깨짐 걱정 없음
+    with _LOCK:
+        EVENTS.append(event)
+        if os.environ.get("NM_PROGRESS") == "1":
+            sys.stdout.write(PREFIX + json.dumps(event, ensure_ascii=True, default=str) + "\n")    # 영문자만 → 글자 깨짐 걱정 없음
+            sys.stdout.flush()
 
 
 def status(text: str) -> None:

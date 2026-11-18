@@ -26,6 +26,8 @@ DEFAULTS = {"LLM_PROVIDER": "anthropic",
 KEY_NAMES = ("ANTHROPIC_API_KEY", "DATA_GO_KR_KEY", "SEOUL_DATA_KEY", "KAKAO_REST_KEY",
              "NAVER_CLIENT_ID", "NAVER_CLIENT_SECRET",           # .env에 넣는 키 이름 (README '키 준비' 참고)
              "GOOGLE_CLIENT_ID", "KAKAO_LOGIN", "KAKAO_CLIENT_SECRET", "ADMIN_EMAILS")   # 로그인 설정 (backend/app/auth.py)
+LLM_TIMEOUT_S = 60       # 한 번 부를 때 기다리는 최대 시간 (SDK 기본은 10분이라, 서버가 멈추면 실행 전체가 멈춘 것처럼 보인다)
+LLM_RETRIES = 1          # 실패하면 한 번만 다시
 T = TypeVar("T", bound=BaseModel)
 
 
@@ -46,7 +48,7 @@ def _anthropic(model: str, system: str, user: str, schema: type[T], max_tokens: 
     import anthropic                       # LLM 기능을 쓸 때만 필요 (pip install anthropic)
     if "ANTHROPIC_API_KEY" not in os.environ and (key := settings().get("ANTHROPIC_API_KEY")):
         os.environ["ANTHROPIC_API_KEY"] = key
-    response = anthropic.Anthropic().messages.parse(
+    response = anthropic.Anthropic(timeout=LLM_TIMEOUT_S, max_retries=LLM_RETRIES).messages.parse(
         model=model, max_tokens=max_tokens, system=system,
         messages=[{"role": "user", "content": user}], output_format=schema,
     )

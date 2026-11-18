@@ -126,6 +126,7 @@ export type ProgressEvent =
   | { kind: 'article'; title: string; url: string }
   | { kind: 'special'; date: string; name: string }
   | { kind: 'trend'; menu: string; pct: number }
+  | { kind: 'trial'; groups: string[]; wape: number } // 검증 중: 이 정보 묶음을 넣어 시험했더니 오차가 이만큼
   | { kind: 'decision'; group: string; adopted: boolean; reason: string }
   | { kind: 'scores'; model: string; wape: number; base_wape: number; coverage: number; test_days?: number }
   | { kind: 'forecast'; date: string; menus: number; top: { menu: string; prep: number | null; pred: number }[]; warnings: string[] }

@@ -16,6 +16,7 @@
     menu_trend    메뉴 검색량 유행             agent/naver.py
 """
 import datetime as dt
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -102,13 +103,20 @@ SOURCE_TEXT = {"공공 데이터": "날씨·학교 일정·서울시 행사를 �
 
 def collect_all(store: StoreConfig, start: dt.date, end: dt.date, work_dir: Path, sources_path: Path | None = None,
                 target: dt.date | None = None, menus: list[str] | None = None) -> Result:
-    """SOURCES의 정보원을 차례로 실행해 결과를 합친다. 하나가 실패해도 나머지는 계속한다."""
+    """SOURCES의 정보원을 동시에 실행해 결과를 합친다. 하나가 실패해도 나머지는 계속한다.
+    서로 다른 곳에서 정보를 받아 오는 일이라 동시에 해도 되고, 결과는 SOURCES 순서대로 합치므로 차례로 한 것과 같다."""
     job = CollectJob(store, start, end, Path(work_dir), sources_path, target, menus or [])
-    rows, items, notes = [], [], []
-    for name, source in SOURCES:
+
+    def run(name, source):
         progress.status(SOURCE_TEXT.get(name, name))
+        return source(job)
+
+    with ThreadPoolExecutor(len(SOURCES)) as pool:
+        waiting = [(name, pool.submit(run, name, source)) for name, source in SOURCES]
+    rows, items, notes = [], [], []
+    for name, done in waiting:
         try:
-            r, i, n = source(job)
+            r, i, n = done.result()
         except Exception as e:
             code = getattr(e, "code", "")                       # HTTP 오류면 상태 코드도 남긴다 (예: 429)
             notes.append(f"{name} 실패({type(e).__name__}{f' {code}' if code else ''}) → 이 정보 없이 진행")

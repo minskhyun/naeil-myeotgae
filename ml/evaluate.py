@@ -24,6 +24,7 @@ from pathlib import Path
 import pandas as pd
 
 from contracts.schemas import BacktestResult
+from ml import progress
 from ml.calibration import apply_calibration, below_rates, check_calibration, fit_calibration
 from ml.features import (DEFAULT_CLOSE_TIME, FEATURE_SETS, SIGNAL_GROUPS, available_signals, base_level, build_frame,
                          signals_in)
@@ -118,6 +119,7 @@ class CrossValidator:
             label = model_label(groups)
             preds = cross_val_predict(self.frame, label, self.folds, groups=list(groups), **self.model_kwargs)
             self._done[key] = (preds, score(preds, label))
+            progress.emit("trial", groups=list(groups), wape=round(self._done[key][1]["wape"], 4))   # 화면: 방금 시험한 조합과 오차
         return self._done[key]
 
 

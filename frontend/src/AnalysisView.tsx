@@ -16,10 +16,11 @@ const STEPS = [
   { id: 'predict', label: '내일 예측' },
 ] as const
 
-// 알림 하나를 보여 준 뒤 다음 것까지 기다리는 시간(ms). 지도에서 벌어지는 일이 끝날 만큼
+// 알림 하나를 보여 준 뒤 다음 것까지 기다리는 시간(ms). 지도에서 벌어지는 일이 끝날 만큼.
+// 알림이 한꺼번에 몰려와도 이 간격대로 하나씩 풀어 놓는다 → 서버가 잠깐 조용해도 화면은 계속 움직인다
 const PAUSE: Record<string, number> = {
   step: 120, status: 260, store: 2000, sales: 500, places: 1500, plan: 1500, weather: 700, academic: 700,
-  event: 650, article: 240, special: 380, trend: 340, decision: 650, scores: 500, forecast: 500,
+  event: 700, article: 450, special: 400, trend: 450, trial: 500, decision: 650, scores: 500, forecast: 500,
 }
 
 // 들어온 정보 목록의 한 줄: 종류(색 이름표) + 내용
@@ -37,6 +38,10 @@ function line(e: ProgressEvent): { tag: string; color: string; text: string } | 
     case 'article': return { tag: '읽은 글', color: KIND_COLOR.article, text: e.title }
     case 'special': return { tag: '기념일', color: KIND_COLOR.special, text: `${e.name} (${e.date})` }
     case 'trend': return { tag: '검색량', color: KIND_COLOR.trend, text: `${e.menu} ${e.pct > 0 ? '+' : ''}${e.pct}%` }
+    case 'trial': return {
+      tag: '시험', color: KIND_COLOR.plan,
+      text: `${e.groups.length ? `판매 기록 + ${e.groups.map((g) => GROUP_LABELS[g] ?? g).join('·')}` : '판매 기록만'}으로 지난 날들을 맞혀 봤어요 → 틀린 양 ${pct1(e.wape)}`,
+    }
     default: return null
   }
 }
@@ -74,12 +79,18 @@ export function AnalysisView({ events, status, error, log, onClose, replay = fal
   replay?: boolean // 지난 분석을 다시 보는 중
 }) {
   const [shown, setShown] = useState(0) // 화면에 풀어 놓은 알림 수
+  const [seconds, setSeconds] = useState(0) // 시작한 지 몇 초 (기다리는 동안에도 화면이 살아 있게)
+  useEffect(() => {
+    if (status !== 'running') return
+    const timer = window.setInterval(() => setSeconds((n) => n + 1), 1000)
+    return () => window.clearInterval(timer)
+  }, [status])
   const seen = useMemo(() => events.slice(0, shown), [events, shown])
 
   useEffect(() => {
     if (shown >= events.length) return
     const backlog = events.length - shown
-    const wait = (PAUSE[events[shown].kind] ?? 300) * (backlog > 40 ? 0.25 : backlog > 15 ? 0.55 : 1) // 밀리면 빨리 감는다
+    const wait = (PAUSE[events[shown].kind] ?? 300) * (backlog > 90 ? 0.3 : backlog > 45 ? 0.6 : 1) // 아주 많이 밀렸을 때만 빨리 감는다
     const timer = window.setTimeout(() => setShown((n) => n + 1), wait)
     return () => window.clearTimeout(timer)
   }, [events, shown])
@@ -128,7 +139,12 @@ export function AnalysisView({ events, status, error, log, onClose, replay = fal
               ? error
               : finished
                 ? '무엇을 모았고, 그중 무엇이 실제로 도움이 됐는지 아래에 정리했어요.'
-                : (<>{find('status')?.text ?? '시작하는 중'}<span className="nm-blink">…</span></>)}
+                : (<>
+                    {find('status')?.text ?? '시작하는 중'}<span className="nm-blink">…</span>
+                    {status === 'running' && seconds >= 5 && (
+                      <span className="ml-3 text-sm text-white/60">{seconds >= 60 ? `${Math.floor(seconds / 60)}분 ` : ''}{seconds % 60}초째 · 보통 2~3분 걸려요</span>
+                    )}
+                  </>)}
           </p>
           <ol className="mt-5 flex flex-wrap gap-2">
             {STEPS.map((s, i) => {

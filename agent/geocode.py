@@ -15,6 +15,7 @@
 """
 import json
 import re
+import threading
 import time
 import urllib.error
 import urllib.parse
@@ -30,6 +31,7 @@ RETRIES = 3                           # 일시적 실패 때 다시 시도하는
 CACHE_PATH = RAW / "geocode_cache.json"
 _last_call = 0.0
 _cache: dict[str, list | None] | None = None      # 주소 → [위도, 경도, 이름] 또는 None(못 찾음)
+_LOCK = threading.Lock()              # 글을 여러 개 동시에 읽어도 좌표 찾기는 한 번에 하나씩
 
 
 def _load() -> dict:
@@ -112,6 +114,11 @@ def place_queries(place: str) -> list[str]:
 def geocode(address: str, search=None) -> tuple[float, float, str]:
     """주소 → (위도, 경도, 찾은 이름). 끝까지 못 찾으면 ValueError.
     search를 주면(테스트) 카카오는 건너뛰고 그 함수로 OpenStreetMap 방식만 쓴다."""
+    with _LOCK:
+        return _geocode(address, search)
+
+
+def _geocode(address: str, search=None) -> tuple[float, float, str]:
     address = " ".join(address.split())
     cache = _load()
     if address in cache:
