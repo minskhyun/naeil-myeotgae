@@ -24,14 +24,14 @@ function Step({ n, title, children }: { n: number; title: string; children: Reac
   )
 }
 
-// 글자 입력 한 칸: 이름 · 입력 · 설명
-function Field({ label, hint, value, onChange, placeholder, wide }: {
-  label: string; hint: string; value: string; onChange: (v: string) => void; placeholder: string; wide?: boolean
+// 입력 한 칸: 이름 · 입력 · 설명. type="time"이면 시각만 고를 수 있는 칸 (값은 "21:00" 형식)
+function Field({ label, hint, value, onChange, placeholder, wide, type = 'text' }: {
+  label: string; hint: string; value: string; onChange: (v: string) => void; placeholder?: string; wide?: boolean; type?: 'text' | 'time'
 }) {
   return (
     <label className={`block ${wide ? 'sm:col-span-2' : ''}`}>
       <span className="text-sm font-medium">{label}</span>
-      <input value={value} onChange={(e) => onChange(e.target.value)} className={INPUT} placeholder={placeholder} />
+      <input type={type} value={value} onChange={(e) => onChange(e.target.value)} className={INPUT} placeholder={placeholder} />
       <span className="mt-1 block text-sm text-faint">{hint}</span>
     </label>
   )
@@ -147,7 +147,7 @@ export function UploadView({ job, onStarted, onClose, account = false, initialTa
             <Field label="매장 ID" value={storeId} onChange={(v) => setStoreId(v.trim())} placeholder="seongsu-a"
               hint="영어 소문자·숫자·하이픈. 같은 ID로 다시 올리면 그 매장의 결과가 새로 만들어집니다" />
           )}
-          <Field label="닫는 시간" value={closeTime} onChange={setCloseTime} placeholder="21:00"
+          <Field type="time" label="닫는 시간" value={closeTime} onChange={setCloseTime}
             hint="이 시각까지 공개된 정보만 다음 날 예측에 씁니다" />
         </div>
       </Step>
@@ -158,7 +158,7 @@ export function UploadView({ job, onStarted, onClose, account = false, initialTa
 
       <Step n={3} title="실행">
         <div className="flex flex-wrap items-center gap-3">
-          <button disabled={!pos || running || (isNew && !name.trim())} onClick={() => start(run)}
+          <button disabled={!pos || running || !closeTime || (isNew && !name.trim())} onClick={() => start(run)}
             className="bg-accent px-5 py-2.5 font-semibold text-white hover:bg-accent/90 disabled:cursor-not-allowed disabled:opacity-40">
             {isNew ? '매장 추가하고 준비표 만들기' : '준비표 만들기'}
           </button>
