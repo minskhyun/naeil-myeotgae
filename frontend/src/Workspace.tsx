@@ -1,4 +1,5 @@
-// 일하는 화면: 내 매장의 분석(내일 준비표 · 얼마나 맞나 · 주변 정보)과 매장 추가·관리.
+// 일하는 화면: 고른 매장의 분석을 한 쪽에 차례로 (내일 준비표 → 주변 정보 → 얼마나 맞나).
+// 매장 추가와 매장 관리는 탭이 아니라 위에 뜨는 창(Modal)으로 연다.
 // 로그인을 쓰는 서버에서는 로그인한 뒤에 나오고, 예시(시연) 매장은 보이지 않는다 → 내 매장만.
 // 로그인을 안 쓰는 서버(혼자 쓰는 노트북)에서는 처음부터 이 화면이고 모든 매장이 보인다.
 import { useQuery } from '@tanstack/react-query'
@@ -7,64 +8,50 @@ import { api } from './api'
 import { AccountBox } from './Auth'
 import { BacktestView } from './BacktestView'
 import { ForecastView } from './ForecastView'
+import { Modal } from './Modal'
 import { SourcesView } from './SourcesView'
 import { StoresView } from './StoresView'
 import { UploadView } from './UploadView'
+import { useJob } from './useJob'
 
-type Tab = 'forecast' | 'backtest' | 'sources' | 'upload' | 'stores'
+// 지금 떠 있는 창: 판매 기록 올리기(target = 다시 올릴 매장, null이면 새 매장) 또는 내 매장 관리
+type Dialog = { kind: 'upload'; target: string | null } | { kind: 'stores' } | null
 
 // clientId: 구글 로그인을 쓰는 서버면 그 값(= 계정 방식), 아니면 null
 export function Workspace({ clientId }: { clientId: string | null }) {
   const account = !!clientId
   const all = useQuery({ queryKey: ['stores'], queryFn: api.stores })
   const stores = all.data?.filter((s) => !account || !s.demo) // 계정 방식이면 예시 매장을 뺀다
-  const tabs: { id: Tab; label: string }[] = [
-    { id: 'forecast', label: '내일 준비표' },
-    { id: 'backtest', label: '얼마나 맞나' },
-    { id: 'sources', label: '주변 정보' },
-    { id: 'upload', label: account ? '매장 추가' : '데이터 올리기' },
-    ...(account ? [{ id: 'stores' as const, label: '내 매장' }] : []),
-  ]
-  // 주소로도 고를 수 있다: ?store=sinchon-a&tab=backtest
+  // 주소로도 매장을 고르고 창을 열 수 있다: ?store=sinchon-a , ?open=add (매장 추가) , ?open=stores (매장 관리)
   const params = new URLSearchParams(window.location.search)
-  const [picked, setStoreId] = useState<string | null>(params.get('store'))
-  const [chosenTab, setTab] = useState<Tab>(tabs.some((t) => t.id === params.get('tab')) ? (params.get('tab') as Tab) : 'forecast')
-  const [uploadTarget, setUploadTarget] = useState<string | null>(null) // '내 매장'에서 고른, 판매 기록을 다시 올릴 매장
+  const [picked, setStoreId] = useState(params.get('store'))
+  const [dialog, setDialog] = useState<Dialog>(
+    params.get('open') === 'add' ? { kind: 'upload', target: null } : params.get('open') === 'stores' && account ? { kind: 'stores' } : null,
+  )
+  // 준비표를 만드는 작업은 여기서 지켜본다 → 창을 닫아도 계속 이어지고, 끝나면 그 매장을 보여 준다
+  const [jobId, setJobId] = useState<string | null>(null)
+  const job = useJob(jobId, (id) => setStoreId(id))
+  const running = job?.status === 'running'
 
-  // 고른 매장이 목록에 없으면 첫 매장. 매장이 하나도 없으면 매장 추가부터
+  // 고른 매장이 목록에 없으면 첫 매장
   const listed = !stores || stores.some((s) => s.store_id === picked)
   const storeId = (picked && listed ? picked : stores?.[0]?.store_id) ?? null
   const store = stores?.find((s) => s.store_id === storeId)
   const empty = !!stores && !stores.length
-  const tab: Tab = empty && chosenTab !== 'stores' ? 'upload' : chosenTab
+  const addLabel = account ? '매장 추가' : '데이터 올리기'
 
   const openUpload = (target: string | null) => {
-    setUploadTarget(target)
-    setTab('upload')
+    if (!running) setJobId(null) // 끝난 지난 작업의 기록은 지우고 새로 시작
+    setDialog({ kind: 'upload', target })
   }
+  const close = () => setDialog(null)
 
   return (
     <div className="min-h-screen">
       <header className="border-b border-ink/80 bg-sheet">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-end justify-between gap-x-8 gap-y-3 px-5 pt-5">
-          <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2">
-            <h1 className="text-xl font-extrabold tracking-tight">내일몇개</h1>
-            <nav className="flex gap-5" aria-label="화면">
-              {tabs.map((t) => (
-                <button
-                  key={t.id}
-                  onClick={() => (t.id === 'upload' ? openUpload(null) : setTab(t.id))}
-                  aria-current={tab === t.id ? 'page' : undefined}
-                  className={`border-b-2 pb-3 text-[15px] ${
-                    tab === t.id ? 'border-ink font-semibold' : 'border-transparent text-muted hover:text-ink'
-                  }`}
-                >
-                  {t.label}
-                </button>
-              ))}
-            </nav>
-          </div>
-          <div className="mb-2.5 flex flex-wrap items-center gap-x-6 gap-y-2">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-8 gap-y-3 px-5 py-3.5">
+          <h1 className="text-xl font-extrabold tracking-tight">내일몇개</h1>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             {!!stores?.length && (
               <label className="flex items-center gap-2 text-sm text-muted">
                 {account ? '내 매장' : '매장'}
@@ -81,42 +68,80 @@ export function Workspace({ clientId }: { clientId: string | null }) {
                 </select>
               </label>
             )}
+            <button onClick={() => openUpload(null)} className="bg-accent px-3.5 py-1.5 text-sm font-semibold text-white hover:bg-accent/90">
+              {addLabel}
+            </button>
+            {account && (
+              <button onClick={() => setDialog({ kind: 'stores' })} className="border border-ink/80 bg-sheet px-3.5 py-1.5 text-sm hover:bg-paper">
+                매장 관리
+              </button>
+            )}
             {clientId && <AccountBox clientId={clientId} />}
           </div>
         </div>
       </header>
 
+      {running && !dialog && (
+        <p className="border-b border-rule bg-accent-soft px-5 py-2 text-center text-sm">
+          준비표를 만드는 중입니다…{' '}
+          <button onClick={() => setDialog({ kind: 'upload', target: null })} className="underline underline-offset-4 hover:text-accent">
+            진행 상황 보기
+          </button>
+        </p>
+      )}
+
       <main className="mx-auto max-w-6xl px-5 py-10">
-        {all.error && (
-          <p className="mb-8 border-l-4 border-up bg-sheet px-4 py-3 text-sm">
-            백엔드에 연결하지 못했습니다. 프로젝트 맨 위 폴더에서{' '}
-            <code className="bg-paper px-1">.venv\Scripts\python.exe -m uvicorn backend.app.main:app --port 8000</code>을 실행하세요.
-          </p>
+        {all.error && <p className="mb-8 border-l-4 border-up bg-sheet px-4 py-3 text-sm">매장 목록을 불러오지 못했습니다. 백엔드가 켜져 있는지 확인해 주세요.</p>}
+
+        {empty && (
+          <section className="max-w-xl">
+            <h2 className="text-3xl font-bold tracking-tight">{account ? '첫 매장을 추가해 주세요' : '아직 준비표가 없습니다'}</h2>
+            <p className="mt-2 mb-5 text-muted">
+              매장 이름, 위치, 닫는 시간을 적고 포스에서 내려받은 판매 기록 파일을 올리면 내일 준비표가 만들어집니다.
+            </p>
+            <button onClick={() => openUpload(null)} className="bg-accent px-5 py-2.5 font-semibold text-white hover:bg-accent/90">
+              {addLabel}
+            </button>
+          </section>
         )}
-        {tab === 'forecast' && storeId && (
-          <ForecastView storeId={storeId} prepMode={store?.prep_mode ?? '균형'} readOnly={store?.can_edit === false} />
+
+        {storeId && (
+          <div className="space-y-14">
+            <ForecastView storeId={storeId} prepMode={store?.prep_mode ?? '균형'} readOnly={store?.can_edit === false} />
+            <section className="border-t border-ink/80 pt-10">
+              <SourcesView storeId={storeId} />
+            </section>
+            <section className="border-t border-ink/80 pt-10">
+              <BacktestView storeId={storeId} />
+            </section>
+          </div>
         )}
-        {tab === 'backtest' && storeId && <BacktestView storeId={storeId} />}
-        {tab === 'sources' && storeId && <SourcesView storeId={storeId} />}
-        {tab === 'upload' && (
+      </main>
+
+      {dialog?.kind === 'upload' && (
+        <Modal label={addLabel} onClose={close}>
           <UploadView
-            key={uploadTarget ?? 'new'}
-            onDone={(id) => setStoreId(id)}
+            key={dialog.target ?? 'new'}
+            job={job}
+            onStarted={setJobId}
+            onClose={close}
             account={account}
-            initialTarget={uploadTarget}
+            initialTarget={dialog.target}
             first={account && empty}
           />
-        )}
-        {tab === 'stores' && (
+        </Modal>
+      )}
+      {dialog?.kind === 'stores' && (
+        <Modal label="매장 관리" onClose={close}>
           <StoresView
             onOpen={(id) => {
               setStoreId(id)
-              setTab('forecast')
+              close()
             }}
             onUpload={openUpload}
           />
-        )}
-      </main>
+        </Modal>
+      )}
     </div>
   )
 }

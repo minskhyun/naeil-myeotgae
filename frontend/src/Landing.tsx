@@ -2,21 +2,15 @@
 //   ① 내일 준비표  ② 어떤 주변 정보를 썼나  ③ 얼마나 맞나
 // 예시 매장 = 서버가 demo로 표시한 매장 (가상 매장, 공개 데이터). 로그인하면 이 화면 대신 Workspace.tsx가 나온다.
 import { useQuery } from '@tanstack/react-query'
-import { useState, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { api } from './api'
 import { AccountBox, GoogleButton } from './Auth'
 import { BacktestView, Decisions } from './BacktestView'
 import { ForecastView } from './ForecastView'
 import { SourcesView } from './SourcesView'
 
-const FIRST_EXAMPLE = 'sinchon-a' // 처음 보여 줄 예시 매장 (주변 정보와 주의 안내가 다 있는 가상 매장). 없으면 목록의 첫 매장
+const FIRST_EXAMPLE = 'sinchon-a' // 보여 줄 예시 매장 (주변 정보와 주의 안내가 다 있는 가상 매장). 없으면 목록의 첫 매장
 const MENUS_SHOWN = 8 // 예시 준비표에 처음 보여 줄 메뉴 수
-const PARTS = [
-  { id: 'forecast', label: '내일 준비표' },
-  { id: 'sources', label: '주변 정보' },
-  { id: 'backtest', label: '얼마나 맞나' },
-]
-
 // 예시 한 부분: 번호 · 무엇을 보여 주는지 한 줄 · 실제 화면
 function Part({ id, n, title, lead, children }: { id: string; n: number; title: string; lead: string; children: ReactNode }) {
   return (
@@ -33,8 +27,8 @@ function Part({ id, n, title, lead, children }: { id: string; n: number; title: 
 export function Landing({ clientId }: { clientId: string | null }) {
   const stores = useQuery({ queryKey: ['stores'], queryFn: api.stores })
   const examples = stores.data?.filter((s) => s.demo) ?? []
-  // 주소로 예시 매장을 고를 수 있다: ?store=fr-bakery (시연 링크용)
-  const [picked, setPicked] = useState(new URLSearchParams(window.location.search).get('store'))
+  // 화면에는 가상 매장 하나만 보여 준다. 주소에 ?store=fr-bakery 를 붙이면 다른 예시 매장(공개 실데이터)을 볼 수 있다 (발표용)
+  const picked = new URLSearchParams(window.location.search).get('store')
   const store =
     examples.find((s) => s.store_id === picked) ?? examples.find((s) => s.store_id === FIRST_EXAMPLE) ?? examples[0]
 
@@ -42,16 +36,7 @@ export function Landing({ clientId }: { clientId: string | null }) {
     <div className="min-h-screen">
       <header className="border-b border-ink/80 bg-sheet">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-8 gap-y-3 px-5 py-4">
-          <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2">
-            <h1 className="text-xl font-extrabold tracking-tight">내일몇개</h1>
-            <nav className="flex gap-5 text-[15px] text-muted" aria-label="이 화면의 차례">
-              {PARTS.map((p) => (
-                <a key={p.id} href={`#${p.id}`} className="hover:text-ink">
-                  {p.label}
-                </a>
-              ))}
-            </nav>
-          </div>
+          <h1 className="text-xl font-extrabold tracking-tight">내일몇개</h1>
           {clientId && <AccountBox clientId={clientId} />}
         </div>
       </header>
@@ -76,25 +61,7 @@ export function Landing({ clientId }: { clientId: string | null }) {
 
         {store && (
           <>
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-              <span className="text-sm text-muted">아래는 예시 매장의 실제 화면입니다.</span>
-              {examples.length > 1 && (
-                <div className="flex border border-ink/80" role="group" aria-label="예시 매장">
-                  {examples.map((s, i) => (
-                    <button
-                      key={s.store_id}
-                      onClick={() => setPicked(s.store_id)}
-                      aria-pressed={s.store_id === store.store_id}
-                      className={`px-3.5 py-1.5 text-sm ${i > 0 ? 'border-l border-ink/80' : ''} ${
-                        s.store_id === store.store_id ? 'bg-ink font-semibold text-white' : 'bg-sheet hover:bg-paper'
-                      }`}
-                    >
-                      {s.name}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+            <p className="text-sm text-muted">아래는 가상으로 만든 예시 매장의 화면입니다.</p>
 
             <Part id="forecast" n={1} title="내일 메뉴별로 몇 개 준비할지"
               lead="메뉴마다 내일 예상 판매량과 예상 범위, 준비 권장량을 보여 주고, 날씨나 행사 때문에 평소와 달라진 이유를 함께 적습니다.">
@@ -126,7 +93,7 @@ export function Landing({ clientId }: { clientId: string | null }) {
           </section>
         ) : (
           <p className="border-t border-rule pt-4 text-xs text-faint">
-            시연용 화면입니다. 가상 매장과 공개 데이터(프랑스 빵집)로 미리 계산한 결과만 보여 주며, 파일 올리기와 설정 변경은 꺼져 있습니다.
+            시연용 화면입니다. 가상 매장으로 미리 계산한 결과만 보여 주며, 파일 올리기와 설정 변경은 꺼져 있습니다.
           </p>
         )}
       </main>

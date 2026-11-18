@@ -1,4 +1,4 @@
-// '내 매장' 화면 (로그인한 사람만): 내가 만든 매장을 보고, 이름을 바꾸고, 판매 기록을 다시 올리고, 지운다.
+// '매장 관리' 창 (로그인한 사람만, Workspace.tsx가 Modal 안에 띄운다): 내가 만든 매장을 보고, 이름을 바꾸고, 판매 기록을 다시 올리고, 지운다.
 // 서버 쪽은 backend/app/main.py의 /api/my/stores, 권한 규칙은 backend/app/auth.py.
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
@@ -44,10 +44,10 @@ export function StoresView({ onOpen, onUpload }: {
 
   return (
     <div className="max-w-4xl">
-      <header className="flex flex-wrap items-end justify-between gap-4 pb-6">
+      <header className="flex flex-wrap items-end justify-between gap-4 pr-8 pb-6">
         <div>
-          <p className="text-sm text-muted">내 매장</p>
-          <h2 className="mt-0.5 text-3xl font-bold tracking-tight">내 매장 관리</h2>
+          <p className="text-sm text-muted">매장 관리</p>
+          <h2 className="mt-0.5 text-3xl font-bold tracking-tight">내 매장</h2>
           <p className="mt-2 text-muted">여기 있는 매장과 그 자료(올린 판매 기록, 결과)는 로그인한 본인만 볼 수 있습니다.</p>
         </div>
         <button onClick={() => onUpload(null)} className="bg-accent px-4 py-2 font-semibold text-white hover:bg-accent/90">

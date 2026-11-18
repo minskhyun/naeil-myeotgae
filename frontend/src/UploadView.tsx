@@ -1,8 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type ReactNode } from 'react'
 import { useDropzone } from 'react-dropzone'
-import { api } from './api'
-import { useJob } from './useJob'
+import { api, type Job } from './api'
 
 const POS_TYPES = {
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
@@ -64,13 +63,16 @@ function PosFile({ file, onPick }: { file?: File; onPick: (f: File) => void }) {
   )
 }
 
-// 판매 기록을 올려 준비표를 만드는 화면. 세 가지 경우가 있다.
+// 판매 기록을 올려 준비표를 만드는 창 (Workspace.tsx가 Modal 안에 띄운다). 세 가지 경우가 있다.
 //   계정 방식 + 새 매장   : '매장 추가' — 매장 이름, 위치, 닫는 시간, 판매 기록 파일 (매장 ID는 서버가 지어 준다)
-//   계정 방식 + 있는 매장 : 그 매장의 판매 기록 다시 올리기 ('내 매장'에서 누르고 온 경우, initialTarget)
+//   계정 방식 + 있는 매장 : 그 매장의 판매 기록 다시 올리기 ('매장 관리'에서 누르고 온 경우, initialTarget)
 //   로그인을 안 쓰는 서버 : 매장 ID를 직접 적는다 (혼자 쓰는 노트북용, 가상 매장 시연 단추도 여기만)
 // first: 아직 매장이 하나도 없는 사람에게 처음 보여 주는 경우 (환영 문구)
-export function UploadView({ onDone, account = false, initialTarget = null, first = false }: {
-  onDone: (storeId: string) => void
+// job·onStarted: 실행 작업은 Workspace가 지켜본다 → 이 창을 닫아도 계산은 이어지고, 다시 열면 진행 상황이 보인다
+export function UploadView({ job, onStarted, onClose, account = false, initialTarget = null, first = false }: {
+  job?: Job
+  onStarted: (jobId: string) => void
+  onClose: () => void
   account?: boolean
   initialTarget?: string | null
   first?: boolean
@@ -88,16 +90,14 @@ export function UploadView({ onDone, account = false, initialTarget = null, firs
   const closeTime = typedClose ?? chosen?.close_time ?? '21:00'
   const address = typedAddress ?? chosen?.address ?? ''
   const [pos, setPos] = useState<File>()
-  const [jobId, setJobId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const job = useJob(jobId, onDone)
   const running = job?.status === 'running'
 
-  // 실행 요청을 보내고, 돌려받은 작업 번호로 진행 상황을 지켜본다
+  // 실행 요청을 보내고, 돌려받은 작업 번호를 Workspace에 넘겨 진행 상황을 지켜보게 한다
   const start = async (request: () => Promise<{ job_id: string }>) => {
     setError(null)
     try {
-      setJobId((await request()).job_id)
+      onStarted((await request()).job_id)
     } catch (e) {
       setError((e as Error).message)
     }
@@ -139,7 +139,7 @@ export function UploadView({ onDone, account = false, initialTarget = null, firs
         <div className="grid gap-4 sm:grid-cols-2">
           {isNew && (
             <Field wide label="매장 이름" value={name} onChange={setName} placeholder="우리 빵집 성수점"
-              hint="화면에 보이는 이름입니다. '내 매장'에서 언제든 바꿀 수 있습니다" />
+              hint="화면에 보이는 이름입니다. '매장 관리'에서 언제든 바꿀 수 있습니다" />
           )}
           <Field wide label="매장 위치 (주소)" value={address} onChange={setAddress} placeholder="서울 성동구 서울숲2길 12-7"
             hint="이 위치의 날씨와 근처 행사를 찾습니다. 비워 두면 판매 기록만으로 예측합니다" />
@@ -177,13 +177,20 @@ export function UploadView({ onDone, account = false, initialTarget = null, firs
           <div className="mt-5 border border-rule bg-sheet">
             <p className="border-b border-rule px-4 py-2 text-sm font-semibold">
               {job.status === 'running' && '실행 중…'}
-              {job.status === 'done' && <span className="text-accent">완료 — '내일 준비표'에서 결과를 보세요</span>}
+              {job.status === 'done' && <span className="text-accent">완료 — 준비표가 만들어졌습니다</span>}
               {job.status === 'error' && <span className="text-up">실패</span>}
             </p>
             <pre className="overflow-x-auto px-4 py-3 font-mono text-xs leading-relaxed text-muted">
               {job.log.join('\n') || '시작하는 중…'}
               {job.status === 'error' && job.error && `\n\n${job.error}`}
             </pre>
+            {job.status === 'done' && (
+              <p className="border-t border-rule px-4 py-3">
+                <button onClick={onClose} className="bg-accent px-4 py-2 text-sm font-semibold text-white hover:bg-accent/90">
+                  결과 보기
+                </button>
+              </p>
+            )}
           </div>
         )}
       </Step>

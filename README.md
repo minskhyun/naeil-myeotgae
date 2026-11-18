@@ -100,7 +100,7 @@ npm run dev
 
 ### 3. 실제 매장 데이터
 
-웹 화면의 '데이터 올리기'에서 매장 주소와 POS 파일(토스·OKPOS 엑셀 또는 CSV)을 올리거나, 명령줄에서 실행합니다.
+웹 화면의 '데이터 올리기'(로그인을 켰으면 '매장 추가')에서 매장 주소와 POS 파일(토스·OKPOS 엑셀 또는 CSV)을 올리거나, 명령줄에서 실행합니다.
 
 ```bash
 python run.py --store seongsu-a --pos data/raw/pos.xlsx --address "서울 성동구 서울숲2길 12-7"
@@ -153,9 +153,9 @@ ADMIN_EMAILS=관리자 구글 이메일 (여러 명이면 쉼표로)      # 선�
 
 화면은 로그인 여부에 따라 둘로 나뉩니다 (`frontend/src/App.tsx`가 고름).
 
-- **로그인 전 (`Landing.tsx`)**: 예시 매장으로 제품을 한 쪽에 차례로 보여 줍니다. ① 내일 준비표 ② 어떤 주변 정보를 썼나 ③ 얼마나 맞나. 공개 시연 사이트(`DEMO_MODE=1`)도 이 화면입니다.
-- **로그인 후 (`Workspace.tsx`)**: 예시 매장은 사라지고 내 매장만 보입니다. 탭은 내일 준비표 · 얼마나 맞나 · 주변 정보 · 매장 추가 · 내 매장입니다. '매장 추가'에서 매장 이름, 위치, 닫는 시간을 적고 판매 기록 파일을 올리면 됩니다(매장 ID는 서버가 지어 줌). '내 매장'에서 이름을 바꾸고, 판매 기록을 다시 올리고, 매장을 지울 수 있습니다. 지우면 그 매장의 결과 폴더와 올린 POS 파일이 모두 삭제됩니다.
-- 로그인을 켜지 않은 서버는 처음부터 작업 화면이고 모든 매장이 보입니다(탭 이름은 '데이터 올리기', 매장 ID를 직접 적음).
+- **로그인 전 (`Landing.tsx`)**: 가상 매장을 예시로 제품을 한 쪽에 차례로 보여 줍니다. ① 내일 준비표 ② 어떤 주변 정보를 썼나 ③ 얼마나 맞나. 공개 시연 사이트(`DEMO_MODE=1`)도 이 화면입니다. 주소에 `?store=fr-bakery`를 붙이면 프랑스 빵집(공개 실데이터) 결과로 바뀝니다.
+- **로그인 후 (`Workspace.tsx`)**: 예시 매장은 사라지고 내 매장만 보입니다. 탭 없이 고른 매장의 준비표 → 주변 정보 → 얼마나 맞나가 한 쪽에 이어집니다. 위쪽의 '매장 추가'를 누르면 창이 떠서 매장 이름, 위치, 닫는 시간을 적고 판매 기록 파일을 올립니다(매장 ID는 서버가 지어 줌). '매장 관리' 창에서 이름을 바꾸고, 판매 기록을 다시 올리고, 매장을 지울 수 있습니다. 지우면 그 매장의 결과 폴더와 올린 POS 파일이 모두 삭제됩니다.
+- 로그인을 켜지 않은 서버는 처음부터 작업 화면이고 모든 매장이 보입니다(단추 이름은 '데이터 올리기', 매장 ID를 직접 적음).
 
 - 비밀번호는 받지 않습니다. 구글에서 받는 것은 이름·이메일·프로필 사진 주소뿐이고, `data/app.db`(SQLite, 저장소에 올리지 않음)에 저장합니다.
 - 로그인 상태는 30일 유지되는 쿠키입니다(자바스크립트가 읽지 못하는 HttpOnly, https에서는 Secure). 서버에는 세션 번호의 해시만 저장합니다.
@@ -239,6 +239,7 @@ cd frontend && npm run build && npm run lint
 | LLM 모델·제공자 바꾸기 | `.env`의 `LLM_MODEL`·`LLM_MODEL_LIGHT`, `ml/llm.py`의 `PROVIDERS` |
 | 로그인·권한 규칙 바꾸기 | `backend/app/auth.py`의 `can_read`·`can_write`·`check_write` (화면은 `frontend/src/Auth.tsx`) |
 | 내 매장 관리 바꾸기 | `backend/app/main.py`의 `/api/my/stores`, `frontend/src/StoresView.tsx` (한 사람당 매장 수는 `auth.MAX_STORES`) |
+| 로그인 후 화면 배치·창 바꾸기 | `frontend/src/Workspace.tsx` (창 틀은 `Modal.tsx`, 매장 추가 창은 `UploadView.tsx`) |
 | 로그인 전 첫 화면 바꾸기 | `frontend/src/Landing.tsx` (처음 보여 줄 예시 매장 `FIRST_EXAMPLE`, 메뉴 수 `MENUS_SHOWN`) |
 
 ## 공공 데이터 수집기 (backend/collectors)
@@ -277,7 +278,7 @@ python -m collectors.run_all --refresh-events # 서울시 행사 목록 새로 �
 - 지금은 수집할 수 없지만 중요해 보이는 정보원(다른 대학, 경기장 일정 등)은 `candidates`에 남겨 다음 수집기 후보로 씁니다.
 - LLM 호출이 실패하면 거리 규칙(2km 안 캠퍼스, 반경 1000m)으로 대신 정합니다. `python -m collectors.agent --rule`로 직접 쓸 수도 있습니다.
 
-결과는 `{store_id}_sources.json`에 근거, 이유, 검증 메모와 함께 저장되고, 웹 화면의 '주변 정보' 탭에서 볼 수 있습니다.
+결과는 `{store_id}_sources.json`에 근거, 이유, 검증 메모와 함께 저장되고, 웹 화면의 '주변 정보'에서 볼 수 있습니다.
 
 학사일정 원문은 `backend/data/raw/academic/{학교}_{학기}.txt`에 저장되고, 파일이 있으면 다시 내려받지 않습니다. 자동으로 못 가져오는 학기는 페이지를 복사해 같은 이름으로 저장하고 `collectors/academic_sources.json`에 학기와 날짜 범위를 추가하면 됩니다.
 

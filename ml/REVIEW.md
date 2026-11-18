@@ -239,6 +239,13 @@
   - 기존 화면 세 개(`ForecastView`·`SourcesView`·`BacktestView`)는 그대로 두고 첫 화면에서 다시 쓴다(`limit`, `brief`, `hideDecisions`만 추가) → 예시와 실제 화면이 같은 코드.
   - 공개 시연 사이트(`DEMO_MODE=1`)도 이제 탭 대신 `Landing.tsx`가 나온다. 주소의 `?store=fr-bakery`는 그대로 되고, `?tab=`은 첫 화면에서는 쓰이지 않는다(대신 `#backtest` 같은 위치 링크).
 
+- 11/18 **탭을 없애고 매장 추가를 창으로** (사용자 요청: "탭은 디자인에 보기 안 좋다, 매장 추가는 팝업으로, 예시는 가상 데이터만")
+  - `Workspace.tsx`: 탭 줄을 없앴다. 고른 매장의 준비표 → 주변 정보 → 얼마나 맞나가 한 쪽에 이어지고, 위쪽에는 매장 고르기 · '매장 추가' · '매장 관리' · 계정만 있다.
+  - '매장 추가'와 '매장 관리'는 `Modal.tsx`(바깥·Esc·✕로 닫힘) 안에 `UploadView`·`StoresView`를 띄운다. 준비표를 만드는 작업은 `Workspace`가 지켜봐서(`useJob`) 창을 닫아도 계산이 이어지고, 닫혀 있는 동안은 위에 '준비표를 만드는 중… 진행 상황 보기' 줄이 뜬다. 끝나면 그 매장으로 넘어간다.
+  - `Landing.tsx`: 위쪽 차례 링크와 예시 매장 바꾸기 단추를 없앴다. 예시는 가상 매장 하나(`FIRST_EXAMPLE`). 프랑스 빵집 결과는 주소에 `?store=fr-bakery`를 붙일 때만 보인다.
+  - 주소로 창을 열 수 있다: `?open=add`(매장 추가), `?open=stores`(매장 관리). 화면 확인용 캡처에도 이걸 썼다.
+  - 위 '화면을 로그인 전·후로 나눔' 항목의 탭 설명(매장 추가·내 매장 탭)은 이 항목으로 바뀌었다.
+
 ## F. 코드 지도 (공부 순서대로)
 
 읽는 순서: `contracts/schemas.py`(주고받는 형식) → `run.py`(전체 흐름) → `ml/`(아래 표 순서) → `agent/collect.py`(주변 정보) → `backend/app/main.py` → `frontend/src/`
