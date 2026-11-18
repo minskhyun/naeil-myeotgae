@@ -88,8 +88,11 @@ export type SourceReport = {
   notes: string[]
 }
 
-// 매장 목록의 한 줄 (GET /api/stores)
-export type StoreInfo = { store_id: string; name: string; prep_mode: string }
+// 매장 목록의 한 줄 (GET /api/stores). can_edit: 내가 고칠 수 있는 매장인지 (시연 매장·시연 모드는 false)
+export type StoreInfo = { store_id: string; name: string; prep_mode: string; can_edit: boolean }
+
+// 로그인한 사람 (GET /api/auth/me). 서버 규칙은 backend/app/auth.py
+export type User = { email: string; name: string; picture: string | null; is_admin: boolean }
 
 // 실행 작업 (예측 돌리기). 화면은 useJob.ts로 상태를 물어본다
 export type Job = {
@@ -112,7 +115,16 @@ async function call<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  config: () => call<{ demo_mode: boolean }>('/config'),
+  // google_client_id가 있으면 서버가 로그인을 쓴다 → 구글 로그인 버튼을 보여 준다
+  config: () => call<{ demo_mode: boolean; google_client_id: string | null }>('/config'),
+  me: () => call<User | null>('/auth/me'),
+  loginGoogle: (credential: string) =>
+    call<User>('/auth/google', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ credential }),
+    }),
+  logout: () => call<{ ok: boolean }>('/auth/logout', { method: 'POST' }),
   stores: () => call<StoreInfo[]>('/stores'),
   forecast: (id: string) => call<Forecast>(`/stores/${id}/forecast`),
   backtest: (id: string) => call<Backtest>(`/stores/${id}/backtest`),

@@ -215,6 +215,14 @@
   - 적용(11/18): `ml/llm.py`에 `LLM_MODEL_LIGHT`(기본 claude-haiku-5-5)와 `ask(..., light=True)`를 추가하고 `agent/events.py`만 light로 부른다. 행사 추출 프롬프트에 "글에 주소가 있으면 주소까지 함께 적습니다"를 넣었다. 모델이 바뀌어 저장 이름도 바뀌므로 예전에 Opus로 뽑아 둔 행사 글 응답은 다시 쓰이지 않는다(다음 수집 때 Haiku로 다시 뽑음). 바꾼 코드로 같은 글 64개를 다시 뽑으니 매장 1km 안 행사 36개: Opus의 35개를 모두 포함하고, AK플라자 홍대 팝업 1건을 더 찾았다.
   - 한계: 표본이 작고(글 64개 1회, 시나리오 16개), 행사 추출은 사람이 만든 정답 없이 Opus 결과를 기준으로 차이만 읽어 판정했다.
 
+- 11/18 **구글 로그인** (브랜치 `feat/google-login`, 서비스 직전 단계의 첫 조각)
+  - 방식: 화면의 구글 버튼이 ID 토큰을 받아 서버로 보내고, 서버가 구글 공개 키로 검증한 뒤(우리 앱용인지·만료·이메일 인증) 세션 쿠키를 준다. 비밀번호·클라이언트 보안 비밀이 없어 `.env`에는 `GOOGLE_CLIENT_ID` 하나만 있으면 된다.
+  - 코드: `backend/app/auth.py`(검증, 사용자·세션·매장 주인을 SQLite `data/app.db`에 저장, 권한 함수), `backend/app/main.py`(`/api/auth/google`·`me`·`logout`, 각 API에 권한 확인), `frontend/src/Auth.tsx`(구글 버튼, 내 계정 칸), `frontend/src/useMe.ts`.
+  - 규칙: 시연 매장은 누구나 보기만, 내 매장은 나만 보고 고침, 새 매장 ID로 처음 올린 사람이 주인, 관리자(`ADMIN_EMAILS`)는 전부. 남의 매장은 '없는 매장'과 똑같이 404로 답한다.
+  - `GOOGLE_CLIENT_ID`가 없으면 로그인이 꺼지고 예전과 똑같이 동작한다(노트북 시연·기존 테스트 그대로). 시연 모드는 보기 전용이라 로그인 버튼이 없다.
+  - 확인: `tests/test_auth.py` 7개(구글 서버 대신 가짜 검증), 로그인 전·후 화면을 브라우저로 캡처해 확인. **실제 구글 계정으로 로그인하는 것은 아직 못 해 봤다**(클라이언트 ID를 만들어야 함).
+  - 서비스까지 남은 것: 회원 탈퇴·내 데이터 삭제, 개인정보 처리방침·이용약관 화면, 지워지지 않는 저장소(지금은 서버 디스크의 SQLite와 폴더), 매장 ID를 사람이 정하는 방식(겹치면 거절) 대신 자동 발급, 요청 횟수 제한, 실행 중 작업 기록을 서버 재시작 뒤에도 유지.
+
 ## F. 코드 지도 (공부 순서대로)
 
 읽는 순서: `contracts/schemas.py`(주고받는 형식) → `run.py`(전체 흐름) → `ml/`(아래 표 순서) → `agent/collect.py`(주변 정보) → `backend/app/main.py` → `frontend/src/`
@@ -242,6 +250,7 @@
 | `agent/geocode.py` | 주소·장소 → 좌표 | 카카오 → OpenStreetMap, 결과 저장(못 찾은 것도) |
 | `backend/collectors/` | 공공 데이터 수집기 (새얼) | 실행 순서(`run_all.py`), 정보원 선택 에이전트(`agent.py`)의 검증 규칙 |
 | `backend/app/main.py` | 웹 API | `run.py`를 별도 프로세스로, 작업 상태 폴링, 시연 모드(보기 전용) |
+| `backend/app/auth.py` | 구글 로그인, 매장 접근 권한 | ID 토큰 검증, 세션 쿠키(HttpOnly), SQLite, 주인·관리자 규칙 |
 
 **직접 검증 (파일마다 손으로 하나씩)**
 먼저 `run.py --store sinchon-a --demo`를 실행해 `data/artifacts/sinchon-a/`에 결과를 만든 뒤 아래를 확인한다.

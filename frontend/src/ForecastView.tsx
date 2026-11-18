@@ -81,7 +81,7 @@ export function ForecastView({ storeId, prepMode, readOnly = false }: { storeId:
         <div>
           <p className="mb-1.5 text-sm text-muted">
             준비 기준 {changing && <span className="text-accent">· 다시 계산 중</span>}
-            {readOnly && <span className="text-faint"> · 시연용 화면에서는 바꿀 수 없음</span>}
+            {readOnly && <span className="text-faint"> · 보기 전용 매장이라 바꿀 수 없음</span>}
           </p>
           <div className="flex border border-ink/80" role="group" aria-label="준비 기준">
             {PREP_MODES.map((m, i) => (

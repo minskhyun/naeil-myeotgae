@@ -5,8 +5,8 @@
 
 조회
   GET  /api/health                         살아 있는지
-  GET  /api/config                         시연 모드인지
-  GET  /api/stores                         결과가 있는 매장 목록
+  GET  /api/config                         시연 모드인지, 로그인을 쓰는지
+  GET  /api/stores                         내가 볼 수 있는 매장 목록
   GET  /api/stores/{store_id}/forecast     내일 예측 (contracts.Forecast)
   GET  /api/stores/{store_id}/backtest     모델 비교·신호 채택 (contracts.BacktestResult)
   GET  /api/stores/{store_id}/sources      주변 정보를 어디서 왜 무엇을 모았는지 (contracts.SourceReport)
@@ -15,6 +15,11 @@
   POST /api/stores/{store_id}/demo         가상 데이터로 전체 실행 (시연용)
   POST /api/stores/{store_id}/settings     준비 방식 바꾸기 → predict 단계만 다시
   GET  /api/jobs/{job_id}                  작업 상태 (running / done / error) + 실행 기록
+로그인 (구글, .env에 GOOGLE_CLIENT_ID가 있을 때만 켜진다 → backend/app/auth.py)
+  POST /api/auth/google                    구글이 준 토큰을 확인하고 로그인 쿠키를 준다
+  GET  /api/auth/me                        지금 로그인한 사람 (없으면 null)
+  POST /api/auth/logout                    로그아웃
+  로그인이 켜지면: 시연 매장은 누구나 보고, 내 매장은 나만 보고 고친다. 파일 올리기는 로그인해야 한다.
 
 예측 계산은 run.py를 '별도 프로세스'로 실행한다. 서버가 멈추지 않고, 명령줄에서 돌린 것과 결과가 똑같다.
 → 예측 로직을 고칠 때 이 파일은 건드릴 필요가 없다.
@@ -32,13 +37,17 @@ import threading
 import uuid
 from pathlib import Path
 
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, Response, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
 
+from backend.app import auth
 from contracts.schemas import BacktestResult, Forecast, SourceReport, StoreConfig
 from ml import paths
 from ml.predict import PREP_MODES
+
+Me = Depends(auth.current_user)     # 요청을 보낸 사람 (로그인 안 했으면 None)
 
 DEMO_MODE = os.environ.get("DEMO_MODE") == "1"   # 보기 전용 (클라우드 공개용)
 # 결과 폴더: 시연 모드면 저장소에 든 시연 결과, 아니면 data/artifacts (테스트에서 바꿔 끼운다)
@@ -65,9 +74,9 @@ def _store_dir(store_id: str) -> Path:
     return ARTIFACTS / store_id
 
 
-def _read(store_id: str, name: str) -> str:
+def _read(store_id: str, name: str, user: auth.User | None) -> str:
     path = _store_dir(store_id) / name
-    if not path.exists():
+    if not path.exists() or not auth.can_read(user, store_id):       # 남의 매장은 '없는 매장'과 똑같이 답한다
         raise HTTPException(404, f"{store_id}의 {name}이(가) 없습니다. 먼저 예측을 실행하세요.")
     return path.read_text(encoding="utf-8")
 
@@ -84,40 +93,73 @@ def health():
 
 @app.get("/api/config")
 def config():
-    """화면이 처음에 물어본다: 시연 모드면 '데이터 올리기'와 준비 방식 바꾸기를 숨긴다."""
-    return {"demo_mode": DEMO_MODE}
+    """화면이 처음에 물어본다: 시연 모드면 '데이터 올리기'와 준비 방식 바꾸기를 숨긴다.
+    google_client_id가 있으면 화면이 구글 로그인 버튼을 보여 준다 (공개돼도 되는 값. 시연 모드는 보기 전용이라 로그인이 없다)."""
+    return {"demo_mode": DEMO_MODE, "google_client_id": None if DEMO_MODE else auth.CLIENT_ID}
 
 
 @app.get("/api/stores")
-def stores():
-    """내일 예측(forecast.json)이 있는 매장들."""
+def stores(user: auth.User | None = Me):
+    """내일 예측(forecast.json)이 있는 매장 중 내가 볼 수 있는 것. can_edit: 내가 고칠 수 있는지."""
     out = []
     for folder in sorted(p.parent for p in ARTIFACTS.glob("*/forecast.json")):
+        if not auth.can_read(user, folder.name):
+            continue
         store = StoreConfig.read(folder / "store.json") if (folder / "store.json").exists() \
             else StoreConfig(store_id=folder.name)
-        out.append(dict(store_id=folder.name, name=store.name or folder.name, prep_mode=store.prep_mode))
+        out.append(dict(store_id=folder.name, name=store.name or folder.name, prep_mode=store.prep_mode,
+                        can_edit=not DEMO_MODE and auth.can_write(user, folder.name)))
     return out
 
 
 @app.get("/api/stores/{store_id}/forecast", response_model=Forecast)
-def forecast(store_id: str):
-    return Forecast.model_validate_json(_read(store_id, "forecast.json"))
+def forecast(store_id: str, user: auth.User | None = Me):
+    return Forecast.model_validate_json(_read(store_id, "forecast.json", user))
 
 
 @app.get("/api/stores/{store_id}/backtest", response_model=BacktestResult)
-def backtest(store_id: str):
-    return BacktestResult.model_validate_json(_read(store_id, "backtest.json"))
+def backtest(store_id: str, user: auth.User | None = Me):
+    return BacktestResult.model_validate_json(_read(store_id, "backtest.json", user))
 
 
 @app.get("/api/stores/{store_id}/sources", response_model=SourceReport)
-def sources(store_id: str):
-    return SourceReport.model_validate_json(_read(store_id, "sources_report.json"))
+def sources(store_id: str, user: auth.User | None = Me):
+    return SourceReport.model_validate_json(_read(store_id, "sources_report.json", user))
+
+
+# ---------------------------------------------------------------- 로그인
+
+class GoogleLogin(BaseModel):
+    credential: str                    # 구글 로그인 버튼이 화면에 준 ID 토큰
+
+
+@app.post("/api/auth/google")
+def auth_google(body: GoogleLogin, request: Request, response: Response):
+    if not auth.CLIENT_ID:
+        raise HTTPException(404, "이 서버는 로그인을 쓰지 않습니다 (.env에 GOOGLE_CLIENT_ID가 없음).")
+    user, token = auth.login(body.credential)
+    https = request.headers.get("x-forwarded-proto", request.url.scheme) == "https"     # 클라우드는 앞단이 https를 받는다
+    response.set_cookie(auth.COOKIE, token, max_age=auth.SESSION_DAYS * 86400, httponly=True, samesite="lax", secure=https)
+    return user.public()
+
+
+@app.get("/api/auth/me")
+def auth_me(user: auth.User | None = Me):
+    return user.public() if user else None
+
+
+@app.post("/api/auth/logout")
+def auth_logout(request: Request, response: Response):
+    auth.logout(request.cookies.get(auth.COOKIE))
+    response.delete_cookie(auth.COOKIE)
+    return {"ok": True}
 
 
 # ---------------------------------------------------------------- 실행
 
 def _start(store_id: str, args: list[str]) -> dict:
-    """run.py를 별도 프로세스로 시작하고 작업 번호를 돌려준다. 실행 기록은 한 줄씩 JOBS에 쌓인다."""
+    """run.py를 별도 프로세스로 시작하고 작업 번호를 돌려준다. 실행 기록은 한 줄씩 JOBS에 쌓인다.
+    누가 해도 되는지는 부르는 쪽(아래 세 API)이 먼저 확인한다."""
     _read_only()
     with LOCK:
         if store_id in RUNNING:
@@ -152,9 +194,11 @@ def _start(store_id: str, args: list[str]) -> dict:
 @app.post("/api/stores/{store_id}/run", status_code=202)
 def run_store(store_id: str, pos: UploadFile = File(..., description="POS 엑셀·CSV (토스·OKPOS)"),
               close_time: str | None = Form(None, description="영업 종료 시각 HH:MM (처음 한 번만 쓰임)"),
-              address: str | None = Form(None, description="매장 주소 → 주변 정보 자동 수집")):
-    _store_dir(store_id)
+              address: str | None = Form(None, description="매장 주소 → 주변 정보 자동 수집"),
+              user: auth.User | None = Me):
+    folder = _store_dir(store_id)
     _read_only()
+    auth.check_write(user, store_id, exists=folder.exists(), create=True)     # 새 ID면 올린 사람의 매장이 된다
     suffix = Path(pos.filename or "").suffix.lower()
     if suffix not in POS_SUFFIXES:
         raise HTTPException(400, "POS 파일은 엑셀(.xlsx·.xls) 또는 .csv여야 합니다.")
@@ -170,8 +214,10 @@ def run_store(store_id: str, pos: UploadFile = File(..., description="POS 엑셀
 
 
 @app.post("/api/stores/{store_id}/demo", status_code=202)
-def run_demo(store_id: str = "sinchon-a"):
-    _store_dir(store_id)
+def run_demo(store_id: str = "sinchon-a", user: auth.User | None = Me):
+    folder = _store_dir(store_id)
+    _read_only()
+    auth.check_write(user, store_id, exists=folder.exists())
     args = ["--demo"]
     sample_collection = paths.SAMPLE / store_id / "collection.json"      # 시험용 가상 기사 (AI 주의 안내 시연)
     if sample_collection.exists():
@@ -180,8 +226,9 @@ def run_demo(store_id: str = "sinchon-a"):
 
 
 @app.post("/api/stores/{store_id}/settings", status_code=202)
-def settings(store_id: str, prep_mode: str = Form(...)):
+def settings(store_id: str, prep_mode: str = Form(...), user: auth.User | None = Me):
     _read_only()
+    auth.check_write(user, store_id, exists=_store_dir(store_id).exists())
     if prep_mode not in PREP_MODES:
         raise HTTPException(400, f"준비 방식은 {list(PREP_MODES)} 중 하나여야 합니다.")
     path = _store_dir(store_id) / "store.json"
@@ -194,8 +241,8 @@ def settings(store_id: str, prep_mode: str = Form(...)):
 
 
 @app.get("/api/jobs/{job_id}")
-def job(job_id: str):
-    if job_id not in JOBS:
+def job(job_id: str, user: auth.User | None = Me):
+    if job_id not in JOBS or not auth.can_read(user, JOBS[job_id]["store_id"]):
         raise HTTPException(404, "그런 작업이 없습니다 (서버를 다시 켜면 작업 기록은 사라집니다).")
     return JOBS[job_id]
 

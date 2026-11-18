@@ -62,7 +62,8 @@ function PosFile({ file, onPick }: { file?: File; onPick: (f: File) => void }) {
   )
 }
 
-export function UploadView({ onDone }: { onDone: (storeId: string) => void }) {
+// canDemo: '가상 매장 데이터로 시연'을 보여 줄지 (로그인을 쓰는 서버에서는 관리자만 시연 매장을 다시 계산할 수 있다)
+export function UploadView({ onDone, canDemo = true }: { onDone: (storeId: string) => void; canDemo?: boolean }) {
   const [storeId, setStoreId] = useState('seongsu-a')
   const [closeTime, setCloseTime] = useState('21:00')
   const [address, setAddress] = useState('')
@@ -114,11 +115,15 @@ export function UploadView({ onDone }: { onDone: (storeId: string) => void }) {
             className="bg-accent px-5 py-2.5 font-semibold text-white hover:bg-accent/90 disabled:cursor-not-allowed disabled:opacity-40">
             준비표 만들기
           </button>
-          <span className="text-sm text-muted">또는</span>
-          <button disabled={running} onClick={() => start(api.demo)}
-            className="text-sm underline underline-offset-4 hover:text-accent disabled:opacity-40">
-            가상 매장 데이터로 시연
-          </button>
+          {canDemo && (
+            <>
+              <span className="text-sm text-muted">또는</span>
+              <button disabled={running} onClick={() => start(api.demo)}
+                className="text-sm underline underline-offset-4 hover:text-accent disabled:opacity-40">
+                가상 매장 데이터로 시연
+              </button>
+            </>
+          )}
         </div>
         {error && <p className="mt-3 text-sm text-up">{error}</p>}
         {job && (

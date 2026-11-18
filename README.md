@@ -132,6 +132,29 @@ LLM_MODEL_LIGHT=claude-haiku-5-5   # 선택 (기본값): 행사 글 추출 (글�
 | `KAKAO_REST_KEY` | 주변 시설, 주소·장소 → 좌표 | 카카오 디벨로퍼스 (없으면 좌표는 OpenStreetMap으로 찾음) |
 | `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET` | 뉴스·블로그 검색, 검색어 트렌드 | NAVER API HUB (2026-07-31부터 신규 키는 여기서만 발급) |
 
+### 로그인 (선택)
+
+`.env`에 `GOOGLE_CLIENT_ID`를 넣으면 구글 로그인이 켜집니다. 넣지 않으면 로그인 없이 혼자 쓰는 방식(모든 매장을 보고 고침)으로 동작합니다.
+
+```
+GOOGLE_CLIENT_ID=구글 클라우드의 OAuth 클라이언트 ID (….apps.googleusercontent.com)
+ADMIN_EMAILS=관리자 구글 이메일 (여러 명이면 쉼표로)      # 선택
+```
+
+클라이언트 ID 만들기: [Google Cloud Console](https://console.cloud.google.com/) → API 및 서비스 → OAuth 동의 화면을 만든 뒤, 사용자 인증 정보 → 사용자 인증 정보 만들기 → OAuth 클라이언트 ID → 유형 '웹 애플리케이션'. **승인된 자바스크립트 원본**에 화면을 여는 주소를 모두 넣습니다: `http://localhost`, `http://localhost:5173`, `http://localhost:8000`, 배포 주소(`https://….onrender.com`). 리디렉션 URI와 클라이언트 보안 비밀은 쓰지 않습니다.
+
+로그인이 켜졌을 때의 규칙 (`backend/app/auth.py`):
+
+| 누가 | 볼 수 있는 매장 | 고칠 수 있는 매장 |
+|---|---|---|
+| 로그인 안 한 사람 | 시연 매장(`backend/demo_data`에 있는 ID) | 없음 |
+| 로그인한 사람 | 시연 매장 + 내 매장 | 내 매장. 아무도 안 쓰는 매장 ID로 처음 파일을 올리면 내 매장이 됨 |
+| 관리자 (`ADMIN_EMAILS`) | 모든 매장 (명령줄로 만든 주인 없는 매장 포함) | 모든 매장 |
+
+- 비밀번호는 받지 않습니다. 구글에서 받는 것은 이름·이메일·프로필 사진 주소뿐이고, `data/app.db`(SQLite, 저장소에 올리지 않음)에 저장합니다.
+- 로그인 상태는 30일 유지되는 쿠키입니다(자바스크립트가 읽지 못하는 HttpOnly, https에서는 Secure). 서버에는 세션 번호의 해시만 저장합니다.
+- 시연 모드(`DEMO_MODE=1`)는 보기 전용이라 로그인 버튼이 나오지 않습니다.
+
 ### 테스트
 
 ```bash
@@ -169,6 +192,7 @@ cd frontend && npm run build && npm run lint
 │   └── special_days.py     기념일
 ├── backend/
 │   ├── app/main.py         웹 API (FastAPI)
+│   ├── app/auth.py         구글 로그인, 매장 접근 권한 (SQLite)
 │   ├── collectors/         공공 데이터 수집기와 정보원 선택 에이전트
 │   ├── data/               수집기를 따로 실행한 예시 결과(신촌), 학사일정 원문
 │   └── demo_data/          공개 시연 사이트용 결과 (가상 매장, 공개 데이터)
@@ -207,6 +231,7 @@ cd frontend && npm run build && npm run lint
 | AI 주의 안내의 규칙 바꾸기 | `ml/alerts.py`의 `SYSTEM` |
 | 매장 설정 칸 추가 | `contracts/schemas.py`의 `StoreConfig` |
 | LLM 모델·제공자 바꾸기 | `.env`의 `LLM_MODEL`·`LLM_MODEL_LIGHT`, `ml/llm.py`의 `PROVIDERS` |
+| 로그인·권한 규칙 바꾸기 | `backend/app/auth.py`의 `can_read`·`can_write`·`check_write` (화면은 `frontend/src/Auth.tsx`) |
 
 ## 공공 데이터 수집기 (backend/collectors)
 
@@ -288,13 +313,14 @@ python -m collectors.run_all --refresh-events # 서울시 행사 목록 새로 �
 
 - **공개 시연 사이트:** `Dockerfile`이 화면을 빌드해 백엔드와 한 주소로 제공합니다. `DEMO_MODE=1`이면 보기 전용이고 `backend/demo_data/`의 결과(가상 매장, 공개 데이터)만 보여 줍니다. API 키가 필요 없습니다. Render는 `render.yaml`대로 만듭니다.
 - **전체 기능:** 위 '웹 화면'대로 로컬에서 실행합니다.
+- **로그인을 켠 채로 배포하려면:** `DEMO_MODE=0`, `GOOGLE_CLIENT_ID`와 API 키들을 환경 변수로 넣고, 구글 콘솔의 승인된 원본에 배포 주소를 추가합니다. `data/`(사용자 DB, 올린 파일, 결과)가 지워지지 않는 디스크에 있어야 합니다. Render 무료 요금제는 다시 배포할 때마다 디스크가 비워지므로 유료 디스크나 외부 DB가 필요합니다.
 
 ## 기술 스택
 
 | 영역 | 사용 기술 |
 |---|---|
 | 프론트엔드 | React, TypeScript, Vite, Tailwind CSS, TanStack Query |
-| 백엔드 | Python, FastAPI |
+| 백엔드 | Python, FastAPI, SQLite(사용자·로그인·매장 주인), 구글 로그인(Google Identity Services) |
 | 예측 | CatBoost (다중 분위 회귀), pandas |
 | LLM | Claude API (Anthropic SDK, 구조화 출력) |
 | 외부 데이터 | 기상청 ASOS·단기예보, 한국천문연구원 특일 정보, 서울시 문화행사 정보, 카카오 로컬, NAVER API HUB 검색·검색어 트렌드, OpenStreetMap |
