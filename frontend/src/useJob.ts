@@ -16,6 +16,7 @@ export function useJob(jobId: string | null, onDone?: (storeId: string) => void)
   useEffect(() => {
     if (status === 'done' && storeId) {
       qc.invalidateQueries({ queryKey: ['stores'] })
+      qc.invalidateQueries({ queryKey: ['myStores'] })
       qc.invalidateQueries({ queryKey: ['forecast', storeId] })
       qc.invalidateQueries({ queryKey: ['backtest', storeId] })
       qc.invalidateQueries({ queryKey: ['sources', storeId] })

@@ -94,6 +94,19 @@ export type StoreInfo = { store_id: string; name: string; prep_mode: string; can
 // 로그인한 사람 (GET /api/auth/me). 서버 규칙은 backend/app/auth.py
 export type User = { email: string; name: string; picture: string | null; is_admin: boolean }
 
+// '내 매장' 목록의 한 줄 (GET /api/my/stores). 아직 준비표가 없는 매장도 나온다
+export type MyStore = {
+  store_id: string
+  name: string
+  address: string | null
+  close_time: string
+  created_at: string | null
+  updated_at: string | null // 마지막으로 준비표를 만든 때
+  ready: boolean // 준비표가 있는지
+  running: boolean // 지금 계산 중인지
+  mine: boolean // 내가 만든 매장인지 (관리자는 남의 매장도 본다)
+}
+
 // 실행 작업 (예측 돌리기). 화면은 useJob.ts로 상태를 물어본다
 export type Job = {
   job_id: string
@@ -105,11 +118,14 @@ export type Job = {
 
 export const PREP_MODES = ['폐기 줄이기', '균형', '품절 줄이기'] as const
 
+const JSON_BODY = { 'Content-Type': 'application/json' }
+
 async function call<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`/api${path}`, init)
   if (!res.ok) {
     const body = await res.json().catch(() => null)
-    throw new Error(body?.detail ?? `요청 실패 (${res.status})`)
+    const detail = body?.detail
+    throw new Error(typeof detail === 'string' ? detail : `요청 실패 (${res.status})`)
   }
   return res.json()
 }
@@ -119,12 +135,15 @@ export const api = {
   config: () => call<{ demo_mode: boolean; google_client_id: string | null }>('/config'),
   me: () => call<User | null>('/auth/me'),
   loginGoogle: (credential: string) =>
-    call<User>('/auth/google', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ credential }),
-    }),
+    call<User>('/auth/google', { method: 'POST', headers: JSON_BODY, body: JSON.stringify({ credential }) }),
   logout: () => call<{ ok: boolean }>('/auth/logout', { method: 'POST' }),
+  // 내 매장 관리 (로그인한 사람만). 매장 ID는 서버가 지어 준다
+  myStores: () => call<MyStore[]>('/my/stores'),
+  createStore: (name: string, closeTime: string) =>
+    call<MyStore>('/my/stores', { method: 'POST', headers: JSON_BODY, body: JSON.stringify({ name, close_time: closeTime }) }),
+  renameStore: (id: string, name: string) =>
+    call<MyStore>(`/my/stores/${id}`, { method: 'PATCH', headers: JSON_BODY, body: JSON.stringify({ name }) }),
+  deleteStore: (id: string) => call<{ ok: boolean }>(`/my/stores/${id}`, { method: 'DELETE' }),
   stores: () => call<StoreInfo[]>('/stores'),
   forecast: (id: string) => call<Forecast>(`/stores/${id}/forecast`),
   backtest: (id: string) => call<Backtest>(`/stores/${id}/backtest`),

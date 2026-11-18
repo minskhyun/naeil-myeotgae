@@ -148,8 +148,10 @@ ADMIN_EMAILS=관리자 구글 이메일 (여러 명이면 쉼표로)      # 선�
 | 누가 | 볼 수 있는 매장 | 고칠 수 있는 매장 |
 |---|---|---|
 | 로그인 안 한 사람 | 시연 매장(`backend/demo_data`에 있는 ID) | 없음 |
-| 로그인한 사람 | 시연 매장 + 내 매장 | 내 매장. 아무도 안 쓰는 매장 ID로 처음 파일을 올리면 내 매장이 됨 |
+| 로그인한 사람 | 시연 매장 + 내 매장 | 내 매장 (한 사람당 10개까지) |
 | 관리자 (`ADMIN_EMAILS`) | 모든 매장 (명령줄로 만든 주인 없는 매장 포함) | 모든 매장 |
+
+로그인하면 '내 매장' 탭이 생깁니다. 거기서 매장을 새로 만들고(매장 ID는 서버가 지어 줌), 이름을 바꾸고, 판매 기록을 다시 올리고, 매장을 지울 수 있습니다. 지우면 그 매장의 결과 폴더와 올린 POS 파일이 모두 삭제됩니다. '데이터 올리기'에서는 매장 ID를 적는 대신 내 매장 중에서 고르거나 새 매장 이름을 적습니다.
 
 - 비밀번호는 받지 않습니다. 구글에서 받는 것은 이름·이메일·프로필 사진 주소뿐이고, `data/app.db`(SQLite, 저장소에 올리지 않음)에 저장합니다.
 - 로그인 상태는 30일 유지되는 쿠키입니다(자바스크립트가 읽지 못하는 HttpOnly, https에서는 Secure). 서버에는 세션 번호의 해시만 저장합니다.
@@ -232,6 +234,7 @@ cd frontend && npm run build && npm run lint
 | 매장 설정 칸 추가 | `contracts/schemas.py`의 `StoreConfig` |
 | LLM 모델·제공자 바꾸기 | `.env`의 `LLM_MODEL`·`LLM_MODEL_LIGHT`, `ml/llm.py`의 `PROVIDERS` |
 | 로그인·권한 규칙 바꾸기 | `backend/app/auth.py`의 `can_read`·`can_write`·`check_write` (화면은 `frontend/src/Auth.tsx`) |
+| 내 매장 관리 바꾸기 | `backend/app/main.py`의 `/api/my/stores`, `frontend/src/StoresView.tsx` (한 사람당 매장 수는 `auth.MAX_STORES`) |
 
 ## 공공 데이터 수집기 (backend/collectors)
 

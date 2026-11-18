@@ -5,6 +5,7 @@ import { AccountBox, GoogleButton } from './Auth'
 import { BacktestView } from './BacktestView'
 import { ForecastView } from './ForecastView'
 import { SourcesView } from './SourcesView'
+import { StoresView } from './StoresView'
 import { UploadView } from './UploadView'
 import { useMe } from './useMe'
 
@@ -13,6 +14,7 @@ const TABS = [
   { id: 'backtest', label: '얼마나 맞나' },
   { id: 'sources', label: '주변 정보' },
   { id: 'upload', label: '데이터 올리기' },
+  { id: 'stores', label: '내 매장' },
 ] as const
 type Tab = (typeof TABS)[number]['id']
 
@@ -24,7 +26,9 @@ export default function App() {
   // 서버가 로그인을 쓰면(구글 클라이언트 ID가 있으면) 로그인 버튼을 보여 주고, 파일 올리기는 로그인한 사람만
   const clientId = config?.google_client_id ?? null
   const me = useMe(!!clientId).data ?? null
-  const tabs = demo ? TABS.filter((t) => t.id !== 'upload') : TABS
+  // '내 매장'은 로그인한 사람에게만 보인다
+  const tabs = TABS.filter((t) => (t.id === 'upload' ? !demo : t.id === 'stores' ? !!me : true))
+  const [uploadTarget, setUploadTarget] = useState<string | null>(null) // '내 매장'에서 고른, 판매 기록을 올릴 매장
   // 주소로도 고를 수 있다: ?store=sinchon-a&tab=backtest (시연 링크용)
   const params = new URLSearchParams(window.location.search)
   const [picked, setStoreId] = useState<string | null>(params.get('store'))
@@ -35,7 +39,11 @@ export default function App() {
   // 고른 매장이 목록에 없으면(없는 매장, 로그아웃해서 안 보이게 된 매장) 첫 매장. 매장이 하나도 없으면 '데이터 올리기' 탭
   const listed = !stores.data || stores.data.some((s) => s.store_id === picked)
   const storeId = (picked && listed ? picked : stores.data?.[0]?.store_id) ?? null
-  const tab: Tab = demo && chosenTab === 'upload' ? 'forecast' : stores.data && !stores.data.length ? 'upload' : chosenTab
+  const tab: Tab = !tabs.some((t) => t.id === chosenTab)
+    ? 'forecast' // 지금은 볼 수 없는 탭 (시연 모드의 올리기, 로그아웃한 뒤의 내 매장)
+    : stores.data && !stores.data.length && chosenTab !== 'stores'
+      ? 'upload'
+      : chosenTab
   const store = stores.data?.find((s) => s.store_id === storeId)
 
   return (
@@ -104,9 +112,27 @@ export default function App() {
               <GoogleButton clientId={clientId} />
             </div>
           ) : (
-            <UploadView onDone={(id) => setStoreId(id)} canDemo={!clientId || !!me?.is_admin} />
+            <UploadView
+              key={uploadTarget ?? 'new'}
+              onDone={(id) => setStoreId(id)}
+              canDemo={!clientId || !!me?.is_admin}
+              account={!!clientId}
+              initialTarget={uploadTarget}
+            />
           ))}
-        {tab !== 'upload' && !storeId && !stores.isLoading && (
+        {tab === 'stores' && (
+          <StoresView
+            onOpen={(id) => {
+              setStoreId(id)
+              setTab('forecast')
+            }}
+            onUpload={(id) => {
+              setUploadTarget(id)
+              setTab('upload')
+            }}
+          />
+        )}
+        {tab !== 'upload' && tab !== 'stores' && !storeId && !stores.isLoading && (
           <p className="text-muted">아직 준비표가 없습니다. '데이터 올리기'에서 시작하세요.</p>
         )}
         {demo && (

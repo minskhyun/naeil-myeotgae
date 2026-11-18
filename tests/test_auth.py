@@ -149,3 +149,59 @@ def test_login_off_keeps_single_user_behavior(site, monkeypatch):
     assert {s["store_id"]: s["can_edit"] for s in solo.get("/api/stores").json()} == {"old-cafe": True, "sinchon-a": True}
     assert solo.post("/api/stores/new-cafe/run", files=POS).status_code == 202
     assert solo.post("/api/auth/google", json={"credential": "alice-token"}).status_code == 404
+
+
+# ---------------------------------------------------------------- 내 매장 관리 (/api/my/stores)
+
+def test_my_stores_create_rename_upload_delete(site):
+    alice, bob = _login("alice"), _login("bob")
+    assert alice.get("/api/my/stores").json() == []
+    made = alice.post("/api/my/stores", json={"name": " 앨리스 빵집 ", "close_time": "20:30"}).json()
+    sid = made["store_id"]
+    assert sid.startswith("s-") and made["name"] == "앨리스 빵집" and made["close_time"] == "20:30"
+    assert (made["ready"], made["running"], made["mine"], made["updated_at"]) == (False, False, True, None)
+    assert [s["store_id"] for s in alice.get("/api/stores").json()] == ["sinchon-a"]   # 준비표가 아직 없으면 매장 고르기에는 안 나옴
+
+    assert alice.post(f"/api/stores/{sid}/run", files=POS, data={"close_time": "19:00"}).status_code == 202
+    assert alice.get("/api/my/stores").json()[0]["close_time"] == "19:00"              # 다시 올리며 바꾼 종료 시각이 반영됨
+    assert alice.post(f"/api/stores/{sid}/run", files=POS, data={"close_time": "9시"}).status_code == 400
+    assert (site / "uploads" / sid / "pos.csv").exists()
+
+    assert alice.patch(f"/api/my/stores/{sid}", json={"name": "앨리스 베이커리"}).json()["name"] == "앨리스 베이커리"
+    assert alice.patch(f"/api/my/stores/{sid}", json={"name": ""}).status_code == 422
+
+    assert bob.get("/api/my/stores").json() == []                                      # 남의 매장은 안 보이고
+    assert bob.patch(f"/api/my/stores/{sid}", json={"name": "밥의 것"}).status_code == 404
+    assert bob.delete(f"/api/my/stores/{sid}").status_code == 404                      # 지울 수도 없다
+    assert (site / sid / "store.json").exists()
+
+    main.RUNNING.add(sid)
+    try:
+        assert alice.delete(f"/api/my/stores/{sid}").status_code == 409                # 계산 중에는 못 지운다
+    finally:
+        main.RUNNING.discard(sid)
+    assert alice.delete(f"/api/my/stores/{sid}").json() == {"ok": True}
+    assert not (site / sid).exists() and not (site / "uploads" / sid).exists()         # 결과와 올린 파일이 모두 사라짐
+    assert alice.get("/api/my/stores").json() == [] and auth.owner_of(sid) is None
+
+
+def test_my_stores_rules(site, monkeypatch):
+    guest, alice, boss = TestClient(main.app), _login("alice"), _login("boss")
+    assert guest.get("/api/my/stores").status_code == 401
+    assert guest.post("/api/my/stores", json={"name": "가게"}).status_code == 401
+    assert alice.delete("/api/my/stores/sinchon-a").status_code == 403                 # 시연 매장은 누구도 못 지운다
+    assert boss.delete("/api/my/stores/sinchon-a").status_code == 403
+    assert alice.delete("/api/my/stores/old-cafe").status_code == 404                  # 주인 없는 매장은 관리자만
+    assert alice.post("/api/my/stores", json={"name": "가게", "close_time": "25:00"}).status_code == 400
+
+    monkeypatch.setattr(auth, "MAX_STORES", 2)
+    for i in range(2):
+        assert alice.post("/api/my/stores", json={"name": f"가게 {i}"}).status_code == 201
+    assert alice.post("/api/my/stores", json={"name": "하나 더"}).status_code == 409    # 한 사람당 매장 수 제한
+
+    listed = {s["store_id"]: s["mine"] for s in boss.get("/api/my/stores").json()}     # 관리자는 남의 매장·주인 없는 매장도 본다
+    assert listed["old-cafe"] is False and len(listed) == 3 and "sinchon-a" not in listed
+    assert boss.delete("/api/my/stores/old-cafe").json() == {"ok": True} and not (site / "old-cafe").exists()
+
+    monkeypatch.setattr(auth, "CLIENT_ID", None)                                       # 로그인을 안 쓰는 서버에는 이 기능이 없다
+    assert guest.get("/api/my/stores").status_code == 404

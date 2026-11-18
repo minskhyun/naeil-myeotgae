@@ -20,6 +20,11 @@
   GET  /api/auth/me                        지금 로그인한 사람 (없으면 null)
   POST /api/auth/logout                    로그아웃
   로그인이 켜지면: 시연 매장은 누구나 보고, 내 매장은 나만 보고 고친다. 파일 올리기는 로그인해야 한다.
+내 매장 관리 (로그인한 사람만)
+  GET    /api/my/stores                    내 매장 목록 (아직 준비표가 없는 매장도)
+  POST   /api/my/stores                    새 매장 만들기 (이름, 영업 종료 시각) → 서버가 매장 ID를 지어 준다
+  PATCH  /api/my/stores/{store_id}         이름 바꾸기
+  DELETE /api/my/stores/{store_id}         매장과 그 자료(올린 파일, 결과)를 모두 지우기
 
 예측 계산은 run.py를 '별도 프로세스'로 실행한다. 서버가 멈추지 않고, 명령줄에서 돌린 것과 결과가 똑같다.
 → 예측 로직을 고칠 때 이 파일은 건드릴 필요가 없다.
@@ -29,8 +34,10 @@
   - 결과는 backend/demo_data/ (가상 매장·공개 데이터 결과만, 저장소에 들어 있음)
   - frontend/dist가 있으면 화면도 이 서버가 함께 보여 준다 → 주소 하나로 끝 (Dockerfile 참고)
 """
+import datetime as dt
 import os
 import re
+import shutil
 import subprocess
 import sys
 import threading
@@ -40,10 +47,10 @@ from pathlib import Path
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, Response, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from backend.app import auth
-from contracts.schemas import BacktestResult, Forecast, SourceReport, StoreConfig
+from contracts.schemas import DEFAULT_CLOSE_TIME, BacktestResult, Forecast, SourceReport, StoreConfig
 from ml import paths
 from ml.predict import PREP_MODES
 
@@ -56,6 +63,7 @@ WEB_DIST = paths.ROOT / "frontend" / "dist"      # npm run build 결과 (있으�
 UPLOADS = paths.RAW / "uploads"                  # 올린 파일 (실제 매장 자료 → 커밋 안 됨)
 STORE_ID = re.compile(r"^[a-z0-9][a-z0-9-]{0,40}$")   # 폴더 이름으로 쓰므로 안전한 글자만
 POS_SUFFIXES = (".xlsx", ".xls", ".xlsm", ".csv")
+CLOSE_TIME = r"^([01]\d|2[0-3]):[0-5]\d$"            # 영업 종료 시각 HH:MM
 
 app = FastAPI(title="내일몇개 API")
 app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
@@ -109,6 +117,8 @@ def stores(user: auth.User | None = Me):
             else StoreConfig(store_id=folder.name)
         out.append(dict(store_id=folder.name, name=store.name or folder.name, prep_mode=store.prep_mode,
                         can_edit=not DEMO_MODE and auth.can_write(user, folder.name)))
+    if auth.CLIENT_ID:                                   # 로그인을 쓰면 내 매장이 먼저, 시연 매장은 뒤에
+        out.sort(key=lambda s: s["store_id"] in auth.DEMO_STORES)
     return out
 
 
@@ -155,6 +165,94 @@ def auth_logout(request: Request, response: Response):
     return {"ok": True}
 
 
+# ---------------------------------------------------------------- 내 매장 관리
+
+class NewStore(BaseModel):
+    name: str = Field(min_length=1, max_length=40)
+    close_time: str = DEFAULT_CLOSE_TIME
+
+
+class StoreName(BaseModel):
+    name: str = Field(min_length=1, max_length=40)
+
+
+def _member(user: auth.User | None) -> auth.User:
+    """내 매장 관리는 로그인을 쓰는 서버에서, 로그인한 사람만."""
+    if not auth.CLIENT_ID:
+        raise HTTPException(404, "이 서버는 로그인을 쓰지 않습니다 (.env에 GOOGLE_CLIENT_ID가 없음).")
+    if user is None:
+        raise HTTPException(401, "로그인이 필요합니다.")
+    return user
+
+
+def _my_store(store_id: str, created_at: str | None, mine: bool) -> dict:
+    """내 매장 목록의 한 줄. 이름·주소·종료 시각은 store.json, 마지막 계산 시각은 forecast.json이 바뀐 때."""
+    folder = ARTIFACTS / store_id
+    store = StoreConfig.read(folder / "store.json") if (folder / "store.json").exists() else StoreConfig(store_id=store_id)
+    fc = folder / "forecast.json"
+    updated = dt.datetime.fromtimestamp(fc.stat().st_mtime).isoformat(timespec="seconds") if fc.exists() else None
+    return dict(store_id=store_id, name=store.name or store_id, address=store.address, close_time=store.close_time,
+                created_at=created_at, updated_at=updated, ready=fc.exists(), running=store_id in RUNNING, mine=mine)
+
+
+@app.get("/api/my/stores")
+def my_stores(user: auth.User | None = Me):
+    """내가 만든 매장 (새것부터). 관리자는 남의 매장과 주인 없는 매장(명령줄로 만든 것)도 뒤에 붙여 본다."""
+    user = _member(user)
+    mine = auth.my_stores(user)
+    out = [_my_store(s, created, True) for s, created in sorted(mine.items(), key=lambda x: x[1], reverse=True)]
+    if user.is_admin:
+        others = sorted(p.name for p in ARTIFACTS.iterdir()
+                        if p.is_dir() and p.name not in mine and p.name not in auth.DEMO_STORES and STORE_ID.match(p.name))
+        out += [_my_store(s, None, False) for s in others]
+    return out
+
+
+@app.post("/api/my/stores", status_code=201)
+def create_my_store(body: NewStore, user: auth.User | None = Me):
+    user = _member(user)
+    _read_only()
+    if not re.match(CLOSE_TIME, body.close_time):
+        raise HTTPException(400, "영업 종료 시각은 21:00처럼 적어 주세요.")
+    store_id = auth.create_store(user)
+    folder = ARTIFACTS / store_id
+    folder.mkdir(parents=True, exist_ok=True)
+    StoreConfig(store_id=store_id, name=body.name.strip(), close_time=body.close_time).write(folder / "store.json")
+    return _my_store(store_id, auth.my_stores(user)[store_id], True)
+
+
+@app.patch("/api/my/stores/{store_id}")
+def rename_my_store(store_id: str, body: StoreName, user: auth.User | None = Me):
+    user = _member(user)
+    _read_only()
+    path = _store_dir(store_id) / "store.json"
+    auth.check_write(user, store_id, exists=path.exists())
+    store = StoreConfig.read(path) if path.exists() else StoreConfig(store_id=store_id)
+    store.name = body.name.strip()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    store.write(path)
+    return _my_store(store_id, auth.my_stores(user).get(store_id), store_id in auth.my_stores(user))
+
+
+@app.delete("/api/my/stores/{store_id}")
+def delete_my_store(store_id: str, user: auth.User | None = Me):
+    """매장을 지운다: 결과 폴더(판매 기록 정리본, 주변 정보, 예측)와 올린 POS 파일, 주인 기록. 되돌릴 수 없다."""
+    user = _member(user)
+    _read_only()
+    folder = _store_dir(store_id)
+    if store_id in auth.DEMO_STORES:
+        raise HTTPException(403, "시연 매장은 지울 수 없습니다.")
+    auth.check_write(user, store_id, exists=folder.exists())             # 남의 매장이면 여기서 404
+    with LOCK:
+        if store_id in RUNNING:
+            raise HTTPException(409, "이 매장은 지금 계산 중입니다. 끝난 뒤 다시 시도해 주세요.")
+    for path in (folder, UPLOADS / store_id):
+        if path.exists():
+            shutil.rmtree(path)
+    auth.forget_store(store_id)
+    return {"ok": True}
+
+
 # ---------------------------------------------------------------- 실행
 
 def _start(store_id: str, args: list[str]) -> dict:
@@ -193,7 +291,7 @@ def _start(store_id: str, args: list[str]) -> dict:
 
 @app.post("/api/stores/{store_id}/run", status_code=202)
 def run_store(store_id: str, pos: UploadFile = File(..., description="POS 엑셀·CSV (토스·OKPOS)"),
-              close_time: str | None = Form(None, description="영업 종료 시각 HH:MM (처음 한 번만 쓰임)"),
+              close_time: str | None = Form(None, description="영업 종료 시각 HH:MM"),
               address: str | None = Form(None, description="매장 주소 → 주변 정보 자동 수집"),
               user: auth.User | None = Me):
     folder = _store_dir(store_id)
@@ -202,6 +300,13 @@ def run_store(store_id: str, pos: UploadFile = File(..., description="POS 엑셀
     suffix = Path(pos.filename or "").suffix.lower()
     if suffix not in POS_SUFFIXES:
         raise HTTPException(400, "POS 파일은 엑셀(.xlsx·.xls) 또는 .csv여야 합니다.")
+    if close_time and not re.match(CLOSE_TIME, close_time):
+        raise HTTPException(400, "영업 종료 시각은 21:00처럼 적어 주세요.")
+    if close_time and (folder / "store.json").exists():                # 이미 있는 매장: 종료 시각이 바뀌었으면 반영
+        store = StoreConfig.read(folder / "store.json")
+        if store.close_time != close_time:
+            store.close_time = close_time
+            store.write(folder / "store.json")
     saved = UPLOADS / store_id / f"pos{suffix}"
     saved.parent.mkdir(parents=True, exist_ok=True)
     saved.write_bytes(pos.file.read())

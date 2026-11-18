@@ -16,7 +16,8 @@
 권한 (로그인이 켜져 있을 때)
   - 시연 매장(backend/demo_data에 있는 ID): 누구나 본다. 다시 계산은 관리자만
   - 그 밖의 매장: 주인과 관리자만 보고 고친다
-  - 아무도 안 쓰는 ID로 처음 파일을 올리면 올린 사람이 주인이 된다
+  - 매장은 '내 매장'에서 만든다: 서버가 매장 ID를 지어 주고(create_store) 만든 사람이 주인이 된다
+    (API로 아무도 안 쓰는 ID에 직접 올려도 올린 사람이 주인이 된다)
   - 관리자: .env의 ADMIN_EMAILS (쉼표로 구분). 주인 없는 매장(명령줄로 만든 것)도 관리자가 본다
 로그인이 꺼져 있을 때 (.env에 GOOGLE_CLIENT_ID가 없음): 예전처럼 혼자 쓰는 노트북용. 모든 매장을 보고 고친다.
 """
@@ -39,6 +40,7 @@ DB_PATH = paths.ROOT / "data" / "app.db"
 DEMO_STORES = {p.name for p in (paths.ROOT / "backend" / "demo_data").iterdir() if p.is_dir()}   # 누구나 보는 매장
 COOKIE = "nm_session"
 SESSION_DAYS = 30                     # 로그인 유지 기간
+MAX_STORES = 10                       # 한 사람이 만들 수 있는 매장 수 (관리자는 제한 없음)
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS users (
@@ -168,6 +170,29 @@ def owner_of(store_id: str) -> int | None:
     with _db() as con:
         row = con.execute("SELECT owner_id FROM stores WHERE store_id = ?", (store_id,)).fetchone()
     return row["owner_id"] if row else None
+
+
+def my_stores(user: User) -> dict[str, str]:
+    """내가 주인인 매장: {매장 ID: 만든 시각}."""
+    with _db() as con:
+        rows = con.execute("SELECT store_id, created_at FROM stores WHERE owner_id = ?", (user.id,)).fetchall()
+    return {r["store_id"]: r["created_at"] for r in rows}
+
+
+def create_store(user: User) -> str:
+    """새 매장 ID를 지어 내 매장으로 등록한다 (예: s-9f3a1c2e). 이름·주소는 store.json에 둔다."""
+    if not user.is_admin and len(my_stores(user)) >= MAX_STORES:
+        raise HTTPException(409, f"매장은 {MAX_STORES}개까지 만들 수 있습니다. 안 쓰는 매장을 지운 뒤 다시 시도해 주세요.")
+    store_id = "s-" + secrets.token_hex(4)
+    with _db() as con:
+        con.execute("INSERT INTO stores (store_id, owner_id, created_at) VALUES (?, ?, ?)", (store_id, user.id, _now()))
+    return store_id
+
+
+def forget_store(store_id: str) -> None:
+    """매장 주인 기록을 지운다 (매장 자료를 지운 뒤에 부른다)."""
+    with _db() as con:
+        con.execute("DELETE FROM stores WHERE store_id = ?", (store_id,))
 
 
 def can_read(user: User | None, store_id: str) -> bool:
