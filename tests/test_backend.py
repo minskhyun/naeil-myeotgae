@@ -83,3 +83,6 @@ def test_demo_data_follows_contracts():
         Forecast.model_validate_json((folder / s / "forecast.json").read_text(encoding="utf-8"))
         SourceReport.model_validate_json((folder / s / "sources_report.json").read_text(encoding="utf-8"))
         BacktestResult.model_validate_json((folder / s / "backtest.json").read_text(encoding="utf-8"))
+    import json                                                                 # 첫 화면의 '분석 과정 보기'가 재생하는 녹화본
+    kinds = [e["kind"] for e in json.loads((folder / "sinchon-a" / "progress.json").read_text(encoding="utf-8"))]
+    assert {"store", "places", "plan", "trial", "decision", "scores", "forecast"} <= set(kinds)

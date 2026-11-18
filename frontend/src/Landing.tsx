@@ -2,7 +2,8 @@
 //   파란 첫머리(인사·로그인) → 세 단계 안내 → 예시 ① 내일 준비표 ② 어떤 주변 정보를 썼나 ③ 얼마나 맞나
 // 예시 매장 = 서버가 demo로 표시한 매장 (가상 매장). 로그인하면 이 화면 대신 Workspace.tsx가 나온다.
 import { useQuery } from '@tanstack/react-query'
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
+import { AnalysisView } from './AnalysisView'
 import { api, type LoginConfig } from './api'
 import { AccountBox, LoginButtons } from './Auth'
 import { BacktestView, Decisions } from './BacktestView'
@@ -41,9 +42,18 @@ export function Landing({ login }: { login: LoginConfig | null }) {
   const loginFailed = params.get('login_error') // 카카오 로그인이 실패·취소되면 서버가 ?login_error=kakao 로 돌려보낸다
   const store =
     examples.find((s) => s.store_id === picked) ?? examples.find((s) => s.store_id === FIRST_EXAMPLE) ?? examples[0]
+  // 예시 매장을 분석했을 때의 과정 (녹화본). 있으면 '분석 과정 보기' 단추로 지도 장면을 재생한다. 주소로는 ?open=replay
+  const past = useQuery({
+    queryKey: ['progress', store?.store_id],
+    queryFn: () => api.progress(store!.store_id),
+    enabled: !!store,
+    retry: false,
+  }).data
+  const [replaying, setReplaying] = useState(params.get('open') === 'replay')
 
   return (
     <div className="min-h-screen">
+      {replaying && past && <AnalysisView events={past} status="done" replay onClose={() => setReplaying(false)} />}
       <header className="bg-sheet">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-8 gap-y-3 px-5 py-4">
           <h1 className="text-xl font-extrabold tracking-tight">내일몇개</h1>
@@ -58,6 +68,14 @@ export function Landing({ login }: { login: LoginConfig | null }) {
           <p className="mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-white/90">
             판매 기록에 날씨·주변 행사·메뉴 유행을 더해, 내일 메뉴별로 얼마나 팔릴지와 몇 개 준비하면 좋을지 알려 드려요.
           </p>
+          {!!past?.length && (
+            <div className="mt-8">
+              <button onClick={() => setReplaying(true)} className="rounded-full bg-white px-7 py-3 text-base font-bold text-ink shadow-xl hover:bg-paper">
+                AI가 분석하는 과정 보기
+              </button>
+              <p className="mt-2 text-sm text-white/75">예시 매장을 분석했을 때의 녹화본이에요.</p>
+            </div>
+          )}
           {loginFailed && (
             <p className="mx-auto mt-6 max-w-md rounded-full bg-white/15 px-5 py-2 text-sm font-semibold">
               로그인을 마치지 못했어요. 다시 시도해 주세요.

@@ -92,6 +92,11 @@ def _ingest_demo(args, out: Path) -> str:
     note = f"가상 데이터 {sales['date'].nunique()}일, {len(sales)}행"
     if args.collection:
         note += ", " + _import_collection(Path(args.collection), out, append=False)
+        seen = set()                                      # 화면에 알리기: 가상 기사 제목 (같은 글은 한 번)
+        for item in json.loads((out / "collection.json").read_text(encoding="utf-8")):
+            if item["title"] not in seen:
+                seen.add(item["title"])
+                progress.emit("article", title=item["title"], url=item["source_url"])
     write_report(args.store, out, ["가상 매장입니다. 판매 기록·날씨·학사일정·근처 행사와 기사는 모두 가상으로 만든 것입니다."])
     return note
 
