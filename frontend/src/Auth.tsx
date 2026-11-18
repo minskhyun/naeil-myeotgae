@@ -1,9 +1,10 @@
-// 구글 로그인: 버튼(GoogleButton)과 머리말의 내 계정 칸(AccountBox).
-// 흐름: 구글 버튼을 누르면 구글이 ID 토큰을 준다 → 서버(/api/auth/google)가 확인하고 로그인 쿠키를 준다.
+// 로그인: 버튼 묶음(LoginButtons = 구글 + 카카오)과 머리말의 내 계정 칸(AccountBox).
+// 구글:  버튼을 누르면 구글이 ID 토큰을 준다 → 서버(/api/auth/google)가 확인하고 로그인 쿠키를 준다.
+// 카카오: 버튼은 그냥 링크다 → 서버(/api/auth/kakao/start)가 카카오 로그인 화면으로 보내고, 끝나면 첫 화면으로 돌아온다.
 // 서버 쪽 규칙은 backend/app/auth.py.
 import { useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
-import { api } from './api'
+import { api, type LoginConfig } from './api'
 import { useMe } from './useMe'
 
 // 구글이 주는 로그인 스크립트(window.google)에서 우리가 쓰는 부분만
@@ -76,12 +77,40 @@ export function GoogleButton({ clientId }: { clientId: string }) {
   )
 }
 
-// 머리말 오른쪽: 로그인 전에는 구글 버튼, 로그인 뒤에는 이름과 로그아웃
-export function AccountBox({ clientId }: { clientId: string }) {
+// '카카오 로그인' 버튼 (카카오 디자인 지침: 노란 바탕 #FEE500, 검은 말풍선과 글자)
+export function KakaoButton() {
+  return (
+    <a
+      href="/api/auth/kakao/start"
+      className="inline-flex h-8 items-center gap-2 rounded bg-[#FEE500] px-3 text-sm font-medium text-black/85 hover:brightness-95"
+    >
+      <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
+        <path
+          fill="currentColor"
+          d="M12 3C6.48 3 2 6.58 2 11c0 2.83 1.84 5.31 4.6 6.73l-.98 3.6c-.09.33.28.6.57.41l4.3-2.85c.49.07 1 .11 1.51.11 5.52 0 10-3.58 10-8s-4.48-8-10-8z"
+        />
+      </svg>
+      카카오 로그인
+    </a>
+  )
+}
+
+// 이 서버가 쓰는 로그인 버튼들을 나란히
+export function LoginButtons({ login }: { login: LoginConfig }) {
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      {login.google && <GoogleButton clientId={login.google} />}
+      {login.kakao && <KakaoButton />}
+    </div>
+  )
+}
+
+// 머리말 오른쪽: 로그인 전에는 로그인 버튼, 로그인 뒤에는 이름과 로그아웃
+export function AccountBox({ login }: { login: LoginConfig }) {
   const qc = useQueryClient()
   const me = useMe(true)
   if (me.isLoading) return null
-  if (!me.data) return <GoogleButton clientId={clientId} />
+  if (!me.data) return <LoginButtons login={login} />
 
   const logout = async () => {
     await api.logout()
@@ -90,7 +119,7 @@ export function AccountBox({ clientId }: { clientId: string }) {
   }
   return (
     <div className="flex items-center gap-3 text-sm">
-      <span className="text-muted" title={me.data.email}>
+      <span className="text-muted" title={me.data.email ?? '카카오 계정'}>
         {me.data.name}
         {me.data.is_admin && ' (관리자)'}
       </span>

@@ -93,7 +93,11 @@ export type SourceReport = {
 export type StoreInfo = { store_id: string; name: string; prep_mode: string; can_edit: boolean; demo: boolean }
 
 // 로그인한 사람 (GET /api/auth/me). 서버 규칙은 backend/app/auth.py
-export type User = { email: string; name: string; picture: string | null; is_admin: boolean }
+// provider: 어느 로그인인지. 카카오는 이메일 제공에 동의하지 않으면 email이 없다
+export type User = { provider: 'google' | 'kakao'; email: string | null; name: string; picture: string | null; is_admin: boolean }
+
+// 이 서버가 쓰는 로그인 방법 (GET /api/config에서 만든다). 하나도 없으면 로그인을 안 쓰는 서버
+export type LoginConfig = { google: string | null; kakao: boolean } // google = 구글 클라이언트 ID
 
 // '내 매장' 목록의 한 줄 (GET /api/my/stores). 아직 준비표가 없는 매장도 나온다
 export type MyStore = {
@@ -132,8 +136,8 @@ async function call<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  // google_client_id가 있으면 서버가 로그인을 쓴다 → 구글 로그인 버튼을 보여 준다
-  config: () => call<{ demo_mode: boolean; google_client_id: string | null }>('/config'),
+  // google_client_id가 있으면 구글 로그인 버튼을, kakao_login이면 카카오 로그인 버튼을 보여 준다
+  config: () => call<{ demo_mode: boolean; google_client_id: string | null; kakao_login: boolean }>('/config'),
   me: () => call<User | null>('/auth/me'),
   loginGoogle: (credential: string) =>
     call<User>('/auth/google', { method: 'POST', headers: JSON_BODY, body: JSON.stringify({ credential }) }),

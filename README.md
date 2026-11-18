@@ -134,14 +134,25 @@ LLM_MODEL_LIGHT=claude-haiku-5-5   # 선택 (기본값): 행사 글 추출 (글�
 
 ### 로그인 (선택)
 
-`.env`에 `GOOGLE_CLIENT_ID`를 넣으면 구글 로그인이 켜집니다. 넣지 않으면 로그인 없이 혼자 쓰는 방식(모든 매장을 보고 고침)으로 동작합니다.
+`.env`에 구글이나 카카오 로그인 설정을 넣으면 로그인이 켜집니다(둘 다 넣어도 됨). 둘 다 없으면 로그인 없이 혼자 쓰는 방식(모든 매장을 보고 고침)으로 동작합니다.
 
 ```
 GOOGLE_CLIENT_ID=구글 클라우드의 OAuth 클라이언트 ID (….apps.googleusercontent.com)
-ADMIN_EMAILS=관리자 구글 이메일 (여러 명이면 쉼표로)      # 선택
+KAKAO_LOGIN=1                                          # 카카오 로그인 켜기 (KAKAO_REST_KEY를 그대로 씀)
+KAKAO_CLIENT_SECRET=카카오 REST API 키의 클라이언트 시크릿   # 콘솔에서 시크릿이 켜져 있을 때 (기본이 켜짐)
+ADMIN_EMAILS=관리자 이메일 (여러 명이면 쉼표로)            # 선택
 ```
 
-클라이언트 ID 만들기: [Google Cloud Console](https://console.cloud.google.com/) → API 및 서비스 → OAuth 동의 화면을 만든 뒤, 사용자 인증 정보 → 사용자 인증 정보 만들기 → OAuth 클라이언트 ID → 유형 '웹 애플리케이션'. **승인된 자바스크립트 원본**에 화면을 여는 주소를 모두 넣습니다: `http://localhost`, `http://localhost:5173`, `http://localhost:8000`, 배포 주소(`https://….onrender.com`). 리디렉션 URI와 클라이언트 보안 비밀은 쓰지 않습니다.
+**구글** — [Google Cloud Console](https://console.cloud.google.com/) → API 및 서비스 → OAuth 동의 화면을 만든 뒤(여기 적은 앱 이름이 로그인 창에 나옴), 사용자 인증 정보 → OAuth 클라이언트 ID → 유형 '웹 애플리케이션'. **승인된 자바스크립트 원본**에 화면을 여는 주소를 모두 넣습니다: `http://localhost`, `http://localhost:5173`, `http://localhost:8000`, 배포 주소(`https://….onrender.com`). 리디렉션 URI와 클라이언트 보안 비밀은 쓰지 않습니다.
+
+**카카오** — [카카오 디벨로퍼스](https://developers.kakao.com/)의 앱 관리 페이지에서 (지도 검색에 쓰는 그 앱 그대로)
+
+1. [카카오 로그인] > [사용 설정] > 상태 ON
+2. [앱] > [플랫폼 키] > [REST API 키]에서 **리다이렉트 URI** 등록: 화면을 여는 주소마다 뒤에 `/api/auth/kakao/callback`을 붙여서 — `http://localhost:5173/api/auth/kakao/callback`, `http://localhost:8000/api/auth/kakao/callback`, 배포 주소
+3. 같은 곳의 **클라이언트 시크릿** 값을 `.env`의 `KAKAO_CLIENT_SECRET`에 (시크릿을 꺼 두었으면 비워 둠)
+4. [카카오 로그인] > [동의항목]에서 닉네임을 설정. 카카오계정(이메일)은 선택이며 없어도 로그인됩니다
+
+같은 사람이 구글과 카카오로 각각 로그인하면 서로 다른 계정입니다(이메일이 같아도 합치지 않음). 카카오는 인증된 이메일을 받았을 때만 `ADMIN_EMAILS`와 비교합니다.
 
 로그인이 켜졌을 때의 규칙 (`backend/app/auth.py`):
 
@@ -157,7 +168,7 @@ ADMIN_EMAILS=관리자 구글 이메일 (여러 명이면 쉼표로)      # 선�
 - **로그인 후 (`Workspace.tsx`)**: 예시 매장은 사라지고 내 매장만 보입니다. 탭 없이 고른 매장의 준비표 → 주변 정보 → 얼마나 맞나가 한 쪽에 이어집니다. 위쪽의 '매장 추가'를 누르면 창이 떠서 매장 이름, 위치, 닫는 시간을 적고 판매 기록 파일을 올립니다(매장 ID는 서버가 지어 줌). '매장 관리' 창에서 이름을 바꾸고, 판매 기록을 다시 올리고, 매장을 지울 수 있습니다. 지우면 그 매장의 결과 폴더와 올린 POS 파일이 모두 삭제됩니다.
 - 로그인을 켜지 않은 서버는 처음부터 작업 화면이고 모든 매장이 보입니다(단추 이름은 '데이터 올리기', 매장 ID를 직접 적음).
 
-- 비밀번호는 받지 않습니다. 구글에서 받는 것은 이름·이메일·프로필 사진 주소뿐이고, `data/app.db`(SQLite, 저장소에 올리지 않음)에 저장합니다.
+- 비밀번호는 받지 않습니다. 구글·카카오에서 받는 것은 이름(닉네임)·이메일·프로필 사진 주소뿐이고, `data/app.db`(SQLite, 저장소에 올리지 않음)에 저장합니다.
 - 로그인 상태는 30일 유지되는 쿠키입니다(자바스크립트가 읽지 못하는 HttpOnly, https에서는 Secure). 서버에는 세션 번호의 해시만 저장합니다.
 - 시연 모드(`DEMO_MODE=1`)는 보기 전용이라 로그인 버튼이 나오지 않습니다.
 
@@ -322,14 +333,14 @@ python -m collectors.run_all --refresh-events # 서울시 행사 목록 새로 �
 
 - **공개 시연 사이트:** `Dockerfile`이 화면을 빌드해 백엔드와 한 주소로 제공합니다. `DEMO_MODE=1`이면 보기 전용이고 `backend/demo_data/`의 결과(가상 매장, 공개 데이터)만 보여 줍니다. API 키가 필요 없습니다. Render는 `render.yaml`대로 만듭니다.
 - **전체 기능:** 위 '웹 화면'대로 로컬에서 실행합니다.
-- **로그인을 켠 채로 배포하려면:** `DEMO_MODE=0`, `GOOGLE_CLIENT_ID`와 API 키들을 환경 변수로 넣고, 구글 콘솔의 승인된 원본에 배포 주소를 추가합니다. `data/`(사용자 DB, 올린 파일, 결과)가 지워지지 않는 디스크에 있어야 합니다. Render 무료 요금제는 다시 배포할 때마다 디스크가 비워지므로 유료 디스크나 외부 DB가 필요합니다.
+- **로그인을 켠 채로 배포하려면:** `DEMO_MODE=0`, 로그인 설정과 API 키들을 환경 변수로 넣고, 구글 콘솔의 승인된 원본과 카카오 콘솔의 리다이렉트 URI에 배포 주소를 추가합니다. `data/`(사용자 DB, 올린 파일, 결과)가 지워지지 않는 디스크에 있어야 합니다. Render 무료 요금제는 다시 배포할 때마다 디스크가 비워지므로 유료 디스크나 외부 DB가 필요합니다.
 
 ## 기술 스택
 
 | 영역 | 사용 기술 |
 |---|---|
 | 프론트엔드 | React, TypeScript, Vite, Tailwind CSS, TanStack Query |
-| 백엔드 | Python, FastAPI, SQLite(사용자·로그인·매장 주인), 구글 로그인(Google Identity Services) |
+| 백엔드 | Python, FastAPI, SQLite(사용자·로그인·매장 주인), 구글 로그인(Google Identity Services), 카카오 로그인(REST API) |
 | 예측 | CatBoost (다중 분위 회귀), pandas |
 | LLM | Claude API (Anthropic SDK, 구조화 출력) |
 | 외부 데이터 | 기상청 ASOS·단기예보, 한국천문연구원 특일 정보, 서울시 문화행사 정보, 카카오 로컬, NAVER API HUB 검색·검색어 트렌드, OpenStreetMap |

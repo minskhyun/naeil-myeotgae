@@ -246,6 +246,15 @@
   - 주소로 창을 열 수 있다: `?open=add`(매장 추가), `?open=stores`(매장 관리). 화면 확인용 캡처에도 이걸 썼다.
   - 위 '화면을 로그인 전·후로 나눔' 항목의 탭 설명(매장 추가·내 매장 탭)은 이 항목으로 바뀌었다.
 
+- 11/18 **카카오 로그인** (브랜치 `feat/google-login`)
+  - 방식: 구글과 달리 서버를 거치는 인가 코드 방식이다. 카카오 버튼(링크) → `/api/auth/kakao/start`가 카카오 로그인 화면으로 보냄 → 카카오가 `/api/auth/kakao/callback?code=…&state=…`로 돌려보냄 → 서버가 코드를 토큰으로 바꾸고 사용자 정보를 받아 로그인 쿠키를 준 뒤 첫 화면으로. 사양은 카카오 문서(11/18 확인)대로.
+  - 우리가 보낸 요청인지는 `state`(무작위 값, 10분짜리 HttpOnly 쿠키와 비교)로 확인한다. 실패·취소는 `/?login_error=kakao`로 돌아가 첫 화면에 한 줄이 뜨고, 이유는 서버 기록에 남는다(카카오 오류 코드 포함).
+  - 설정: `KAKAO_LOGIN=1`(지도용 `KAKAO_REST_KEY`가 있다고 로그인까지 켜지지는 않게), `KAKAO_CLIENT_SECRET`(카카오는 새 REST API 키의 시크릿이 기본으로 켜져 있음).
+  - DB: `users.google_sub` → `provider` + `subject`(둘을 묶어 유일), `email`은 비어 있을 수 있음. 예전 DB는 처음 열 때 자동으로 옮긴다(`auth._prepare`, 사용자 번호 유지 → 로그인 상태·매장 주인 그대로). 실제 DB(사용자 2명, 로그인 1개)로 옮겨 보존을 확인했다.
+  - **계정을 합치지 않는다:** 같은 이메일이라도 구글 계정과 카카오 계정은 따로다. 이메일로 합치면 남의 이메일이 붙은 계정으로 그 사람의 매장을 볼 수 있게 된다. 카카오 이메일은 인증된 것만 저장한다(관리자 판정에 쓰이므로).
+  - 화면: `Auth.tsx`의 `KakaoButton`·`LoginButtons`, 화면들은 `clientId` 대신 `LoginConfig`(구글 클라이언트 ID, 카카오 여부)를 받는다.
+  - 확인: `tests/test_auth.py`에 5개 추가(흐름, 구글과 별개 계정, 잘못된 요청 거절, 인증된 이메일만, 예전 DB 옮기기). **실제 카카오 계정 로그인은 콘솔 설정 뒤 확인 필요.**
+
 ## F. 코드 지도 (공부 순서대로)
 
 읽는 순서: `contracts/schemas.py`(주고받는 형식) → `run.py`(전체 흐름) → `ml/`(아래 표 순서) → `agent/collect.py`(주변 정보) → `backend/app/main.py` → `frontend/src/`
@@ -273,7 +282,7 @@
 | `agent/geocode.py` | 주소·장소 → 좌표 | 카카오 → OpenStreetMap, 결과 저장(못 찾은 것도) |
 | `backend/collectors/` | 공공 데이터 수집기 (새얼) | 실행 순서(`run_all.py`), 정보원 선택 에이전트(`agent.py`)의 검증 규칙 |
 | `backend/app/main.py` | 웹 API | `run.py`를 별도 프로세스로, 작업 상태 폴링, 시연 모드(보기 전용) |
-| `backend/app/auth.py` | 구글 로그인, 매장 접근 권한, 내 매장 등록 | ID 토큰 검증, 세션 쿠키(HttpOnly), SQLite, 주인·관리자 규칙 |
+| `backend/app/auth.py` | 구글·카카오 로그인, 매장 접근 권한, 내 매장 등록 | ID 토큰 검증(구글), 인가 코드 방식(카카오), 세션 쿠키(HttpOnly), SQLite, 주인·관리자 규칙 |
 
 **직접 검증 (파일마다 손으로 하나씩)**
 먼저 `run.py --store sinchon-a --demo`를 실행해 `data/artifacts/sinchon-a/`에 결과를 만든 뒤 아래를 확인한다.

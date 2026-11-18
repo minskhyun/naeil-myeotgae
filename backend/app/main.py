@@ -15,8 +15,10 @@
   POST /api/stores/{store_id}/demo         가상 데이터로 전체 실행 (시연용)
   POST /api/stores/{store_id}/settings     준비 방식 바꾸기 → predict 단계만 다시
   GET  /api/jobs/{job_id}                  작업 상태 (running / done / error) + 실행 기록
-로그인 (구글, .env에 GOOGLE_CLIENT_ID가 있을 때만 켜진다 → backend/app/auth.py)
+로그인 (.env에 GOOGLE_CLIENT_ID 또는 KAKAO_LOGIN=1이 있을 때만 켜진다 → backend/app/auth.py)
   POST /api/auth/google                    구글이 준 토큰을 확인하고 로그인 쿠키를 준다
+  GET  /api/auth/kakao/start               카카오 로그인 화면으로 보낸다
+  GET  /api/auth/kakao/callback            카카오가 돌려보내는 곳: 확인하고 로그인 쿠키를 준 뒤 첫 화면으로
   GET  /api/auth/me                        지금 로그인한 사람 (없으면 null)
   POST /api/auth/logout                    로그아웃
   로그인이 켜지면: 시연 매장은 누구나 보고, 내 매장은 나만 보고 고친다. 파일 올리기는 로그인해야 한다.
@@ -37,6 +39,7 @@
 import datetime as dt
 import os
 import re
+import secrets
 import shutil
 import subprocess
 import sys
@@ -46,6 +49,7 @@ from pathlib import Path
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, Response, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -102,8 +106,10 @@ def health():
 @app.get("/api/config")
 def config():
     """화면이 처음에 물어본다: 시연 모드면 '데이터 올리기'와 준비 방식 바꾸기를 숨긴다.
-    google_client_id가 있으면 화면이 구글 로그인 버튼을 보여 준다 (공개돼도 되는 값. 시연 모드는 보기 전용이라 로그인이 없다)."""
-    return {"demo_mode": DEMO_MODE, "google_client_id": None if DEMO_MODE else auth.CLIENT_ID}
+    google_client_id가 있으면 구글 로그인 버튼을, kakao_login이면 카카오 로그인 버튼을 보여 준다
+    (클라이언트 ID는 공개돼도 되는 값. 시연 모드는 보기 전용이라 로그인이 없다)."""
+    return {"demo_mode": DEMO_MODE, "google_client_id": None if DEMO_MODE else auth.CLIENT_ID,
+            "kakao_login": not DEMO_MODE and bool(auth.KAKAO_KEY)}
 
 
 @app.get("/api/stores")
@@ -119,7 +125,7 @@ def stores(user: auth.User | None = Me):
         out.append(dict(store_id=folder.name, name=store.name or folder.name, prep_mode=store.prep_mode,
                         can_edit=not DEMO_MODE and auth.can_write(user, folder.name),
                         demo=DEMO_MODE or folder.name in auth.DEMO_STORES))
-    if auth.CLIENT_ID:                                   # 로그인을 쓰면 내 매장이 먼저, 시연 매장은 뒤에
+    if auth.enabled():                                   # 로그인을 쓰면 내 매장이 먼저, 시연 매장은 뒤에
         out.sort(key=lambda s: s["store_id"] in auth.DEMO_STORES)
     return out
 
@@ -145,14 +151,56 @@ class GoogleLogin(BaseModel):
     credential: str                    # 구글 로그인 버튼이 화면에 준 ID 토큰
 
 
+STATE_COOKIE = "nm_oauth_state"            # 카카오로 보낼 때 심어 두는 확인용 값 (10분)
+KAKAO_CALLBACK = "/api/auth/kakao/callback"  # 카카오 콘솔의 '리다이렉트 URI'에 등록하는 주소의 뒷부분
+
+
+def _origin(request: Request) -> str:
+    """사용자가 연 주소의 앞부분 (예: http://localhost:5173). 클라우드는 앞단이 https를 받아서 헤더로 알려 준다."""
+    scheme = request.headers.get("x-forwarded-proto", request.url.scheme)
+    return f"{scheme}://{request.headers.get('host', request.url.netloc)}"
+
+
+def _set_session(response: Response, request: Request, token: str) -> None:
+    """로그인 쿠키를 준다: 자바스크립트가 못 읽고(HttpOnly), 다른 사이트의 요청에는 안 실리고(Lax), https면 https로만."""
+    response.set_cookie(auth.COOKIE, token, max_age=auth.SESSION_DAYS * 86400, httponly=True, samesite="lax",
+                        secure=_origin(request).startswith("https"))
+
+
 @app.post("/api/auth/google")
 def auth_google(body: GoogleLogin, request: Request, response: Response):
     if not auth.CLIENT_ID:
-        raise HTTPException(404, "이 서버는 로그인을 쓰지 않습니다 (.env에 GOOGLE_CLIENT_ID가 없음).")
+        raise HTTPException(404, "이 서버는 구글 로그인을 쓰지 않습니다 (.env에 GOOGLE_CLIENT_ID가 없음).")
     user, token = auth.login(body.credential)
-    https = request.headers.get("x-forwarded-proto", request.url.scheme) == "https"     # 클라우드는 앞단이 https를 받는다
-    response.set_cookie(auth.COOKIE, token, max_age=auth.SESSION_DAYS * 86400, httponly=True, samesite="lax", secure=https)
+    _set_session(response, request, token)
     return user.public()
+
+
+@app.get("/api/auth/kakao/start")
+def auth_kakao_start(request: Request):
+    """카카오 로그인 화면으로 보낸다. 돌아왔을 때 우리가 보낸 요청이 맞는지 보려고 무작위 값(state)을 쿠키에 심어 둔다."""
+    if not auth.KAKAO_KEY:
+        raise HTTPException(404, "이 서버는 카카오 로그인을 쓰지 않습니다 (.env에 KAKAO_LOGIN=1이 없음).")
+    state = secrets.token_urlsafe(16)
+    go = RedirectResponse(auth.kakao_login_url(_origin(request) + KAKAO_CALLBACK, state))
+    go.set_cookie(STATE_COOKIE, state, max_age=600, httponly=True, samesite="lax", secure=_origin(request).startswith("https"))
+    return go
+
+
+@app.get(KAKAO_CALLBACK)
+def auth_kakao_callback(request: Request, code: str | None = None, state: str | None = None):
+    """카카오가 사용자를 돌려보내는 곳. 성공하면 로그인 쿠키를 주고 첫 화면으로, 실패·취소면 ?login_error=kakao 로."""
+    saved = request.cookies.get(STATE_COOKIE)
+    back = RedirectResponse("/?login_error=kakao")
+    if auth.KAKAO_KEY and code and state and saved and secrets.compare_digest(state, saved):
+        try:
+            _, token = auth.login_as("kakao", auth.kakao_profile(code, _origin(request) + KAKAO_CALLBACK))
+            back = RedirectResponse("/")
+            _set_session(back, request, token)
+        except Exception as e:                       # 코드 만료, 시크릿 틀림, 카카오 서버 오류 등 → 서버 기록에 이유를 남긴다
+            print(f"[카카오 로그인 실패] {type(e).__name__}: {e}", flush=True)
+    back.delete_cookie(STATE_COOKIE)
+    return back
 
 
 @app.get("/api/auth/me")
@@ -180,8 +228,8 @@ class StoreName(BaseModel):
 
 def _member(user: auth.User | None) -> auth.User:
     """내 매장 관리는 로그인을 쓰는 서버에서, 로그인한 사람만."""
-    if not auth.CLIENT_ID:
-        raise HTTPException(404, "이 서버는 로그인을 쓰지 않습니다 (.env에 GOOGLE_CLIENT_ID가 없음).")
+    if not auth.enabled():
+        raise HTTPException(404, "이 서버는 로그인을 쓰지 않습니다.")
     if user is None:
         raise HTTPException(401, "로그인이 필요합니다.")
     return user

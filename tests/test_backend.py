@@ -21,6 +21,7 @@ def client(tmp_path, monkeypatch):
     monkeypatch.setattr(main, "ARTIFACTS", tmp_path)
     monkeypatch.setattr(main, "UPLOADS", tmp_path / "uploads")
     monkeypatch.setattr(main.auth, "CLIENT_ID", None)             # 로그인 꺼짐 (켜진 경우는 tests/test_auth.py)
+    monkeypatch.setattr(main.auth, "KAKAO_KEY", None)
     return TestClient(main.app)
 
 
@@ -60,7 +61,7 @@ def test_run_job_finishes(client, tmp_path):
 def test_demo_mode_is_read_only(client, monkeypatch):
     """시연 모드: 보기는 되고, 업로드·실행·설정 변경은 403. 저장소의 시연 결과 폴더가 계약 형식을 지킨다."""
     monkeypatch.setattr(main, "DEMO_MODE", True)
-    assert client.get("/api/config").json() == {"demo_mode": True, "google_client_id": None}
+    assert client.get("/api/config").json() == {"demo_mode": True, "google_client_id": None, "kakao_login": False}
     assert client.get("/api/stores/sinchon-a/forecast").status_code == 200
     assert client.post("/api/stores/sinchon-a/demo").status_code == 403
     assert client.post("/api/stores/sinchon-a/settings", data={"prep_mode": "균형"}).status_code == 403

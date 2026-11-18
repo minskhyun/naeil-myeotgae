@@ -4,7 +4,7 @@
 // 로그인을 안 쓰는 서버(혼자 쓰는 노트북)에서는 처음부터 이 화면이고 모든 매장이 보인다.
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
-import { api } from './api'
+import { api, type LoginConfig } from './api'
 import { AccountBox } from './Auth'
 import { BacktestView } from './BacktestView'
 import { ForecastView } from './ForecastView'
@@ -17,9 +17,9 @@ import { useJob } from './useJob'
 // 지금 떠 있는 창: 판매 기록 올리기(target = 다시 올릴 매장, null이면 새 매장) 또는 내 매장 관리
 type Dialog = { kind: 'upload'; target: string | null } | { kind: 'stores' } | null
 
-// clientId: 구글 로그인을 쓰는 서버면 그 값(= 계정 방식), 아니면 null
-export function Workspace({ clientId }: { clientId: string | null }) {
-  const account = !!clientId
+// login: 서버가 쓰는 로그인 방법(= 계정 방식). 로그인을 안 쓰는 서버면 null
+export function Workspace({ login }: { login: LoginConfig | null }) {
+  const account = !!login
   const all = useQuery({ queryKey: ['stores'], queryFn: api.stores })
   const stores = all.data?.filter((s) => !account || !s.demo) // 계정 방식이면 예시 매장을 뺀다
   // 주소로도 매장을 고르고 창을 열 수 있다: ?store=sinchon-a , ?open=add (매장 추가) , ?open=stores (매장 관리)
@@ -76,7 +76,7 @@ export function Workspace({ clientId }: { clientId: string | null }) {
                 매장 관리
               </button>
             )}
-            {clientId && <AccountBox clientId={clientId} />}
+            {login && <AccountBox login={login} />}
           </div>
         </div>
       </header>

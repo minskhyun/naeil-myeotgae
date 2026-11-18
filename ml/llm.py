@@ -25,7 +25,7 @@ DEFAULTS = {"LLM_PROVIDER": "anthropic",
             "LLM_MODEL_LIGHT": "claude-haiku-5-5"}   # 양이 많은 단순 추출 (행사 글마다 한 번, 값이 Opus의 1/30)
 KEY_NAMES = ("ANTHROPIC_API_KEY", "DATA_GO_KR_KEY", "SEOUL_DATA_KEY", "KAKAO_REST_KEY",
              "NAVER_CLIENT_ID", "NAVER_CLIENT_SECRET",           # .env에 넣는 키 이름 (README '키 준비' 참고)
-             "GOOGLE_CLIENT_ID", "ADMIN_EMAILS")                 # 로그인 설정 (backend/app/auth.py)
+             "GOOGLE_CLIENT_ID", "KAKAO_LOGIN", "KAKAO_CLIENT_SECRET", "ADMIN_EMAILS")   # 로그인 설정 (backend/app/auth.py)
 T = TypeVar("T", bound=BaseModel)
 
 

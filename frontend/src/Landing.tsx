@@ -3,8 +3,8 @@
 // 예시 매장 = 서버가 demo로 표시한 매장 (가상 매장, 공개 데이터). 로그인하면 이 화면 대신 Workspace.tsx가 나온다.
 import { useQuery } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
-import { api } from './api'
-import { AccountBox, GoogleButton } from './Auth'
+import { api, type LoginConfig } from './api'
+import { AccountBox, LoginButtons } from './Auth'
 import { BacktestView, Decisions } from './BacktestView'
 import { ForecastView } from './ForecastView'
 import { SourcesView } from './SourcesView'
@@ -23,12 +23,14 @@ function Part({ id, n, title, lead, children }: { id: string; n: number; title: 
   )
 }
 
-// clientId: 구글 로그인을 쓰는 서버면 그 값, 보기 전용 시연 사이트면 null (로그인 버튼 없음)
-export function Landing({ clientId }: { clientId: string | null }) {
+// login: 서버가 쓰는 로그인 방법(구글·카카오). 보기 전용 시연 사이트면 null (로그인 버튼 없음)
+export function Landing({ login }: { login: LoginConfig | null }) {
   const stores = useQuery({ queryKey: ['stores'], queryFn: api.stores })
   const examples = stores.data?.filter((s) => s.demo) ?? []
   // 화면에는 가상 매장 하나만 보여 준다. 주소에 ?store=fr-bakery 를 붙이면 다른 예시 매장(공개 실데이터)을 볼 수 있다 (발표용)
-  const picked = new URLSearchParams(window.location.search).get('store')
+  const params = new URLSearchParams(window.location.search)
+  const picked = params.get('store')
+  const loginFailed = params.get('login_error') // 카카오 로그인이 실패·취소되면 서버가 ?login_error=kakao 로 돌려보낸다
   const store =
     examples.find((s) => s.store_id === picked) ?? examples.find((s) => s.store_id === FIRST_EXAMPLE) ?? examples[0]
 
@@ -37,7 +39,7 @@ export function Landing({ clientId }: { clientId: string | null }) {
       <header className="border-b border-ink/80 bg-sheet">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-8 gap-y-3 px-5 py-4">
           <h1 className="text-xl font-extrabold tracking-tight">내일몇개</h1>
-          {clientId && <AccountBox clientId={clientId} />}
+          {login && <AccountBox login={login} />}
         </div>
       </header>
 
@@ -48,9 +50,14 @@ export function Landing({ clientId }: { clientId: string | null }) {
           <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted">
             포스 판매 기록에 날씨·주변 행사·메뉴 유행을 더해, 내일 메뉴별로 얼마나 팔릴지와 몇 개 준비하면 좋을지 알려 드립니다.
           </p>
-          {clientId && (
+          {loginFailed && (
+            <p className="mt-5 max-w-2xl border-l-4 border-up bg-sheet px-4 py-3 text-sm">
+              로그인을 마치지 못했습니다. 다시 시도해 주세요.
+            </p>
+          )}
+          {login && (
             <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2">
-              <GoogleButton clientId={clientId} />
+              <LoginButtons login={login} />
               <span className="text-sm text-muted">로그인하면 내 가게 판매 기록으로 준비표를 만들 수 있습니다.</span>
             </div>
           )}
@@ -83,13 +90,13 @@ export function Landing({ clientId }: { clientId: string | null }) {
           </>
         )}
 
-        {clientId ? (
+        {login ? (
           <section className="border-t border-ink/80 pt-8">
             <h2 className="text-2xl font-bold tracking-tight">내 가게로 해 보기</h2>
             <p className="mt-2 mb-5 max-w-2xl text-muted">
               로그인한 뒤 매장 이름, 위치, 닫는 시간을 적고 포스에서 내려받은 판매 기록 파일을 올리면 됩니다. 올린 자료와 결과는 본인만 볼 수 있습니다.
             </p>
-            <GoogleButton clientId={clientId} />
+            <LoginButtons login={login} />
           </section>
         ) : (
           <p className="border-t border-rule pt-4 text-xs text-faint">
