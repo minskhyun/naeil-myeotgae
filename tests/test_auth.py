@@ -59,7 +59,7 @@ def test_logged_out_sees_only_demo_and_cannot_change(site):
     guest = TestClient(main.app)
     assert guest.get("/api/config").json() == {"demo_mode": False, "google_client_id": "test-client-id"}
     assert guest.get("/api/auth/me").json() is None
-    assert guest.get("/api/stores").json() == [dict(store_id="sinchon-a", name="sinchon-a", prep_mode="균형", can_edit=False)]
+    assert guest.get("/api/stores").json() == [dict(store_id="sinchon-a", name="sinchon-a", prep_mode="균형", can_edit=False, demo=True)]
     assert guest.get("/api/stores/sinchon-a/forecast").status_code == 200
     assert guest.get("/api/stores/old-cafe/forecast").status_code == 404           # 있는지조차 알려 주지 않는다
     assert guest.post("/api/stores/my-cafe/run", files=POS).status_code == 401

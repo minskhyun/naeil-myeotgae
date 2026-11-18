@@ -108,7 +108,8 @@ def config():
 
 @app.get("/api/stores")
 def stores(user: auth.User | None = Me):
-    """내일 예측(forecast.json)이 있는 매장 중 내가 볼 수 있는 것. can_edit: 내가 고칠 수 있는지."""
+    """내일 예측(forecast.json)이 있는 매장 중 내가 볼 수 있는 것.
+    can_edit: 내가 고칠 수 있는지.  demo: 누구나 보는 예시 매장인지 (화면은 로그인 전 첫 화면에만 보여 준다)."""
     out = []
     for folder in sorted(p.parent for p in ARTIFACTS.glob("*/forecast.json")):
         if not auth.can_read(user, folder.name):
@@ -116,7 +117,8 @@ def stores(user: auth.User | None = Me):
         store = StoreConfig.read(folder / "store.json") if (folder / "store.json").exists() \
             else StoreConfig(store_id=folder.name)
         out.append(dict(store_id=folder.name, name=store.name or folder.name, prep_mode=store.prep_mode,
-                        can_edit=not DEMO_MODE and auth.can_write(user, folder.name)))
+                        can_edit=not DEMO_MODE and auth.can_write(user, folder.name),
+                        demo=DEMO_MODE or folder.name in auth.DEMO_STORES))
     if auth.CLIENT_ID:                                   # 로그인을 쓰면 내 매장이 먼저, 시연 매장은 뒤에
         out.sort(key=lambda s: s["store_id"] in auth.DEMO_STORES)
     return out

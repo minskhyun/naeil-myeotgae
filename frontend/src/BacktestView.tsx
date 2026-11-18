@@ -17,7 +17,29 @@ function BarRow({ label, value, max, strong }: { label: string; value: number; m
   )
 }
 
-export function BacktestView({ storeId }: { storeId: string }) {
+// 주변 정보 묶음마다 썼는지와 그 이유 (첫 화면에서는 이것만 따로 보여 준다)
+export function Decisions({ storeId }: { storeId: string }) {
+  const { data } = useQuery({ queryKey: ['backtest', storeId], queryFn: () => api.backtest(storeId) })
+  if (!data) return null
+  return (
+    <section>
+      <h3 className="text-lg font-semibold">주변 정보를 쓴 이유, 안 쓴 이유</h3>
+      <p className="mt-1 text-sm text-muted">넣었을 때 과거 예측이 실제로 더 정확해진 정보만 씁니다.</p>
+      <ul className="mt-3 divide-y divide-rule border-y border-rule">
+        {data.decisions.map((d) => (
+          <li key={d.signal_group} className="grid grid-cols-[6rem_1fr] gap-3 py-3 text-sm sm:grid-cols-[8rem_4rem_1fr]">
+            <span className="font-semibold">{GROUP_LABELS[d.signal_group] ?? d.signal_group}</span>
+            <span className={d.adopted ? 'font-semibold text-accent' : 'text-faint'}>{d.adopted ? '씀' : '안 씀'}</span>
+            <span className="col-span-2 text-muted sm:col-span-1">{d.reason}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
+}
+
+// hideDecisions: 위 Decisions를 다른 자리에서 이미 보여 줄 때 (첫 화면)
+export function BacktestView({ storeId, hideDecisions = false }: { storeId: string; hideDecisions?: boolean }) {
   const { data, error, isLoading } = useQuery({ queryKey: ['backtest', storeId], queryFn: () => api.backtest(storeId) })
   if (isLoading) return <p className="text-muted">불러오는 중…</p>
   if (error || !data) return <p className="text-up">{(error as Error)?.message ?? '검증 결과가 없습니다.'}</p>
@@ -86,19 +108,7 @@ export function BacktestView({ storeId }: { storeId: string }) {
         </div>
       </section>
 
-      <section>
-        <h3 className="text-lg font-semibold">주변 정보를 쓴 이유, 안 쓴 이유</h3>
-        <p className="mt-1 text-sm text-muted">넣었을 때 과거 예측이 실제로 더 정확해진 정보만 씁니다.</p>
-        <ul className="mt-3 divide-y divide-rule border-y border-rule">
-          {data.decisions.map((d) => (
-            <li key={d.signal_group} className="grid grid-cols-[6rem_1fr] gap-3 py-3 text-sm sm:grid-cols-[8rem_4rem_1fr]">
-              <span className="font-semibold">{GROUP_LABELS[d.signal_group] ?? d.signal_group}</span>
-              <span className={d.adopted ? 'font-semibold text-accent' : 'text-faint'}>{d.adopted ? '씀' : '안 씀'}</span>
-              <span className="col-span-2 text-muted sm:col-span-1">{d.reason}</span>
-            </li>
-          ))}
-        </ul>
-      </section>
+      {!hideDecisions && <Decisions storeId={storeId} />}
 
       <section className="text-sm leading-relaxed text-muted">
         <h3 className="font-semibold text-ink">데이터 메모</h3>

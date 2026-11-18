@@ -89,7 +89,8 @@ export type SourceReport = {
 }
 
 // 매장 목록의 한 줄 (GET /api/stores). can_edit: 내가 고칠 수 있는 매장인지 (시연 매장·시연 모드는 false)
-export type StoreInfo = { store_id: string; name: string; prep_mode: string; can_edit: boolean }
+// demo: 누구나 보는 예시 매장인지 → 로그인 전 첫 화면(Landing.tsx)에만 보여 준다
+export type StoreInfo = { store_id: string; name: string; prep_mode: string; can_edit: boolean; demo: boolean }
 
 // 로그인한 사람 (GET /api/auth/me). 서버 규칙은 backend/app/auth.py
 export type User = { email: string; name: string; picture: string | null; is_admin: boolean }

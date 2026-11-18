@@ -88,7 +88,8 @@ function Plan({ plan, nNearby }: { plan: SourcePlan; nNearby: number | null }) {
   )
 }
 
-export function SourcesView({ storeId }: { storeId: string }) {
+// brief: 첫 화면의 예시용 — 고른 정보원과 모은 정보까지만 (찾은 글 목록·수집 기록은 뺀다)
+export function SourcesView({ storeId, brief = false }: { storeId: string; brief?: boolean }) {
   const { data, error, isLoading } = useQuery({ queryKey: ['sources', storeId], queryFn: () => api.sources(storeId) })
   const [showAll, setShowAll] = useState(false)
   if (isLoading) return <p className="text-muted">불러오는 중…</p>
@@ -144,7 +145,7 @@ export function SourcesView({ storeId }: { storeId: string }) {
         )}
       </Section>
 
-      {!!data.articles.length && (
+      {!brief && !!data.articles.length && (
         <Section title={`찾은 행사·뉴스 ${data.articles.length}건`}
           sub="AI가 글에서 날짜와 장소를 뽑았고, 근거 문장이 원문에 그대로 있고 매장에서 가까운 것만 남겼습니다. 최근 날짜부터입니다.">
           <ul className="divide-y divide-rule border-y border-rule">
@@ -165,7 +166,7 @@ export function SourcesView({ storeId }: { storeId: string }) {
         </Section>
       )}
 
-      {!!data.notes.length && (
+      {!brief && !!data.notes.length && (
         <Section title="수집 기록">
           <ul className="list-disc space-y-1 pl-5 text-sm leading-relaxed text-muted">
             {data.notes.map((n, i) => (

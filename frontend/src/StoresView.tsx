@@ -57,7 +57,7 @@ export function StoresView({ onOpen, onUpload }: {
 
       {error && <p className="mb-4 border-l-4 border-up bg-sheet px-4 py-3 text-sm">{error}</p>}
       {stores.data && !stores.data.length && (
-        <p className="border-t border-rule py-6 text-muted">아직 매장이 없습니다. '새 매장 추가'에서 판매 기록을 올리면 여기에 나타납니다.</p>
+        <p className="border-t border-rule py-6 text-muted">아직 매장이 없습니다. '새 매장 추가'를 눌러 판매 기록을 올리면 여기에 나타납니다.</p>
       )}
 
       <ul className="border-t border-rule">
@@ -94,7 +94,7 @@ export function StoresView({ onOpen, onUpload }: {
                 </p>
               )}
               <p className="mt-0.5 text-sm text-muted">
-                {s.address ?? '주소 없음'} · 영업 종료 {s.close_time}
+                {s.address ?? '위치 없음'} · 닫는 시간 {s.close_time}
               </p>
               <p className="mt-0.5 text-sm">{status(s)}</p>
             </div>

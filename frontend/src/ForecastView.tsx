@@ -42,10 +42,17 @@ function Notice({ w }: { w: Warning }) {
   )
 }
 
-export function ForecastView({ storeId, prepMode, readOnly = false }: { storeId: string; prepMode: string; readOnly?: boolean }) {
+// limit: 처음에 많이 팔리는 메뉴 몇 개만 보여 주고 나머지는 '더 보기'로 (첫 화면의 예시용). 합계는 항상 전체 메뉴
+export function ForecastView({ storeId, prepMode, readOnly = false, limit }: {
+  storeId: string
+  prepMode: string
+  readOnly?: boolean
+  limit?: number
+}) {
   const { data, error, isLoading } = useQuery({ queryKey: ['forecast', storeId], queryFn: () => api.forecast(storeId) })
   const [jobId, setJobId] = useState<string | null>(null)
   const [jobError, setJobError] = useState<string | null>(null)
+  const [showAll, setShowAll] = useState(false)
   const job = useJob(jobId)
   const changing = job?.status === 'running'
 
@@ -53,7 +60,8 @@ export function ForecastView({ storeId, prepMode, readOnly = false }: { storeId:
   if (error || !data) return <p className="text-up">{(error as Error)?.message ?? '예측이 없습니다.'}</p>
 
   const rows = [...data.rows].sort((a, b) => b.pred - a.pred)
-  const max = Math.max(...rows.map((r) => r.p90)) * 1.05
+  const shown = limit && !showAll ? rows.slice(0, limit) : rows
+  const max = Math.max(...shown.map((r) => r.p90)) * 1.05
   const used = data.signals_used.filter((s) => SIGNAL_LABELS[s]).map((s) => SIGNAL_LABELS[s])
   const totalPrep = rows.reduce((s, r) => s + (r.prep_qty ?? 0), 0)
   const totalPred = Math.round(rows.reduce((s, r) => s + r.pred, 0))
@@ -115,7 +123,7 @@ export function ForecastView({ storeId, prepMode, readOnly = false }: { storeId:
           <span>평소와 다른 점</span>
         </div>
         <ol>
-          {rows.map((r) => (
+          {shown.map((r) => (
             <li
               key={r.menu}
               className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-1 border-b border-rule px-5 py-3.5 last:border-b-0 md:grid-cols-[minmax(9rem,1.3fr)_5.5rem_5.5rem_12rem_minmax(10rem,1.5fr)] md:items-center"
@@ -150,6 +158,11 @@ export function ForecastView({ storeId, prepMode, readOnly = false }: { storeId:
             </li>
           ))}
         </ol>
+        {limit !== undefined && rows.length > limit && (
+          <button onClick={() => setShowAll(!showAll)} className="w-full border-t border-rule px-5 py-2.5 text-left text-sm underline underline-offset-4 hover:text-accent">
+            {showAll ? '많이 팔리는 메뉴만 보기' : `나머지 ${rows.length - limit}개 메뉴 더 보기`}
+          </button>
+        )}
         <div className="flex flex-wrap justify-between gap-2 border-t-2 border-ink px-5 py-3 text-sm">
           <span className="font-semibold">합계 {rows.length}개 메뉴</span>
           <span className="tabular-nums">
