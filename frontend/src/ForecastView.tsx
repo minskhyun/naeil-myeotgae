@@ -25,7 +25,7 @@ function Range({ row, max }: { row: ForecastRow; max: number }) {
 function Notice({ w }: { w: Warning }) {
   const scope = w.menu_scope.includes('*') ? '전체 메뉴' : w.menu_scope.join(', ')
   return (
-    <section className="border-l-4 border-warn bg-warn-soft px-5 py-4">
+    <section className="rounded-2xl border-l-4 border-warn bg-warn-soft px-5 py-4">
       <p className="text-sm font-semibold text-warn">
         주의 · {w.situation_type} — 손님 {w.direction} 가능 ({scope}, 영향 {w.strength})
       </p>
@@ -91,7 +91,7 @@ export function ForecastView({ storeId, prepMode, readOnly = false, limit }: {
             준비 기준 {changing && <span className="text-accent">· 다시 계산 중</span>}
             {readOnly && <span className="text-faint"> · 보기 전용 매장이라 바꿀 수 없음</span>}
           </p>
-          <div className="flex border border-ink/80" role="group" aria-label="준비 기준">
+          <div className="flex overflow-hidden rounded-full border border-ink/80" role="group" aria-label="준비 기준">
             {PREP_MODES.map((m, i) => (
               <button
                 key={m}
@@ -114,7 +114,7 @@ export function ForecastView({ storeId, prepMode, readOnly = false, limit }: {
         <Notice key={i} w={w} />
       ))}
 
-      <section className="border border-rule bg-sheet">
+      <section className="overflow-hidden rounded-2xl border border-rule bg-sheet">
         <div className="hidden grid-cols-[minmax(9rem,1.3fr)_5.5rem_5.5rem_12rem_minmax(10rem,1.5fr)] gap-4 border-b border-rule px-5 py-2.5 text-sm text-muted md:grid">
           <span>메뉴</span>
           <span className="text-right">준비</span>

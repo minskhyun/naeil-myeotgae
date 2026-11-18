@@ -1,6 +1,6 @@
-// 로그인 전 첫 화면 (공개 시연 사이트도 이 화면): 예시 매장으로 제품이 무엇을 보여 주는지 한 쪽에 차례로.
-//   ① 내일 준비표  ② 어떤 주변 정보를 썼나  ③ 얼마나 맞나
-// 예시 매장 = 서버가 demo로 표시한 매장 (가상 매장, 공개 데이터). 로그인하면 이 화면 대신 Workspace.tsx가 나온다.
+// 로그인 전 첫 화면 (공개 시연 사이트도 이 화면): 제품이 무엇을 해 주는지 한 쪽에 차례로.
+//   파란 첫머리(인사·로그인) → 세 단계 안내 → 예시 ① 내일 준비표 ② 어떤 주변 정보를 썼나 ③ 얼마나 맞나
+// 예시 매장 = 서버가 demo로 표시한 매장 (가상 매장). 로그인하면 이 화면 대신 Workspace.tsx가 나온다.
 import { useQuery } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 import { api, type LoginConfig } from './api'
@@ -11,14 +11,22 @@ import { SourcesView } from './SourcesView'
 
 const FIRST_EXAMPLE = 'sinchon-a' // 보여 줄 예시 매장 (주변 정보와 주의 안내가 다 있는 가상 매장). 없으면 목록의 첫 매장
 const MENUS_SHOWN = 8 // 예시 준비표에 처음 보여 줄 메뉴 수
-// 예시 한 부분: 번호 · 무엇을 보여 주는지 한 줄 · 실제 화면
-function Part({ id, n, title, lead, children }: { id: string; n: number; title: string; lead: string; children: ReactNode }) {
+const HOW = [
+  { title: '판매 기록 올리기', text: '포스에서 내려받은 파일과 가게 위치만 알려 주세요.' },
+  { title: 'AI가 주변을 살펴요', text: '날씨, 학교 일정, 근처 행사와 소식, 메뉴 검색량을 지도 위에서 모읍니다.' },
+  { title: '내일 준비표 완성', text: '메뉴마다 몇 개 준비하면 좋을지와 그 이유를 알려 드려요.' },
+]
+
+// 예시 한 부분: 가운데 제목 · 한 줄 설명 · 흰 카드에 담은 실제 화면
+function Part({ n, title, lead, children }: { n: number; title: string; lead: string; children: ReactNode }) {
   return (
-    <section id={id} className="scroll-mt-6 border-t border-ink/80 pt-8">
-      <p className="text-sm font-semibold text-accent">예시 {n}</p>
-      <h2 className="mt-1 text-2xl font-bold tracking-tight">{title}</h2>
-      <p className="mt-2 max-w-3xl text-muted">{lead}</p>
-      <div className="mt-8">{children}</div>
+    <section>
+      <div className="mx-auto max-w-3xl text-center">
+        <span className="inline-block rounded-full bg-accent px-3 py-1 text-xs font-bold text-white">예시 {n}</span>
+        <h2 className="mt-3 text-3xl font-extrabold tracking-tight">{title}</h2>
+        <p className="mt-3 text-muted">{lead}</p>
+      </div>
+      <div className="mt-8 rounded-3xl bg-sheet p-5 shadow-sm sm:p-8">{children}</div>
     </section>
   )
 }
@@ -36,74 +44,94 @@ export function Landing({ login }: { login: LoginConfig | null }) {
 
   return (
     <div className="min-h-screen">
-      <header className="border-b border-ink/80 bg-sheet">
+      <header className="bg-sheet">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-8 gap-y-3 px-5 py-4">
           <h1 className="text-xl font-extrabold tracking-tight">내일몇개</h1>
           {login && <AccountBox login={login} />}
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl space-y-14 px-5 py-12">
-        <section>
-          <p className="text-sm text-muted">카페·베이커리를 위한 내일 판매 예측</p>
-          <h2 className="mt-1 text-4xl font-extrabold tracking-tight sm:text-5xl">내일 몇 개 만들까요?</h2>
-          <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted">
-            포스 판매 기록에 날씨·주변 행사·메뉴 유행을 더해, 내일 메뉴별로 얼마나 팔릴지와 몇 개 준비하면 좋을지 알려 드립니다.
+      <section className="bg-gradient-to-b from-accent to-accent-deep text-white">
+        <div className="mx-auto max-w-6xl px-5 py-20 text-center sm:py-28">
+          <p className="font-semibold text-white/80">카페·베이커리를 위한 내일 판매 예측</p>
+          <h2 className="mt-3 text-5xl font-extrabold tracking-tight sm:text-6xl">내일 몇 개 만들까요?</h2>
+          <p className="mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-white/90">
+            판매 기록에 날씨·주변 행사·메뉴 유행을 더해, 내일 메뉴별로 얼마나 팔릴지와 몇 개 준비하면 좋을지 알려 드려요.
           </p>
           {loginFailed && (
-            <p className="mt-5 max-w-2xl border-l-4 border-up bg-sheet px-4 py-3 text-sm">
-              로그인을 마치지 못했습니다. 다시 시도해 주세요.
+            <p className="mx-auto mt-6 max-w-md rounded-full bg-white/15 px-5 py-2 text-sm font-semibold">
+              로그인을 마치지 못했어요. 다시 시도해 주세요.
             </p>
           )}
           {login && (
-            <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2">
+            <div className="mt-8 flex flex-col items-center gap-3">
               <LoginButtons login={login} />
-              <span className="text-sm text-muted">로그인하면 내 가게 판매 기록으로 준비표를 만들 수 있습니다.</span>
+              <span className="text-sm text-white/80">로그인하면 내 가게 판매 기록으로 준비표를 만들 수 있어요.</span>
             </div>
           )}
+        </div>
+      </section>
+
+      <main className="mx-auto max-w-6xl space-y-24 px-5 py-20">
+        <section>
+          <div className="text-center">
+            <h2 className="text-3xl font-extrabold tracking-tight">세 단계면 내일 준비표 완성!</h2>
+            <p className="mt-3 text-muted">어려운 설정은 없어요. 주변 정보는 저희가 찾습니다.</p>
+          </div>
+          <ol className="mt-10 grid gap-5 md:grid-cols-3">
+            {HOW.map((h, i) => (
+              <li key={h.title} className="rounded-3xl bg-sheet px-6 py-10 text-center shadow-sm">
+                <span className="inline-block rounded-full bg-accent px-3 py-1 text-xs font-bold text-white">STEP {i + 1}</span>
+                <h3 className="mt-4 text-xl font-bold">{h.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted">{h.text}</p>
+              </li>
+            ))}
+          </ol>
         </section>
 
-        {stores.error && <p className="border-l-4 border-up bg-sheet px-4 py-3 text-sm">예시를 불러오지 못했습니다. 백엔드가 켜져 있는지 확인해 주세요.</p>}
-        {stores.data && !store && <p className="text-muted">보여 줄 예시 매장이 아직 없습니다.</p>}
+        {stores.error && <p className="rounded-2xl bg-sheet px-5 py-4 text-sm text-up">예시를 불러오지 못했습니다. 백엔드가 켜져 있는지 확인해 주세요.</p>}
+        {stores.data && !store && <p className="text-center text-muted">보여 줄 예시 매장이 아직 없습니다.</p>}
 
         {store && (
           <>
-            <p className="text-sm text-muted">아래는 가상으로 만든 예시 매장의 화면입니다.</p>
-
-            <Part id="forecast" n={1} title="내일 메뉴별로 몇 개 준비할지"
-              lead="메뉴마다 내일 예상 판매량과 예상 범위, 준비 권장량을 보여 주고, 날씨나 행사 때문에 평소와 달라진 이유를 함께 적습니다.">
+            <Part n={1} title="내일 메뉴별로 몇 개 준비할지"
+              lead="메뉴마다 내일 예상 판매량과 예상 범위, 준비 권장량을 보여 주고, 날씨나 행사 때문에 평소와 달라진 이유를 함께 적어요. 아래는 가상으로 만든 예시 매장입니다.">
               <ForecastView storeId={store.store_id} prepMode={store.prep_mode} readOnly limit={MENUS_SHOWN} />
             </Part>
 
-            <Part id="sources" n={2} title="어떤 주변 정보를 썼나"
-              lead="매장 주변을 살펴 날씨·학교 일정·행사·메뉴 검색량을 모읍니다. 그중 과거 기록으로 확인해 예측을 실제로 더 정확하게 만든 정보만 씁니다.">
+            <Part n={2} title="어떤 주변 정보를 썼나"
+              lead="매장 주변을 살펴 날씨·학교 일정·행사·메뉴 검색량을 모읍니다. 그중 지난 기록으로 확인해 예측을 실제로 더 정확하게 만든 정보만 써요.">
               <div className="space-y-10">
                 <Decisions storeId={store.store_id} />
                 <SourcesView storeId={store.store_id} brief />
               </div>
             </Part>
 
-            <Part id="backtest" n={3} title="얼마나 맞나"
-              lead="지난 기록에서 그날그날 전날까지의 자료만 보고 예측한 뒤 실제 판매와 비교한 결과입니다. 가게마다 따로 확인해 그대로 보여 줍니다.">
+            <Part n={3} title="얼마나 맞나"
+              lead="지난 기록에서 그날그날 전날까지의 자료만 보고 예측한 뒤 실제 판매와 비교한 결과예요. 가게마다 따로 확인해 그대로 보여 드립니다.">
               <BacktestView storeId={store.store_id} hideDecisions />
             </Part>
           </>
         )}
-
-        {login ? (
-          <section className="border-t border-ink/80 pt-8">
-            <h2 className="text-2xl font-bold tracking-tight">내 가게로 해 보기</h2>
-            <p className="mt-2 mb-5 max-w-2xl text-muted">
-              로그인한 뒤 매장 이름, 위치, 닫는 시간을 적고 포스에서 내려받은 판매 기록 파일을 올리면 됩니다. 올린 자료와 결과는 본인만 볼 수 있습니다.
-            </p>
-            <LoginButtons login={login} />
-          </section>
-        ) : (
-          <p className="border-t border-rule pt-4 text-xs text-faint">
-            시연용 화면입니다. 가상 매장으로 미리 계산한 결과만 보여 주며, 파일 올리기와 설정 변경은 꺼져 있습니다.
-          </p>
-        )}
       </main>
+
+      {login ? (
+        <section className="bg-ink text-white">
+          <div className="mx-auto max-w-6xl px-5 py-20 text-center">
+            <h2 className="text-3xl font-extrabold tracking-tight">내 가게로 해 보기</h2>
+            <p className="mx-auto mt-3 mb-7 max-w-xl text-white/75">
+              로그인한 뒤 매장 이름, 위치, 닫는 시간을 적고 판매 기록 파일을 올리면 됩니다. 올린 자료와 결과는 본인만 볼 수 있어요.
+            </p>
+            <div className="flex justify-center">
+              <LoginButtons login={login} />
+            </div>
+          </div>
+        </section>
+      ) : (
+        <p className="mx-auto max-w-6xl px-5 pb-10 text-xs text-faint">
+          시연용 화면입니다. 가상 매장으로 미리 계산한 결과만 보여 주며, 파일 올리기와 설정 변경은 꺼져 있습니다.
+        </p>
+      )}
     </div>
   )
 }

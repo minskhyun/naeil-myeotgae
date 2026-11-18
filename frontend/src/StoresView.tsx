@@ -50,7 +50,7 @@ export function StoresView({ onOpen, onUpload }: {
           <h2 className="mt-0.5 text-3xl font-bold tracking-tight">내 매장</h2>
           <p className="mt-2 text-muted">여기 있는 매장과 그 자료(올린 판매 기록, 결과)는 로그인한 본인만 볼 수 있습니다.</p>
         </div>
-        <button onClick={() => onUpload(null)} className="bg-accent px-4 py-2 font-semibold text-white hover:bg-accent/90">
+        <button onClick={() => onUpload(null)} className="rounded-full bg-accent px-5 py-2 font-semibold text-white hover:bg-accent-deep">
           새 매장 추가
         </button>
       </header>
@@ -78,7 +78,7 @@ export function StoresView({ onOpen, onUpload }: {
                     maxLength={40}
                     onChange={(e) => setDraft(e.target.value)}
                     aria-label="매장 이름"
-                    className="min-w-0 flex-1 border border-rule bg-sheet px-2 py-1 focus:border-ink focus:outline-none"
+                    className="min-w-0 flex-1 rounded-xl border border-rule bg-sheet px-3 py-1.5 focus:border-accent focus:outline-none"
                   />
                   <button type="submit" disabled={!draft.trim()} className={`text-sm ${LINK}`}>
                     저장
@@ -102,7 +102,7 @@ export function StoresView({ onOpen, onUpload }: {
             {asking === s.store_id ? (
               <div className="flex flex-wrap items-center gap-3 text-sm sm:justify-end">
                 <span className="text-up">올린 판매 기록과 결과가 모두 지워지고 되돌릴 수 없습니다.</span>
-                <button onClick={() => act(() => api.deleteStore(s.store_id))} className="bg-up px-3 py-1.5 font-semibold text-white">
+                <button onClick={() => act(() => api.deleteStore(s.store_id))} className="rounded-full bg-up px-4 py-1.5 font-semibold text-white">
                   지우기
                 </button>
                 <button onClick={() => setAsking(null)} className={LINK}>

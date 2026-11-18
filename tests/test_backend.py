@@ -54,6 +54,11 @@ def test_run_job_finishes(client, tmp_path):
         time.sleep(0.5)
     assert status["status"] == "done", status
     assert any("predict" in line for line in status["log"])
+    assert not any(line.startswith("@@EVENT") for line in status["log"])       # 알림 줄은 실행 기록에 섞이지 않고
+    kinds = [e["kind"] for e in status["events"]]                               # 알림으로 따로 온다 (화면의 분석 과정)
+    assert kinds[0] == "step" and {"sales", "decision", "forecast"} <= set(kinds)
+    replay = client.get("/api/stores/sinchon-a/progress").json()                # 끝난 뒤에는 다시 볼 수 있게 저장된다
+    assert [e["kind"] for e in replay] == kinds
     assert client.get("/api/stores/sinchon-a/forecast").json()["rows"][0]["date"] == "2025-12-06"
     assert "sinchon-a" not in main.RUNNING
 

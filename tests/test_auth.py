@@ -106,7 +106,7 @@ def test_first_uploader_owns_the_store(site):
     assert bob.post("/api/stores/alice-cafe/run", files=POS).status_code == 409        # 이미 쓰이는 ID
     assert bob.post("/api/stores/alice-cafe/settings", data={"prep_mode": "균형"}).status_code == 404
 
-    main.JOBS["job-a"] = dict(job_id="job-a", store_id="alice-cafe", status="running", log=[], error=None)
+    main.JOBS["job-a"] = dict(job_id="job-a", store_id="alice-cafe", status="running", log=[], events=[], error=None)
     try:
         assert alice.get("/api/jobs/job-a").status_code == 200
         assert bob.get("/api/jobs/job-a").status_code == 404                           # 남의 실행 기록도 못 본다

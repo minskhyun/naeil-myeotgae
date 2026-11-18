@@ -54,3 +54,17 @@ export const shortReason = (r: Reason) => `${SIGNAL_LABELS[r.signal] ?? r.signal
 
 // 0.191 → "19.1%"
 export const pct1 = (v: number) => `${(v * 100).toFixed(1)}%`
+
+// '분석 중' 화면에서 정보 종류마다 쓰는 색 (지도의 표시와 목록의 이름표가 같은 색)
+export const KIND_COLOR: Record<string, string> = {
+  places: '#8a9bbd',
+  plan: '#2b66f6',
+  event: '#ff7a45',
+  news: '#f43f8e',
+  weather: '#0ea5e9',
+  academic: '#8b5cf6',
+  special: '#f59e0b',
+  trend: '#10b981',
+  sales: '#15171c',
+  article: '#f43f8e',
+}

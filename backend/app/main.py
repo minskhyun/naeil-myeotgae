@@ -10,11 +10,13 @@
   GET  /api/stores/{store_id}/forecast     내일 예측 (contracts.Forecast)
   GET  /api/stores/{store_id}/backtest     모델 비교·신호 채택 (contracts.BacktestResult)
   GET  /api/stores/{store_id}/sources      주변 정보를 어디서 왜 무엇을 모았는지 (contracts.SourceReport)
+  GET  /api/stores/{store_id}/progress     마지막 분석 때 알린 것 전부 → 화면의 '분석 과정 다시 보기'
 실행 (오래 걸리므로 작업 번호를 주고, 화면이 상태를 물어본다)
   POST /api/stores/{store_id}/run          POS 파일 + 매장 주소 → run.py 전체 실행 (주변 정보는 주소로 자동 수집)
   POST /api/stores/{store_id}/demo         가상 데이터로 전체 실행 (시연용)
   POST /api/stores/{store_id}/settings     준비 방식 바꾸기 → predict 단계만 다시
-  GET  /api/jobs/{job_id}                  작업 상태 (running / done / error) + 실행 기록
+  GET  /api/jobs/{job_id}                  작업 상태 (running / done / error) + 실행 기록 + 알림(events)
+                                           알림 = 실행 중에 찾은 것 한 건씩 (ml/progress.py) → 화면이 지도 위에 그린다
 로그인 (.env에 GOOGLE_CLIENT_ID 또는 KAKAO_LOGIN=1이 있을 때만 켜진다 → backend/app/auth.py)
   POST /api/auth/google                    구글이 준 토큰을 확인하고 로그인 쿠키를 준다
   GET  /api/auth/kakao/start               카카오 로그인 화면으로 보낸다
@@ -37,6 +39,7 @@
   - frontend/dist가 있으면 화면도 이 서버가 함께 보여 준다 → 주소 하나로 끝 (Dockerfile 참고)
 """
 import datetime as dt
+import json
 import os
 import re
 import secrets
@@ -55,7 +58,7 @@ from pydantic import BaseModel, Field
 
 from backend.app import auth
 from contracts.schemas import DEFAULT_CLOSE_TIME, BacktestResult, Forecast, SourceReport, StoreConfig
-from ml import paths
+from ml import paths, progress
 from ml.predict import PREP_MODES
 
 Me = Depends(auth.current_user)     # 요청을 보낸 사람 (로그인 안 했으면 None)
@@ -143,6 +146,12 @@ def backtest(store_id: str, user: auth.User | None = Me):
 @app.get("/api/stores/{store_id}/sources", response_model=SourceReport)
 def sources(store_id: str, user: auth.User | None = Me):
     return SourceReport.model_validate_json(_read(store_id, "sources_report.json", user))
+
+
+@app.get("/api/stores/{store_id}/progress")
+def store_progress(store_id: str, user: auth.User | None = Me):
+    """마지막으로 처음부터 분석했을 때 알린 것 전부 (run.py가 progress.json으로 남긴다)."""
+    return json.loads(_read(store_id, "progress.json", user))
 
 
 # ---------------------------------------------------------------- 로그인
@@ -330,16 +339,24 @@ def _start(store_id: str, args: list[str]) -> dict:
             raise HTTPException(409, f"{store_id}는 이미 실행 중입니다. 끝난 뒤 다시 시도하세요.")
         RUNNING.add(store_id)
     job_id = uuid.uuid4().hex[:12]
-    JOBS[job_id] = dict(job_id=job_id, store_id=store_id, status="running", log=[], error=None)
+    JOBS[job_id] = dict(job_id=job_id, store_id=store_id, status="running", log=[], events=[], error=None)
     cmd = [sys.executable, str(paths.ROOT / "run.py"), "--store", store_id, "--artifacts", str(ARTIFACTS), *args]
 
     def work():
         job = JOBS[job_id]
         try:
             proc = subprocess.Popen(cmd, cwd=paths.ROOT, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                                    text=True, encoding="utf-8", errors="replace")
-            for line in proc.stdout:                       # 단계마다 한 줄씩 → 화면에 진행 상황
-                job["log"].append(line.rstrip())
+                                    text=True, encoding="utf-8", errors="replace",
+                                    env={**os.environ, "NM_PROGRESS": "1"})      # 찾은 것을 한 건씩 알리게 한다
+            for line in proc.stdout:
+                line = line.rstrip()
+                if line.startswith(progress.PREFIX):       # 알림 줄 → 화면의 지도·목록에 쓰인다
+                    try:
+                        job["events"].append(json.loads(line[len(progress.PREFIX):]))
+                    except ValueError:
+                        pass
+                else:                                      # 그 밖의 줄(단계마다 한 줄) → 실행 기록
+                    job["log"].append(line)
             proc.wait()
             if proc.returncode == 0:
                 job["status"] = "done"

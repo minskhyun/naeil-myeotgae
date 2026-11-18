@@ -112,12 +112,31 @@ export type MyStore = {
   mine: boolean // 내가 만든 매장인지 (관리자는 남의 매장도 본다)
 }
 
+// 실행 중에 서버가 알려 주는 것 한 건 (ml/progress.py가 내보낸다) → '분석 중' 화면(AnalysisView.tsx)이 지도와 목록에 그린다
+export type ProgressEvent =
+  | { kind: 'step'; step: 'ingest' | 'collect' | 'evaluate' | 'predict'; status: 'start' | 'done'; note?: string }
+  | { kind: 'status'; text: string } // 지금 하는 일 한 줄
+  | { kind: 'store'; name: string; address?: string; lat?: number; lon?: number }
+  | { kind: 'sales'; days: number; menus: number; first: string; last: string }
+  | { kind: 'places'; count: number; places: { name: string; group: string; lat: number; lon: number; distance_m: number }[] }
+  | { kind: 'plan'; method?: string; model?: string; radius_m?: number; reason?: string; picks: { what: string; name: string; lat: number; lon: number; reason?: string }[] }
+  | { kind: 'weather'; days: number }
+  | { kind: 'academic'; days: number }
+  | { kind: 'event'; title: string; place?: string; lat: number; lon: number; start: string; end: string; source: string; url?: string }
+  | { kind: 'article'; title: string; url: string }
+  | { kind: 'special'; date: string; name: string }
+  | { kind: 'trend'; menu: string; pct: number }
+  | { kind: 'decision'; group: string; adopted: boolean; reason: string }
+  | { kind: 'scores'; model: string; wape: number; base_wape: number; coverage: number; test_days?: number }
+  | { kind: 'forecast'; date: string; menus: number; top: { menu: string; prep: number | null; pred: number }[]; warnings: string[] }
+
 // 실행 작업 (예측 돌리기). 화면은 useJob.ts로 상태를 물어본다
 export type Job = {
   job_id: string
   store_id: string
   status: 'running' | 'done' | 'error'
   log: string[]
+  events: ProgressEvent[] // 실행 중에 찾은 것 한 건씩
   error: string | null
 }
 
@@ -153,6 +172,7 @@ export const api = {
   forecast: (id: string) => call<Forecast>(`/stores/${id}/forecast`),
   backtest: (id: string) => call<Backtest>(`/stores/${id}/backtest`),
   sources: (id: string) => call<SourceReport>(`/stores/${id}/sources`),
+  progress: (id: string) => call<ProgressEvent[]>(`/stores/${id}/progress`), // 마지막 분석 때 알린 것 (다시 보기)
   job: (jobId: string) => call<Job>(`/jobs/${jobId}`),
   demo: () => call<Job>('/stores/sinchon-a/demo', { method: 'POST' }),
   setPrepMode: (id: string, prepMode: string) => {

@@ -25,6 +25,7 @@ import numpy as np
 import pandas as pd
 
 from contracts.schemas import CollectionItem, SignalRow, StoreConfig
+from ml import progress
 from ml.llm import settings
 
 HOST = "https://naverapihub.apigw.ntruss.com"
@@ -200,6 +201,8 @@ def menu_trend(store_id: str, menus: list[str], start: dt.date, target: dt.date,
                                   value=round(float(value), 3), source_url=TREND_PAGE, published_at=published,
                                   kind="observed"))
         now_level = level.get(pd.Timestamp(target))
+        if now_level is not None:
+            progress.emit("trend", menu=menu, pct=round((float(now_level) - 1) * 100))    # 화면: 메뉴별 검색량 변화
         if now_level is None or abs(now_level - 1) * 100 < TREND_ALERT_PCT:
             continue
         pct = (now_level - 1) * 100

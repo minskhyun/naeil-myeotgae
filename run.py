@@ -32,10 +32,11 @@ from pathlib import Path
 
 import pandas as pd
 
-from agent import collect, geocode
+from agent import collect, collectors_bridge, geocode
 from agent.collectors_bridge import OBSERVED_PROXY
 from agent.report import write_report
 from contracts.schemas import BacktestResult, CollectionItem, SignalRow, StoreConfig
+from ml import progress
 from ml.alerts import make_warnings
 from ml.evaluate import run_backtest, write_backtest
 from ml.features import load_sales, load_signals, to_kst
@@ -44,6 +45,7 @@ from ml.paths import ARTIFACTS, RAW, SAMPLE
 from ml.predict import predict_from_backtest, write_forecast
 
 STEPS = ["ingest", "evaluate", "predict"]
+PROGRESS_FILE = "progress.json"        # 실행 중에 알린 것 전부 (ml/progress.py) → 웹의 '분석 과정 다시 보기'
 
 
 def _need(path: Path, step: str) -> Path:
@@ -85,6 +87,8 @@ def _ingest_demo(args, out: Path) -> str:
     shutil.copyfile(src / "store.json", out / "store.json")
     if (src / "collectors").exists():                     # 정보원 선택 에이전트를 미리 돌려 둔 결과 (sample_data.py 참고)
         shutil.copytree(src / "collectors", out / "collectors", dirs_exist_ok=True)
+    _tell_sales(sales)
+    _tell_demo_surroundings(args.store, out)
     note = f"가상 데이터 {sales['date'].nunique()}일, {len(sales)}행"
     if args.collection:
         note += ", " + _import_collection(Path(args.collection), out, append=False)
@@ -92,17 +96,47 @@ def _ingest_demo(args, out: Path) -> str:
     return note
 
 
+def _tell_sales(sales: pd.DataFrame) -> None:
+    """화면에 알리기: 판매 기록이 며칠치, 메뉴 몇 개인지."""
+    progress.emit("sales", days=int(sales["date"].nunique()), menus=int(sales["menu"].nunique()),
+                  first=sales["date"].min().date(), last=sales["date"].max().date())
+
+
+def _tell_demo_surroundings(store_id: str, out: Path) -> None:
+    """가상 매장: 미리 만들어 둔 주변 시설·정보원 계획과 가상 기사를 화면에 알린다 (실제 수집은 하지 않는다)."""
+    work_dir = out / "collectors"
+    nearby = work_dir / f"{store_id}_nearby.json"
+    if nearby.exists():
+        at = json.loads(nearby.read_text(encoding="utf-8"))
+        store = StoreConfig.read(out / "store.json")
+        progress.emit("store", name=store.name or store_id, address=store.address, lat=at.get("lat"), lon=at.get("lon"))
+        progress.emit("step", step="collect", status="start")
+        collectors_bridge.tell_plan(store_id, work_dir)
+    signals = load_signals(out / "signals.csv")
+    days = lambda names: int(signals.loc[signals["signal"].isin(names), "date"].nunique())     # noqa: E731
+    progress.emit("weather", days=days(["temp_mean", "rain_mm"]))
+    progress.emit("academic", days=days(collectors_bridge.ACADEMIC_COLS))
+    progress.emit("step", step="collect", status="done")
+
+
 def _ingest_pos(args, out: Path) -> str:
     """실데이터: POS 파일 정리 → 매장 설정 → 주변 정보 (사장님은 POS와 주소만 준다)."""
+    progress.status("판매 기록을 읽는 중")
     notes = [ingest_store(Path(args.pos), args.store, out, pos_type=args.pos_type)]
+    _tell_sales(load_sales(out / "sales_clean.csv"))
+    if args.address:
+        progress.status("매장 위치를 찾는 중")
     store, where = _store_setup(args, out)
+    progress.emit("store", name=store.name or store.store_id, address=store.address, lat=store.lat, lon=store.lon)
     notes.append(where)
     collected = []                                         # 정보원별 수집 메모 (sources_report.json에 남긴다)
     if args.signals:                                       # 신호 파일을 직접 주면 자동 수집을 하지 않는다
         notes.append(_write_signals(load_signals(args.signals), args.store, out, Path(args.signals).name))
         collected.append(f"신호 파일을 직접 받음: {Path(args.signals).name}")
     else:
+        progress.emit("step", step="collect", status="start")
         summary, collected = _auto_collect(store, out)
+        progress.emit("step", step="collect", status="done")
         notes.append(summary)
     if args.collection:                                    # 직접 준 원문은 자동 수집분 뒤에 덧붙인다
         notes.append(_import_collection(Path(args.collection), out, append=True))
@@ -194,8 +228,17 @@ def _import_collection(path: Path, out: Path, append: bool = False) -> str:
 
 def step_evaluate(args, out: Path) -> str:
     store, sales, signals = _load(out)
+    progress.status("지난 기록으로 예측을 시험해, 어떤 정보가 실제로 도움이 되는지 확인하는 중")
     bt = run_backtest(sales, signals, close_time=store.close_time, **args.model_kwargs)
     write_backtest(bt, out.parent)
+    for d in bt.decisions:                                    # 화면: 정보 묶음마다 쓸지 말지
+        progress.emit("decision", group=d.signal_group, adopted=d.adopted, reason=d.reason)
+    test = {s.model[:2]: s for s in bt.test_scores}           # "M3(채택 신호만)" → "M3"
+    mine, base = test.get(bt.chosen_model[:2]), test.get("M0")
+    if mine and base:
+        days = (pd.Timestamp(bt.test_period[1]) - pd.Timestamp(bt.test_period[0])).days + 1 if bt.test_period else None
+        progress.emit("scores", model=bt.chosen_model, wape=round(mine.wape, 4), base_wape=round(base.wape, 4),
+                      coverage=round(mine.coverage_80, 4), test_days=days)
     adopted = [d.signal_group for d in bt.decisions if d.adopted] or ["없음"]
     return f"선택 모델 {bt.chosen_model}, 채택 신호 {', '.join(adopted)}"
 
@@ -204,6 +247,7 @@ def step_evaluate(args, out: Path) -> str:
 
 def step_predict(args, out: Path) -> str:
     store, sales, signals = _load(out)
+    progress.status("내일 메뉴별 판매량을 예측하는 중")
     bt = BacktestResult.model_validate_json(_need(out / "backtest.json", "evaluate").read_text(encoding="utf-8"))
     fc = predict_from_backtest(sales, signals, bt, close_time=store.close_time, prep_mode=store.prep_mode,
                                menus=store.menus, **args.model_kwargs)
@@ -214,12 +258,16 @@ def step_predict(args, out: Path) -> str:
             note += f", menus 중 예측 못 한 메뉴(최근 14일 판매 기록 없음·오타?): {', '.join(missing)}"
     if (out / "collection.json").exists():                    # 모은 원문이 있으면 AI 주의 안내 (숫자는 안 바꿈)
         try:
+            progress.status("AI가 모은 소식 중 주의할 것이 있는지 읽는 중")
             collection = json.loads((out / "collection.json").read_text(encoding="utf-8"))
             fc.warnings = make_warnings(fc, collection, out / "llm_cache", close_time=store.close_time)
             note += f", 경고 {len(fc.warnings)}개"
         except Exception as e:                                # 안내는 부가 기능: 실패해도 예측은 저장
             note += f", 경고 생성 실패({type(e).__name__}) → 경고 없이 저장"
     write_forecast(fc, out.parent)
+    top = sorted(fc.rows, key=lambda r: r.pred, reverse=True)[:5]
+    progress.emit("forecast", date=fc.rows[0].date, menus=len(fc.rows), warnings=[w.message for w in fc.warnings],
+                  top=[dict(menu=r.menu, prep=r.prep_qty, pred=round(r.pred)) for r in top])
     return f"{fc.rows[0].date} 메뉴 {len(fc.rows)}개 예측{note}"
 
 
@@ -253,10 +301,15 @@ def main(argv=None) -> Path:
     args = parse_args(argv)
     out = Path(args.artifacts) / args.store
     start_all = time.perf_counter()
+    progress.reset()
     for step in STEPS[STEPS.index(args.from_step):]:
         t = time.perf_counter()
+        progress.emit("step", step=step, status="start")
         note = STEP_FUNCS[step](args, out)
+        progress.emit("step", step=step, status="done", note=note)
         print(f"[{step:<8}] {time.perf_counter() - t:5.1f}초  {note}")
+    if args.from_step == "ingest":                             # 처음부터 돌린 실행만 남긴다 (준비 방식만 바꾼 실행은 덮어쓰지 않음)
+        progress.save(out / PROGRESS_FILE)
     print(f"완료 {time.perf_counter() - start_all:.1f}초 → {out}")
     return out
 

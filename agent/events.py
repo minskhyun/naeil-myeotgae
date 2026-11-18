@@ -21,6 +21,7 @@ from pydantic import BaseModel
 
 from agent.geocode import geocode as find_place
 from contracts.schemas import CollectionItem, SignalRow
+from ml import progress
 from ml.llm import ask
 
 NEAR_KM = 1.0              # 매장에서 이 거리 안이면 '근처' (걸어서 15분 안팎)
@@ -137,6 +138,7 @@ def page_event_signals(store_id: str, lat: float, lon: float, sources: list[tupl
         except Exception as e:
             notes.append(f"글을 못 받음({type(e).__name__}): {url}")
             continue
+        progress.emit("article", title=title, url=url)                      # 화면: 지금 읽는 글
         for ev in extract_events(title, text, published, cache_dir):
             try:
                 elat, elon, _ = geocode(ev.place)
@@ -146,6 +148,8 @@ def page_event_signals(store_id: str, lat: float, lon: float, sources: list[tupl
             if distance_km(lat, lon, elat, elon) > NEAR_KM:
                 continue
             last = ev.end_date or ev.start_date
+            progress.emit("event", title=ev.title or title, place=ev.place, lat=elat, lon=elon, start=ev.start_date,
+                          end=last, source="뉴스·블로그", url=url, cancelled=ev.cancelled or None)
             if (last - ev.start_date).days + 1 > MAX_EVENT_DAYS:   # 긴 팝업: 신호는 없이, 여는 날 원문만
                 if start <= ev.start_date <= end:
                     items.append(CollectionItem(date=ev.start_date, title=f"[새로 엶] {ev.title or title}", text=text,

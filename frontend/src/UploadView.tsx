@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type ReactNode } from 'react'
 import { useDropzone } from 'react-dropzone'
-import { api, type Job } from './api'
+import { api } from './api'
 
 const POS_TYPES = {
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
@@ -9,7 +9,7 @@ const POS_TYPES = {
   'text/csv': ['.csv'],
 }
 const NEW = 'new' // 매장 고르기에서 '새 매장 만들기'
-const INPUT = 'mt-1 w-full border border-rule bg-sheet px-3 py-2 focus:border-ink focus:outline-none'
+const INPUT = 'mt-1 w-full rounded-xl border border-rule bg-sheet px-3.5 py-2.5 focus:border-accent focus:outline-none'
 
 // 번호가 붙은 단계 한 칸: 왼쪽에 제목, 오른쪽에 내용
 function Step({ n, title, children }: { n: number; title: string; children: ReactNode }) {
@@ -45,8 +45,8 @@ function PosFile({ file, onPick }: { file?: File; onPick: (f: File) => void }) {
   return (
     <div
       {...getRootProps()}
-      className={`flex flex-wrap items-center justify-between gap-3 border px-4 py-3 ${
-        isDragActive ? 'border-accent bg-accent-soft' : 'border-rule bg-sheet'
+      className={`flex flex-wrap items-center justify-between gap-3 rounded-2xl border-2 border-dashed px-4 py-4 ${
+        isDragActive ? 'border-accent bg-accent-soft' : 'border-rule bg-paper'
       }`}
     >
       <input {...getInputProps()} />
@@ -56,7 +56,7 @@ function PosFile({ file, onPick }: { file?: File; onPick: (f: File) => void }) {
           {file ? file.name : '토스포스·OKPOS에서 내려받은 CSV 또는 엑셀(.xlsx) — 끌어다 놓아도 됩니다'}
         </p>
       </div>
-      <button type="button" onClick={open} className="border border-ink/80 bg-sheet px-3 py-1.5 text-sm hover:bg-paper">
+      <button type="button" onClick={open} className="rounded-full border border-rule bg-sheet px-4 py-1.5 text-sm font-semibold hover:bg-paper">
         {file ? '다른 파일' : '파일 고르기'}
       </button>
     </div>
@@ -68,11 +68,11 @@ function PosFile({ file, onPick }: { file?: File; onPick: (f: File) => void }) {
 //   계정 방식 + 있는 매장 : 그 매장의 판매 기록 다시 올리기 ('매장 관리'에서 누르고 온 경우, initialTarget)
 //   로그인을 안 쓰는 서버 : 매장 ID를 직접 적는다 (혼자 쓰는 노트북용, 가상 매장 시연 단추도 여기만)
 // first: 아직 매장이 하나도 없는 사람에게 처음 보여 주는 경우 (환영 문구)
-// job·onStarted: 실행 작업은 Workspace가 지켜본다 → 이 창을 닫아도 계산은 이어지고, 다시 열면 진행 상황이 보인다
-export function UploadView({ job, onStarted, onClose, account = false, initialTarget = null, first = false }: {
-  job?: Job
+// onStarted: 실행이 시작되면 작업 번호를 Workspace에 넘긴다 → 이 창은 닫히고 '분석 중' 화면(AnalysisView)이 뜬다
+// busy: 다른 분석이 아직 돌고 있다 (끝날 때까지 새로 시작할 수 없다)
+export function UploadView({ onStarted, busy = false, account = false, initialTarget = null, first = false }: {
   onStarted: (jobId: string) => void
-  onClose: () => void
+  busy?: boolean
   account?: boolean
   initialTarget?: string | null
   first?: boolean
@@ -91,17 +91,20 @@ export function UploadView({ job, onStarted, onClose, account = false, initialTa
   const address = typedAddress ?? chosen?.address ?? ''
   const [pos, setPos] = useState<File>()
   const [error, setError] = useState<string | null>(null)
-  const running = job?.status === 'running'
+  const [sending, setSending] = useState(false) // 파일을 보내는 중
 
-  // 실행 요청을 보내고, 돌려받은 작업 번호를 Workspace에 넘겨 진행 상황을 지켜보게 한다
+  // 실행 요청을 보내고, 돌려받은 작업 번호를 Workspace에 넘긴다 (거기서 분석 화면을 띄우고 진행을 지켜본다)
   const start = async (request: () => Promise<{ job_id: string }>) => {
     setError(null)
+    setSending(true)
     try {
       onStarted((await request()).job_id)
     } catch (e) {
       setError((e as Error).message)
+      setSending(false)
     }
   }
+  const running = busy || sending
 
   // 준비표 만들기: 새 매장이면 먼저 매장을 만들어 ID를 받고, 그 매장에 파일을 올린다
   const run = async () => {
@@ -156,11 +159,11 @@ export function UploadView({ job, onStarted, onClose, account = false, initialTa
         <PosFile file={pos} onPick={setPos} />
       </Step>
 
-      <Step n={3} title="실행">
+      <Step n={3} title="분석">
         <div className="flex flex-wrap items-center gap-3">
           <button disabled={!pos || running || !closeTime || (isNew && !name.trim())} onClick={() => start(run)}
-            className="bg-accent px-5 py-2.5 font-semibold text-white hover:bg-accent/90 disabled:cursor-not-allowed disabled:opacity-40">
-            {isNew ? '매장 추가하고 준비표 만들기' : '준비표 만들기'}
+            className="rounded-full bg-accent px-7 py-3 font-bold text-white hover:bg-accent-deep disabled:cursor-not-allowed disabled:opacity-40">
+            {sending ? '보내는 중…' : '분석 및 예측하기'}
           </button>
           {!account && (
             <>
@@ -173,26 +176,7 @@ export function UploadView({ job, onStarted, onClose, account = false, initialTa
           )}
         </div>
         {error && <p className="mt-3 text-sm text-up">{error}</p>}
-        {job && (
-          <div className="mt-5 border border-rule bg-sheet">
-            <p className="border-b border-rule px-4 py-2 text-sm font-semibold">
-              {job.status === 'running' && '실행 중…'}
-              {job.status === 'done' && <span className="text-accent">완료 — 준비표가 만들어졌습니다</span>}
-              {job.status === 'error' && <span className="text-up">실패</span>}
-            </p>
-            <pre className="overflow-x-auto px-4 py-3 font-mono text-xs leading-relaxed text-muted">
-              {job.log.join('\n') || '시작하는 중…'}
-              {job.status === 'error' && job.error && `\n\n${job.error}`}
-            </pre>
-            {job.status === 'done' && (
-              <p className="border-t border-rule px-4 py-3">
-                <button onClick={onClose} className="bg-accent px-4 py-2 text-sm font-semibold text-white hover:bg-accent/90">
-                  결과 보기
-                </button>
-              </p>
-            )}
-          </div>
-        )}
+        {busy && <p className="mt-3 text-sm text-muted">다른 분석이 아직 진행 중입니다. 끝난 뒤에 시작할 수 있어요.</p>}
       </Step>
     </div>
   )

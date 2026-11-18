@@ -20,8 +20,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from agent import collectors_bridge, events, naver
-from agent.special_days import special_day_signals
+from agent.special_days import special_day_names, special_day_signals
 from contracts.schemas import CollectionItem, SignalRow, StoreConfig
+from ml import progress
 from ml.paths import RAW
 
 Result = tuple[list[SignalRow], list[CollectionItem], list[str]]
@@ -50,12 +51,17 @@ def public_data(job: CollectJob) -> Result:
     ok, tail = collectors_bridge.run_collectors(store_id, job.start, yesterday, job.work_dir)
     if not ok:
         return [], [], ["공공 데이터 수집 실패 → 날씨·학사일정·서울 행사 없이 진행: " + " / ".join(tail[-2:])]
-    return collectors_bridge.signals_from_collectors(store_id, job.start, job.end, job.work_dir)
+    rows, items, notes = collectors_bridge.signals_from_collectors(store_id, job.start, job.end, job.work_dir)
+    collectors_bridge.tell_results(store_id, job.work_dir, rows, job.target or job.end)
+    return rows, items, notes
 
 
 def special_days(job: CollectJob) -> Result:
     """발렌타인·빼빼로데이·크리스마스 같은 기념일."""
-    return special_day_signals(job.store.store_id, job.start, job.end), [], []
+    rows = special_day_signals(job.store.store_id, job.start, job.end)
+    for date, name in special_day_names(job.start, job.end)[-4:]:        # 화면에는 가까운 날 몇 개만
+        progress.emit("special", date=date, name=name)
+    return rows, [], []
 
 
 def event_posts(job: CollectJob) -> Result:
@@ -87,6 +93,9 @@ def menu_trend(job: CollectJob) -> Result:
 
 
 SOURCES = [("공공 데이터", public_data), ("기념일", special_days), ("행사 글", event_posts), ("메뉴 검색량", menu_trend)]
+# 정보원을 시작할 때 화면에 보여 줄 '지금 하는 일' (ml/progress.py)
+SOURCE_TEXT = {"공공 데이터": "날씨·학교 일정·서울시 행사를 모으는 중", "기념일": "기념일을 확인하는 중",
+               "행사 글": "근처 팝업·행사 소식을 뉴스와 블로그에서 찾는 중", "메뉴 검색량": "메뉴별 검색량(유행)을 확인하는 중"}
 
 
 # ---------------------------------------------------------------- 한 번에
@@ -97,6 +106,7 @@ def collect_all(store: StoreConfig, start: dt.date, end: dt.date, work_dir: Path
     job = CollectJob(store, start, end, Path(work_dir), sources_path, target, menus or [])
     rows, items, notes = [], [], []
     for name, source in SOURCES:
+        progress.status(SOURCE_TEXT.get(name, name))
         try:
             r, i, n = source(job)
         except Exception as e:
