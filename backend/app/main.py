@@ -153,6 +153,7 @@ class GoogleLogin(BaseModel):
 
 STATE_COOKIE = "nm_oauth_state"            # 카카오로 보낼 때 심어 두는 확인용 값 (10분)
 KAKAO_CALLBACK = "/api/auth/kakao/callback"  # 카카오 콘솔의 '리다이렉트 URI'에 등록하는 주소의 뒷부분
+ASKED = ".nickname"                        # state 끝에 붙이는 표시: 닉네임 동의를 따로 물어보고 돌아오는 길
 
 
 def _origin(request: Request) -> str:
@@ -191,12 +192,25 @@ def auth_kakao_start(request: Request):
 
 @app.get(KAKAO_CALLBACK)
 def auth_kakao_callback(request: Request, code: str | None = None, state: str | None = None):
-    """카카오가 사용자를 돌려보내는 곳. 성공하면 로그인 쿠키를 주고 첫 화면으로, 실패·취소면 ?login_error=kakao 로."""
+    """카카오가 사용자를 돌려보내는 곳. 성공하면 로그인 쿠키를 주고 첫 화면으로, 실패·취소면 ?login_error=kakao 로.
+    닉네임 제공에 아직 동의하지 않은 계정이면, 로그인은 시켜 두고 그 항목만 한 번 더 물어보러 보낸다
+    (콘솔에서 동의항목을 나중에 켰을 때, 먼저 가입한 사람은 이렇게 따로 물어야 닉네임을 받을 수 있다)."""
     saved = request.cookies.get(STATE_COOKIE)
-    back = RedirectResponse("/?login_error=kakao")
-    if auth.KAKAO_KEY and code and state and saved and secrets.compare_digest(state, saved):
+    callback = _origin(request) + KAKAO_CALLBACK
+    mine = bool(state and saved and secrets.compare_digest(state, saved))       # 우리가 보낸 요청이 맞는가
+    asked = mine and state.endswith(ASKED)                                      # 닉네임을 물어보고 돌아오는 길인가
+    # 닉네임 동의를 거절하고 돌아왔어도 로그인은 이미 돼 있으니 첫 화면으로 보낸다
+    back = RedirectResponse("/" if asked and auth.current_user(request) else "/?login_error=kakao")
+    if auth.KAKAO_KEY and code and mine:
         try:
-            _, token = auth.login_as("kakao", auth.kakao_profile(code, _origin(request) + KAKAO_CALLBACK))
+            profile = auth.kakao_profile(code, callback)
+            _, token = auth.login_as("kakao", profile)
+            if profile.get("ask_nickname") and not asked:
+                again = secrets.token_urlsafe(16) + ASKED
+                back = RedirectResponse(auth.kakao_login_url(callback, again, scope="profile_nickname"))
+                back.set_cookie(STATE_COOKIE, again, max_age=600, httponly=True, samesite="lax", secure=callback.startswith("https"))
+                _set_session(back, request, token)
+                return back
             back = RedirectResponse("/")
             _set_session(back, request, token)
         except Exception as e:                       # 코드 만료, 시크릿 틀림, 카카오 서버 오류 등 → 서버 기록에 이유를 남긴다

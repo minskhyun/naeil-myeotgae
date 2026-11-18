@@ -308,7 +308,8 @@ def test_kakao_profile_reads_only_verified_email(monkeypatch):
     monkeypatch.setattr(requests, "get", fake_get)
     monkeypatch.setattr(auth, "KAKAO_KEY", "kakao-rest-key")
     monkeypatch.setattr(auth, "KAKAO_SECRET", "s3cret")
-    assert auth.kakao_profile("good", "http://x/cb") == dict(sub="4242", email="a@example.com", name="민지", picture="https://img/1.jpg")
+    assert auth.kakao_profile("good", "http://x/cb") == dict(sub="4242", email="a@example.com", name="민지", picture="https://img/1.jpg",
+                                                             ask_nickname=False)
     assert (sent["url"], sent["client_id"], sent["client_secret"], sent["redirect_uri"], sent["grant_type"], sent["auth"]) == \
         (auth.KAKAO_TOKEN, "kakao-rest-key", "s3cret", "http://x/cb", "authorization_code", "Bearer tok")
     sent["verified"] = False
@@ -349,3 +350,29 @@ def test_kakao_comes_back_to_the_address_the_user_opened(kakao):
         client.get("/api/auth/kakao/start", headers=via_proxy).headers["location"]
     assert "redirect_uri=http%3A%2F%2Ftestserver%2Fapi%2Fauth%2Fkakao%2Fcallback" in \
         client.get("/api/auth/kakao/start").headers["location"]
+
+
+def test_kakao_asks_for_nickname_once_when_not_yet_agreed(kakao, monkeypatch):
+    """닉네임 제공에 아직 동의하지 않은 계정: 로그인은 시켜 두고 그 항목만 따로 물어본다. 동의하면 이름이 바뀌고, 거절해도 로그인은 유지."""
+    replies = {"first": dict(sub="k-9", email=None, name="카카오 사용자", picture=None, ask_nickname=True),
+               "agreed": dict(sub="k-9", email=None, name="민지", picture=None, ask_nickname=False)}
+    monkeypatch.setattr(auth, "kakao_profile", lambda code, redirect_uri: replies[code])
+
+    client = TestClient(main.app, follow_redirects=False)
+    client.get("/api/auth/kakao/start")
+    go = client.get(f"/api/auth/kakao/callback?code=first&state={client.cookies.get(main.STATE_COOKIE)}")
+    state = client.cookies.get(main.STATE_COOKIE)
+    assert "scope=profile_nickname" in go.headers["location"] and state.endswith(main.ASKED)   # 닉네임만 물어보러 감
+    assert client.get("/api/auth/me").json()["name"] == "카카오 사용자"                          # 그사이 로그인은 이미 됨
+
+    declined = TestClient(main.app, follow_redirects=False, cookies=dict(client.cookies))        # 거절하고 돌아온 경우
+    assert declined.get(f"/api/auth/kakao/callback?error=access_denied&state={state}").headers["location"] == "/"
+    assert declined.get("/api/auth/me").json()["name"] == "카카오 사용자"
+
+    back = client.get(f"/api/auth/kakao/callback?code=agreed&state={state}")                     # 동의하고 돌아온 경우
+    assert back.headers["location"] == "/" and client.get("/api/auth/me").json()["name"] == "민지"
+
+    still = dict(replies["first"])                                                               # 또 못 받아도 다시 묻지는 않는다 (무한 반복 방지)
+    monkeypatch.setattr(auth, "kakao_profile", lambda code, redirect_uri: still)
+    client.cookies.set(main.STATE_COOKIE, state)
+    assert client.get(f"/api/auth/kakao/callback?code=x&state={state}").headers["location"] == "/"

@@ -157,14 +157,20 @@ def verify_google(credential: str) -> dict:
     return claims
 
 
-def kakao_login_url(redirect_uri: str, state: str) -> str:
-    """카카오 로그인 화면 주소. state는 우리가 보낸 요청이 맞는지 돌아왔을 때 확인하는 무작위 값."""
-    return KAKAO_AUTHORIZE + "?" + urlencode(dict(client_id=KAKAO_KEY, redirect_uri=redirect_uri, response_type="code", state=state))
+def kakao_login_url(redirect_uri: str, state: str, scope: str | None = None) -> str:
+    """카카오 로그인 화면 주소. state는 우리가 보낸 요청이 맞는지 돌아왔을 때 확인하는 무작위 값.
+    scope를 주면 그 동의항목만 따로 물어보는 화면이 된다 (이미 가입한 사람에게 닉네임 제공 동의를 받을 때)."""
+    query = dict(client_id=KAKAO_KEY, redirect_uri=redirect_uri, response_type="code", state=state)
+    if scope:
+        query["scope"] = scope
+    return KAKAO_AUTHORIZE + "?" + urlencode(query)
 
 
 def kakao_profile(code: str, redirect_uri: str) -> dict:
-    """카카오가 준 인가 코드 → 계정 정보(sub, email, name, picture). 실패하면 ValueError.
-    코드 → 액세스 토큰(서버끼리) → 사용자 정보. 토큰은 여기서만 쓰고 저장하지 않는다."""
+    """카카오가 준 인가 코드 → 계정 정보(sub, email, name, picture, ask_nickname). 실패하면 ValueError.
+    코드 → 액세스 토큰(서버끼리) → 사용자 정보. 토큰은 여기서만 쓰고 저장하지 않는다.
+    name은 카카오 닉네임(프로필 이름). 닉네임을 못 받으면 "카카오 사용자".
+    ask_nickname: 닉네임 동의항목은 켜져 있는데 이 사람이 아직 동의하지 않았다 → 한 번 더 물어보면 받을 수 있다."""
     import requests
     body = dict(grant_type="authorization_code", client_id=KAKAO_KEY, redirect_uri=redirect_uri, code=code)
     if KAKAO_SECRET:
@@ -180,8 +186,10 @@ def kakao_profile(code: str, redirect_uri: str) -> dict:
     account = data.get("kakao_account") or {}
     profile = account.get("profile") or {}
     verified = account.get("is_email_valid") and account.get("is_email_verified")    # 인증된 이메일만 믿는다
+    nickname = profile.get("nickname")
     return dict(sub=str(data["id"]), email=account.get("email") if verified else None,
-                name=profile.get("nickname") or "카카오 사용자", picture=profile.get("profile_image_url"))
+                name=nickname or "카카오 사용자", picture=profile.get("profile_image_url"),
+                ask_nickname=not nickname and account.get("profile_nickname_needs_agreement") is True)
 
 
 def login_as(provider: str, profile: dict) -> tuple[User, str]:
