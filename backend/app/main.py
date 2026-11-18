@@ -156,9 +156,11 @@ KAKAO_CALLBACK = "/api/auth/kakao/callback"  # 카카오 콘솔의 '리다이렉
 
 
 def _origin(request: Request) -> str:
-    """사용자가 연 주소의 앞부분 (예: http://localhost:5173). 클라우드는 앞단이 https를 받아서 헤더로 알려 준다."""
-    scheme = request.headers.get("x-forwarded-proto", request.url.scheme)
-    return f"{scheme}://{request.headers.get('host', request.url.netloc)}"
+    """사용자가 연 주소의 앞부분 (예: http://localhost:5173).
+    앞단(개발용 화면 서버, 클라우드)을 거쳐 오면 원래 주소를 x-forwarded-* 헤더로 알려 준다."""
+    scheme = request.headers.get("x-forwarded-proto", request.url.scheme).split(",")[0].strip()
+    host = request.headers.get("x-forwarded-host") or request.headers.get("host", request.url.netloc)
+    return f"{scheme}://{host.split(',')[0].strip()}"
 
 
 def _set_session(response: Response, request: Request, token: str) -> None:

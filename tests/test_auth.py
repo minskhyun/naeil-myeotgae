@@ -339,3 +339,13 @@ def test_old_google_only_database_is_migrated(site):
     con = sqlite3.connect(auth.DB_PATH)
     assert con.execute("SELECT id, provider, subject FROM users").fetchall() == [(7, "google", "g-1")]
     con.close()
+
+
+def test_kakao_comes_back_to_the_address_the_user_opened(kakao):
+    """앞단(개발용 화면 서버, 클라우드)을 거쳐 와도, 카카오에 알려 주는 돌아올 주소는 사용자가 연 주소다."""
+    client = TestClient(main.app, follow_redirects=False)
+    via_proxy = {"x-forwarded-host": "shop.example.com", "x-forwarded-proto": "https"}
+    assert "redirect_uri=https%3A%2F%2Fshop.example.com%2Fapi%2Fauth%2Fkakao%2Fcallback" in \
+        client.get("/api/auth/kakao/start", headers=via_proxy).headers["location"]
+    assert "redirect_uri=http%3A%2F%2Ftestserver%2Fapi%2Fauth%2Fkakao%2Fcallback" in \
+        client.get("/api/auth/kakao/start").headers["location"]
