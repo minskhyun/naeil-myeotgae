@@ -75,15 +75,15 @@ def _request(path: str, params: dict | None = None, body: dict | None = None) ->
 
 # ---------------------------------------------------------------- 1. 뉴스·블로그
 
-def area_keywords(store: StoreConfig, station: str | None = None) -> list[str]:
-    """근처 소식을 검색할 동네 이름. 순서: 매장 설정의 area_keywords → 가장 가까운 역 이름(station) → 주소에서 뽑은 말.
-    역 이름 하나만 쓰는 이유: 재 보니 '신촌' 하나로 찾을 때 근처 행사가 가장 많이 나왔다. 주소에서 뽑은 '서대문'·'연세'는
+def area_keywords(store: StoreConfig, area: str | None = None) -> list[str]:
+    """근처 소식을 검색할 동네 이름. 순서: 매장 설정의 area_keywords → 동 이름(area, geocode.area_name) → 주소에서 뽑은 말.
+    동네 이름 하나만 쓰는 이유: 재 보니 '신촌' 하나로 찾을 때 근처 행사가 가장 많이 나왔다. 주소에서 뽑은 '서대문'·'연세'는
     구청 소식·병원 학술행사가 섞이고, 말을 여럿 쓰면 읽을 글 MAX_ARTICLES개 안에서 좋은 글이 밀려난다 (ml/REVIEW.md E).
     주소에서 뽑기: 도로·구 이름 ('서울숲2길' → '서울숲', '성동구' → '성동')."""
     if store.area_keywords:
         return list(store.area_keywords)
-    if station:
-        return [station]
+    if area:
+        return [area]
     out = []
     for tok in (store.address or "").split():
         m = re.fullmatch(r"(.+?)\d*(?:길|로)", tok) or re.fullmatch(r"(.+?)(?:구|동)", tok)
@@ -139,8 +139,11 @@ def news_sources(areas: list[str], search=None, now: dt.datetime | None = None
 # ---------------------------------------------------------------- 2. 메뉴 검색량 유행
 
 def menu_keyword(menu: str) -> str:
-    """POS 메뉴 이름 → 검색어. 아이스/핫 표기·괄호를 뗀다 ('아메리카노(ICE)' → '아메리카노')."""
-    s = re.sub(r"\((?:ice|iced|hot)\)|아이스|따뜻한|\b(?:ice|iced|hot)\b", "", menu, flags=re.I)
+    """POS 메뉴 이름 → 검색어. 아이스/핫 표기·괄호를 뗀다 ('아메리카노(ICE)' → '아메리카노').
+    한글 이름 뒤에 영어 이름을 괄호로 붙인 메뉴는 한글 이름만 쓴다 ('카페라떼 (Cafe latte)' → '카페라떼')."""
+    if re.search(r"[가-힣]", re.sub(r"\([^)가-힣]*\)?", "", menu)):
+        menu = re.sub(r"\([^)가-힣]*\)?", "", menu)
+    s = re.sub(r"\((?:ice|iced|hot)\)|아이스(?!티)|따뜻한|\b(?:ice|iced|hot)\b", "", menu, flags=re.I)
     return " ".join(re.sub(r"[()\[\]]", " ", s).split())
 
 

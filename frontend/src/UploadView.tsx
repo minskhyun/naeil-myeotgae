@@ -53,7 +53,7 @@ function PosFile({ file, onPick }: { file?: File; onPick: (f: File) => void }) {
       <div className="min-w-0 flex-1">
         <p className="font-medium">POS 판매 기록</p>
         <p className="text-sm text-muted">
-          {file ? file.name : '토스포스·OKPOS에서 내려받은 CSV 또는 엑셀(.xlsx) — 끌어다 놓아도 됩니다'}
+          {file ? file.name : 'POS·매출 프로그램에서 내려받은 CSV 또는 엑셀(.xlsx) — 끌어다 놓아도 됩니다'}
         </p>
       </div>
       <button type="button" onClick={open} className="rounded-full border border-rule bg-sheet px-4 py-1.5 text-sm font-semibold hover:bg-paper">

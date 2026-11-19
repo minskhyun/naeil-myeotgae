@@ -25,9 +25,13 @@ COLUMN_MAP = {
               "qty": ["수량", "판매수량"], "time": ["시간", "판매시각", "결제시각"]},
     "okpos": {"date": ["일자", "영업일자", "판매일자"], "menu": ["상품명"],
               "qty": ["수량", "판매수량"], "time": ["시간", "판매시간"]},
+    # 상품별 매출 엑셀 (일자 · 품목코드 · 품목명 · 규격 · 수량 · 공급가액 · 부가세). 달마다 시트가 나뉘어 있다
+    "items": {"date": ["일자", "판매일자"], "menu": ["품목명"], "qty": ["수량", "판매수량"]},
 }
 HEADER_SEARCH_ROWS = 10                          # 머리글을 찾을 범위 (위에서 10줄)
 TOTAL_WORDS = ("합계", "소계", "총계", "총합")    # 이런 글자가 메뉴·날짜 칸에 있으면 합계 행
+# 메뉴가 아닌 품목: 이름이 금액뿐인 것('10000원' = 금액권·임의 금액 결제), 충전. 준비할 것이 아니므로 예측에서 뺀다
+NON_MENU = re.compile(r"^\d[\d,]*\s*원$|충전")
 SOLD_OUT_MIN_REPEATS = 3                         # 같은 최댓값에서 3번 이상 멈추면 품절로 본다 (TASKS §3)
 SOLD_OUT_MIN_QTY = 10                            # 단, 최댓값이 10개 이상일 때만 (적게 팔리는 메뉴의 우연한 반복 제외)
 SOLD_OUT_PILE_RATIO = 3.0                        # 그리고 최댓값 횟수가 바로 아래 세 값 평균 횟수의 3배 이상일 때만
@@ -42,13 +46,13 @@ def _norm_header(x) -> str:
     return re.sub(r"\s+", "", str(x)) if pd.notna(x) else ""
 
 
-def _read_raw(path: Path) -> pd.DataFrame:
-    """머리글 없이 통째로 읽는다 (머리글이 몇 번째 줄인지는 아직 모르므로)."""
+def _read_raw(path: Path) -> list[pd.DataFrame]:
+    """머리글 없이 통째로 읽는다 (머리글이 몇 번째 줄인지는 아직 모르므로). 엑셀은 시트마다 표 하나, CSV는 표 하나."""
     if path.suffix.lower() in (".xlsx", ".xlsm", ".xls"):
-        return pd.read_excel(path, sheet_name=0, header=None, dtype=object)
+        return list(pd.read_excel(path, sheet_name=None, header=None, dtype=object).values())
     for enc in ("utf-8-sig", "cp949"):           # 한국 POS의 CSV는 cp949(EUC-KR)인 경우가 많다
         try:
-            return pd.read_csv(path, header=None, dtype=object, encoding=enc)
+            return [pd.read_csv(path, header=None, dtype=object, encoding=enc)]
         except UnicodeDecodeError:
             continue
     raise ValueError(f"{path.name}: 글자 인코딩을 알 수 없습니다 (utf-8, cp949 모두 실패).")
@@ -93,9 +97,12 @@ def read_pos(path, pos_type: str = "auto") -> tuple[pd.DataFrame, dict]:
     ※ TASKS.md는 표만 돌려준다고 했지만, 뺀 행 수를 남기려고 기록(dict)도 함께 돌려준다.
     """
     path = Path(path)
-    raw = _read_raw(path)
-    found_type, header_row, cols = _find_header(raw, pos_type)
-    body = raw.iloc[header_row + 1:]
+    sheets = _read_raw(path)
+    found_type, header_row, cols = _find_header(sheets[0], pos_type)
+    # 달마다 시트를 나눈 파일('9월', '10월'): 첫 시트와 머리글이 같은 시트를 아래로 이어 붙인다 (다른 모양의 시트는 읽지 않음)
+    header = [_norm_header(x) for x in sheets[0].iloc[header_row]]
+    same = [s for s in sheets if len(s) > header_row and [_norm_header(x) for x in s.iloc[header_row]] == header]
+    body = pd.concat([s.iloc[header_row + 1:] for s in same], ignore_index=True)
 
     df = pd.DataFrame({
         "date": _parse_dates(body.iloc[:, cols["date"]]),
@@ -113,10 +120,12 @@ def read_pos(path, pos_type: str = "auto") -> tuple[pd.DataFrame, dict]:
                 | body.iloc[:, cols["date"]].astype(str).str.contains("|".join(TOTAL_WORDS)).to_numpy())
     is_blank = df["date"].isna() | df["menu_raw"].isna() | df["qty"].isna()
     is_cancel = df["qty"] < 0
-    log = dict(file=path.name, pos_type=found_type, header_row=int(header_row), rows_read=len(df),
+    is_other = df["menu_raw"].fillna("").str.contains(NON_MENU) & ~is_total & ~is_blank
+    log = dict(file=path.name, pos_type=found_type, header_row=int(header_row), sheets=len(same), rows_read=len(df),
                dropped_total_or_blank=int((is_total | is_blank).sum()),
-               dropped_cancel=int((is_cancel & ~is_total & ~is_blank).sum()))
-    df = df[~(is_total | is_blank | is_cancel)]
+               dropped_cancel=int((is_cancel & ~is_total & ~is_blank).sum()),
+               dropped_non_menu=int(is_other.sum()), non_menu=sorted(df.loc[is_other, "menu_raw"].unique()))
+    df = df[~(is_total | is_blank | is_cancel | is_other)]
 
     log["receipt_level"] = bool(df.duplicated(["date", "menu_raw"]).any())   # 같은 날·메뉴가 여러 줄 = 영수증 단위
     keys = ["date", "menu_raw"]
@@ -264,7 +273,9 @@ def ingest_store(pos_path, store_id: str, out: Path, pos_type: str = "auto") -> 
     (out / "ingest_log.json").write_text(json.dumps(log, ensure_ascii=False, indent=1), encoding="utf-8")
 
     parts = [f"{read_log['pos_type']} 형식, {clean_log['days']}일·메뉴 {clean_log['menus']}개",
-             f"합계·빈 행 {read_log['dropped_total_or_blank']}개, 취소 {read_log['dropped_cancel']}개 제외"]
+             f"합계·빈 행 {read_log['dropped_total_or_blank']}개, 취소 {read_log['dropped_cancel']}개 제외"
+             + (f", 메뉴가 아닌 품목(금액권·충전) {len(read_log['non_menu'])}개 제외" if read_log["non_menu"] else "")
+             + (f", 시트 {read_log['sheets']}개를 이어 읽음" if read_log["sheets"] > 1 else "")]
     if clean_log["closed_days"]:
         parts.append(f"휴무 {len(clean_log['closed_days'])}일")
     if clean_log["sold_out"]:

@@ -12,26 +12,31 @@ def test_area_keywords():
     assert naver.area_keywords(StoreConfig(store_id="s", address="서울 성동구 서울숲2길 12-7")) == ["성동", "서울숲"]
     assert naver.area_keywords(StoreConfig(store_id="s", address="x", area_keywords=["성수", "서울숲"])) == ["성수", "서울숲"]
     store = StoreConfig(store_id="s", address="서울 서대문구 연세로 12")
-    assert naver.area_keywords(store, "신촌") == ["신촌"]                       # 가까운 역 이름이 있으면 그것 하나만
+    assert naver.area_keywords(store, "신촌") == ["신촌"]                       # 동네 이름이 있으면 그것 하나만
     assert naver.area_keywords(StoreConfig(store_id="s", address="x", area_keywords=["성수"]), "뚝섬") == ["성수"]   # 사람이 정한 것이 먼저
 
 
-def test_nearest_station_name():
-    from agent.geocode import nearest_station
-    found = lambda lat, lon: [dict(place_name="신촌역 2호선"), dict(place_name="서강대역 경의중앙선")]     # noqa: E731
-    assert nearest_station(37.55, 126.93, found) == "신촌"                     # '역'과 노선을 뗀다
-    assert nearest_station(37.55, 126.93, lambda lat, lon: [dict(place_name="홍대입구역")]) == "홍대입구"
-    assert nearest_station(37.55, 126.93, lambda lat, lon: []) is None          # 근처에 역이 없음
-    assert nearest_station(None, None, found) is None                           # 좌표가 없는 매장
+def test_area_name_from_dong():
+    from agent.geocode import area_name
+    dong = lambda b, h: lambda lat, lon: [dict(region_type="B", region_3depth_name=b), dict(region_type="H", region_3depth_name=h)]   # noqa: E731
+    assert area_name(37.55, 126.93, dong("창천동", "신촌동")) == "신촌"          # 행정동이 먼저
+    assert area_name(37.54, 127.04, dong("성수동1가", "성수1가1동")) == "성수"   # 번호와 '동'을 뗀다
+    assert area_name(37.38, 126.66, dong("송도동", "송도3동")) == "송도"
+    assert area_name(37.5, 127.0, dong("역삼동", "")) == "역삼"                  # 행정동이 없으면 법정동
+    assert area_name(37.5, 127.0, lambda lat, lon: []) is None
+    assert area_name(None, None, dong("송도동", "송도3동")) is None              # 좌표가 없는 매장
 
     def broken(lat, lon):
         raise TimeoutError
-    assert nearest_station(37.55, 126.93, broken) is None                       # 못 찾아도 수집은 계속 (주소에서 뽑은 말로)
+    assert area_name(37.55, 126.93, broken) is None                             # 못 찾아도 수집은 계속 (주소에서 뽑은 말로)
 
 
 def test_menu_keyword():
     assert [naver.menu_keyword(m) for m in ["아메리카노(ICE)", "아이스 카페라떼", "소금빵", "카페라떼(HOT)"]] == \
         ["아메리카노", "카페라떼", "소금빵", "카페라떼"]
+    assert [naver.menu_keyword(m) for m in ["카페라떼 (Cafe latte)", "햄 치즈 파니니(Ham and cheese panini)",
+                                            "피치아이스티(peach iced tea-only iced)", "Cold brew (ICE)"]] == \
+        ["카페라떼", "햄 치즈 파니니", "피치아이스티", "Cold brew"]                   # 영어 이름 병기는 떼고, '아이스티'는 그대로
 
 
 def test_news_sources_times_dedupe_and_order(monkeypatch):

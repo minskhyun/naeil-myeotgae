@@ -74,8 +74,8 @@ def event_posts(job: CollectJob) -> Result:
     sources = events.read_sources(job.sources_path) if job.sources_path and Path(job.sources_path).exists() else []
     if naver.has_keys():
         try:
-            station = geocode.nearest_station(job.store.lat, job.store.lon)      # 동네 이름 = 가장 가까운 역
-            found, n = naver.news_sources(naver.area_keywords(job.store, station))
+            area = geocode.area_name(job.store.lat, job.store.lon)               # 동네 이름 = 행정동 ('신촌', '송도')
+            found, n = naver.news_sources(naver.area_keywords(job.store, area))
             known = {url for url, _ in sources}
             sources += [s for s in found if s[0] not in known]
             notes += n

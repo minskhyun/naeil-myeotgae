@@ -285,7 +285,7 @@ def parse_args(argv=None):
     p.add_argument("--demo", action="store_true", help="data/sample/{store}의 가상 데이터로 실행")
     p.add_argument("--demo-days", type=int, help="가상 데이터를 앞 N일로 잘라 실행 (짧은 데이터 모드 시연)")
     p.add_argument("--pos", help="POS 파일 경로 (실데이터)")
-    p.add_argument("--pos-type", default="auto", choices=["auto", "toss", "okpos"])
+    p.add_argument("--pos-type", default="auto", choices=["auto", "toss", "okpos", "items"])
     p.add_argument("--address", help="매장 주소 → 위치를 찾아 날씨·행사·뉴스를 자동 수집 (store.json에 저장)")
     p.add_argument("--close-time", help="영업 종료 시각 HH:MM (store.json이 없을 때만 씀, 기본 21:00)")
     p.add_argument("--signals", help="[개발용] 외부 신호 파일 (SignalRow 형식 .json/.csv). 주면 자동 수집을 하지 않음")
