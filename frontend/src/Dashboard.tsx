@@ -19,15 +19,26 @@ const MENUS_SHOWN = 8 // 준비표에 처음 보여 줄 메뉴 수 (나머지는
 const MISS_HELP = '예측대로 준비했다면 남거나 모자랐을 개수 (모든 메뉴 합, 하루 평균)'
 
 // 요약 숫자 한 칸: 이름 · 큰 숫자 · (짧은 덧말). help = 마우스를 올리면 보이는 뜻
-function Tile({ label, value, note, warn = false, help }: { label: string; value: string; note?: string; warn?: boolean; help?: string }) {
+// big = 이 화면에서 가장 큰 숫자 (한 화면에 하나만: 준비할 개수). 숫자는 잉크색, 단위('개'·'건')는 작게 회색
+function Tile({ label, value, note, warn = false, help, big = false }: { label: string; value: string; note?: string; warn?: boolean; help?: string; big?: boolean }) {
+  const parts = value.match(/^([\d,]+)(\D+)$/) // "339개" → 숫자와 단위
   return (
-    <div className="rounded-3xl bg-sheet px-6 py-5 shadow-sm" title={help}>
-      <p className="flex items-center gap-2 text-sm font-semibold text-muted">
-        {warn && <span className="h-2 w-2 rounded-full bg-warn" aria-hidden="true" />}
+    <div className="rounded-2xl border border-line bg-white px-6 py-5" title={help}>
+      <p className="flex items-center gap-2 text-label text-ink-500">
+        {warn && <span className="h-2 w-2 rounded-full bg-ink-900" aria-hidden="true" />}
         {label}
       </p>
-      <p className="mt-1.5 text-4xl font-extrabold tracking-tight tabular-nums">{value}</p>
-      {note && <p className="mt-1.5 text-sm text-muted">{note}</p>}
+      <p className={`mt-1.5 tabular-nums ${big ? 'text-display' : 'text-h1'}`}>
+        {parts ? (
+          <>
+            {parts[1]}
+            <span className={`ml-1 font-normal tracking-normal text-ink-500 ${big ? 'text-[28px]' : 'text-xl'}`}>{parts[2]}</span>
+          </>
+        ) : (
+          value
+        )}
+      </p>
+      {note && <p className="mt-1.5 text-sm text-ink-700">{note}</p>}
     </div>
   )
 }
@@ -35,7 +46,7 @@ function Tile({ label, value, note, warn = false, help }: { label: string; value
 // 카드 제목 옆의 작은 버튼 ('자세히', '분석 과정')
 function More({ onClick, children }: { onClick: () => void; children: ReactNode }) {
   return (
-    <button onClick={onClick} className="rounded-full bg-paper px-3.5 py-1 text-sm font-semibold text-muted hover:text-ink">
+    <button onClick={onClick} className="inline-flex h-8 items-center rounded-lg border border-line bg-white px-3 text-sm font-medium text-ink-900 transition-colors duration-150 hover:bg-surface">
       {children}
     </button>
   )
@@ -44,9 +55,9 @@ function More({ onClick, children }: { onClick: () => void; children: ReactNode 
 // 본문의 카드 한 장: 제목 (+ 작은 버튼들) · 내용. grow = 줄에서 남는 높이를 이 카드가 채운다 (내용도 그 높이만큼 늘어난다)
 function Card({ title, actions, grow = false, children }: { title: string; actions?: ReactNode; grow?: boolean; children: ReactNode }) {
   return (
-    <section className={`min-w-0 rounded-3xl bg-sheet p-5 shadow-sm sm:p-6 ${grow ? 'flex flex-1 flex-col' : ''}`}>
+    <section className={`min-w-0 rounded-2xl border border-line bg-white p-5 sm:p-6 ${grow ? 'flex flex-1 flex-col' : ''}`}>
       <div className="mb-4 flex items-center justify-between gap-3">
-        <h3 className="text-lg font-bold">{title}</h3>
+        <h3 className="text-h3">{title}</h3>
         {actions && <div className="flex gap-2">{actions}</div>}
       </div>
       {grow ? <div className="min-h-0 flex-1">{children}</div> : children}
@@ -66,8 +77,8 @@ export function Dashboard({ storeId, storeName, prepMode, readOnly, onReplay }: 
   const history = useQuery({ queryKey: ['history', storeId], queryFn: () => api.history(storeId), retry: false }).data
   const [detail, setDetail] = useState<'sources' | 'backtest' | null>(null)
 
-  if (forecast.isLoading) return <p className="text-muted">불러오는 중…</p>
-  if (forecast.error || !forecast.data) return <p className="text-up">{(forecast.error as Error)?.message ?? '예측이 없습니다.'}</p>
+  if (forecast.isLoading) return <p className="text-ink-700">불러오는 중…</p>
+  if (forecast.error || !forecast.data) return <p className="text-down">{(forecast.error as Error)?.message ?? '예측이 없습니다.'}</p>
   const fc = forecast.data
 
   // 요약 숫자에 쓸 값들
@@ -85,17 +96,17 @@ export function Dashboard({ storeId, storeName, prepMode, readOnly, onReplay }: 
       <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
         <div>
           {/* 예측 날짜가 오늘·어제로 보일 때 헷갈리지 않게: 어느 날까지의 판매 기록으로 만든 준비표인지 적는다 */}
-          <p className="text-sm font-semibold text-muted">
+          <p className="text-label text-ink-500">
             {storeName}
             {history?.dates.length ? ` · 판매 기록 ${shortDate(history.dates[history.dates.length - 1])}까지` : ''}
           </p>
-          <h2 className="mt-0.5 text-3xl font-extrabold tracking-tight">{fmtDate(date)}</h2>
+          <h2 className="mt-0.5 text-h1">{fmtDate(date)}</h2>
         </div>
         <PrepToggle storeId={storeId} prepMode={prepMode} readOnly={readOnly} />
       </div>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <Tile label={`${dayPrefix(date)}준비할 개수`} value={`${count(totalPrep)}개`} note={`메뉴 ${fc.rows.length}개`} />
+        <Tile big label={`${dayPrefix(date)}준비할 개수`} value={`${count(totalPrep)}개`} note={`메뉴 ${fc.rows.length}개`} />
         <Tile
           label="예상 판매"
           value={`${count(totalPred)}개`}
@@ -130,7 +141,7 @@ export function Dashboard({ storeId, storeName, prepMode, readOnly, onReplay }: 
                 ))}
               </div>
             ) : (
-              <p className="text-muted">특별한 소식이 없어요.</p>
+              <p className="text-ink-700">특별한 소식이 없어요.</p>
             )}
           </Card>
 
@@ -145,29 +156,29 @@ export function Dashboard({ storeId, storeName, prepMode, readOnly, onReplay }: 
           >
             {backtest ? (
               <ul className="flex flex-wrap gap-2">
-                <li className="rounded-full bg-accent px-3.5 py-1.5 text-sm font-bold text-white">판매 기록</li>
+                <li className="tag bg-ink-900 text-white">판매 기록</li>
                 {backtest.decisions.map((d) => (
                   <li
                     key={d.signal_group}
                     title={d.reason}
-                    className={`rounded-full px-3.5 py-1.5 text-sm font-bold ${d.adopted ? 'bg-accent text-white' : 'bg-paper text-faint line-through decoration-faint/60'}`}
+                    className={`tag ${d.adopted ? 'bg-ink-900 text-white' : 'bg-surface text-ink-500 line-through decoration-ink-500/60'}`}
                   >
                     {GROUP_LABELS[d.signal_group] ?? d.signal_group}
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="text-muted">검증 결과가 없어요.</p>
+              <p className="text-ink-700">검증 결과가 없어요.</p>
             )}
           </Card>
 
           <Card title="얼마나 맞나" actions={<More onClick={() => setDetail('backtest')}>자세히</More>}>
             {v ? (
               <div title={`${periodName(v)} 기준 · ${MISS_HELP}`}>
-                <p className="mb-3 text-2xl font-extrabold tracking-tight">
+                <p className="mb-3 text-h2">
                   {v.saved > 0 ? (
                     <>
-                      지난주대로보다 <span className="text-accent">{v.gain}% 덜 틀려요</span>
+                      지난주대로보다 <span className="text-point">{v.gain}% 덜 틀려요</span>
                     </>
                   ) : (
                     '지난주대로와 비슷해요'
@@ -175,16 +186,16 @@ export function Dashboard({ storeId, storeName, prepMode, readOnly, onReplay }: 
                 </p>
                 <BarRow label="지난주대로 준비" value={v.baseMiss} max={Math.max(v.baseMiss, v.mineMiss)} strong={false} />
                 <BarRow label="내일몇개" value={v.mineMiss} max={Math.max(v.baseMiss, v.mineMiss)} strong />
-                <p className="mt-4 flex items-baseline justify-between gap-3 border-t border-rule pt-4 text-sm">
-                  <span className="text-muted">예상 범위 안에 든 비율</span>
-                  <span className="text-muted">
-                    <b className="mr-2 text-lg tabular-nums text-ink">{pct1(v.mine.coverage_80)}</b>
+                <p className="mt-4 flex items-baseline justify-between gap-3 border-t border-line pt-4 text-sm">
+                  <span className="text-ink-700">예상 범위 안에 든 비율</span>
+                  <span className="text-ink-700">
+                    <b className="mr-2 text-lg tabular-nums text-ink-900">{pct1(v.mine.coverage_80)}</b>
                     {RANGE_TARGET_TEXT}
                   </span>
                 </p>
               </div>
             ) : (
-              <p className="text-muted">검증 결과가 아직 없어요.</p>
+              <p className="text-ink-700">검증 결과가 아직 없어요.</p>
             )}
           </Card>
 

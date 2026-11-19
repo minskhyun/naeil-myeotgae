@@ -18,9 +18,9 @@ export default function App() {
 
   if (config.error) {
     return (
-      <p className="m-8 border-l-4 border-up bg-sheet px-4 py-3 text-sm">
+      <p className="m-8 border-l-4 border-down bg-white px-4 py-3 text-sm">
         백엔드에 연결하지 못했습니다. 프로젝트 맨 위 폴더에서{' '}
-        <code className="bg-paper px-1">.venv\Scripts\python.exe -m uvicorn backend.app.main:app --port 8000</code>을 실행하세요.
+        <code className="bg-surface px-1">.venv\Scripts\python.exe -m uvicorn backend.app.main:app --port 8000</code>을 실행하세요.
       </p>
     )
   }

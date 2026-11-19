@@ -5,13 +5,13 @@ import { useState } from 'react'
 import { api, type MyStore } from './api'
 import { fmtTime } from './format'
 
-const LINK = 'underline underline-offset-4 hover:text-accent disabled:opacity-40'
+const LINK = 'underline underline-offset-4 hover:text-ink-900 disabled:opacity-40'
 
 // 매장의 지금 상태를 한 줄로
 function status(s: MyStore) {
-  if (s.running) return <span className="text-accent">계산 중…</span>
+  if (s.running) return <span className="text-ink-700">계산 중…</span>
   if (s.ready && s.updated_at) return <>준비표 있음 · {fmtTime(s.updated_at)} 계산</>
-  return <span className="text-faint">아직 준비표 없음 (판매 기록을 올려 주세요)</span>
+  return <span className="text-ink-500">아직 준비표 없음 (판매 기록을 올려 주세요)</span>
 }
 
 export function StoresView({ onOpen, onUpload }: {
@@ -46,23 +46,23 @@ export function StoresView({ onOpen, onUpload }: {
     <div className="max-w-4xl">
       <header className="flex flex-wrap items-end justify-between gap-4 pr-8 pb-6">
         <div>
-          <p className="text-sm text-muted">매장 관리</p>
-          <h2 className="mt-0.5 text-3xl font-bold tracking-tight">내 매장</h2>
-          <p className="mt-2 text-muted">여기 있는 매장과 그 자료(올린 판매 기록, 결과)는 로그인한 본인만 볼 수 있습니다.</p>
+          <p className="text-sm text-ink-700">매장 관리</p>
+          <h2 className="mt-0.5 text-h2">내 매장</h2>
+          <p className="mt-2 text-ink-700">여기 있는 매장과 그 자료(올린 판매 기록, 결과)는 로그인한 본인만 볼 수 있습니다.</p>
         </div>
-        <button onClick={() => onUpload(null)} className="rounded-full bg-accent px-5 py-2 font-semibold text-white hover:bg-accent-deep">
+        <button onClick={() => onUpload(null)} className="btn-md btn-primary">
           새 매장 추가
         </button>
       </header>
 
-      {error && <p className="mb-4 border-l-4 border-up bg-sheet px-4 py-3 text-sm">{error}</p>}
+      {error && <p className="mb-4 border-l-4 border-down bg-white px-4 py-3 text-sm">{error}</p>}
       {stores.data && !stores.data.length && (
-        <p className="border-t border-rule py-6 text-muted">아직 매장이 없습니다. '새 매장 추가'를 눌러 판매 기록을 올리면 여기에 나타납니다.</p>
+        <p className="border-t border-line py-6 text-ink-700">아직 매장이 없습니다. '새 매장 추가'를 눌러 판매 기록을 올리면 여기에 나타납니다.</p>
       )}
 
-      <ul className="border-t border-rule">
+      <ul className="border-t border-line">
         {stores.data?.map((s) => (
-          <li key={s.store_id} className="grid gap-x-6 gap-y-2 border-b border-rule py-4 sm:grid-cols-[1fr_auto]">
+          <li key={s.store_id} className="grid gap-x-6 gap-y-2 border-b border-line py-4 sm:grid-cols-[1fr_auto]">
             <div className="min-w-0">
               {editing === s.store_id ? (
                 <form
@@ -78,22 +78,22 @@ export function StoresView({ onOpen, onUpload }: {
                     maxLength={40}
                     onChange={(e) => setDraft(e.target.value)}
                     aria-label="매장 이름"
-                    className="min-w-0 flex-1 rounded-xl border border-rule bg-sheet px-3 py-1.5 focus:border-accent focus:outline-none"
+                    className="h-10 min-w-0 flex-1 rounded-lg border border-line bg-white px-3 focus:border-ink-900 focus:outline-none"
                   />
                   <button type="submit" disabled={!draft.trim()} className={`text-sm ${LINK}`}>
                     저장
                   </button>
-                  <button type="button" onClick={() => setEditing(null)} className={`text-sm text-muted ${LINK}`}>
+                  <button type="button" onClick={() => setEditing(null)} className={`text-sm text-ink-700 ${LINK}`}>
                     취소
                   </button>
                 </form>
               ) : (
                 <p className="font-semibold">
                   {s.name}
-                  {!s.mine && <span className="ml-2 text-sm font-normal text-faint">다른 사람 또는 주인 없는 매장 (관리자에게만 보임)</span>}
+                  {!s.mine && <span className="ml-2 text-sm font-normal text-ink-500">다른 사람 또는 주인 없는 매장 (관리자에게만 보임)</span>}
                 </p>
               )}
-              <p className="mt-0.5 text-sm text-muted">
+              <p className="mt-0.5 text-sm text-ink-700">
                 {s.address ?? '위치 없음'} · 닫는 시간 {s.close_time}
               </p>
               <p className="mt-0.5 text-sm">{status(s)}</p>
@@ -101,8 +101,8 @@ export function StoresView({ onOpen, onUpload }: {
 
             {asking === s.store_id ? (
               <div className="flex flex-wrap items-center gap-3 text-sm sm:justify-end">
-                <span className="text-up">올린 판매 기록과 결과가 모두 지워지고 되돌릴 수 없습니다.</span>
-                <button onClick={() => act(() => api.deleteStore(s.store_id))} className="rounded-full bg-up px-4 py-1.5 font-semibold text-white">
+                <span className="text-down">올린 판매 기록과 결과가 모두 지워지고 되돌릴 수 없습니다.</span>
+                <button onClick={() => act(() => api.deleteStore(s.store_id))} className="btn-md bg-down text-white">
                   지우기
                 </button>
                 <button onClick={() => setAsking(null)} className={LINK}>
@@ -128,7 +128,7 @@ export function StoresView({ onOpen, onUpload }: {
                 >
                   이름 바꾸기
                 </button>
-                <button onClick={() => setAsking(s.store_id)} disabled={s.running} className={`text-up ${LINK}`}>
+                <button onClick={() => setAsking(s.store_id)} disabled={s.running} className={`text-down ${LINK}`}>
                   지우기
                 </button>
               </div>

@@ -66,8 +66,8 @@ function line(e: ProgressEvent): { tag: string; color: string; text: string } | 
 
 function Card({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="nm-rise rounded-3xl bg-white p-6 text-ink shadow-xl">
-      <h3 className="text-sm font-semibold text-accent">{title}</h3>
+    <section className="nm-rise rounded-2xl bg-white p-6 text-ink-900">
+      <h3 className="text-label text-ink-500">{title}</h3>
       <div className="mt-3">{children}</div>
     </section>
   )
@@ -129,18 +129,18 @@ export function AnalysisView({ events, status, error, log, onClose, replay = fal
       : Math.round((1 - scores.wape / scores.base_wape) * 100)
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-gradient-to-b from-accent to-accent-deep text-white">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-ink-900 text-white">
       <div className="mx-auto max-w-6xl px-5 py-6">
         <div className="flex items-center justify-between">
-          <p className="text-lg font-extrabold tracking-tight">내일몇개</p>
-          <button onClick={onClose} className="rounded-full bg-white/15 px-4 py-1.5 text-sm font-semibold hover:bg-white/25">
+          <p className="text-lg font-[800] tracking-[-0.05em]">내일몇개</p>
+          <button onClick={onClose} className="inline-flex h-10 items-center rounded-lg border border-white/30 px-4 text-sm font-medium transition-colors duration-150 hover:bg-white/10">
             {finished || failed || replay ? '닫기' : '화면 닫기 (분석은 계속돼요)'}
           </button>
         </div>
 
         <header className="mt-6 mb-6">
-          <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
-            {failed ? '분석을 마치지 못했어요' : finished ? '분석이 끝났어요!' : `${store?.name ?? '우리 가게'} 주변을 살펴보고 있어요`}
+          <h2 className="text-h1">
+            {failed ? '분석을 마치지 못했어요' : finished ? '분석이 끝났어요' : `${store?.name ?? '우리 가게'} 주변을 살펴보고 있어요`}
           </h2>
           <p className="mt-2 min-h-6 text-white/85">
             {failed
@@ -158,8 +158,8 @@ export function AnalysisView({ events, status, error, log, onClose, replay = fal
             {STEPS.map((s, i) => {
               const state = stepState(s.id)
               return (
-                <li key={s.id} className={`flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-semibold ${
-                  state === 'done' ? 'bg-white text-accent' : state === 'now' ? 'bg-white/25' : 'bg-white/10 text-white/60'}`}>
+                <li key={s.id} className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium ${
+                  state === 'done' ? 'bg-white text-ink-900' : state === 'now' ? 'bg-white/25' : 'bg-white/10 text-white/60'}`}>
                   <span className="text-xs opacity-80">STEP {i + 1}</span>
                   {s.label}
                   {state === 'done' && <span aria-hidden="true">✓</span>}
@@ -171,34 +171,34 @@ export function AnalysisView({ events, status, error, log, onClose, replay = fal
         </header>
 
         <div className="grid gap-5 lg:grid-cols-[1.65fr_1fr]">
-          <div className="relative h-[26rem] min-w-0 overflow-hidden rounded-3xl bg-white shadow-2xl sm:h-[32rem]">
+          <div className="relative h-[26rem] min-w-0 overflow-hidden rounded-2xl bg-white sm:h-[32rem]">
             {hasMap ? (
               <AnalysisMap events={seen} />
             ) : (
-              <div className="flex h-full flex-col items-center justify-center gap-3 bg-accent-soft px-8 text-center text-ink">
-                <span className="nm-blink h-5 w-5 rounded-full bg-accent" />
+              <div className="flex h-full flex-col items-center justify-center gap-3 bg-surface px-8 text-center text-ink-900">
+                <span className="nm-blink h-5 w-5 rounded-full bg-ink-900" />
                 <p className="font-semibold">{store ? '매장 위치를 적지 않아 판매 기록만으로 분석해요' : '매장 위치를 찾고 있어요'}</p>
-                {store && <p className="text-sm text-muted">위치를 적으면 날씨·근처 행사·소식을 지도에서 모으는 모습을 볼 수 있어요.</p>}
+                {store && <p className="text-sm text-ink-700">위치를 적으면 날씨·근처 행사·소식을 지도에서 모으는 모습을 볼 수 있어요.</p>}
               </div>
             )}
             {hasMap && (
-              <ul className="pointer-events-none absolute bottom-3 left-3 z-[500] flex flex-wrap gap-1.5 text-xs font-semibold text-ink">
-                {count.places > 0 && <li className="rounded-full bg-white/95 px-3 py-1 shadow">주변 시설 {count.places}</li>}
-                {count.weather > 0 && <li className="rounded-full bg-white/95 px-3 py-1 shadow">날씨 {count.weather}일</li>}
-                {count.events > 0 && <li className="rounded-full bg-white/95 px-3 py-1 shadow">행사 {count.events}</li>}
-                {count.articles > 0 && <li className="rounded-full bg-white/95 px-3 py-1 shadow">읽은 글 {count.articles}</li>}
-                {count.trends > 0 && <li className="rounded-full bg-white/95 px-3 py-1 shadow">검색량 {count.trends}</li>}
+              <ul className="pointer-events-none absolute bottom-3 left-3 z-[500] flex flex-wrap gap-1.5 text-xs font-semibold text-ink-900">
+                {count.places > 0 && <li className="tag border border-line bg-white text-ink-900">주변 시설 {count.places}</li>}
+                {count.weather > 0 && <li className="tag border border-line bg-white text-ink-900">날씨 {count.weather}일</li>}
+                {count.events > 0 && <li className="tag border border-line bg-white text-ink-900">행사 {count.events}</li>}
+                {count.articles > 0 && <li className="tag border border-line bg-white text-ink-900">읽은 글 {count.articles}</li>}
+                {count.trends > 0 && <li className="tag border border-line bg-white text-ink-900">검색량 {count.trends}</li>}
               </ul>
             )}
           </div>
 
-          <section className="flex h-[26rem] min-w-0 flex-col rounded-3xl bg-white p-5 text-ink shadow-2xl sm:h-[32rem]">
-            <h3 className="text-sm font-semibold text-accent">우리 가게로 들어온 정보 {feed.length > 0 && `· ${feed.length}건`}</h3>
+          <section className="flex h-[26rem] min-w-0 flex-col rounded-2xl bg-white p-5 text-ink-900 sm:h-[32rem]">
+            <h3 className="text-label text-ink-500">우리 가게로 들어온 정보 {feed.length > 0 && `· ${feed.length}건`}</h3>
             <ul className="mt-3 flex-1 space-y-2 overflow-y-auto pr-1">
-              {feed.length === 0 && <li className="text-sm text-muted">곧 여기에 하나씩 나타나요.</li>}
+              {feed.length === 0 && <li className="text-sm text-ink-700">곧 여기에 하나씩 나타나요.</li>}
               {feed.map((f, i) => (
-                <li key={feed.length - i} className="nm-rise flex items-start gap-2 rounded-2xl bg-paper px-3 py-2 text-sm">
-                  <span className="mt-0.5 shrink-0 rounded-full px-2 py-0.5 text-xs font-bold text-white" style={{ background: f.color }}>{f.tag}</span>
+                <li key={feed.length - i} className="nm-rise flex items-start gap-2 rounded-2xl bg-surface px-3 py-2 text-sm">
+                  <span className="tag mt-0.5 shrink-0 gap-1.5 bg-surface text-ink-900"><i className="h-2 w-2 rounded-full" style={{ background: f.color }} />{f.tag}</span>
                   <span className="min-w-0 [overflow-wrap:anywhere]">{f.text}</span>
                 </li>
               ))}
@@ -207,7 +207,7 @@ export function AnalysisView({ events, status, error, log, onClose, replay = fal
         </div>
 
         {failed && log && log.length > 0 && (
-          <pre className="mt-5 overflow-x-auto rounded-3xl bg-white/10 p-5 font-mono text-xs leading-relaxed">{log.slice(-8).join('\n')}</pre>
+          <pre className="mt-5 overflow-x-auto rounded-2xl bg-white/10 p-5 font-mono text-xs leading-relaxed">{log.slice(-8).join('\n')}</pre>
         )}
 
         {finished && (
@@ -219,7 +219,7 @@ export function AnalysisView({ events, status, error, log, onClose, replay = fal
                 {count.events > 0 && <li>근처 행사 <b>{count.events}건</b></li>}
                 {count.articles > 0 && <li>읽은 소식 <b>{count.articles}건</b></li>}
                 {count.trends > 0 && <li>메뉴 검색량 <b>{count.trends}개</b></li>}
-                {!hasMap && <li className="text-muted">판매 기록만 사용</li>}
+                {!hasMap && <li className="text-ink-700">판매 기록만 사용</li>}
               </ul>
             </Card>
             <Card title="예측에 쓴 정보">
@@ -227,7 +227,7 @@ export function AnalysisView({ events, status, error, log, onClose, replay = fal
                 {decisions.map((d) => (
                   <li key={d.group} className="flex items-center justify-between gap-2" title={d.reason}>
                     <span>{GROUP_LABELS[d.group] ?? d.group}</span>
-                    <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${d.adopted ? 'bg-accent text-white' : 'bg-paper text-faint'}`}>
+                    <span className={`tag ${d.adopted ? 'bg-ink-900 text-white' : 'bg-surface text-ink-500'}`}>
                       {d.adopted ? '씀' : '안 씀'}
                     </span>
                   </li>
@@ -237,24 +237,25 @@ export function AnalysisView({ events, status, error, log, onClose, replay = fal
             <Card title="얼마나 맞나">
               {scores ? (
                 <>
-                  <p className="text-sm text-muted">지난주대로 준비할 때보다</p>
-                  <p className="mt-1 text-4xl font-extrabold tracking-tight tabular-nums">
+                  <p className="text-sm text-ink-700">지난주대로 준비할 때보다</p>
+                  <p className={`mt-1 text-h1 tabular-nums ${gain > 0 ? 'text-point' : ''}`}>
                     {gain > 0 ? (
                       <>
-                        <CountUp to={gain} />% 덜 틀려요
+                        <CountUp to={gain} />%
+                        <br />덜 틀려요
                       </>
                     ) : (
                       '비슷해요'
                     )}
                   </p>
                   {scores.miss !== undefined && scores.base_miss !== undefined && (
-                    <p className="mt-3 text-sm text-muted">
-                      하루 오차 {cnt(scores.base_miss)}개 → <b className="text-ink">{cnt(scores.miss)}개</b>
+                    <p className="mt-3 text-sm text-ink-700">
+                      하루 오차 {cnt(scores.base_miss)}개 → <b className="text-ink-900">{cnt(scores.miss)}개</b>
                     </p>
                   )}
                 </>
               ) : (
-                <p className="text-sm text-muted">검증 결과가 아직 없어요.</p>
+                <p className="text-sm text-ink-700">검증 결과가 아직 없어요.</p>
               )}
             </Card>
             <Card title={forecast ? `${fmtDate(forecast.date)} 준비` : '내일 준비'}>
@@ -262,19 +263,19 @@ export function AnalysisView({ events, status, error, log, onClose, replay = fal
                 {forecast?.top.slice(0, 4).map((r) => (
                   <li key={r.menu} className="flex items-baseline justify-between gap-2">
                     <span className="truncate">{r.menu}</span>
-                    <b className="text-base text-accent tabular-nums">{r.prep ?? r.pred}개</b>
+                    <b className="text-base text-ink-900 tabular-nums">{r.prep ?? r.pred}개</b>
                   </li>
                 ))}
               </ul>
-              {forecast && forecast.menus > 4 && <p className="mt-2 text-xs text-muted">외 {forecast.menus - 4}개 메뉴</p>}
-              {!!forecast?.warnings.length && <p className="mt-2 text-xs font-semibold text-warn">주의할 소식 {forecast.warnings.length}건</p>}
+              {forecast && forecast.menus > 4 && <p className="mt-2 text-xs text-ink-700">외 {forecast.menus - 4}개 메뉴</p>}
+              {!!forecast?.warnings.length && <p className="mt-2 text-xs font-semibold text-ink-700">주의할 소식 {forecast.warnings.length}건</p>}
             </Card>
           </div>
         )}
 
         {(finished || failed) && (
           <div className="mt-8 flex justify-center pb-6">
-            <button onClick={onClose} className="rounded-full bg-white px-8 py-3 text-base font-bold text-ink shadow-xl hover:bg-paper">
+            <button onClick={onClose} className="btn bg-white text-ink-900 hover:bg-surface">
               {failed ? '닫기' : replay ? '닫기' : '준비표 보기'}
             </button>
           </div>

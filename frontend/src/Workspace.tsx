@@ -56,17 +56,17 @@ export function Workspace({ login }: { login: LoginConfig | null }) {
 
   return (
     <div className="min-h-screen">
-      <header className="bg-sheet shadow-sm">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-8 gap-y-3 px-5 py-3.5">
-          <h1 className="text-xl font-extrabold tracking-tight">내일몇개</h1>
+      <header className="border-b border-line bg-white">
+        <div className="mx-auto flex min-h-16 max-w-content flex-wrap items-center justify-between gap-x-8 gap-y-3 px-5 py-2 md:px-10">
+          <h1 className="text-xl font-bold tracking-tight">내일몇개</h1>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             {!!stores?.length && (
-              <label className="flex items-center gap-2 text-sm text-muted">
+              <label className="flex items-center gap-2 text-sm text-ink-700">
                 {account ? '내 매장' : '매장'}
                 <select
                   value={storeId ?? ''}
                   onChange={(e) => setStoreId(e.target.value)}
-                  className="rounded-full border border-rule bg-sheet px-3 py-1.5 text-ink focus:border-accent focus:outline-none"
+                  className="h-10 rounded-lg border border-line bg-white px-3 text-ink-900 focus:border-ink-900 focus:outline-none"
                 >
                   {stores.map((s) => (
                     <option key={s.store_id} value={s.store_id}>
@@ -76,11 +76,11 @@ export function Workspace({ login }: { login: LoginConfig | null }) {
                 </select>
               </label>
             )}
-            <button onClick={() => openUpload(null)} className="rounded-full bg-ink px-4 py-2 text-sm font-semibold text-white hover:bg-ink/85">
+            <button onClick={() => openUpload(null)} className="btn-md btn-primary">
               {addLabel}
             </button>
             {account && (
-              <button onClick={() => setDialog({ kind: 'stores' })} className="rounded-full border border-rule bg-sheet px-4 py-2 text-sm font-semibold hover:bg-paper">
+              <button onClick={() => setDialog({ kind: 'stores' })} className="btn-md btn-secondary">
                 매장 관리
               </button>
             )}
@@ -90,24 +90,24 @@ export function Workspace({ login }: { login: LoginConfig | null }) {
       </header>
 
       {running && !watching && (
-        <p className="bg-accent-soft px-5 py-2.5 text-center text-sm text-accent-deep">
+        <p className="bg-tag-sand px-5 py-2.5 text-center text-sm text-ink-900">
           준비표를 만드는 중입니다…{' '}
-          <button onClick={() => setWatching(true)} className="font-semibold underline underline-offset-4 hover:text-accent">
+          <button onClick={() => setWatching(true)} className="font-semibold underline underline-offset-4 hover:text-ink-900">
             진행 상황 보기
           </button>
         </p>
       )}
 
-      <main className="mx-auto max-w-7xl px-5 py-8">
-        {all.error && <p className="mb-8 border-l-4 border-up bg-sheet px-4 py-3 text-sm">매장 목록을 불러오지 못했습니다. 백엔드가 켜져 있는지 확인해 주세요.</p>}
+      <main className="mx-auto max-w-content px-5 py-8 md:px-10">
+        {all.error && <p className="mb-8 border-l-4 border-down bg-white px-4 py-3 text-sm">매장 목록을 불러오지 못했습니다. 백엔드가 켜져 있는지 확인해 주세요.</p>}
 
         {empty && (
-          <section className="mx-auto max-w-xl rounded-3xl bg-sheet px-8 py-12 text-center shadow-sm">
-            <h2 className="text-3xl font-bold tracking-tight">{account ? '첫 매장을 추가해 주세요' : '아직 준비표가 없습니다'}</h2>
-            <p className="mt-2 mb-5 text-muted">
+          <section className="mx-auto max-w-xl rounded-2xl border border-line bg-white px-8 py-12 text-center">
+            <h2 className="text-h3">{account ? '첫 매장을 추가해 주세요' : '아직 준비표가 없습니다'}</h2>
+            <p className="mt-2 mb-5 text-ink-700">
               매장 이름, 위치, 닫는 시간을 적고 포스에서 내려받은 판매 기록 파일을 올리면 내일 준비표가 만들어집니다.
             </p>
-            <button onClick={() => openUpload(null)} className="rounded-full bg-accent px-6 py-3 font-semibold text-white hover:bg-accent-deep">
+            <button onClick={() => openUpload(null)} className="btn btn-primary">
               {addLabel}
             </button>
           </section>

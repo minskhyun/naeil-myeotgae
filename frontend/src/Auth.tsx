@@ -72,7 +72,7 @@ export function GoogleButton({ clientId }: { clientId: string }) {
   return (
     <div>
       <div ref={box} className="w-fit" />
-      {error && <p className="mt-1 text-xs text-up">{error}</p>}
+      {error && <p className="mt-1 text-xs text-down">{error}</p>}
     </div>
   )
 }
@@ -119,11 +119,11 @@ export function AccountBox({ login }: { login: LoginConfig }) {
   }
   return (
     <div className="flex items-center gap-3 text-sm">
-      <span className="text-muted" title={me.data.email ?? '카카오 계정'}>
+      <span className="text-ink-700" title={me.data.email ?? '카카오 계정'}>
         {me.data.name}
         {me.data.is_admin && ' (관리자)'}
       </span>
-      <button onClick={logout} className="underline underline-offset-4 hover:text-accent">
+      <button onClick={logout} className="underline underline-offset-4 hover:text-ink-900">
         로그아웃
       </button>
     </div>

@@ -98,16 +98,16 @@ export const RANGE_TARGET_TEXT = '80%가 이상적' // '목표 80%'라고 적으
 
 // '분석 중' 화면에서 정보 종류마다 쓰는 색 (지도의 표시와 목록의 이름표가 같은 색)
 export const KIND_COLOR: Record<string, string> = {
-  places: '#8a9bbd',
-  plan: '#2b66f6',
-  event: '#ff7a45',
-  news: '#f43f8e',
-  weather: '#0ea5e9',
-  academic: '#8b5cf6',
-  special: '#f59e0b',
-  trend: '#10b981',
-  sales: '#15171c',
-  article: '#f43f8e',
+  places: '#FF5A1F', // point (작은 점은 CSS에서 옅게 칠한다)
+  plan: '#C2410C', // point-text
+  event: '#FF5A1F', // point
+  news: '#C2410C',
+  weather: '#C2410C',
+  academic: '#C2410C',
+  special: '#C2410C',
+  trend: '#C2410C',
+  sales: '#14171C', // ink-900 (지도에는 나오지 않고 목록에만 쓴다)
+  article: '#C2410C',
 }
 
 // ---- 요일 (준비표의 그래프와 문장이 쓴다)

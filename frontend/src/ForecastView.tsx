@@ -12,11 +12,11 @@ function Range({ row, max, narrow = false }: { row: ForecastRow; max: number; na
   return (
     <div className="flex items-center gap-3">
       <div className={`relative h-3 shrink-0 ${narrow ? 'w-20' : 'w-28'}`} aria-hidden>
-        <div className="absolute top-1/2 h-px w-full bg-rule" />
-        <div className="nm-band absolute top-1/2 -mt-0.5 h-1 rounded-full bg-ink/25" style={{ left: x(row.p10), width: `calc(${x(row.p90)} - ${x(row.p10)})` }} />
-        <div className="nm-fade absolute top-0 h-3 w-0.5 -translate-x-1/2 bg-ink" style={{ left: x(row.pred), animationDelay: '500ms' }} />
+        <div className="absolute top-1/2 h-px w-full bg-line" />
+        <div className="nm-band absolute top-1/2 -mt-0.5 h-1 rounded-full bg-ink-300" style={{ left: x(row.p10), width: `calc(${x(row.p90)} - ${x(row.p10)})` }} />
+        <div className="nm-fade absolute top-0 h-3 w-0.5 -translate-x-1/2 bg-ink-900" style={{ left: x(row.pred), animationDelay: '500ms' }} />
       </div>
-      <span className="text-sm text-muted tabular-nums">
+      <span className="text-sm text-ink-700 tabular-nums">
         {rangeText(row.p10, row.p90)}
       </span>
     </div>
@@ -26,18 +26,18 @@ function Range({ row, max, narrow = false }: { row: ForecastRow; max: number; na
 // AI가 읽은 소식 한 건: 상황 한 줄 · 안내 문장. 근거(원문 인용과 링크)는 접어 두고 누르면 펼친다
 export function Notice({ w }: { w: Warning }) {
   return (
-    <section className="rounded-2xl border-l-4 border-warn bg-warn-soft px-5 py-4">
-      <p className="text-sm font-bold text-warn">
+    <section className="rounded-2xl bg-tag-sand px-5 py-4">
+      <p className="text-label font-semibold text-ink-900">
         {SITUATION_LABELS[w.situation_type] ?? w.situation_type} · 손님 {w.direction} 가능
       </p>
       <p className="mt-1.5 text-[17px] leading-relaxed">{w.message}</p>
       {w.evidence.length > 0 && (
         <details className="mt-2 text-sm">
-          <summary className="cursor-pointer font-semibold text-warn underline-offset-4 hover:underline">근거 {w.evidence.length}건</summary>
+          <summary className="cursor-pointer font-semibold text-ink-900 underline-offset-4 hover:underline">근거 {w.evidence.length}건</summary>
           {w.evidence.map((e, i) => (
-            <blockquote key={i} className="mt-2 border-l border-warn/40 pl-3 leading-relaxed text-muted">
+            <blockquote key={i} className="mt-2 border-l border-ink-900/20 pl-3 leading-relaxed text-ink-700">
               {e.quote}{' '}
-              <a href={e.source_url} target="_blank" rel="noreferrer" className="whitespace-nowrap text-warn underline underline-offset-2">
+              <a href={e.source_url} target="_blank" rel="noreferrer" className="whitespace-nowrap text-ink-900 underline underline-offset-2">
                 원문
               </a>
             </blockquote>
@@ -74,25 +74,25 @@ export function PrepToggle({ storeId, prepMode, readOnly = false, onPick }: {
 
   return (
     <div>
-      <p className="mb-1.5 text-sm text-muted">
-        준비 기준 {changing && <span className="text-accent">· 다시 계산 중</span>}
+      <p className="mb-1.5 text-sm text-ink-700">
+        준비 기준 {changing && <span className="text-ink-500">· 다시 계산 중</span>}
       </p>
-      <div className="flex overflow-hidden rounded-full border border-ink/80" role="group" aria-label="준비 기준">
+      <div className="flex overflow-hidden rounded-lg border border-line" role="group" aria-label="준비 기준">
         {PREP_MODES.map((m, i) => (
           <button
             key={m}
             disabled={changing || (readOnly && !onPick)}
             onClick={() => choose(m)}
             aria-pressed={m === prepMode}
-            className={`px-3.5 py-1.5 text-sm ${i > 0 ? 'border-l border-ink/80' : ''} ${
-              m === prepMode ? 'bg-ink font-semibold text-white' : 'bg-sheet hover:bg-paper'
+            className={`h-10 px-4 text-sm font-medium transition-colors duration-150 ${i > 0 ? 'border-l border-line' : ''} ${
+              m === prepMode ? 'bg-ink-900 text-white' : 'bg-white hover:bg-surface'
             } ${readOnly ? 'disabled:cursor-not-allowed' : 'disabled:cursor-wait'}`}
           >
             {m}
           </button>
         ))}
       </div>
-      {(jobError || job?.status === 'error') && <p className="mt-1 text-sm text-up">{jobError ?? job?.error}</p>}
+      {(jobError || job?.status === 'error') && <p className="mt-1 text-sm text-down">{jobError ?? job?.error}</p>}
     </div>
   )
 }
@@ -103,33 +103,33 @@ function MenuDetail({ row, history }: { row: ForecastRow; history: SalesHistory 
   const past = history && values ? sameWeekday(history.dates, values, row.date) : []
   const usual = average(past)
   return (
-    <div className="nm-rise border-t border-dashed border-rule bg-paper/60 px-5 pb-5 pt-4">
+    <div className="nm-rise border-t border-dashed border-line bg-surface/60 px-5 pb-5 pt-4">
       {history && values ? (
         <>
-          <p className="mb-3 text-sm text-muted">
+          <p className="mb-3 text-sm text-ink-700">
             {usual !== null && (
               <>
-                지난 4주 {weekdayName(row.date)}요일 평균 <b className="text-ink">{count(usual)}개</b> →{' '}
+                지난 4주 {weekdayName(row.date)}요일 평균 <b className="text-ink-900">{count(usual)}개</b> →{' '}
               </>
             )}
-            {dayPrefix(row.date)}예상 <b className="text-ink">{count(row.pred)}개</b>
+            {dayPrefix(row.date)}예상 <b className="text-ink-900">{count(row.pred)}개</b>
           </p>
           <DayBars dates={history.dates} values={values} next={{ date: row.date, value: row.pred, lo: row.p10, hi: row.p90 }} height={110} />
         </>
       ) : (
-        <p className="text-sm text-muted">최근 판매 기록이 없어요.</p>
+        <p className="text-sm text-ink-700">최근 판매 기록이 없어요.</p>
       )}
       {row.reasons.length > 0 && (
         <ul className="mt-4 space-y-1 text-sm">
           {row.reasons.map((x) => (
             <li key={x.signal} className="flex gap-2">
               <span className={`shrink-0 font-semibold tabular-nums ${x.effect_pct < 0 ? 'text-down' : 'text-up'}`}>{signedPct(x.effect_pct)}</span>
-              <span className="text-muted">
+              <span className="text-ink-700">
                 {x.text}
                 {x.source_url && (
                   <>
                     {' '}
-                    <a href={x.source_url} target="_blank" rel="noreferrer" className="underline underline-offset-2 hover:text-accent">
+                    <a href={x.source_url} target="_blank" rel="noreferrer" className="underline underline-offset-2 hover:text-ink-900">
                       출처
                     </a>
                   </>
@@ -176,9 +176,9 @@ export function ForecastTable({ rows, limit, compact = false, storeId }: {
   const date = rows[0].date
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-rule bg-sheet">
+    <section className="overflow-hidden rounded-2xl border border-line bg-white">
       {history && (
-        <div className="border-b border-rule px-5 pb-4 pt-5">
+        <div className="border-b border-line px-5 pb-4 pt-5">
           <div className="mb-4 flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
             <h4 className="font-bold">최근 4주 판매</h4>
             <BarsLegend date={date} />
@@ -186,7 +186,7 @@ export function ForecastTable({ rows, limit, compact = false, storeId }: {
           <DayBars dates={history.dates} values={history.total} next={{ date, value: totalPred }} height={compact ? 130 : 160} />
         </div>
       )}
-      <div className={`hidden gap-4 border-b border-rule px-5 py-2.5 text-sm text-muted md:grid ${cols}`}>
+      <div className={`hidden gap-4 border-b border-line px-5 py-2.5 text-sm text-ink-700 md:grid ${cols}`}>
         <span>메뉴</span>
         <span className="text-right">준비</span>
         {!compact && <span className="text-right">예상</span>}
@@ -197,21 +197,21 @@ export function ForecastTable({ rows, limit, compact = false, storeId }: {
       </div>
       <ol>
         {shown.map((r, i) => (
-          <li key={r.menu} className="nm-rise border-b border-rule last:border-b-0" style={{ animationDelay: `${Math.min(i, 12) * 45}ms` }}>
+          <li key={r.menu} className="nm-rise border-b border-line last:border-b-0" style={{ animationDelay: `${Math.min(i, 12) * 45}ms` }}>
             <button
               type="button"
               onClick={() => setOpen(open === r.menu ? null : r.menu)}
               aria-expanded={open === r.menu}
-              className={`grid w-full grid-cols-[1fr_auto] gap-x-4 gap-y-1 px-5 text-left transition-colors hover:bg-accent-soft/50 md:items-center ${cols} ${
+              className={`grid w-full grid-cols-[1fr_auto] gap-x-4 gap-y-1 px-5 text-left transition-colors hover:bg-surface md:items-center ${cols} ${
                 compact ? 'py-2.5' : 'py-3.5'
-              } ${open === r.menu ? 'bg-accent-soft/50' : ''}`}
+              } ${open === r.menu ? 'bg-surface' : ''}`}
             >
               <span className={`font-semibold ${compact ? 'text-base' : 'text-[17px]'}`}>{r.menu}</span>
-              <span className="text-right text-2xl font-bold text-accent tabular-nums md:text-xl">
+              <span className="text-right text-2xl font-semibold text-ink-900 tabular-nums md:text-xl">
                 {r.prep_qty === null || r.prep_qty === undefined ? '–' : <CountUp to={r.prep_qty} />}
-                <span className="ml-0.5 text-sm font-normal text-muted md:hidden">개 준비</span>
+                <span className="ml-0.5 text-sm font-normal text-ink-700 md:hidden">개 준비</span>
               </span>
-              <span className={`col-span-2 text-sm text-muted tabular-nums md:col-span-1 md:text-right md:text-base md:text-ink ${compact ? 'md:hidden' : ''}`}>
+              <span className={`col-span-2 text-sm text-ink-700 tabular-nums md:col-span-1 md:text-right md:text-base md:text-ink-900 ${compact ? 'md:hidden' : ''}`}>
                 <span className="md:hidden">예상 </span>
                 {Math.round(r.pred)}
                 <span className="md:hidden">
@@ -226,7 +226,7 @@ export function ForecastTable({ rows, limit, compact = false, storeId }: {
               <span className="hidden md:block">
                 <Range row={r} max={max} narrow={compact} />
               </span>
-              <span className={`col-span-2 text-sm text-muted md:col-span-1 md:whitespace-nowrap ${why ? '' : 'hidden'}`}>
+              <span className={`col-span-2 text-sm text-ink-700 md:col-span-1 md:whitespace-nowrap ${why ? '' : 'hidden'}`}>
                 {r.reasons.length ? (
                   r.reasons.map((x, k) => (
                     <span key={x.signal} title={x.text}>
@@ -235,10 +235,10 @@ export function ForecastTable({ rows, limit, compact = false, storeId }: {
                     </span>
                   ))
                 ) : (
-                  <span className="text-faint">–</span>
+                  <span className="text-ink-500">–</span>
                 )}
               </span>
-              <span className={`hidden text-faint transition-transform md:block ${open === r.menu ? 'rotate-180' : ''}`} aria-hidden>
+              <span className={`hidden text-ink-500 transition-transform md:block ${open === r.menu ? 'rotate-180' : ''}`} aria-hidden>
                 ▾
               </span>
             </button>
@@ -247,14 +247,14 @@ export function ForecastTable({ rows, limit, compact = false, storeId }: {
         ))}
       </ol>
       {cut !== undefined && (
-        <button onClick={() => setShowAll(!showAll)} className="w-full border-t border-rule px-5 py-2.5 text-left text-sm underline underline-offset-4 hover:text-accent">
+        <button onClick={() => setShowAll(!showAll)} className="w-full border-t border-line px-5 py-2.5 text-left text-sm underline underline-offset-4 hover:text-ink-900">
           {showAll ? '많이 팔리는 메뉴만 보기' : `나머지 ${rows.length - cut}개 메뉴 더 보기`}
         </button>
       )}
-      <div className="flex flex-wrap justify-between gap-2 border-t-2 border-ink px-5 py-3 text-sm">
+      <div className="flex flex-wrap justify-between gap-2 border-t border-line px-5 py-3 text-sm">
         <span className="font-semibold">합계 {rows.length}개 메뉴</span>
         <span className="tabular-nums">
-          준비 <b className="text-base text-accent">{totalPrep}</b> · 예상 {totalPred}
+          준비 <b className="text-base text-ink-900">{totalPrep}</b> · 예상 {totalPred}
         </span>
       </div>
     </section>
@@ -271,8 +271,8 @@ export function ForecastView({ storeId, prepMode, readOnly = false, limit }: {
 }) {
   const { data, error, isLoading } = useQuery({ queryKey: ['forecast', storeId], queryFn: () => api.forecast(storeId) })
   const [picked, setPicked] = useState<string | null>(null) // 보기 전용 예시에서 눌러 본 준비 기준
-  if (isLoading) return <p className="text-muted">불러오는 중…</p>
-  if (error || !data) return <p className="text-up">{(error as Error)?.message ?? '예측이 없습니다.'}</p>
+  if (isLoading) return <p className="text-ink-700">불러오는 중…</p>
+  if (error || !data) return <p className="text-down">{(error as Error)?.message ?? '예측이 없습니다.'}</p>
 
   // 보기 전용 예시: 준비 기준을 눌러 보면 서버 없이 그 기준의 개수로 바꿔 보여 준다 (예측할 때 세 기준을 모두 계산해 둔다)
   const local = readOnly && data.rows.some((r) => r.prep_by_mode)
@@ -286,13 +286,13 @@ export function ForecastView({ storeId, prepMode, readOnly = false, limit }: {
     <div className="space-y-8">
       <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
         <div>
-          <p className="text-sm font-semibold text-muted">{day === '이날' ? '준비표' : `${day} 준비표`}</p>
-          <h2 className="mt-0.5 text-3xl font-extrabold tracking-tight">{fmtDate(data.rows[0].date)}</h2>
+          <p className="text-sm font-semibold text-ink-700">{day === '이날' ? '준비표' : `${day} 준비표`}</p>
+          <h2 className="mt-0.5 text-h2">{fmtDate(data.rows[0].date)}</h2>
           {moved.length > 0 && (
             <ul className="mt-3 flex flex-wrap items-center gap-2 text-sm">
-              <li className="text-muted">반영한 정보</li>
+              <li className="text-ink-700">반영한 정보</li>
               {moved.map((m) => (
-                <li key={m} className="rounded-full bg-accent-soft px-3 py-1 font-bold text-accent">
+                <li key={m} className="tag bg-surface text-ink-900">
                   {m}
                 </li>
               ))}

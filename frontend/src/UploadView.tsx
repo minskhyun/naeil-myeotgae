@@ -9,14 +9,14 @@ const POS_TYPES = {
   'text/csv': ['.csv'],
 }
 const NEW = 'new' // 매장 고르기에서 '새 매장 만들기'
-const INPUT = 'mt-1 w-full rounded-xl border border-rule bg-sheet px-3.5 py-2.5 focus:border-accent focus:outline-none'
+const INPUT = 'field mt-1 w-full'
 
 // 번호가 붙은 단계 한 칸: 왼쪽에 제목, 오른쪽에 내용
 function Step({ n, title, children }: { n: number; title: string; children: ReactNode }) {
   return (
-    <section className="grid gap-4 border-t border-rule py-6 sm:grid-cols-[12rem_1fr]">
+    <section className="grid gap-4 border-t border-line py-6 sm:grid-cols-[12rem_1fr]">
       <h3 className="font-semibold">
-        <span className="mr-2 text-muted tabular-nums">{n}</span>
+        <span className="mr-2 text-ink-700 tabular-nums">{n}</span>
         {title}
       </h3>
       <div>{children}</div>
@@ -32,7 +32,7 @@ function Field({ label, hint, value, onChange, placeholder, wide, type = 'text' 
     <label className={`block ${wide ? 'sm:col-span-2' : ''}`}>
       <span className="text-sm font-medium">{label}</span>
       <input type={type} value={value} onChange={(e) => onChange(e.target.value)} className={INPUT} placeholder={placeholder} />
-      <span className="mt-1 block text-sm text-faint">{hint}</span>
+      <span className="mt-1 block text-sm text-ink-500">{hint}</span>
     </label>
   )
 }
@@ -46,17 +46,17 @@ function PosFile({ file, onPick }: { file?: File; onPick: (f: File) => void }) {
     <div
       {...getRootProps()}
       className={`flex flex-wrap items-center justify-between gap-3 rounded-2xl border-2 border-dashed px-4 py-4 ${
-        isDragActive ? 'border-accent bg-accent-soft' : 'border-rule bg-paper'
+        isDragActive ? 'border-ink-900 bg-surface' : 'border-line bg-surface'
       }`}
     >
       <input {...getInputProps()} />
       <div className="min-w-0 flex-1">
         <p className="font-medium">POS 판매 기록</p>
-        <p className="text-sm text-muted">
+        <p className="text-sm text-ink-700">
           {file ? file.name : 'POS·매출 프로그램에서 내려받은 CSV 또는 엑셀(.xlsx) — 끌어다 놓아도 됩니다'}
         </p>
       </div>
-      <button type="button" onClick={open} className="rounded-full border border-rule bg-sheet px-4 py-1.5 text-sm font-semibold hover:bg-paper">
+      <button type="button" onClick={open} className="btn-md btn-secondary">
         {file ? '다른 파일' : '파일 고르기'}
       </button>
     </div>
@@ -129,9 +129,9 @@ export function UploadView({ onStarted, busy = false, account = false, initialTa
   return (
     <div className="max-w-4xl">
       <header className="pb-6">
-        <p className="text-sm text-muted">{label}</p>
-        <h2 className="mt-0.5 text-3xl font-bold tracking-tight">{title}</h2>
-        <p className="mt-2 text-muted">
+        <p className="text-sm text-ink-700">{label}</p>
+        <h2 className="mt-0.5 text-h2">{title}</h2>
+        <p className="mt-2 text-ink-700">
           {account && !isNew
             ? '새 판매 기록으로 이 매장의 결과를 다시 만듭니다. 위치나 닫는 시간이 바뀌었으면 여기서 고쳐 주세요. 몇 분 걸립니다.'
             : '포스에서 내려받은 파일 하나면 됩니다. 날씨·행사·뉴스 같은 주변 정보는 매장 위치로 저희가 찾아 붙입니다. 몇 분 걸립니다.'}
@@ -162,21 +162,21 @@ export function UploadView({ onStarted, busy = false, account = false, initialTa
       <Step n={3} title="분석">
         <div className="flex flex-wrap items-center gap-3">
           <button disabled={!pos || running || !closeTime || (isNew && !name.trim())} onClick={() => start(run)}
-            className="rounded-full bg-accent px-7 py-3 font-bold text-white hover:bg-accent-deep disabled:cursor-not-allowed disabled:opacity-40">
+            className="btn btn-primary">
             {sending ? '보내는 중…' : '분석 및 예측하기'}
           </button>
           {!account && (
             <>
-              <span className="text-sm text-muted">또는</span>
+              <span className="text-sm text-ink-700">또는</span>
               <button disabled={running} onClick={() => start(api.demo)}
-                className="text-sm underline underline-offset-4 hover:text-accent disabled:opacity-40">
+                className="text-sm underline underline-offset-4 hover:text-ink-900 disabled:opacity-40">
                 가상 매장 데이터로 시연
               </button>
             </>
           )}
         </div>
-        {error && <p className="mt-3 text-sm text-up">{error}</p>}
-        {busy && <p className="mt-3 text-sm text-muted">다른 분석이 아직 진행 중입니다. 끝난 뒤에 시작할 수 있어요.</p>}
+        {error && <p className="mt-3 text-sm text-down">{error}</p>}
+        {busy && <p className="mt-3 text-sm text-ink-700">다른 분석이 아직 진행 중입니다. 끝난 뒤에 시작할 수 있어요.</p>}
       </Step>
     </div>
   )
