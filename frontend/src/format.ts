@@ -59,10 +59,16 @@ export const shortReason = (r: Reason) => `${SIGNAL_LABELS[r.signal] ?? r.signal
 export const pct1 = (v: number) => `${(v * 100).toFixed(1)}%`
 
 // ---- 얼마나 맞나: 화면에 보여 주는 두 숫자
-// 오차율 = 평균 오차(개) ÷ 평균 판매량(개). 서버의 wape와 같은 값이다 (Σ|실제−예측| ÷ Σ실제 = 평균 오차 ÷ 평균 판매량)
-// 예: 메뉴 하나가 하루 평균 20개 팔리는데 평균 4개 틀리면 20%
-export const avgSold = (s: { mae: number; wape: number }) => (s.wape > 0 ? s.mae / s.wape : 0) // 메뉴 하나의 하루 평균 판매량
-export const num1 = (v: number) => v.toFixed(1)
+// 남거나 모자란 개수 (하루, 모든 메뉴 합) = 예측대로 준비했다면 남았을 개수 + 모자랐을 개수.
+// 비율(오차율)로 보여 주지 않는 이유: 하루 한두 개 팔리는 메뉴는 한 개만 틀려도 50~100%가 되어 숫자가 뜻 없이 커진다.
+// Σ|실제−예측| = mae × n 이라 예전 결과 파일에서도 계산된다. days가 없는 예전 파일은 fallbackDays(구간의 날짜 수)로 나눈다
+export const missPerDay = (s: { mae: number; n: number; days?: number }, fallbackDays = 1) => (s.mae * s.n) / (s.days || fallbackDays || 1)
+export const count = (v: number) => Math.round(v).toLocaleString('ko-KR')
+// 금액: 1만 원 이상은 '12.3만 원', 그 아래는 천 원 단위
+export const won = (v: number) => (Math.abs(v) >= 10000 ? `${(v / 10000).toFixed(1)}만 원` : `${count(Math.round(v / 100) * 100)}원`)
+// 지난주 방식보다 하루에 덜 틀린 금액 (판매가를 아는 매장만)
+export const savedPerDay = (mine: { amount?: number | null; days?: number }, base: { amount?: number | null }) =>
+  mine.amount != null && base.amount != null && mine.days ? (base.amount - mine.amount) / mine.days : null
 
 // 범위 정확도: 예상 범위는 실제 판매의 80%가 들어오도록 만든다 → 80%를 정확히 맞추면 100%(만점).
 // 모자라면(범위가 좁다) 그만큼 깎고, 넘쳐도(범위가 쓸데없이 넓다) 같은 만큼 깎는다. 예: 75% → 93.8%, 90% → 87.5%

@@ -641,21 +641,24 @@
  {
   "kind": "trial",
   "groups": [],
-  "wape": 0.2816
+  "wape": 0.2845,
+  "miss": 62.6
  },
  {
   "kind": "trial",
   "groups": [
    "weather"
   ],
-  "wape": 0.2618
+  "wape": 0.2638,
+  "miss": 58.1
  },
  {
   "kind": "trial",
   "groups": [
    "events"
   ],
-  "wape": 0.2345
+  "wape": 0.2294,
+  "miss": 50.5
  },
  {
   "kind": "trial",
@@ -663,19 +666,20 @@
    "weather",
    "events"
   ],
-  "wape": 0.2175
+  "wape": 0.2177,
+  "miss": 47.9
  },
  {
   "kind": "decision",
   "group": "weather",
   "adopted": true,
-  "reason": "날씨 신호를 넣으니 검증 4개 구간 중 4개에서 오차가 줄어 사용함 (전체 오차 7.3% 감소)"
+  "reason": "날씨 신호를 넣으니 검증 4개 구간 중 4개에서 오차가 줄어 사용함 (전체 오차 5.1% 감소)"
  },
  {
   "kind": "decision",
   "group": "events",
   "adopted": true,
-  "reason": "학사일정·행사 신호를 넣으니 검증 4개 구간 중 4개에서 오차가 줄어 사용함 (전체 오차 16.9% 감소)"
+  "reason": "학사일정·행사 신호를 넣으니 검증 4개 구간 중 3개에서 오차가 줄어 사용함 (전체 오차 17.5% 감소)"
  },
  {
   "kind": "decision",
@@ -692,10 +696,12 @@
  {
   "kind": "scores",
   "model": "M3",
-  "wape": 0.1912,
+  "wape": 0.1927,
   "base_wape": 0.2975,
   "coverage": 0.7482,
-  "test_days": 28
+  "test_days": 28,
+  "miss": 50.5,
+  "base_miss": 77.9
  },
  {
   "kind": "step",
@@ -721,13 +727,13 @@
   "date": "2026-11-01",
   "menus": 10,
   "warnings": [
-   "내일 정오부터 저녁 8시까지 신촌 연세로에서 큰 가을 축제가 열려 손님이 평소보다 많이 몰릴 수 있으니 재고와 인력을 넉넉히 준비해 보세요."
+   "내일 정오부터 저녁 8시까지 연세로에서 '차 없는 거리' 가을 축제가 열려 손님이 늘어날 수 있지만, 예측에는 이 행사가 반영되지 않았고 비 소식도 있으니 준비량을 살펴 주세요."
   ],
   "top": [
    {
     "menu": "소금빵",
-    "prep": 32,
-    "pred": 32
+    "prep": 31,
+    "pred": 31
    },
    {
     "menu": "아이스 아메리카노",
@@ -736,18 +742,18 @@
    },
    {
     "menu": "아메리카노(HOT)",
-    "prep": 21,
-    "pred": 21
+    "prep": 20,
+    "pred": 20
    },
    {
     "menu": "크루아상",
-    "prep": 18,
-    "pred": 18
+    "prep": 17,
+    "pred": 16
    },
    {
     "menu": "에그타르트",
     "prep": 13,
-    "pred": 13
+    "pred": 12
    }
   ]
  },

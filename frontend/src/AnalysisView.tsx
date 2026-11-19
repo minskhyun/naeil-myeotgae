@@ -7,7 +7,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { AnalysisMap } from './AnalysisMap'
 import type { Job, ProgressEvent } from './api'
-import { fmtDate, GROUP_LABELS, KIND_COLOR, pct1, rangeScore } from './format'
+import { count as cnt, fmtDate, GROUP_LABELS, KIND_COLOR, pct1, rangeScore, won } from './format'
 
 const STEPS = [
   { id: 'ingest', label: '판매 기록' },
@@ -54,7 +54,7 @@ function line(e: ProgressEvent): { tag: string; color: string; text: string } | 
     }
     case 'trial': return {
       tag: '시험', color: KIND_COLOR.plan,
-      text: `${e.groups.length ? `판매 기록 + ${e.groups.map((g) => GROUP_LABELS[g] ?? g).join('·')}` : '판매 기록만'}으로 지난 날들을 맞혀 봤어요 → 오차율 ${pct1(e.wape)}`,
+      text: `${e.groups.length ? `판매 기록 + ${e.groups.map((g) => GROUP_LABELS[g] ?? g).join('·')}` : '판매 기록만'}으로 지난 날들을 맞혀 봤어요 → ${e.miss !== undefined ? `하루 ${cnt(e.miss)}개 틀림` : `오차율 ${pct1(e.wape)}`}`,
     }
     default: return null
   }
@@ -242,7 +242,22 @@ export function AnalysisView({ events, status, error, log, onClose, replay = fal
               <p className="mt-3 text-xs text-muted">지난 기록으로 시험해 실제로 더 정확해진 정보만 써요.</p>
             </Card>
             <Card title="얼마나 맞나">
-              {scores ? (
+              {scores?.miss !== undefined && scores.base_miss !== undefined ? (
+                <>
+                  <p className="text-4xl font-extrabold tracking-tight tabular-nums">
+                    하루 <CountUp to={Math.max(0, scores.base_miss - scores.miss)} />개
+                  </p>
+                  <p className="mt-1 text-sm">
+                    '지난주 같은 요일만큼' 준비할 때보다 덜 틀린 개수{gain > 0 && ` (${gain}% 적음)`}
+                  </p>
+                  <p className="mt-3 text-xs text-muted">
+                    남거나 모자란 개수 하루 {cnt(scores.base_miss)}개 → {cnt(scores.miss)}개
+                    {scores.saved_amount !== undefined && scores.saved_amount > 0 && ` · 판매가로 하루 약 ${won(scores.saved_amount)}`}
+                    {' '}· 예상 범위 정확도 {pct1(rangeScore(scores.coverage))}
+                    {scores.test_days ? ` · 마지막 ${scores.test_days}일로 시험` : ''}
+                  </p>
+                </>
+              ) : scores ? (
                 <>
                   <p className="text-4xl font-extrabold tracking-tight tabular-nums">
                     <CountUp to={scores.wape * 100} format={(v) => v.toFixed(1)} />%

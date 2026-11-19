@@ -132,7 +132,7 @@ class ForecastRow(BaseModel):
     """메뉴 하나의 내일 예측."""
     date: dt.date
     menu: str
-    pred: float = Field(ge=0)                   # 예상 판매량 (= p50)
+    pred: float = Field(ge=0)                   # 예상 판매량 (평균 기대값. 중앙값이 아니다 → ml/models.py)
     p10: float = Field(ge=0)                    # 10%의 날은 이보다 적게 팔림
     p90: float = Field(ge=0)                    # 90%의 날은 이보다 적게 팔림
     prep_qty: int | None = Field(default=None, ge=0)   # 권장 준비량
@@ -183,6 +183,11 @@ class ModelScore(BaseModel):
     coverage_80: float = Field(ge=0, le=1)      # 실제값이 [p10, p90] 안에 든 비율 (이상적으로 0.8)
     n: int = Field(ge=0)                        # 채점한 (날짜, 메뉴) 행 수
     wape_by_fold: list[float]                   # 검증 구간별 WAPE
+    # 화면의 '남거나 모자란 개수' (11/19). 비율(wape)은 하루 한두 개 팔리는 메뉴에서 크게 튀어, 화면에는 개수로 보여 준다
+    over: float = Field(default=0, ge=0)        # 예측대로 준비했다면 남았을 개수 합 Σmax(예측−실제, 0)
+    under: float = Field(default=0, ge=0)       # 모자랐을 개수 합 Σmax(실제−예측, 0).  over + under = Σ|실제−예측|
+    days: int = Field(default=0, ge=0)          # 채점한 날짜 수 (하루 평균을 낼 때 나누는 수)
+    amount: float | None = None                 # 남거나 모자란 개수를 판매가로 환산한 금액 합(원). 판매가를 모르면 None
 
 
 class SignalDecision(BaseModel):

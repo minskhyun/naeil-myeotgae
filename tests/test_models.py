@@ -43,6 +43,22 @@ def test_catboost_output_shape_and_order(frame, name):
     q = out[Q_COLS].to_numpy()
     assert (q >= 0).all()                                 # 음수 없음
     assert (np.diff(q, axis=1) >= 0).all()                # p10 ≤ p40 ≤ p50 ≤ p60 ≤ p80 ≤ p90
+    assert ((out["pred"] >= out["p10"]) & (out["pred"] <= out["p90"])).all()   # 예상 판매량(평균)은 범위 안
+
+
+def test_pred_is_the_mean_not_the_median():
+    """가끔 한 개 팔리는 메뉴 30개: 중앙값은 0이지만 하루 합계는 10개쯤 팔린다. 예상 판매량의 합이 그 근처여야 한다."""
+    from ml.features import build_frame
+    rng = np.random.default_rng(0)
+    days = pd.date_range("2026-06-01", periods=90)
+    sales = pd.DataFrame([dict(date=d, store_id="s", menu=f"메뉴{m}", qty=int(rng.random() < 1 / 3), sold_out=False)
+                          for d in days for m in range(30)])
+    frame = build_frame(sales)
+    train, test = frame[frame["date"] < "2026-08-15"], frame[frame["date"] >= "2026-08-15"]
+    out = make_model("M1", iterations=50).fit(train).predict(test)
+    actual = test["qty"].sum()
+    assert out["p50"].sum() < 0.3 * actual                # 중앙값을 더하면 거의 0
+    assert 0.7 * actual < out["pred"].sum() < 1.3 * actual
 
 
 def test_feature_sets_differ(frame):

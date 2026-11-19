@@ -24,9 +24,10 @@
     trend_span 검색량을 가져온 기간    menus, days, first, last
     trend     메뉴 검색량            menu, pct (예측 날짜 기준: 최근 7일이 그 전 4주보다 몇 % 늘었나)
     rating    행사 평가 (LLM)       title, scale(1~5), relevance(1~5), distance_m, menus[특히 관련 있는 메뉴], reason
-    trial     검증 중 시험 한 번     groups[정보 묶음], wape
+    trial     검증 중 시험 한 번     groups[정보 묶음], wape, miss(하루에 남거나 모자란 개수)
     decision  정보를 쓸지 판정        group, adopted, reason
-    scores    검증 결과             model, wape, base_wape, coverage, test_days
+    scores    검증 결과             model, wape, base_wape, coverage, test_days, miss·base_miss(하루에 남거나 모자란 개수),
+                                 saved_amount(지난주 방식보다 하루에 덜 틀린 금액, 판매가를 알 때만)
     forecast  내일 예측             date, menus, top[{menu, prep, pred}], warnings[문장]
 """
 import json

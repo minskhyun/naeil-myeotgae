@@ -6,7 +6,7 @@ export type Reason = { signal: string; effect_pct: number; text: string; source_
 export type ForecastRow = {
   date: string
   menu: string
-  pred: number // 예상 판매량 (= p50)
+  pred: number // 예상 판매량 (평균 기대값)
   p10: number // 예상 범위 아래 끝
   p90: number // 예상 범위 위 끝
   prep_qty: number | null // 준비 권장량
@@ -42,6 +42,10 @@ export type ModelScore = {
   coverage_80: number
   n: number
   wape_by_fold: number[]
+  over?: number // 예측대로 준비했다면 남았을 개수 합
+  under?: number // 모자랐을 개수 합
+  days?: number // 채점한 날짜 수
+  amount?: number | null // 남거나 모자란 개수를 판매가로 환산한 금액 합(원). 판매가를 모르면 없음
 }
 
 export type SignalDecision = {
@@ -128,9 +132,10 @@ export type ProgressEvent =
   | { kind: 'trend_span'; menus: number; days: number; first: string; last: string } // 검색량을 가져온 기간
   | { kind: 'trend'; menu: string; pct: number } // 예측 날짜 기준: 최근 7일이 그 전 4주보다 몇 % 늘었나
   | { kind: 'rating'; title: string; scale: number; relevance: number; distance_m: number; menus: string[]; reason: string } // AI가 매긴 행사의 규모·연관도
-  | { kind: 'trial'; groups: string[]; wape: number } // 검증 중: 이 정보 묶음을 넣어 시험했더니 오차가 이만큼
+  | { kind: 'trial'; groups: string[]; wape: number; miss?: number } // miss = 하루에 남거나 모자란 개수.
+  // 검증 중: 이 정보 묶음을 넣어 시험했더니 오차가 이만큼
   | { kind: 'decision'; group: string; adopted: boolean; reason: string }
-  | { kind: 'scores'; model: string; wape: number; base_wape: number; coverage: number; test_days?: number }
+  | { kind: 'scores'; model: string; wape: number; base_wape: number; coverage: number; test_days?: number; miss?: number; base_miss?: number; saved_amount?: number }
   | { kind: 'forecast'; date: string; menus: number; top: { menu: string; prep: number | null; pred: number }[]; warnings: string[] }
 
 // 실행 작업 (예측 돌리기). 화면은 useJob.ts로 상태를 물어본다

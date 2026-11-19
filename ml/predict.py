@@ -24,7 +24,8 @@ from ml.features import (DEFAULT_CLOSE_TIME, DERIVED_SIGNALS, SPECIAL_LEAD_DAYS,
 from ml.models import make_model
 from ml.paths import ARTIFACTS
 
-PREP_MODES = {"폐기 줄이기": "p40", "균형": "p50", "품절 줄이기": "p80"}   # 준비 방식 → 준비량으로 쓸 분위
+# 준비 방식 → 준비량으로 쓸 값. 균형 = 예상 판매량(평균). 중앙값(p50)을 쓰면 조금씩 팔리는 메뉴가 모두 0이 된다 (models.py)
+PREP_MODES = {"폐기 줄이기": "p40", "균형": "pred", "품절 줄이기": "p80"}
 REASON_MIN_PCT = 3.0        # 효과가 이보다 작으면 근거로 보여 주지 않는다
 RECENT_DAYS = 28            # 연속값 신호의 '평소 값' = 최근 28일 중앙값
 # 평소 값이 정해져 있는 신호: 비 안 옴(0), 최근 평균과 같은 기온(0), 평소와 같은 검색량(1배)
@@ -37,11 +38,13 @@ EVENT_TEXT = {"exam_period": "시험기간이라", "vacation": "방학 기간이
 # ---------------------------------------------------------------- 준비량
 
 def prep_qty(q: pd.DataFrame, mode: str = DEFAULT_PREP_MODE) -> pd.Series:
-    """준비량 = 고른 방식의 분위를 올림한 정수.  폐기 줄이기=p40, 균형=p50, 품절 줄이기=p80."""
+    """준비량 = 고른 방식의 값을 올림한 정수.  폐기 줄이기=p40, 균형=예상 판매량(pred), 품절 줄이기=p80.
+    폐기 줄이기 ≤ 균형 ≤ 품절 줄이기 순서는 지킨다 (조금씩 팔리는 메뉴는 평균이 p80보다 클 수도, p40이 평균보다 클 수도 있다)."""
     if mode not in PREP_MODES:
         raise ValueError(f"준비 방식은 {list(PREP_MODES)} 중 하나여야 합니다: {mode!r}")
+    level = {"폐기 줄이기": np.minimum(q["p40"], q["pred"]), "균형": q["pred"], "품절 줄이기": np.maximum(q["p80"], q["pred"])}[mode]
     # round(…, 6): 40.0000001 같은 계산 찌꺼기가 41로 올림되지 않게
-    return np.ceil(q[PREP_MODES[mode]].round(6)).astype(int)
+    return np.ceil(level.round(6)).astype(int)
 
 
 # ---------------------------------------------------------------- 근거 문장
@@ -151,13 +154,14 @@ def predict_next_day(sales: pd.DataFrame, signals: pd.DataFrame | None, groups: 
     q = model.predict(rows)
     if calibration:
         q = apply_calibration(q.assign(base=base_level(rows)), calibration)
+        q["pred"] = q["pred"].clip(q["p10"], q["p90"])                # 보정으로 범위가 움직여도 예상 판매량은 범위 안에
 
     reasons = explain(model, rows, q["p50"], usual_values(train, model.signal_cols, kinds),
                       signal_sources(signals, store_id, target, close_time) if names else {})
     prep = prep_qty(q, prep_mode)
     out_rows = [
         ForecastRow(date=target.date(), menu=rows.at[i, "menu"],
-                    pred=round(float(q.at[i, "p50"]), 1), p10=round(float(q.at[i, "p10"]), 1),
+                    pred=round(float(q.at[i, "pred"]), 1), p10=round(float(q.at[i, "p10"]), 1),
                     p90=round(float(q.at[i, "p90"]), 1), prep_qty=int(prep[i]), model=model_name, reasons=reasons[i])
         for i in range(len(rows))
     ]

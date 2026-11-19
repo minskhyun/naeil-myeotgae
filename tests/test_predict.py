@@ -15,13 +15,15 @@ GROUPS = ["weather", "events"]
 # ---------------------------------------------------------------- 준비량·문장 (손 계산)
 
 def test_prep_qty_modes():
-    q = pd.DataFrame({"p40": [38.1, 37.0], "p50": [40.2, 40.0000001], "p80": [47.1, 45.0]})
+    q = pd.DataFrame({"p40": [38.1, 37.0], "pred": [40.2, 40.0000001], "p80": [47.1, 45.0]})
     assert prep_qty(q, "균형").tolist() == [41, 40]           # 올림 (계산 찌꺼기 40.0000001은 40)
     assert prep_qty(q, "폐기 줄이기").tolist() == [39, 37]     # 예상보다 조금 적게
     assert (prep_qty(q, "폐기 줄이기") <= prep_qty(q, "균형")).all()
     assert prep_qty(q, "품절 줄이기").tolist() == [48, 45]
     with pytest.raises(ValueError):
         prep_qty(q, "많이")
+    rare = pd.DataFrame({"p40": [0.0], "pred": [0.3], "p80": [0.0]})    # 가끔 한 개 팔리는 메뉴: 중앙값은 0, 평균은 0.3
+    assert [int(prep_qty(rare, m)[0]) for m in ("폐기 줄이기", "균형", "품절 줄이기")] == [0, 1, 1]   # 순서를 지킨다
 
 
 def test_reason_text():
@@ -52,7 +54,7 @@ def test_forecast_next_day(forecast, tmp_path):
     assert forecast.signals_used == ["temp_diff", "rain_mm", "exam_period", "vacation", "festival", "nearby_event",
         "exam_period_diff", "vacation_diff", "festival_diff"]
     for r in forecast.rows:
-        assert r.prep_qty >= r.pred                                  # 균형 = p50 올림
+        assert r.prep_qty >= r.pred and r.p10 <= r.pred <= r.p90     # 균형 = 예상 판매량(평균) 올림
         assert all(abs(x.effect_pct) >= 3 for x in r.reasons)
         assert not {x.signal for x in r.reasons} & {"vacation_diff", "exam_period_diff", "festival_diff"}  # 원재료 근거에 묶임
         assert [abs(x.effect_pct) for x in r.reasons] == sorted((abs(x.effect_pct) for x in r.reasons), reverse=True)

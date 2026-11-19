@@ -28,6 +28,8 @@ COLUMN_MAP = {
     # 상품별 매출 엑셀 (일자 · 품목코드 · 품목명 · 규격 · 수량 · 공급가액 · 부가세). 달마다 시트가 나뉘어 있다
     "items": {"date": ["일자", "판매일자"], "menu": ["품목명"], "qty": ["수량", "판매수량"]},
 }
+# 금액 열 (있으면 메뉴별 판매가 = 금액 합 ÷ 수량 합 → menu_prices.json. 예측에는 쓰지 않고 '얼마를 아꼈나' 환산에만 쓴다)
+AMOUNT_COLUMNS = {"amount": ["공급가액", "판매금액", "매출액", "실매출액", "결제금액", "금액"], "vat": ["부가세"]}
 HEADER_SEARCH_ROWS = 10                          # 머리글을 찾을 범위 (위에서 10줄)
 TOTAL_WORDS = ("합계", "소계", "총계", "총합")    # 이런 글자가 메뉴·날짜 칸에 있으면 합계 행
 # 메뉴가 아닌 품목: 이름이 금액뿐인 것('10000원' = 금액권·임의 금액 결제), 충전. 준비할 것이 아니므로 예측에서 뺀다
@@ -109,6 +111,15 @@ def read_pos(path, pos_type: str = "auto") -> tuple[pd.DataFrame, dict]:
         "menu_raw": body.iloc[:, cols["menu"]].astype("string").str.strip(),
         "qty": _parse_qty(body.iloc[:, cols["qty"]]),
     })
+    money = {}
+    for role, names in AMOUNT_COLUMNS.items():                      # 금액 열 (공급가액이면 부가세를 더해 판매가로)
+        hit = [header.index(n) for n in names if n in header]
+        if hit:
+            money[role] = hit[0]
+    if "amount" in money:
+        df["amount"] = _parse_qty(body.iloc[:, money["amount"]]).fillna(0)
+        if "vat" in money and header[money["amount"]] == "공급가액":
+            df["amount"] += _parse_qty(body.iloc[:, money["vat"]]).fillna(0)
     # 판매 시각: 따로 열이 있거나, 날짜 칸에 시각이 같이 들어 있는 경우 (영수증 단위 파일)
     if "time" in cols:
         df["time"] = body.iloc[:, cols["time"]].astype("string").str.strip().to_numpy()
@@ -126,6 +137,10 @@ def read_pos(path, pos_type: str = "auto") -> tuple[pd.DataFrame, dict]:
                dropped_cancel=int((is_cancel & ~is_total & ~is_blank).sum()),
                dropped_non_menu=int(is_other.sum()), non_menu=sorted(df.loc[is_other, "menu_raw"].unique()))
     df = df[~(is_total | is_blank | is_cancel | is_other)]
+    if "amount" in df:                                              # 메뉴별 판매가 = 금액 합 ÷ 수량 합
+        sums = df.groupby("menu_raw")[["amount", "qty"]].sum()
+        sums = sums[(sums["qty"] > 0) & (sums["amount"] > 0)]
+        log["prices"] = {m: round(float(a / q)) for m, a, q in sums.itertuples()}
 
     log["receipt_level"] = bool(df.duplicated(["date", "menu_raw"]).any())   # 같은 날·메뉴가 여러 줄 = 영수증 단위
     keys = ["date", "menu_raw"]
@@ -269,7 +284,10 @@ def ingest_store(pos_path, store_id: str, out: Path, pos_type: str = "auto") -> 
     candidates = suggest_menu_merges(sales["menu"].unique())
     (out / "menu_merge_candidates.json").write_text(json.dumps(
         [dict(a=a, b=b, score=s) for a, b, s in candidates], ensure_ascii=False, indent=1), encoding="utf-8")
-    log = dict(read=read_log, clean=clean_log, merge_candidates=len(candidates))
+    prices = {menu_map.get(m, m): p for m, p in read_log.pop("prices", {}).items()}      # 판매가 (금액 열이 있을 때)
+    if prices:
+        (out / "menu_prices.json").write_text(json.dumps(prices, ensure_ascii=False, indent=1), encoding="utf-8")
+    log = dict(read=read_log, clean=clean_log, merge_candidates=len(candidates), menus_with_price=len(prices))
     (out / "ingest_log.json").write_text(json.dumps(log, ensure_ascii=False, indent=1), encoding="utf-8")
 
     parts = [f"{read_log['pos_type']} 형식, {clean_log['days']}일·메뉴 {clean_log['menus']}개",

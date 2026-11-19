@@ -1,6 +1,6 @@
 // 로그인 뒤의 분석 결과 화면: 한 매장의 내일 준비를 한눈에.
 //   맨 위   날짜 · 준비 기준
-//   요약    숫자 네 칸 (준비할 양 · 평소와 다른 메뉴 · 오차율 · 주의할 소식)
+//   요약    숫자 네 칸 (준비할 양 · 평소와 다른 메뉴 · 지난주 방식보다 덜 틀린 개수 · 주의할 소식)
 //   본문    왼쪽: 메뉴별 준비표      오른쪽: AI 주의 안내 · 예측에 쓴 주변 정보 · 얼마나 맞나
 // 자세한 내용(주변 정보 전체, 검증 전체)은 길게 늘어놓지 않고 '자세히'를 누르면 창으로 뜬다.
 // 조각들은 기존 화면의 것을 그대로 쓴다 (ForecastView.tsx, BacktestView.tsx, SourcesView.tsx).
@@ -9,7 +9,7 @@ import { useState, type ReactNode } from 'react'
 import { api, type ModelScore } from './api'
 import { BacktestView, BarRow } from './BacktestView'
 import { ForecastTable, Notice, PrepToggle } from './ForecastView'
-import { avgSold, fmtDate, fmtTime, GROUP_LABELS, num1, pct1, rangeScore } from './format'
+import { count, fmtDate, fmtTime, GROUP_LABELS, missPerDay, pct1, rangeScore, savedPerDay, won } from './format'
 import { Modal } from './Modal'
 import { SourcesView } from './SourcesView'
 
@@ -71,6 +71,12 @@ export function Dashboard({ storeId, storeName, prepMode, readOnly, onReplay }: 
   const mine = backtest ? test[backtest.chosen_model.slice(0, 2)] : undefined
   const base = test.M0
   const gain = mine && base ? Math.round((1 - mine.wape / base.wape) * 100) : null
+  // 하루에 남거나 모자란 개수 (모든 메뉴 합): 지난주 같은 요일만큼 준비했을 때 vs 내일몇개 예측대로 준비했을 때
+  const period = backtest?.test_period
+  const testDays = period ? Math.round((Date.parse(period[1]) - Date.parse(period[0])) / 86400000) + 1 : 1
+  const mineMiss = mine ? missPerDay(mine, testDays) : 0
+  const baseMiss = base ? missPerDay(base, testDays) : 0
+  const money = mine && base ? savedPerDay(mine, base) : null
 
   return (
     <div className="space-y-5">
@@ -97,9 +103,13 @@ export function Dashboard({ storeId, storeName, prepMode, readOnly, onReplay }: 
           note={more + less ? `평소보다 많이 ${more}개 · 적게 ${less}개` : '모든 메뉴가 평소와 비슷해요'}
         />
         <Tile
-          label="오차율"
-          value={mine ? pct1(mine.wape) : '–'}
-          note={mine ? `하루 평균 ${num1(avgSold(mine))}개 파는 메뉴에서 ${num1(mine.mae)}개 틀림` : '기록이 짧아 최종 시험이 없어요'}
+          label="지난주 방식보다 덜 틀린 양"
+          value={mine && base ? (baseMiss > mineMiss ? `하루 ${count(baseMiss - mineMiss)}개` : '차이 없음') : '–'}
+          note={
+            mine && base
+              ? `남거나 모자란 개수 ${count(baseMiss)}개 → ${count(mineMiss)}개${money !== null && money > 0 ? ` · 판매가로 약 ${won(money)}` : ''}`
+              : '기록이 짧아 최종 시험이 없어요'
+          }
         />
         <Tile
           label="주의할 소식"
@@ -152,11 +162,18 @@ export function Dashboard({ storeId, storeName, prepMode, readOnly, onReplay }: 
           <Card title="얼마나 맞나" onMore={() => setDetail('backtest')}>
             {mine && base ? (
               <>
-                <BarRow label="지난주 같은 요일만큼" value={base.wape} max={Math.max(base.wape, mine.wape)} strong={false} />
-                <BarRow label="내일몇개 예측" value={mine.wape} max={Math.max(base.wape, mine.wape)} strong />
+                <BarRow label="지난주 같은 요일만큼" value={baseMiss} max={Math.max(baseMiss, mineMiss)} strong={false} />
+                <BarRow label="내일몇개 예측" value={mineMiss} max={Math.max(baseMiss, mineMiss)} strong />
                 <p className="mt-3 text-sm text-muted">
-                  오차율 = 평균 오차 ÷ 평균 판매량(짧을수록 좋음).{' '}
-                  {gain !== null && gain > 0 ? <b className="text-ink">지난주만큼 준비할 때보다 {gain}% 적게 틀려요.</b> : '지난주만큼 준비하는 것보다 나아지지 않았어요.'}
+                  하루에 남거나 모자란 개수(모든 메뉴 합, 짧을수록 좋음).{' '}
+                  {gain !== null && gain > 0 ? (
+                    <b className="text-ink">
+                      지난주만큼 준비할 때보다 하루 {count(baseMiss - mineMiss)}개({gain}%) 덜 틀려요
+                      {money !== null && money > 0 && `. 판매가로 하루 약 ${won(money)}`}.
+                    </b>
+                  ) : (
+                    '지난주만큼 준비하는 것보다 나아지지 않았어요.'
+                  )}
                 </p>
                 <p className="mt-3 flex items-baseline justify-between gap-3 border-t border-rule pt-3 text-sm">
                   <span>

@@ -232,7 +232,9 @@ def _import_collection(path: Path, out: Path, append: bool = False) -> str:
 def step_evaluate(args, out: Path) -> str:
     store, sales, signals = _load(out)
     progress.status("지난 기록으로 예측을 시험해, 어떤 정보가 실제로 도움이 되는지 확인하는 중")
-    bt = run_backtest(sales, signals, close_time=store.close_time, **args.model_kwargs)
+    price_file = out / "menu_prices.json"                     # 판매가 (POS 파일에 금액 열이 있었을 때만 있다)
+    prices = json.loads(price_file.read_text(encoding="utf-8")) if price_file.exists() else None
+    bt = run_backtest(sales, signals, close_time=store.close_time, prices=prices, **args.model_kwargs)
     write_backtest(bt, out.parent)
     for d in bt.decisions:                                    # 화면: 정보 묶음마다 쓸지 말지
         progress.emit("decision", group=d.signal_group, adopted=d.adopted, reason=d.reason)
@@ -240,8 +242,11 @@ def step_evaluate(args, out: Path) -> str:
     mine, base = test.get(bt.chosen_model[:2]), test.get("M0")
     if mine and base:
         days = (pd.Timestamp(bt.test_period[1]) - pd.Timestamp(bt.test_period[0])).days + 1 if bt.test_period else None
+        per_day = lambda s: round((s.over + s.under) / max(s.days, 1), 1)                 # noqa: E731  하루에 남거나 모자란 개수
+        saved = round((base.amount - mine.amount) / max(mine.days, 1)) if mine.amount is not None and base.amount is not None else None
         progress.emit("scores", model=bt.chosen_model, wape=round(mine.wape, 4), base_wape=round(base.wape, 4),
-                      coverage=round(mine.coverage_80, 4), test_days=days)
+                      coverage=round(mine.coverage_80, 4), test_days=days, miss=per_day(mine), base_miss=per_day(base),
+                      saved_amount=saved)
     adopted = [d.signal_group for d in bt.decisions if d.adopted] or ["없음"]
     return f"선택 모델 {bt.chosen_model}, 채택 신호 {', '.join(adopted)}"
 

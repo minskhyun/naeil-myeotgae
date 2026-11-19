@@ -141,3 +141,19 @@ def test_run_with_pos_file(tmp_path):
         assert (out / name).exists(), name
     cands = json.loads((out / "menu_merge_candidates.json").read_text(encoding="utf-8"))
     assert {"a": "아메리카노(ICE)", "b": "아이스 아메리카노", "score": 1.0} in cands
+
+
+def test_unit_prices_from_amount_columns(tmp_path):
+    """금액 열이 있으면 메뉴별 판매가(금액 합 ÷ 수량 합, 공급가액이면 부가세 포함)를 menu_prices.json에 남긴다."""
+    import json
+    from ml.ingest import ingest_store
+    p = tmp_path / "items.csv"
+    p.write_text("일자,품목명,수량,공급가액,부가세\n20261001,소금빵,10,30000,3000\n20261002,소금빵,10,30000,3000\n"
+                 "20261001,아메리카노,4,16000,1600\n20261002,서비스 쿠키,2,0,0\n", encoding="utf-8")
+    ingest_store(p, "s", tmp_path / "out")
+    assert json.loads((tmp_path / "out" / "menu_prices.json").read_text(encoding="utf-8")) == {"소금빵": 3300, "아메리카노": 4400}
+
+    q = tmp_path / "no_amount.csv"                                   # 금액 열이 없으면 파일을 만들지 않는다
+    q.write_text("날짜,상품명,수량\n2026-10-01,소금빵,10\n", encoding="utf-8")
+    ingest_store(q, "s", tmp_path / "out2")
+    assert not (tmp_path / "out2" / "menu_prices.json").exists()
