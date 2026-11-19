@@ -24,7 +24,10 @@ export const GROUP_LABELS: Record<string, string> = {
   special: '기념일',
 }
 
-export const SCHOOL_LABELS: Record<string, string> = { yonsei: '연세대', sogang: '서강대', ewha: '이화여대' }
+export const SCHOOL_LABELS: Record<string, string> = {
+  yonsei: '연세대', sogang: '서강대', ewha: '이화여대',
+  sunykorea: '한국뉴욕주립대', utah: '유타대 아시아캠퍼스', gmu: '한국조지메이슨대', ghent: '겐트대 글로벌캠퍼스',
+}
 
 export const MODEL_LABELS: Record<string, string> = {
   M0: '지난주 같은 요일만큼',

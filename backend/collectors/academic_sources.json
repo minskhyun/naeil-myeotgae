@@ -1,26 +1,181 @@
 [
-  {"school": "yonsei", "label": "2026-2", "hint": "2026학년도 2학기",
-   "range": ["2026-08-01", "2027-02-28"],
-   "url": "https://www.yonsei.ac.kr/sc/373/subview.do"},
-  {"school": "yonsei", "label": "2026-1", "hint": "2026학년도 1학기",
-   "range": ["2026-02-01", "2026-08-31"],
-   "url": "https://www.yonsei.ac.kr/sc/373/subview.do"},
-  {"school": "yonsei", "label": "2025-2", "hint": "2025학년도 2학기",
-   "range": ["2025-08-01", "2026-02-28"],
-   "url": "https://www.yonsei.ac.kr/sc/373/subview.do"},
-  {"school": "yonsei", "label": "2025-1", "hint": "2025학년도 1학기",
-   "range": ["2025-02-01", "2025-08-31"],
-   "url": "https://www.yonsei.ac.kr/sc/373/subview.do"},
-  {"school": "sogang", "label": "2026", "hint": "2026학년도",
-   "range": ["2026-03-01", "2027-02-28"],
-   "url": "https://www.sogang.ac.kr/ko/academic-support/calendar"},
-  {"school": "sogang", "label": "2025", "hint": "2025학년도",
-   "range": ["2025-03-01", "2026-02-28"],
-   "url": "https://www.sogang.ac.kr/ko/academic-support/calendar"},
-  {"school": "ewha", "label": "2026", "hint": "2026학년도",
-   "range": ["2026-01-01", "2027-02-28"],
-   "url": "https://www.ewha.ac.kr/ewha/bachelor/calendar2026.do?mode=user_list&year=2026"},
-  {"school": "ewha", "label": "2025", "hint": "2025학년도",
-   "range": ["2025-01-01", "2026-02-28"],
-   "url": "https://www.ewha.ac.kr/ewha/bachelor/calendar2025.do?mode=user_list&year=2025"}
+  {
+    "school": "yonsei",
+    "label": "2026-2",
+    "hint": "2026학년도 2학기",
+    "range": [
+      "2026-08-01",
+      "2027-02-28"
+    ],
+    "url": "https://www.yonsei.ac.kr/sc/373/subview.do"
+  },
+  {
+    "school": "yonsei",
+    "label": "2026-1",
+    "hint": "2026학년도 1학기",
+    "range": [
+      "2026-02-01",
+      "2026-08-31"
+    ],
+    "url": "https://www.yonsei.ac.kr/sc/373/subview.do"
+  },
+  {
+    "school": "yonsei",
+    "label": "2025-2",
+    "hint": "2025학년도 2학기",
+    "range": [
+      "2025-08-01",
+      "2026-02-28"
+    ],
+    "url": "https://www.yonsei.ac.kr/sc/373/subview.do"
+  },
+  {
+    "school": "yonsei",
+    "label": "2025-1",
+    "hint": "2025학년도 1학기",
+    "range": [
+      "2025-02-01",
+      "2025-08-31"
+    ],
+    "url": "https://www.yonsei.ac.kr/sc/373/subview.do"
+  },
+  {
+    "school": "sogang",
+    "label": "2026",
+    "hint": "2026학년도",
+    "range": [
+      "2026-03-01",
+      "2027-02-28"
+    ],
+    "url": "https://www.sogang.ac.kr/ko/academic-support/calendar"
+  },
+  {
+    "school": "sogang",
+    "label": "2025",
+    "hint": "2025학년도",
+    "range": [
+      "2025-03-01",
+      "2026-02-28"
+    ],
+    "url": "https://www.sogang.ac.kr/ko/academic-support/calendar"
+  },
+  {
+    "school": "ewha",
+    "label": "2026",
+    "hint": "2026학년도",
+    "range": [
+      "2026-01-01",
+      "2027-02-28"
+    ],
+    "url": "https://www.ewha.ac.kr/ewha/bachelor/calendar2026.do?mode=user_list&year=2026"
+  },
+  {
+    "school": "ewha",
+    "label": "2025",
+    "hint": "2025학년도",
+    "range": [
+      "2025-01-01",
+      "2026-02-28"
+    ],
+    "url": "https://www.ewha.ac.kr/ewha/bachelor/calendar2025.do?mode=user_list&year=2025"
+  },
+  {
+    "school": "gmu",
+    "label": "2026-fall",
+    "hint": "Fall 2026 semester",
+    "range": [
+      "2026-08-01",
+      "2026-12-31"
+    ],
+    "lang": "en",
+    "url": "https://masonkorea.gmu.edu/academic-calendars/fall-2026"
+  },
+  {
+    "school": "gmu",
+    "label": "2026-spring",
+    "hint": "Spring 2026 semester",
+    "range": [
+      "2026-01-01",
+      "2026-07-31"
+    ],
+    "lang": "en",
+    "url": "https://masonkorea.gmu.edu/academic-calendars/spring-2026"
+  },
+  {
+    "school": "gmu",
+    "label": "2027-spring",
+    "hint": "Spring 2027 semester",
+    "range": [
+      "2027-01-01",
+      "2027-07-31"
+    ],
+    "lang": "en",
+    "url": "https://masonkorea.gmu.edu/academic-calendars/spring-2027"
+  },
+  {
+    "school": "utah",
+    "label": "2026-2027",
+    "hint": "2026-2027 academic year (Fall 2026, Spring 2027, Summer 2027)",
+    "range": [
+      "2026-08-01",
+      "2027-08-31"
+    ],
+    "lang": "en",
+    "url": "https://registrar.utah.edu/academic-calendars/pdf-academic-calendars/asia_2026-2027.pdf"
+  },
+  {
+    "school": "utah",
+    "label": "2025-2026",
+    "hint": "2025-2026 academic year (Fall 2025, Spring 2026, Summer 2026)",
+    "range": [
+      "2025-08-01",
+      "2026-08-31"
+    ],
+    "lang": "en",
+    "url": "https://registrar.utah.edu/_pdf/asia_2025-2026_calendar.pdf"
+  },
+  {
+    "school": "sunykorea",
+    "label": "2026-fall",
+    "hint": "Fall 2026 semester (undergraduate)",
+    "range": [
+      "2026-08-01",
+      "2026-12-31"
+    ],
+    "lang": "en",
+    "url": "https://www.sunykorea.ac.kr/_prog/dn00/?file_id=62dfcd0c83673ce3e3a8c9b5d2f2d214"
+  },
+  {
+    "school": "sunykorea",
+    "label": "2026-spring",
+    "hint": "Spring 2026 semester (undergraduate)",
+    "range": [
+      "2026-01-01",
+      "2026-07-31"
+    ],
+    "lang": "en",
+    "url": "https://www.sunykorea.ac.kr/_prog/dn00/?file_id=60744430b0faf5bcfb6230d6531fbe4b"
+  },
+  {
+    "school": "sunykorea",
+    "label": "2027-spring",
+    "hint": "Spring 2027 semester (undergraduate)",
+    "range": [
+      "2027-01-01",
+      "2027-07-31"
+    ],
+    "lang": "en",
+    "url": "https://www.sunykorea.ac.kr/_prog/dn00/?file_id=ab5c985aec2f0815032d8f095e59af1f"
+  },
+  {
+    "school": "ghent",
+    "label": "2026-2027",
+    "hint": "2026-2027 academic year (Bachelor 1 and Bachelor 2)",
+    "range": [
+      "2026-08-01",
+      "2027-08-31"
+    ],
+    "lang": "en",
+    "url": "https://ghent.ac.kr/data/attach/Academic_Calendar_2026-27_final_CCM_1114.pdf"
+  }
 ]

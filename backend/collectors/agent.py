@@ -20,7 +20,10 @@ from collectors.store import STORE_DIR, get_store, nearby_path, plan_path
 
 KST = dt.timezone(dt.timedelta(hours=9))
 SOURCES_FILE = Path(__file__).parent / "academic_sources.json"
-SCHOOL_NAMES = {"yonsei": "연세대학교", "sogang": "서강대학교", "ewha": "이화여자대학교"}
+# 학교 코드 → 주변 시설 이름에 들어 있어야 하는 글자 (근거 시설이 정말 그 학교인지 확인할 때 쓴다)
+SCHOOL_NAMES = {"yonsei": "연세대학교", "sogang": "서강대학교", "ewha": "이화여자대학교",
+                # 인천글로벌캠퍼스 (11/19): '한국조지메이슨대학교'·'조지메이슨대학교 송도캠퍼스' 둘 다 잡히게
+                "sunykorea": "한국뉴욕주립대학교", "utah": "유타대학교", "gmu": "조지메이슨대학교", "ghent": "겐트대학교"}
 SCHOOL_MAX_M = 3000
 RADIUS_MIN, RADIUS_MAX = 300, 2000
 
