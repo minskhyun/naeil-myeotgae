@@ -119,3 +119,10 @@ def test_vacation_reason_includes_its_diff(sample):
     vac = [x for r in fc.rows for x in r.reasons if x.signal == "vacation"]
     assert vac and all(x.effect_pct < 0 and x.text.startswith("방학 기간이라") for x in vac)
     assert not {x.signal for r in fc.rows for x in r.reasons} & {"vacation_diff", "exam_period_diff", "festival_diff"}
+
+
+def test_reason_for_days_before_special_day():
+    """기념일을 앞둔 날의 근거 문장: 신호 값 7 = 하루 전, 1 = 일주일 전."""
+    from ml.predict import reason_text
+    assert reason_text("special_lead", 7, 12.0) == "기념일을 1일 앞두고 있어 평소보다 약 12% 많이 예상"
+    assert reason_text("special_lead", 1, -4.0) == "기념일을 7일 앞두고 있어 평소보다 약 4% 적게 예상"

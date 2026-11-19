@@ -11,6 +11,7 @@ export const SIGNAL_LABELS: Record<string, string> = {
   festival: '축제',
   nearby_event: '근처 행사',
   special_day: '기념일',
+  special_lead: '기념일 앞둔 날',
   trend_level: '검색량 유행',
 }
 

@@ -19,8 +19,8 @@ import pandas as pd
 
 from contracts.schemas import DEFAULT_PREP_MODE, BacktestResult, Forecast, ForecastRow, Reason
 from ml.calibration import apply_calibration
-from ml.features import (DEFAULT_CLOSE_TIME, DERIVED_SIGNALS, ZERO_FILL_KINDS, available_signals, base_level,
-                         build_frame, issue_time)
+from ml.features import (DEFAULT_CLOSE_TIME, DERIVED_SIGNALS, SPECIAL_LEAD_DAYS, ZERO_FILL_KINDS, available_signals,
+                         base_level, build_frame, issue_time)
 from ml.models import make_model
 from ml.paths import ARTIFACTS
 
@@ -52,6 +52,8 @@ def reason_text(signal: str, value: float, pct: float) -> str:
         head = f"비 예보({value:g}mm)로"
     elif signal == "temp_diff":
         head = f"기온이 최근 평균보다 {abs(value):.0f}도 {'높아' if value > 0 else '낮아'}"
+    elif signal == "special_lead":                       # 값 7 = 하루 전, 1 = 일주일 전
+        head = f"기념일을 {SPECIAL_LEAD_DAYS + 1 - round(value)}일 앞두고 있어"
     elif signal == "trend_level":
         head = f"이 메뉴 검색량이 그 전 4주보다 {abs(value - 1) * 100:.0f}% {'늘어' if value > 1 else '줄어'}"
     elif signal in EVENT_TEXT:

@@ -34,7 +34,13 @@ def test_menu_trend_is_skipped_without_target_or_menus(tmp_path):
 def test_special_days_source(tmp_path):
     job = collect.CollectJob(STORE, D1, D2, tmp_path)
     rows, items, notes = collect.special_days(job)
-    assert [(str(r.date), r.signal) for r in rows] == [("2026-11-11", "special_day")] and not items   # 빼빼로데이
+    # 빼빼로데이(11/11) 당일 + 그 전 일주일: 가까울수록 큰 값 (일주일 전 1 → 전날 7)
+    assert [(str(r.date), r.signal, r.value) for r in rows] == \
+        [(f"2026-11-{d:02d}", "special_lead", float(d - 3)) for d in range(4, 11)] + [("2026-11-11", "special_day", 1.0)]
+    assert not items and all(r.published_at.year == 2025 and r.kind == "calendar" for r in rows)   # 달력은 미리 알려진 정보
+    edge = collect.CollectJob(STORE, dt.date(2026, 12, 20), dt.date(2026, 12, 22), tmp_path)        # 범위 바로 뒤의 크리스마스이브도
+    assert [(str(r.date), r.value) for r in collect.special_days(edge)[0]] == \
+        [("2026-12-20", 4.0), ("2026-12-21", 5.0), ("2026-12-22", 6.0)]                               # 앞둔 날로 잡힌다
 
 
 def test_report_summarizes_what_was_collected(tmp_path):

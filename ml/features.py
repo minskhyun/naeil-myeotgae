@@ -50,8 +50,12 @@ SIGNAL_GROUPS = {
                 "exam_period_diff", "vacation_diff", "festival_diff"],
     # 메뉴별 신호: 그 메뉴 이름의 검색량이 '최근 7일 ÷ 그 전 28일' (1 = 평소와 같음). agent/naver.py가 만든다
     "trend":   ["trend_level"],
-    "special": ["special_day"],                # 기념일(발렌타인·빼빼로데이·크리스마스 등)을 하나로 묶은 표시
+    # special_day = 기념일 당일(발렌타인·빼빼로데이·크리스마스 등을 하나로 묶은 표시)
+    # special_lead = 기념일을 앞둔 날: 전날 7, 이틀 전 6, …, 일주일 전 1 (그 밖의 날 0). 수요는 당일만이 아니라
+    #                며칠 전부터 움직이므로(선물용 빵·케이크 예약 등) 다가오는 정도를 알려 준다. agent/special_days.py가 만든다
+    "special": ["special_day", "special_lead"],
 }
+SPECIAL_LEAD_DAYS = 7    # 기념일 며칠 전부터 '앞둔 날'로 볼지
 ALL_SIGNALS = {name for names in SIGNAL_GROUPS.values() for name in names}
 # 화면 비교표에 보여 주는 기본 모델 정의 (실제로 쓸 조합은 evaluate.py가 매장마다 고른다)
 FEATURE_SETS = {"M1": [], "M2": ["weather"], "M3": ["weather", "events", "trend", "special"]}
