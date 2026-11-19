@@ -167,7 +167,7 @@ ADMIN_EMAILS=관리자 이메일 (여러 명이면 쉼표로)            # 선�
 화면은 로그인 여부에 따라 둘로 나뉩니다 (`frontend/src/App.tsx`가 고름).
 
 - **로그인 전 (`Landing.tsx`)**: 가상 매장을 예시로 제품을 한 쪽에 차례로 보여 줍니다. ① 내일 준비표 ② 어떤 주변 정보를 썼나 ③ 얼마나 맞나. 공개 시연 사이트(`DEMO_MODE=1`)도 이 화면입니다. 주소에 `?store=fr-bakery`를 붙이면 프랑스 빵집(공개 실데이터) 결과로 바뀝니다.
-- **로그인 후 (`Workspace.tsx`)**: 예시 매장은 사라지고 내 매장만 보입니다. 탭 없이 고른 매장의 준비표 → 주변 정보 → 얼마나 맞나가 한 쪽에 이어집니다. 위쪽의 '매장 추가'를 누르면 창이 떠서 매장 이름, 위치, 닫는 시간을 적고 판매 기록 파일을 올립니다(매장 ID는 서버가 지어 줌). '매장 관리' 창에서 이름을 바꾸고, 판매 기록을 다시 올리고, 매장을 지울 수 있습니다. 지우면 그 매장의 결과 폴더와 올린 POS 파일이 모두 삭제됩니다.
+- **로그인 후 (`Workspace.tsx`)**: 예시 매장은 사라지고 내 매장만 보입니다. 탭 없이 고른 매장의 결과를 한눈에 보여 줍니다(`Dashboard.tsx`): 맨 위에 요약 숫자 네 칸(준비할 양, 평소와 다른 메뉴, 예상 범위 안에 든 비율, 주의할 소식), 왼쪽에 메뉴별 준비표, 오른쪽에 AI 주의 안내·예측에 쓴 주변 정보·얼마나 맞나 카드. 주변 정보와 검증의 전체 내용은 카드의 '자세히'를 누르면 창으로 뜹니다. 위쪽의 '매장 추가'를 누르면 창이 떠서 매장 이름, 위치, 닫는 시간을 적고 판매 기록 파일을 올립니다(매장 ID는 서버가 지어 줌). '매장 관리' 창에서 이름을 바꾸고, 판매 기록을 다시 올리고, 매장을 지울 수 있습니다. 지우면 그 매장의 결과 폴더와 올린 POS 파일이 모두 삭제됩니다.
 - 로그인을 켜지 않은 서버는 처음부터 작업 화면이고 모든 매장이 보입니다(단추 이름은 '데이터 올리기', 매장 ID를 직접 적음).
 - **분석 중 화면 (`AnalysisView.tsx`)**: '분석 및 예측하기'를 누르면 화면 전체에 뜹니다. 서버가 실행 중에 찾은 것을 한 건씩 알려 주고(`ml/progress.py`), 화면은 그것을 지도(Leaflet + OpenStreetMap) 위에 그립니다: 매장으로 날아가 내려앉고, 주변 시설이 점으로 돋아나고, 날씨·행사·소식·검색량이 빛줄기가 되어 가게로 들어옵니다. 끝나면 무엇을 모았고, 무엇을 썼고, 얼마나 맞고, 내일 무엇을 준비하면 되는지 정리해 보여 줍니다. 닫아도 분석은 계속되고, 끝난 뒤에는 '분석 과정 다시 보기'로 다시 볼 수 있습니다.
 
@@ -255,7 +255,7 @@ cd frontend && npm run build && npm run lint
 | LLM 모델·제공자 바꾸기 | `.env`의 `LLM_MODEL`·`LLM_MODEL_LIGHT`, `ml/llm.py`의 `PROVIDERS` |
 | 로그인·권한 규칙 바꾸기 | `backend/app/auth.py`의 `can_read`·`can_write`·`check_write` (화면은 `frontend/src/Auth.tsx`) |
 | 내 매장 관리 바꾸기 | `backend/app/main.py`의 `/api/my/stores`, `frontend/src/StoresView.tsx` (한 사람당 매장 수는 `auth.MAX_STORES`) |
-| 로그인 후 화면 배치·창 바꾸기 | `frontend/src/Workspace.tsx` (창 틀은 `Modal.tsx`, 매장 추가 창은 `UploadView.tsx`) |
+| 로그인 후 화면 배치·창 바꾸기 | `frontend/src/Workspace.tsx` (창 틀은 `Modal.tsx`, 매장 추가 창은 `UploadView.tsx`), 결과 화면의 배치는 `Dashboard.tsx` |
 | 분석 중 화면에 새 정보 보여 주기 | 파이썬에서 `progress.emit("종류", …)` → `frontend/src/api.ts`의 `ProgressEvent`에 종류 추가 → `AnalysisView.tsx`의 `line`(목록), `AnalysisMap.tsx`(지도) |
 | 색·둥근 모양 같은 전체 분위기 | `frontend/src/index.css`의 `@theme` (지도 위 표시와 움직임은 같은 파일의 `nm-…`) |
 | 로그인 전 첫 화면 바꾸기 | `frontend/src/Landing.tsx` (처음 보여 줄 예시 매장 `FIRST_EXAMPLE`, 메뉴 수 `MENUS_SHOWN`) |

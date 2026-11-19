@@ -1,7 +1,8 @@
 // 화면 위에 뜨는 창 (매장 추가, 매장 관리). 바깥을 누르거나 Esc, ✕로 닫는다.
 import { useEffect, type ReactNode } from 'react'
 
-export function Modal({ label, onClose, children }: { label: string; onClose: () => void; children: ReactNode }) {
+// wide: 내용이 넓은 창 (주변 정보·검증 자세히 보기)
+export function Modal({ label, onClose, children, wide = false }: { label: string; onClose: () => void; children: ReactNode; wide?: boolean }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
     window.addEventListener('keydown', onKey)
@@ -18,7 +19,7 @@ export function Modal({ label, onClose, children }: { label: string; onClose: ()
       className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-ink/50 p-3 sm:p-8"
       onMouseDown={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div role="dialog" aria-modal="true" aria-label={label} className="relative w-full max-w-3xl rounded-3xl bg-sheet shadow-2xl">
+      <div role="dialog" aria-modal="true" aria-label={label} className={`relative w-full rounded-3xl bg-sheet shadow-2xl ${wide ? 'max-w-5xl' : 'max-w-3xl'}`}>
         <button
           onClick={onClose}
           aria-label="닫기"

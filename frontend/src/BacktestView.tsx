@@ -5,7 +5,7 @@ import { fmtDate, GROUP_LABELS, MODEL_LABELS, pct1 } from './format'
 const base = (m: string) => m.slice(0, 2) // "M3(채택 신호만)" → "M3"
 
 // 가로 막대 한 줄: 이름 · 막대 · 값. 선택한 방법만 강조색.
-function BarRow({ label, value, max, strong }: { label: string; value: number; max: number; strong: boolean }) {
+export function BarRow({ label, value, max, strong }: { label: string; value: number; max: number; strong: boolean }) {
   return (
     <div className="grid grid-cols-[9rem_1fr_4rem] items-center gap-3 py-1.5 sm:grid-cols-[11rem_1fr_4.5rem]">
       <span className={`text-sm ${strong ? 'font-semibold' : 'text-muted'}`}>{label}</span>

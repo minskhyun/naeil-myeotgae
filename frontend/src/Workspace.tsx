@@ -1,4 +1,4 @@
-// 일하는 화면: 고른 매장의 분석을 한 쪽에 차례로 (내일 준비표 → 주변 정보 → 얼마나 맞나).
+// 일하는 화면: 고른 매장의 분석 결과를 한눈에 (Dashboard.tsx: 요약 숫자 · 준비표 · 주의 안내 · 쓴 정보 · 정확도).
 // 매장 추가와 매장 관리는 탭이 아니라 위에 뜨는 창(Modal)으로 연다.
 // '분석 및 예측하기'를 누르면 창이 닫히고 '분석 중' 화면(AnalysisView)이 화면 전체에 뜬다: 찾은 정보가 지도 위에서 가게로 모인다.
 // 로그인을 쓰는 서버에서는 로그인한 뒤에 나오고, 예시(시연) 매장은 보이지 않는다 → 내 매장만.
@@ -8,10 +8,8 @@ import { useState } from 'react'
 import { api, type LoginConfig } from './api'
 import { AnalysisView } from './AnalysisView'
 import { AccountBox } from './Auth'
-import { BacktestView } from './BacktestView'
-import { ForecastView } from './ForecastView'
+import { Dashboard } from './Dashboard'
 import { Modal } from './Modal'
-import { SourcesView } from './SourcesView'
 import { StoresView } from './StoresView'
 import { UploadView } from './UploadView'
 import { useJob } from './useJob'
@@ -59,7 +57,7 @@ export function Workspace({ login }: { login: LoginConfig | null }) {
   return (
     <div className="min-h-screen">
       <header className="bg-sheet shadow-sm">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-8 gap-y-3 px-5 py-3.5">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-8 gap-y-3 px-5 py-3.5">
           <h1 className="text-xl font-extrabold tracking-tight">내일몇개</h1>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             {!!stores?.length && (
@@ -100,7 +98,7 @@ export function Workspace({ login }: { login: LoginConfig | null }) {
         </p>
       )}
 
-      <main className="mx-auto max-w-6xl px-5 py-10">
+      <main className="mx-auto max-w-7xl px-5 py-8">
         {all.error && <p className="mb-8 border-l-4 border-up bg-sheet px-4 py-3 text-sm">매장 목록을 불러오지 못했습니다. 백엔드가 켜져 있는지 확인해 주세요.</p>}
 
         {empty && (
@@ -115,25 +113,14 @@ export function Workspace({ login }: { login: LoginConfig | null }) {
           </section>
         )}
 
-        {storeId && !!past?.length && (
-          <p className="mb-6 text-right">
-            <button onClick={() => setReplaying(true)} className="rounded-full bg-accent-soft px-4 py-1.5 text-sm font-semibold text-accent hover:bg-accent hover:text-white">
-              분석 과정 다시 보기
-            </button>
-          </p>
-        )}
         {storeId && (
-          <div className="space-y-8">
-            <section className="rounded-3xl bg-sheet p-5 shadow-sm sm:p-8">
-              <ForecastView storeId={storeId} prepMode={store?.prep_mode ?? '균형'} readOnly={store?.can_edit === false} />
-            </section>
-            <section className="rounded-3xl bg-sheet p-5 shadow-sm sm:p-8">
-              <SourcesView storeId={storeId} />
-            </section>
-            <section className="rounded-3xl bg-sheet p-5 shadow-sm sm:p-8">
-              <BacktestView storeId={storeId} />
-            </section>
-          </div>
+          <Dashboard
+            storeId={storeId}
+            storeName={store?.name ?? storeId}
+            prepMode={store?.prep_mode ?? '균형'}
+            readOnly={store?.can_edit === false}
+            onReplay={past?.length ? () => setReplaying(true) : undefined}
+          />
         )}
       </main>
 
