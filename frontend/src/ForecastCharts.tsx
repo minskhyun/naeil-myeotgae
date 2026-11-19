@@ -5,7 +5,7 @@
 // 움직임(막대가 자라고 선이 그려짐)은 index.css의 nm-bar · nm-line · nm-dotin 이 맡는다.
 import { useState } from 'react'
 import { CountUp } from './CountUp'
-import { asDate, count, WEEKDAYS } from './format'
+import { asDate, count, dayWord, WEEKDAYS } from './format'
 
 const short = (iso: string) => `${asDate(iso).getMonth() + 1}/${asDate(iso).getDate()}`
 
@@ -26,6 +26,7 @@ export function DayBars({ dates, values, next, height = 150 }: {
   const [hover, setHover] = useState<number | null>(null) // 마우스가 올라간 막대 (dates.length = 내일)
   const top = niceTop(Math.max(next.hi ?? next.value, ...values.map((v) => v ?? 0)))
   const weekday = asDate(next.date).getDay()
+  const day = dayWord(next.date) // 오늘 · 내일 · 이날
   const pct = (v: number) => `${(v / top) * 100}%`
   const tipSide = (i: number) => (i < 4 ? 'left-0' : i > dates.length - 4 ? 'right-0' : 'left-1/2 -translate-x-1/2')
   const tip = (i: number, text: string, at: number) => (
@@ -67,7 +68,7 @@ export function DayBars({ dates, values, next, height = 150 }: {
             {hover === dates.length &&
               next.lo !== undefined &&
               next.hi !== undefined &&
-              tip(dates.length, `내일 예상 ${count(next.value)}개 · 범위 ${count(next.lo)}–${count(next.hi)}개`, next.hi)}
+              tip(dates.length, `${day} 예상 ${count(next.value)}개 · 범위 ${count(next.lo)}–${count(next.hi)}개`, next.hi)}
             <span
               className="nm-bar w-full rounded-t-[4px] bg-accent"
               style={{ height: pct(next.value), minHeight: 2, animationDelay: `${dates.length * 22 + 120}ms` }}
@@ -96,14 +97,15 @@ export function DayBars({ dates, values, next, height = 150 }: {
           </span>
         ))}
         <span className="w-2 shrink-0" />
-        <span className="flex-[1.8] whitespace-nowrap text-center font-bold text-ink">내일</span>
+        <span className="flex-[1.8] whitespace-nowrap text-center font-bold text-ink">{day === '이날' ? short(next.date) : day}</span>
       </div>
     </div>
   )
 }
 
 // 그래프 아래의 색 설명 (회색 두 가지와 파랑)
-export function BarsLegend({ weekday }: { weekday: string }) {
+export function BarsLegend({ date }: { date: string }) {
+  const day = dayWord(date)
   const item = (color: string, text: string) => (
     <span className="flex items-center gap-1.5">
       <i className={`h-2.5 w-2.5 rounded-[3px] ${color}`} />
@@ -112,9 +114,9 @@ export function BarsLegend({ weekday }: { weekday: string }) {
   )
   return (
     <p className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
-      {item('bg-ink/45', `${weekday}요일 (내일과 같은 요일)`)}
+      {item('bg-ink/45', `${WEEKDAYS[asDate(date).getDay()]}요일 (${day}과 같은 요일)`)}
       {item('bg-ink/15', '다른 요일')}
-      {item('bg-accent', '내일 예상')}
+      {item('bg-accent', `${day} 예상`)}
     </p>
   )
 }

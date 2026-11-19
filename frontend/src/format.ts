@@ -97,3 +97,12 @@ export function sameWeekday(dates: string[], values: (number | null)[], nextDate
   return values.filter((v, i): v is number => v !== null && asDate(dates[i]).getDay() === weekday)
 }
 export const average = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null)
+
+// 예측 날짜를 부르는 말. 예측 날짜 = 판매 기록 마지막 날의 다음 날이라, 화면을 보는 날의 '내일'이 아닐 수 있다
+// (어제까지의 기록을 오늘 올리면 예측 날짜는 오늘이다). 오늘이면 '오늘', 내일이면 '내일', 그 밖은 '이날'
+export function dayWord(iso: string): '오늘' | '내일' | '이날' {
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
+  const gap = Math.round((asDate(iso).getTime() - today) / 86400000)
+  return gap === 0 ? '오늘' : gap === 1 ? '내일' : '이날'
+}

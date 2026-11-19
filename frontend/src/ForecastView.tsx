@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { api, PREP_MODES, type ForecastRow, type SalesHistory, type Warning } from './api'
 import { CountUp } from './CountUp'
 import { BarsLegend, DayBars, Spark } from './ForecastCharts'
-import { average, count, fmtDate, fmtTime, sameWeekday, shortReason, SIGNAL_LABELS, signedPct, weekdayName } from './format'
+import { average, count, dayWord, fmtDate, fmtTime, sameWeekday, shortReason, SIGNAL_LABELS, signedPct, weekdayName } from './format'
 import { useJob } from './useJob'
 
 // 예상 범위 그림: 가는 선 위에 범위(굵은 선, 왼쪽에서 자라남)와 예상값(눈금). narrow = 좁은 칸용
@@ -106,7 +106,7 @@ function MenuDetail({ row, history }: { row: ForecastRow; history: SalesHistory 
         <>
           <p className="mb-3 text-sm text-muted">
             지난 4주 {weekdayName(row.date)}요일에 <b className="text-ink">{past.map((v) => count(v)).join(' · ') || '기록 없음'}</b>
-            {usual !== null && <>개 (평균 {count(usual)}개)</>} → 내일 예상 <b className="text-ink">{count(row.pred)}개</b>, 범위 {count(row.p10)}–
+            {usual !== null && <>개 (평균 {count(usual)}개)</>} → {dayWord(row.date)} 예상 <b className="text-ink">{count(row.pred)}개</b>, 범위 {count(row.p10)}–
             {count(row.p90)}개
           </p>
           <DayBars dates={history.dates} values={values} next={{ date: row.date, value: row.pred, lo: row.p10, hi: row.p90 }} height={110} />
@@ -163,6 +163,7 @@ export function ForecastTable({ rows, limit, compact = false, storeId }: {
     ? 'md:grid-cols-[minmax(7rem,1.2fr)_3.5rem_7.5rem_9.5rem_minmax(6rem,1fr)_1rem]'
     : 'md:grid-cols-[minmax(9rem,1.3fr)_5rem_4.5rem_7.5rem_12rem_minmax(9rem,1.4fr)_1rem]'
   const date = rows[0].date
+  const day = dayWord(date) // 예측 날짜를 부르는 말: 오늘 · 내일 · 이날
   const past = history ? sameWeekday(history.dates, history.total, date) : []
   const usual = average(past)
   const diff = usual ? Math.round((totalPred / usual - 1) * 100) : null
@@ -173,10 +174,10 @@ export function ForecastTable({ rows, limit, compact = false, storeId }: {
         <div className="border-b border-rule px-5 pb-4 pt-5">
           <div className="mb-4 flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
             <div>
-              <h4 className="font-bold">최근 4주 하루 판매량과 내일 예상</h4>
+              <h4 className="font-bold">최근 4주 하루 판매량과 {day} 예상</h4>
               {usual !== null && diff !== null && (
                 <p className="mt-0.5 text-sm text-muted">
-                  지난 4주 {weekdayName(date)}요일은 평균 {count(usual)}개 → 내일은 <b className="text-ink">{count(totalPred)}개</b> 예상
+                  지난 4주 {weekdayName(date)}요일은 평균 {count(usual)}개 → {day}은 <b className="text-ink">{count(totalPred)}개</b> 예상
                   {Math.abs(diff) >= 3 && (
                     <>
                       {' '}
@@ -186,7 +187,7 @@ export function ForecastTable({ rows, limit, compact = false, storeId }: {
                 </p>
               )}
             </div>
-            <BarsLegend weekday={weekdayName(date)} />
+            <BarsLegend date={date} />
           </div>
           <DayBars dates={history.dates} values={history.total} next={{ date, value: totalPred }} height={compact ? 130 : 160} />
         </div>
@@ -195,7 +196,7 @@ export function ForecastTable({ rows, limit, compact = false, storeId }: {
         <span>메뉴</span>
         <span className="text-right">준비</span>
         {!compact && <span className="text-right">예상</span>}
-        <span>최근 4주 → 내일</span>
+        <span>최근 4주 → {day}</span>
         <span>예상 범위</span>
         <span>평소와 다른 점</span>
         <span />
@@ -285,18 +286,19 @@ export function ForecastView({ storeId, prepMode, readOnly = false, limit }: {
   const rows = local ? data.rows.map((r) => ({ ...r, prep_qty: r.prep_by_mode?.[mode] ?? r.prep_qty })) : data.rows
   // 모델이 매일 살펴보는 정보(검증을 통과한 것)와, 그중 내일 숫자를 실제로 바꾼 정보를 따로 적는다
   const used = data.signals_used.filter((s) => SIGNAL_LABELS[s]).map((s) => SIGNAL_LABELS[s])
+  const day = dayWord(data.rows[0].date)
   const moved = [...new Set(data.rows.flatMap((r) => r.reasons.map((x) => SIGNAL_LABELS[x.signal] ?? x.signal)))]
 
   return (
     <div className="space-y-8">
       <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
         <div>
-          <p className="text-sm text-muted">내일 준비표</p>
+          <p className="text-sm text-muted">{day === '이날' ? '준비표' : `${day} 준비표`}</p>
           <h2 className="mt-0.5 text-3xl font-bold tracking-tight">{fmtDate(data.rows[0].date)}</h2>
           {used.length ? (
             <div className="mt-2 space-y-0.5 text-sm text-muted">
               <p>
-                내일 숫자를 바꾼 정보 — <b className="text-ink">{moved.length ? moved.join(', ') : '없음 (내일은 평소와 같게 봤어요)'}</b>
+                {day} 숫자를 바꾼 정보 — <b className="text-ink">{moved.length ? moved.join(', ') : `없음 (${day}은 평소와 같게 봤어요)`}</b>
               </p>
               <p className="text-faint">검증을 통과해 매일 살펴보는 정보 — {used.join(', ')}</p>
             </div>
@@ -327,7 +329,7 @@ export function ForecastView({ storeId, prepMode, readOnly = false, limit }: {
         </div>
         <div>
           <dt className="font-semibold text-ink">예상 범위</dt>
-          <dd>실제 판매가 들어올 것으로 보는 구간. 넓을수록 내일이 불확실</dd>
+          <dd>실제 판매가 들어올 것으로 보는 구간. 넓을수록 불확실</dd>
         </div>
         <div>
           <dt className="font-semibold text-ink">평소와 다른 점</dt>

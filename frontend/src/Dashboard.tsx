@@ -9,7 +9,7 @@ import { useState, type ReactNode } from 'react'
 import { api } from './api'
 import { BacktestView, BarRow } from './BacktestView'
 import { ForecastTable, Notice, PrepToggle } from './ForecastView'
-import { count, fmtDate, fmtTime, GROUP_LABELS, pct1, won } from './format'
+import { count, dayWord, fmtDate, fmtTime, GROUP_LABELS, pct1, won } from './format'
 import { Modal } from './Modal'
 import { SourcesView } from './SourcesView'
 import { periodName, verdict } from './verdict'
@@ -63,6 +63,7 @@ export function Dashboard({ storeId, storeName, prepMode, readOnly, onReplay }: 
   const fc = forecast.data
 
   // 요약 숫자에 쓸 값들
+  const day = dayWord(fc.rows[0].date) // 예측 날짜를 부르는 말: 오늘 · 내일 · 이날
   const totalPrep = fc.rows.reduce((sum, r) => sum + (r.prep_qty ?? 0), 0)
   const totalPred = Math.round(fc.rows.reduce((sum, r) => sum + r.pred, 0))
   const effect = (r: (typeof fc.rows)[number]) => r.reasons.reduce((sum, x) => sum + x.effect_pct, 0)
@@ -75,7 +76,7 @@ export function Dashboard({ storeId, storeName, prepMode, readOnly, onReplay }: 
     <div className="space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
         <div>
-          <p className="text-sm text-muted">{storeName} · 내일 준비표</p>
+          <p className="text-sm text-muted">{storeName} · {day} 준비표</p>
           <h2 className="mt-0.5 text-3xl font-extrabold tracking-tight">{fmtDate(fc.rows[0].date)}</h2>
         </div>
         <div className="flex flex-wrap items-end gap-3">
@@ -89,7 +90,7 @@ export function Dashboard({ storeId, storeName, prepMode, readOnly, onReplay }: 
       </div>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <Tile label="내일 준비할 양" value={`${totalPrep}개`} note={`메뉴 ${fc.rows.length}개 · 예상 판매 ${totalPred}개`} />
+        <Tile label={`${day} 준비할 양`} value={`${totalPrep}개`} note={`메뉴 ${fc.rows.length}개 · 예상 판매 ${totalPred}개`} />
         <Tile
           label="평소와 다른 메뉴"
           value={`${more + less}개`}
@@ -132,7 +133,7 @@ export function Dashboard({ storeId, storeName, prepMode, readOnly, onReplay }: 
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-muted">내일은 특별히 주의할 소식이 없어요.</p>
+              <p className="text-sm text-muted">{day}은 특별히 주의할 소식이 없어요.</p>
             )}
           </Card>
 
