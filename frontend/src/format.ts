@@ -73,6 +73,11 @@ export const won = (v: number) => (Math.abs(v) >= 10000 ? `${(v / 10000).toFixed
 export const savedPerDay = (mine: { amount?: number | null; days?: number }, base: { amount?: number | null }) =>
   mine.amount != null && base.amount != null && mine.days ? (base.amount - mine.amount) / mine.days : null
 
+// 범위 정확도: 예상 범위는 실제 판매의 80%가 들어오도록 만든다 → 80%를 정확히 맞추면 100%(만점).
+// 모자라면(범위가 좁다) 그만큼 깎고, 넘쳐도(범위가 쓸데없이 넓다) 같은 만큼 깎는다. 예: 75% → 93.8%, 90% → 87.5%
+export const RANGE_TARGET = 0.8
+export const rangeScore = (coverage: number) => Math.max(0, 1 - Math.abs(coverage - RANGE_TARGET) / RANGE_TARGET)
+
 // '분석 중' 화면에서 정보 종류마다 쓰는 색 (지도의 표시와 목록의 이름표가 같은 색)
 export const KIND_COLOR: Record<string, string> = {
   places: '#8a9bbd',

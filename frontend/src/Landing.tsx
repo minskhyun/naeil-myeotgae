@@ -89,7 +89,7 @@ function RealData() {
           {count(v.baseShown)}개 → {count(v.mineShown)}개
         </b>
         로 줄었습니다({v.gain}% 적음).
-        {v.mine.days_won != null && ` ${v.days}일 중 ${v.mine.days_won}일은 '지난주 같은 요일만큼' 준비하는 것보다 덜 틀렸어요.`} 위치를 알 수 없는 가게라
+        {' '}위치를 알 수 없는 가게라
         주변 정보 없이 판매 기록만 쓴 결과입니다.{' '}
         <a href={`?store=${REAL_EXAMPLE}#example`} className="font-semibold text-accent underline underline-offset-4">
           이 가게의 결과 보기

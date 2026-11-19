@@ -8,7 +8,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { AnalysisMap } from './AnalysisMap'
 import type { Job, ProgressEvent } from './api'
 import { CountUp } from './CountUp'
-import { count as cnt, fmtDate, GROUP_LABELS, KIND_COLOR, pct1, won } from './format'
+import { count as cnt, fmtDate, GROUP_LABELS, KIND_COLOR, pct1, rangeScore, won } from './format'
 
 const STEPS = [
   { id: 'ingest', label: '판매 기록' },
@@ -244,8 +244,7 @@ export function AnalysisView({ events, status, error, log, onClose, replay = fal
                   <p className="mt-3 text-xs text-muted">
                     남거나 모자란 개수 하루 {cnt(scores.base_miss)}개 → {cnt(scores.miss)}개
                     {scores.saved_amount !== undefined && scores.saved_amount > 0 && ` · 판매가로 하루 약 ${won(scores.saved_amount)}`}
-                    {scores.days_won !== undefined && scores.test_days ? ` · ${scores.test_days}일 중 ${scores.days_won}일 이김` : ''}
-                    {' '}· 실제 판매의 {pct1(scores.coverage)}가 예상 범위 안(목표 80%)
+                    {' '}· 예상 범위 정확도 {pct1(rangeScore(scores.coverage))}(100%가 만점)
                     {scores.test_days ? ` · ${scores.final === false ? '검증 기간' : '마지막'} ${scores.test_days}일 기준` : ''}
                   </p>
                 </>
@@ -258,7 +257,7 @@ export function AnalysisView({ events, status, error, log, onClose, replay = fal
                     오차율 (평균 오차 ÷ 평균 판매량){gain > 0 && ` · '지난주 같은 요일만큼'보다 ${gain}% 적음`}
                   </p>
                   <p className="mt-3 text-xs text-muted">
-                    실제 판매의 {pct1(scores.coverage)}가 예상 범위 안(목표 80%)
+                    예상 범위 정확도 {pct1(rangeScore(scores.coverage))} (100%가 만점 · 실제 판매의 {pct1(scores.coverage)}가 범위 안, 목표 80%)
                     {scores.test_days ? ` · 마지막 ${scores.test_days}일 기준` : ''}
                   </p>
                 </>

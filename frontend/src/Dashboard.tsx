@@ -9,7 +9,7 @@ import { useState, type ReactNode } from 'react'
 import { api } from './api'
 import { BacktestView, BarRow } from './BacktestView'
 import { ForecastTable, Notice, PrepToggle } from './ForecastView'
-import { count, dayWord, fmtDate, fmtTime, GROUP_LABELS, pct1, won } from './format'
+import { count, dayWord, fmtDate, fmtTime, GROUP_LABELS, pct1, rangeScore, won } from './format'
 import { Modal } from './Modal'
 import { SourcesView } from './SourcesView'
 import { periodName, verdict } from './verdict'
@@ -76,7 +76,7 @@ export function Dashboard({ storeId, storeName, prepMode, readOnly, onReplay }: 
     <div className="space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
         <div>
-          <p className="text-sm text-muted">{storeName} · {day} 준비표</p>
+          <p className="text-sm text-muted">{storeName}</p>
           <h2 className="mt-0.5 text-3xl font-extrabold tracking-tight">{fmtDate(fc.rows[0].date)}</h2>
         </div>
         <div className="flex flex-wrap items-end gap-3">
@@ -170,20 +170,14 @@ export function Dashboard({ storeId, storeName, prepMode, readOnly, onReplay }: 
                   ) : (
                     '지난주만큼 준비하는 것보다 나아지지 않았어요.'
                   )}
-                  {v.mine.days_won != null && (
-                    <>
-                      {' '}
-                      {v.days}일 중 <b className="text-ink">{v.mine.days_won}일</b>은 내일몇개가 덜 틀렸어요.
-                    </>
-                  )}
                 </p>
                 <p className="mt-3 flex items-baseline justify-between gap-3 border-t border-rule pt-3 text-sm">
                   <span>
-                    예상 범위 안에 든 비율 <span className="text-faint">(목표 80%)</span>
+                    예상 범위 정확도 <span className="text-faint">(100%가 만점)</span>
                   </span>
-                  <b className="text-lg tabular-nums">{pct1(v.mine.coverage_80)}</b>
+                  <b className="text-lg tabular-nums">{pct1(rangeScore(v.mine.coverage_80))}</b>
                 </p>
-                <p className="mt-1 text-xs text-faint">실제 판매가 예상 범위 안에 들어온 비율이에요. 80%에 가까울수록 범위를 알맞게 잡은 것입니다.</p>
+                <p className="mt-1 text-xs text-faint">실제 판매의 {pct1(v.mine.coverage_80)}가 범위 안 · 목표 80%를 맞추면 100%</p>
               </>
             ) : (
               <p className="text-sm text-muted">검증 결과가 아직 없어요.</p>

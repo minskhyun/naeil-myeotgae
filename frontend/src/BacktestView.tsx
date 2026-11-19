@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { api, type ModelScore } from './api'
-import { count, fmtDate, GROUP_LABELS, missPerDay, MODEL_LABELS, pct1, won } from './format'
+import { count, fmtDate, GROUP_LABELS, missPerDay, MODEL_LABELS, pct1, rangeScore, won } from './format'
 import { periodName, verdict } from './verdict'
 
 const base = (m: string) => m.slice(0, 2) // "M3(채택 신호만)" → "M3"
@@ -67,7 +67,6 @@ export function BacktestView({ storeId, hideDecisions = false }: { storeId: stri
             <span className="text-muted">
               '지난주 같은 요일만큼' 준비하는 방법(하루 {count(v.baseShown)}개)
               {v.saved > 0 ? `보다 하루 ${count(v.saved)}개(${v.gain}%) 적습니다.` : '보다 나아지지 않았습니다.'}
-              {v.mine.days_won != null && ` ${v.days}일 중 ${v.mine.days_won}일은 내일몇개가 덜 틀렸습니다.`}
               {v.money !== null && v.money > 0 && ` 판매가로 환산하면 하루 약 ${won(v.money)}입니다.`}
             </span>
           </h2>
@@ -102,11 +101,11 @@ export function BacktestView({ storeId, hideDecisions = false }: { storeId: stri
           ) : null}
         </div>
         <div className="border-t border-rule py-4 sm:border-t-0 sm:pl-6">
-          <dt className="text-sm text-muted">예상 범위 안에 든 비율</dt>
+          <dt className="text-sm text-muted">예상 범위 정확도</dt>
           <dd className="mt-1 text-xl font-semibold tabular-nums">
-            {v ? pct1(v.mine.coverage_80) : '–'} <span className="text-sm font-normal text-muted">목표 80%</span>
+            {v ? pct1(rangeScore(v.mine.coverage_80)) : '–'} <span className="text-sm font-normal text-muted">100%가 만점</span>
           </dd>
-          {v && <dd className="mt-1 text-sm text-muted">실제 판매가 예상 범위 안에 들어온 비율. 80%에 가까울수록 범위를 알맞게 잡은 것</dd>}
+          {v && <dd className="mt-1 text-sm text-muted">실제 판매의 {pct1(v.mine.coverage_80)}가 범위 안 · 목표 80%를 맞추면 100%</dd>}
         </div>
       </dl>
 
