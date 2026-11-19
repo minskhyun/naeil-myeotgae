@@ -1,13 +1,14 @@
 // 로그인 뒤의 분석 결과 화면: 한 매장의 준비를 한눈에. 글은 최소로, 숫자와 그림 위주로.
 //   맨 위   매장 · 날짜 · 준비 기준
 //   요약    숫자 네 칸 (준비할 개수 · 예상 판매 · 하루 오차 · 주의할 소식)
-//   본문    왼쪽: 메뉴별 준비표      오른쪽: 주의할 소식 · 예측에 쓴 정보 · 얼마나 맞나
+//   본문    왼쪽: 메뉴별 준비표      오른쪽: 주의할 소식 · 예측에 쓴 정보 · 얼마나 맞나 · 요일별 판매
 // 풀이와 자세한 내용은 길게 늘어놓지 않는다: '자세히'를 누르면 창으로 뜨고, 짧은 뜻은 마우스를 올리면 보인다.
 //   하루 오차 = 예측대로 준비했다면 남거나 모자랐을 개수 (모든 메뉴 합, 하루 평균). '지난주대로' = 지난주 같은 요일만큼 준비
 import { useQuery } from '@tanstack/react-query'
 import { useState, type ReactNode } from 'react'
 import { api } from './api'
 import { BacktestView, BarRow } from './BacktestView'
+import { WeekdayBars } from './ForecastCharts'
 import { ForecastTable, Notice, PrepToggle } from './ForecastView'
 import { average, count, dayPrefix, fmtDate, GROUP_LABELS, pct1, rangeScore, sameWeekday, weekdayName } from './format'
 import { Modal } from './Modal'
@@ -31,19 +32,24 @@ function Tile({ label, value, note, warn = false, help }: { label: string; value
   )
 }
 
-// 본문의 카드 한 장: 제목 (+ '자세히') · 내용. grow = 줄에서 남는 높이를 이 카드가 채운다
-function Card({ title, onMore, grow = false, children }: { title: string; onMore?: () => void; grow?: boolean; children: ReactNode }) {
+// 카드 제목 옆의 작은 버튼 ('자세히', '분석 과정')
+function More({ onClick, children }: { onClick: () => void; children: ReactNode }) {
   return (
-    <section className={`min-w-0 rounded-3xl bg-sheet p-5 shadow-sm sm:p-6 ${grow ? 'flex-1' : ''}`}>
+    <button onClick={onClick} className="rounded-full bg-paper px-3.5 py-1 text-sm font-semibold text-muted hover:text-ink">
+      {children}
+    </button>
+  )
+}
+
+// 본문의 카드 한 장: 제목 (+ 작은 버튼들) · 내용. grow = 줄에서 남는 높이를 이 카드가 채운다 (내용도 그 높이만큼 늘어난다)
+function Card({ title, actions, grow = false, children }: { title: string; actions?: ReactNode; grow?: boolean; children: ReactNode }) {
+  return (
+    <section className={`min-w-0 rounded-3xl bg-sheet p-5 shadow-sm sm:p-6 ${grow ? 'flex flex-1 flex-col' : ''}`}>
       <div className="mb-4 flex items-center justify-between gap-3">
         <h3 className="text-lg font-bold">{title}</h3>
-        {onMore && (
-          <button onClick={onMore} className="rounded-full bg-paper px-3.5 py-1 text-sm font-semibold text-muted hover:text-ink">
-            자세히
-          </button>
-        )}
+        {actions && <div className="flex gap-2">{actions}</div>}
       </div>
-      {children}
+      {grow ? <div className="min-h-0 flex-1">{children}</div> : children}
     </section>
   )
 }
@@ -110,7 +116,7 @@ export function Dashboard({ storeId, storeName, prepMode, readOnly, onReplay }: 
           <ForecastTable rows={fc.rows} limit={MENUS_SHOWN} compact storeId={storeId} />
         </Card>
 
-        {/* 오른쪽 줄은 왼쪽 준비표와 아래 끝을 맞춘다: 남는 높이는 맨 아래 칸(분석 과정 다시 보기, 없으면 '얼마나 맞나')이 채운다 */}
+        {/* 오른쪽 줄은 왼쪽 준비표와 아래 끝을 맞춘다: 남는 높이는 맨 아래의 요일별 그래프가 채운다 (막대가 그만큼 길어진다) */}
         <div className="flex min-w-0 flex-col gap-5">
           <Card title="주의할 소식">
             {fc.warnings.length ? (
@@ -124,7 +130,15 @@ export function Dashboard({ storeId, storeName, prepMode, readOnly, onReplay }: 
             )}
           </Card>
 
-          <Card title="예측에 쓴 정보" onMore={() => setDetail('sources')}>
+          <Card
+            title="예측에 쓴 정보"
+            actions={
+              <>
+                {onReplay && <More onClick={onReplay}>분석 과정</More>}
+                <More onClick={() => setDetail('sources')}>자세히</More>
+              </>
+            }
+          >
             {backtest ? (
               <ul className="flex flex-wrap gap-2">
                 <li className="rounded-full bg-accent px-3.5 py-1.5 text-sm font-bold text-white">판매 기록</li>
@@ -143,7 +157,7 @@ export function Dashboard({ storeId, storeName, prepMode, readOnly, onReplay }: 
             )}
           </Card>
 
-          <Card title="얼마나 맞나" onMore={() => setDetail('backtest')} grow={!onReplay}>
+          <Card title="얼마나 맞나" actions={<More onClick={() => setDetail('backtest')}>자세히</More>}>
             {v ? (
               <div title={`${periodName(v)} 기준 · ${MISS_HELP}`}>
                 <p className="mb-3 text-2xl font-extrabold tracking-tight">
@@ -167,19 +181,10 @@ export function Dashboard({ storeId, storeName, prepMode, readOnly, onReplay }: 
             )}
           </Card>
 
-          {onReplay && (
-            <button
-              onClick={onReplay}
-              className="group flex min-h-32 flex-1 flex-col justify-between rounded-3xl bg-gradient-to-br from-accent to-accent-deep p-6 text-left text-white shadow-sm transition hover:brightness-110"
-            >
-              <span className="text-sm font-semibold text-white/75">AI가 주변을 살펴본 과정</span>
-              <span className="flex items-center justify-between gap-3 text-xl font-extrabold tracking-tight">
-                분석 과정 다시 보기
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white/20 transition group-hover:bg-white group-hover:text-accent" aria-hidden>
-                  ▶
-                </span>
-              </span>
-            </button>
+          {history && (
+            <Card title="요일별 판매" grow>
+              <WeekdayBars dates={history.dates} values={history.total} date={date} />
+            </Card>
           )}
         </div>
       </div>

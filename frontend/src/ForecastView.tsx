@@ -160,7 +160,8 @@ export function ForecastTable({ rows, limit, compact = false, storeId }: {
   const [open, setOpen] = useState<string | null>(() => new URLSearchParams(window.location.search).get('menu'))
   const history = useQuery({ queryKey: ['history', storeId], queryFn: () => api.history(storeId as string), enabled: !!storeId, retry: false }).data
   const sorted = [...rows].sort((a, b) => b.pred - a.pred)
-  const shown = limit && !showAll ? sorted.slice(0, limit) : sorted
+  const cut = limit !== undefined && rows.length > limit + 2 ? limit : undefined // 한두 개만 숨기느니 다 보여 준다
+  const shown = cut && !showAll ? sorted.slice(0, cut) : sorted
   const max = Math.max(...shown.map((r) => r.p90)) * 1.05
   const totalPrep = rows.reduce((sum, r) => sum + (r.prep_qty ?? 0), 0)
   const totalPred = Math.round(rows.reduce((sum, r) => sum + r.pred, 0))
@@ -240,9 +241,9 @@ export function ForecastTable({ rows, limit, compact = false, storeId }: {
           </li>
         ))}
       </ol>
-      {limit !== undefined && rows.length > limit && (
+      {cut !== undefined && (
         <button onClick={() => setShowAll(!showAll)} className="w-full border-t border-rule px-5 py-2.5 text-left text-sm underline underline-offset-4 hover:text-accent">
-          {showAll ? '많이 팔리는 메뉴만 보기' : `나머지 ${rows.length - limit}개 메뉴 더 보기`}
+          {showAll ? '많이 팔리는 메뉴만 보기' : `나머지 ${rows.length - cut}개 메뉴 더 보기`}
         </button>
       )}
       <div className="flex flex-wrap justify-between gap-2 border-t-2 border-ink px-5 py-3 text-sm">

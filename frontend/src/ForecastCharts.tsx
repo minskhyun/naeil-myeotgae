@@ -159,3 +159,37 @@ export function Spark({ values, next, delay = 0 }: { values: (number | null)[]; 
     </svg>
   )
 }
+
+// 요일별 평소 판매: 최근 4주의 요일별 평균 막대 일곱 개 (월~일). 예측 날짜의 요일만 진하게.
+// 높이가 정해져 있지 않다: 담는 칸의 높이만큼 막대가 길어진다 (결과 화면 오른쪽 줄의 남는 높이를 채운다)
+export function WeekdayBars({ dates, values, date }: { dates: string[]; values: (number | null)[]; date: string }) {
+  const byDay: number[][] = Array.from({ length: 7 }, () => [])
+  dates.forEach((d, i) => {
+    const v = values[i]
+    if (v !== null) byDay[asDate(d).getDay()].push(v)
+  })
+  const order = [1, 2, 3, 4, 5, 6, 0] // 월요일부터
+  const mean = order.map((w) => (byDay[w].length ? byDay[w].reduce((a, b) => a + b, 0) / byDay[w].length : null))
+  const top = Math.max(...mean.map((v) => v ?? 0), 1)
+  const target = asDate(date).getDay()
+  return (
+    <div className="flex h-full min-h-28 gap-2">
+      {order.map((w, i) => {
+        const v = mean[i]
+        const on = w === target
+        return (
+          <div key={w} className="flex min-w-0 flex-1 flex-col items-center gap-1.5">
+            <div className="flex min-h-0 w-full flex-1 flex-col items-center justify-end gap-1">
+              <span className={`text-xs tabular-nums ${on ? 'font-bold text-ink' : 'text-muted'}`}>{v === null ? '' : count(v)}</span>
+              <span
+                className={`nm-bar w-full rounded-t-[4px] ${on ? 'bg-accent' : 'bg-ink/15'}`}
+                style={{ height: `${((v ?? 0) / top) * 82}%`, minHeight: v ? 2 : 0, animationDelay: `${i * 60}ms` }}
+              />
+            </div>
+            <span className={`text-sm ${on ? 'font-bold text-ink' : 'text-muted'}`}>{WEEKDAYS[w]}</span>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
