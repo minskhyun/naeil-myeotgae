@@ -49,6 +49,7 @@ export type ModelScore = {
   under?: number // 모자랐을 개수 합
   days?: number // 채점한 날짜 수
   amount?: number | null // 남거나 모자란 개수를 판매가로 환산한 금액 합(원). 판매가를 모르면 없음
+  days_won?: number | null // days 중 '지난주 같은 요일' 방식보다 덜 틀린 날 수
 }
 
 export type SignalDecision = {
@@ -138,7 +139,7 @@ export type ProgressEvent =
   | { kind: 'trial'; groups: string[]; wape: number; miss?: number } // miss = 하루에 남거나 모자란 개수.
   // 검증 중: 이 정보 묶음을 넣어 시험했더니 오차가 이만큼
   | { kind: 'decision'; group: string; adopted: boolean; reason: string }
-  | { kind: 'scores'; model: string; wape: number; base_wape: number; coverage: number; test_days?: number; miss?: number; base_miss?: number; saved_amount?: number }
+  | { kind: 'scores'; model: string; wape: number; base_wape: number; coverage: number; test_days?: number; miss?: number; base_miss?: number; saved_amount?: number; days_won?: number; final?: boolean }
   | { kind: 'forecast'; date: string; menus: number; top: { menu: string; prep: number | null; pred: number }[]; warnings: string[] }
 
 // 실행 작업 (예측 돌리기). 화면은 useJob.ts로 상태를 물어본다

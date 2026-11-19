@@ -188,6 +188,7 @@ class ModelScore(BaseModel):
     under: float = Field(default=0, ge=0)       # 모자랐을 개수 합 Σmax(실제−예측, 0).  over + under = Σ|실제−예측|
     days: int = Field(default=0, ge=0)          # 채점한 날짜 수 (하루 평균을 낼 때 나누는 수)
     amount: float | None = None                 # 남거나 모자란 개수를 판매가로 환산한 금액 합(원). 판매가를 모르면 None
+    days_won: int | None = None                 # days 중 '지난주 같은 요일'(M0)보다 그날 합계가 덜 틀린 날 수. M0 자신은 None
 
 
 class SignalDecision(BaseModel):

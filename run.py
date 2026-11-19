@@ -238,15 +238,17 @@ def step_evaluate(args, out: Path) -> str:
     write_backtest(bt, out.parent)
     for d in bt.decisions:                                    # 화면: 정보 묶음마다 쓸지 말지
         progress.emit("decision", group=d.signal_group, adopted=d.adopted, reason=d.reason)
-    test = {s.model[:2]: s for s in bt.test_scores}           # "M3(채택 신호만)" → "M3"
-    mine, base = test.get(bt.chosen_model[:2]), test.get("M0")
+    final = bool(bt.test_scores)                              # 최종 시험이 있으면 그 결과, 기록이 짧아 없으면 검증 기간 결과
+    rows = bt.test_scores if final else bt.cv_scores
+    picked = next((s for s in rows if "채택" in s.model), None) or next((s for s in rows if s.model[:2] == bt.chosen_model[:2]), None)
+    mine, base = picked, next((s for s in rows if s.model == "M0"), None)
     if mine and base:
-        days = (pd.Timestamp(bt.test_period[1]) - pd.Timestamp(bt.test_period[0])).days + 1 if bt.test_period else None
+        days = mine.days or None
         per_day = lambda s: round((s.over + s.under) / max(s.days, 1), 1)                 # noqa: E731  하루에 남거나 모자란 개수
         saved = round((base.amount - mine.amount) / max(mine.days, 1)) if mine.amount is not None and base.amount is not None else None
         progress.emit("scores", model=bt.chosen_model, wape=round(mine.wape, 4), base_wape=round(base.wape, 4),
                       coverage=round(mine.coverage_80, 4), test_days=days, miss=per_day(mine), base_miss=per_day(base),
-                      saved_amount=saved)
+                      saved_amount=saved, days_won=mine.days_won, final=final)
     adopted = [d.signal_group for d in bt.decisions if d.adopted] or ["없음"]
     return f"선택 모델 {bt.chosen_model}, 채택 신호 {', '.join(adopted)}"
 

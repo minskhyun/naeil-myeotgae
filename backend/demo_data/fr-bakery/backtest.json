@@ -1,6 +1,6 @@
 {
   "store_id": "fr-bakery",
-  "generated_at": "2026-11-19T19:00:20",
+  "generated_at": "2026-11-19T21:16:18",
   "folds": [
     [
       "2022-05-14",
@@ -42,7 +42,8 @@
       "over": 17827.466666666667,
       "under": 19299.86666666667,
       "days": 111,
-      "amount": null
+      "amount": null,
+      "days_won": null
     },
     {
       "model": "M1",
@@ -62,7 +63,8 @@
       "over": 13548.948488018013,
       "under": 13622.228509652512,
       "days": 111,
-      "amount": null
+      "amount": null,
+      "days_won": 91
     }
   ],
   "decisions": [
@@ -120,7 +122,8 @@
       "over": 3450.666666666667,
       "under": 1910.0,
       "days": 27,
-      "amount": null
+      "amount": null,
+      "days_won": null
     },
     {
       "model": "M1",
@@ -137,7 +140,8 @@
       "over": 2759.5429280823296,
       "under": 1466.9154866242477,
       "days": 27,
-      "amount": null
+      "amount": null,
+      "days_won": 21
     }
   ],
   "data_note": "판매 기록 600일. 검증 구간에서 M1의 오차가 M0 대비 -26.8% (95% 구간 -32.4~-20.6%, 우연이라 보기 어려움). 범위 보정이 검사한 3개 구간 중 0개만 개선해 쓰지 않음",

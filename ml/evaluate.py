@@ -28,7 +28,7 @@ from ml import progress
 from ml.calibration import apply_calibration, below_rates, check_calibration, fit_calibration
 from ml.features import (DEFAULT_CLOSE_TIME, FEATURE_SETS, SIGNAL_GROUPS, available_signals, base_level, build_frame,
                          signals_in)
-from ml.metrics import bootstrap_wape_change, coverage, score, scored
+from ml.metrics import bootstrap_wape_change, coverage, days_won, score, scored
 from ml.models import SHORT_DATA_DAYS, make_model
 from ml.paths import ARTIFACTS
 
@@ -246,9 +246,11 @@ def comparison_table(cv: CrossValidator, cv_m0: pd.DataFrame, adopted: list[str]
         key = cv.key(FEATURE_SETS[name])
         if key not in seen:                            # 신호 자료가 없어 앞 모델과 같으면 생략
             seen.add(key)
-            table.append(score(cv.run(FEATURE_SETS[name])[0], name))
+            preds = cv.run(FEATURE_SETS[name])[0]
+            table.append(score(preds, name) | dict(days_won=days_won(preds, cv_m0)))
     if cv.key(adopted) not in seen:
-        table.append(score(cv.run(adopted)[0], f"{model_label(adopted)}(채택 신호만)"))
+        preds = cv.run(adopted)[0]
+        table.append(score(preds, f"{model_label(adopted)}(채택 신호만)") | dict(days_won=days_won(preds, cv_m0)))
     return table
 
 
@@ -270,7 +272,8 @@ def final_test(frame: pd.DataFrame, plan: FoldPlan, adopted: list[str], shifts: 
         effect = dict(test_coverage_before=round(coverage(d_raw["qty"], d_raw["p10"], d_raw["p90"]), 3),
                       test_coverage_after=round(coverage(d_cal["qty"], d_cal["p10"], d_cal["p90"]), 3),
                       test_below_before=below_rates(t_raw), test_below_after=below_rates(t_final))
-    return [score(t_m0, "M0"), score(t_final, chosen)], effect, int(t_m0["sold_out"].astype(bool).sum())
+    mine = score(t_final, chosen) | dict(days_won=days_won(t_final, t_m0))
+    return [score(t_m0, "M0"), mine], effect, int(t_m0["sold_out"].astype(bool).sum())
 
 
 # ---------------------------------------------------------------- 6. 설명 문장

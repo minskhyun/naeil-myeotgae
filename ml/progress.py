@@ -27,7 +27,8 @@
     trial     검증 중 시험 한 번     groups[정보 묶음], wape, miss(하루에 남거나 모자란 개수)
     decision  정보를 쓸지 판정        group, adopted, reason
     scores    검증 결과             model, wape, base_wape, coverage, test_days, miss·base_miss(하루에 남거나 모자란 개수),
-                                 saved_amount(지난주 방식보다 하루에 덜 틀린 금액, 판매가를 알 때만)
+                                 saved_amount(지난주 방식보다 하루에 덜 틀린 금액, 판매가를 알 때만),
+                                 days_won(test_days 중 지난주 방식을 이긴 날 수), final(최종 시험이면 true, 검증 기간이면 false)
     forecast  내일 예측             date, menus, top[{menu, prep, pred}], warnings[문장]
 """
 import json

@@ -239,8 +239,9 @@ export function AnalysisView({ events, status, error, log, onClose, replay = fal
                   <p className="mt-3 text-xs text-muted">
                     남거나 모자란 개수 하루 {cnt(scores.base_miss)}개 → {cnt(scores.miss)}개
                     {scores.saved_amount !== undefined && scores.saved_amount > 0 && ` · 판매가로 하루 약 ${won(scores.saved_amount)}`}
+                    {scores.days_won !== undefined && scores.test_days ? ` · ${scores.test_days}일 중 ${scores.days_won}일 이김` : ''}
                     {' '}· 예상 범위 정확도 {pct1(rangeScore(scores.coverage))}
-                    {scores.test_days ? ` · 마지막 ${scores.test_days}일로 시험` : ''}
+                    {scores.test_days ? ` · ${scores.final === false ? '검증 기간' : '마지막'} ${scores.test_days}일로 시험` : ''}
                   </p>
                 </>
               ) : scores ? (

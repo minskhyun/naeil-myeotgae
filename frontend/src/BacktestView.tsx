@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { api, type ModelScore } from './api'
-import { count, fmtDate, GROUP_LABELS, missPerDay, MODEL_LABELS, pct1, rangeScore, savedPerDay, won } from './format'
+import { count, fmtDate, GROUP_LABELS, missPerDay, MODEL_LABELS, pct1, rangeScore, won } from './format'
+import { periodName, verdict } from './verdict'
 
 const base = (m: string) => m.slice(0, 2) // "M3(채택 신호만)" → "M3"
 
@@ -44,10 +45,6 @@ export function BacktestView({ storeId, hideDecisions = false }: { storeId: stri
   if (isLoading) return <p className="text-muted">불러오는 중…</p>
   if (error || !data) return <p className="text-up">{(error as Error)?.message ?? '검증 결과가 없습니다.'}</p>
 
-  const test = Object.fromEntries(data.test_scores.map((s) => [base(s.model), s])) as Record<string, ModelScore>
-  const chosen = base(data.chosen_model)
-  const tChosen = test[chosen]
-  const tM0 = test.M0
   const span = (p: [string, string]) => Math.round((Date.parse(p[1]) - Date.parse(p[0])) / 86400000) + 1
   const cvDays = data.folds.reduce((sum, f) => sum + span(f), 0)
   const cvMiss = (s: ModelScore) => missPerDay(s, cvDays)
@@ -57,27 +54,29 @@ export function BacktestView({ storeId, hideDecisions = false }: { storeId: stri
   const used = data.decisions.filter((d) => d.adopted).map((d) => GROUP_LABELS[d.signal_group] ?? d.signal_group)
   // 화면에 보일 이름: 쓰는 방법은 실제로 채택한 정보로 ("판매 기록 + 날씨·유행"), 나머지는 기본 이름
   const name = (m: string) => (m === picked && used.length ? `판매 기록 + ${used.join('·')}` : (MODEL_LABELS[base(m)] ?? m))
-  const gain = tChosen && tM0 ? Math.round((1 - tChosen.wape / tM0.wape) * 100) : null
-  const testDays = data.test_period ? span(data.test_period) : 0
-  const mineMiss = tChosen ? missPerDay(tChosen, testDays) : 0
-  const baseMiss = tM0 ? missPerDay(tM0, testDays) : 0
-  const money = tChosen && tM0 ? savedPerDay(tChosen, tM0) : null
+  const v = verdict(data) // 최종 시험 결과, 기록이 짧아 없으면 검증 기간 결과
 
   return (
     <div className="space-y-10">
       <header>
         <p className="text-sm text-muted">얼마나 맞나</p>
-        {tChosen && tM0 ? (
+        {v ? (
           <h2 className="mt-1 max-w-3xl text-2xl font-bold leading-snug tracking-tight sm:text-[28px]">
-            마지막 {testDays}일 동안 하루 평균 {count(mineMiss)}개가 남거나 모자랐습니다.{' '}
+            {periodName(v)} 동안 하루 평균 {count(v.mineMiss)}개가 남거나 모자랐습니다.{' '}
             <span className="text-muted">
-              '지난주 같은 요일만큼' 준비하는 방법(하루 {count(baseMiss)}개)
-              {gain !== null && gain > 0 ? `보다 하루 ${count(baseMiss - mineMiss)}개(${gain}%) 적습니다.` : '보다 나아지지 않았습니다.'}
-              {money !== null && money > 0 && ` 판매가로 환산하면 하루 약 ${won(money)}입니다.`}
+              '지난주 같은 요일만큼' 준비하는 방법(하루 {count(v.baseMiss)}개)
+              {v.gain > 0 ? `보다 하루 ${count(v.baseMiss - v.mineMiss)}개(${v.gain}%) 적습니다.` : '보다 나아지지 않았습니다.'}
+              {v.mine.days_won != null && ` ${v.days}일 중 ${v.mine.days_won}일은 내일몇개가 덜 틀렸습니다.`}
+              {v.money !== null && v.money > 0 && ` 판매가로 환산하면 하루 약 ${won(v.money)}입니다.`}
             </span>
           </h2>
         ) : (
-          <h2 className="mt-1 text-2xl font-bold">기록이 짧아 최종 시험 기간 없이 검증 기간 결과만 있습니다.</h2>
+          <h2 className="mt-1 text-2xl font-bold">검증 결과가 없습니다.</h2>
+        )}
+        {v && !v.final && (
+          <p className="mt-3 text-sm text-muted">
+            기록이 짧아 최종 시험 기간을 따로 두지 못했습니다. 검증 기간 결과입니다: 그날그날 전날까지의 기록만 보고 예측한 뒤 실제와 비교했습니다.
+          </p>
         )}
         {data.test_period && (
           <p className="mt-3 text-sm text-muted">
@@ -92,22 +91,20 @@ export function BacktestView({ storeId, hideDecisions = false }: { storeId: stri
           <dd className="mt-1 text-xl font-semibold">{name(picked)}</dd>
         </div>
         <div className="border-t border-rule py-4 sm:border-t-0 sm:px-6">
-          <dt className="text-sm text-muted">남거나 모자란 개수 (하루, 시험 기간)</dt>
-          <dd className="mt-1 text-xl font-semibold tabular-nums">{tChosen ? `${count(mineMiss)}개` : '–'}</dd>
-          {tChosen?.days ? (
+          <dt className="text-sm text-muted">남거나 모자란 개수 (하루, {v?.final === false ? '검증 기간' : '시험 기간'})</dt>
+          <dd className="mt-1 text-xl font-semibold tabular-nums">{v ? `${count(v.mineMiss)}개` : '–'}</dd>
+          {v?.mine.days ? (
             <dd className="mt-1 text-sm text-muted">
-              남는 쪽 {count((tChosen.over ?? 0) / tChosen.days)}개 · 모자란 쪽 {count((tChosen.under ?? 0) / tChosen.days)}개 (모든 메뉴 합)
+              남는 쪽 {count((v.mine.over ?? 0) / v.mine.days)}개 · 모자란 쪽 {count((v.mine.under ?? 0) / v.mine.days)}개 (모든 메뉴 합)
             </dd>
           ) : null}
         </div>
         <div className="border-t border-rule py-4 sm:border-t-0 sm:pl-6">
           <dt className="text-sm text-muted">예상 범위 정확도</dt>
           <dd className="mt-1 text-xl font-semibold tabular-nums">
-            {tChosen ? pct1(rangeScore(tChosen.coverage_80)) : '–'} <span className="text-sm font-normal text-muted">100%가 만점</span>
+            {v ? pct1(rangeScore(v.mine.coverage_80)) : '–'} <span className="text-sm font-normal text-muted">100%가 만점</span>
           </dd>
-          {tChosen && (
-            <dd className="mt-1 text-sm text-muted">실제 판매의 {pct1(tChosen.coverage_80)}가 범위 안 · 목표 80%를 맞추면 100%</dd>
-          )}
+          {v && <dd className="mt-1 text-sm text-muted">실제 판매의 {pct1(v.mine.coverage_80)}가 범위 안 · 목표 80%를 맞추면 100%</dd>}
         </div>
       </dl>
 

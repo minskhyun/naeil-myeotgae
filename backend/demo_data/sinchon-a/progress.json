@@ -701,7 +701,9 @@
   "coverage": 0.7482,
   "test_days": 28,
   "miss": 50.5,
-  "base_miss": 77.9
+  "base_miss": 77.9,
+  "days_won": 25,
+  "final": true
  },
  {
   "kind": "step",

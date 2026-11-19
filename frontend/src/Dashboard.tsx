@@ -6,12 +6,13 @@
 // 조각들은 기존 화면의 것을 그대로 쓴다 (ForecastView.tsx, BacktestView.tsx, SourcesView.tsx).
 import { useQuery } from '@tanstack/react-query'
 import { useState, type ReactNode } from 'react'
-import { api, type ModelScore } from './api'
+import { api } from './api'
 import { BacktestView, BarRow } from './BacktestView'
 import { ForecastTable, Notice, PrepToggle } from './ForecastView'
-import { count, fmtDate, fmtTime, GROUP_LABELS, missPerDay, pct1, rangeScore, savedPerDay, won } from './format'
+import { count, fmtDate, fmtTime, GROUP_LABELS, pct1, rangeScore, won } from './format'
 import { Modal } from './Modal'
 import { SourcesView } from './SourcesView'
+import { periodName, verdict } from './verdict'
 
 const MENUS_SHOWN = 8 // 준비표에 처음 보여 줄 메뉴 수 (나머지는 '더 보기')
 
@@ -67,16 +68,8 @@ export function Dashboard({ storeId, storeName, prepMode, readOnly, onReplay }: 
   const effect = (r: (typeof fc.rows)[number]) => r.reasons.reduce((sum, x) => sum + x.effect_pct, 0)
   const more = fc.rows.filter((r) => effect(r) > 0).length
   const less = fc.rows.filter((r) => effect(r) < 0).length
-  const test = Object.fromEntries((backtest?.test_scores ?? []).map((s) => [s.model.slice(0, 2), s])) as Record<string, ModelScore>
-  const mine = backtest ? test[backtest.chosen_model.slice(0, 2)] : undefined
-  const base = test.M0
-  const gain = mine && base ? Math.round((1 - mine.wape / base.wape) * 100) : null
-  // 하루에 남거나 모자란 개수 (모든 메뉴 합): 지난주 같은 요일만큼 준비했을 때 vs 내일몇개 예측대로 준비했을 때
-  const period = backtest?.test_period
-  const testDays = period ? Math.round((Date.parse(period[1]) - Date.parse(period[0])) / 86400000) + 1 : 1
-  const mineMiss = mine ? missPerDay(mine, testDays) : 0
-  const baseMiss = base ? missPerDay(base, testDays) : 0
-  const money = mine && base ? savedPerDay(mine, base) : null
+  // 얼마나 맞나: 지난주 같은 요일만큼 준비했을 때 vs 내일몇개 예측대로 준비했을 때 (최종 시험, 없으면 검증 기간)
+  const v = verdict(backtest)
 
   return (
     <div className="space-y-5">
@@ -104,11 +97,11 @@ export function Dashboard({ storeId, storeName, prepMode, readOnly, onReplay }: 
         />
         <Tile
           label="지난주 방식보다 덜 틀린 양"
-          value={mine && base ? (baseMiss > mineMiss ? `하루 ${count(baseMiss - mineMiss)}개` : '차이 없음') : '–'}
+          value={v ? (v.baseMiss > v.mineMiss ? `하루 ${count(v.baseMiss - v.mineMiss)}개` : '차이 없음') : '–'}
           note={
-            mine && base
-              ? `남거나 모자란 개수 ${count(baseMiss)}개 → ${count(mineMiss)}개${money !== null && money > 0 ? ` · 판매가로 약 ${won(money)}` : ''}`
-              : '기록이 짧아 최종 시험이 없어요'
+            v
+              ? `남거나 모자란 개수 ${count(v.baseMiss)}개 → ${count(v.mineMiss)}개${v.money !== null && v.money > 0 ? ` · 판매가로 약 ${won(v.money)}` : ''} · ${periodName(v)}`
+              : '검증 결과가 없어요'
           }
         />
         <Tile
@@ -160,28 +153,34 @@ export function Dashboard({ storeId, storeName, prepMode, readOnly, onReplay }: 
           </Card>
 
           <Card title="얼마나 맞나" onMore={() => setDetail('backtest')}>
-            {mine && base ? (
+            {v ? (
               <>
-                <BarRow label="지난주 같은 요일만큼" value={baseMiss} max={Math.max(baseMiss, mineMiss)} strong={false} />
-                <BarRow label="내일몇개 예측" value={mineMiss} max={Math.max(baseMiss, mineMiss)} strong />
+                <BarRow label="지난주 같은 요일만큼" value={v.baseMiss} max={Math.max(v.baseMiss, v.mineMiss)} strong={false} />
+                <BarRow label="내일몇개 예측" value={v.mineMiss} max={Math.max(v.baseMiss, v.mineMiss)} strong />
                 <p className="mt-3 text-sm text-muted">
-                  하루에 남거나 모자란 개수(모든 메뉴 합, 짧을수록 좋음).{' '}
-                  {gain !== null && gain > 0 ? (
+                  {periodName(v)} 동안 하루에 남거나 모자란 개수(모든 메뉴 합, 짧을수록 좋음).{' '}
+                  {v.gain > 0 ? (
                     <b className="text-ink">
-                      지난주만큼 준비할 때보다 하루 {count(baseMiss - mineMiss)}개({gain}%) 덜 틀려요
-                      {money !== null && money > 0 && `. 판매가로 하루 약 ${won(money)}`}.
+                      지난주만큼 준비할 때보다 하루 {count(v.baseMiss - v.mineMiss)}개({v.gain}%) 덜 틀려요
+                      {v.money !== null && v.money > 0 && `. 판매가로 하루 약 ${won(v.money)}`}.
                     </b>
                   ) : (
                     '지난주만큼 준비하는 것보다 나아지지 않았어요.'
+                  )}
+                  {v.mine.days_won != null && (
+                    <>
+                      {' '}
+                      {v.days}일 중 <b className="text-ink">{v.mine.days_won}일</b>은 내일몇개가 덜 틀렸어요.
+                    </>
                   )}
                 </p>
                 <p className="mt-3 flex items-baseline justify-between gap-3 border-t border-rule pt-3 text-sm">
                   <span>
                     예상 범위 정확도 <span className="text-faint">(100%가 만점)</span>
                   </span>
-                  <b className="text-lg tabular-nums">{pct1(rangeScore(mine.coverage_80))}</b>
+                  <b className="text-lg tabular-nums">{pct1(rangeScore(v.mine.coverage_80))}</b>
                 </p>
-                <p className="mt-1 text-xs text-faint">실제 판매의 {pct1(mine.coverage_80)}가 범위 안 · 목표 80%를 맞추면 100%</p>
+                <p className="mt-1 text-xs text-faint">실제 판매의 {pct1(v.mine.coverage_80)}가 범위 안 · 목표 80%를 맞추면 100%</p>
               </>
             ) : (
               <p className="text-sm text-muted">기록이 짧아 최종 시험 없이 검증 기간 결과만 있어요. '자세히'에서 볼 수 있습니다.</p>
