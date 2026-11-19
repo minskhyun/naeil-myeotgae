@@ -26,7 +26,8 @@ export default function App() {
   }
   if (!config.data || (login && me.isLoading)) return null // 누구인지 알기 전에는 아무 화면도 깜빡이지 않게
 
-  if (config.data.demo_mode) return <Landing login={null} />
-  if (login && !me.data) return <Landing login={login} />
+  const contactUrl = config.data.contact_url ?? null // '사전 신청·문의' 버튼이 여는 주소 (서버 설정 CONTACT_URL)
+  if (config.data.demo_mode) return <Landing login={null} contactUrl={contactUrl} />
+  if (login && !me.data) return <Landing login={login} contactUrl={contactUrl} />
   return <Workspace login={login} />
 }

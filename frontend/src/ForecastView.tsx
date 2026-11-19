@@ -45,7 +45,13 @@ export function Notice({ w }: { w: Warning }) {
 }
 
 // 준비 기준(폐기 줄이기 · 균형 · 품절 줄이기) 고르기. 바꾸면 서버가 예측 단계만 다시 돌린다
-export function PrepToggle({ storeId, prepMode, readOnly = false }: { storeId: string; prepMode: string; readOnly?: boolean }) {
+//   onPick  주면 서버를 부르지 않고 화면에서만 바꾼다 (보기 전용 예시: 세 기준의 개수를 눌러서 비교)
+export function PrepToggle({ storeId, prepMode, readOnly = false, onPick }: {
+  storeId: string
+  prepMode: string
+  readOnly?: boolean
+  onPick?: (mode: string) => void
+}) {
   const [jobId, setJobId] = useState<string | null>(null)
   const [jobError, setJobError] = useState<string | null>(null)
   const job = useJob(jobId)
@@ -53,6 +59,7 @@ export function PrepToggle({ storeId, prepMode, readOnly = false }: { storeId: s
 
   const choose = async (mode: string) => {
     if (mode === prepMode) return
+    if (onPick) return onPick(mode)
     setJobError(null)
     try {
       setJobId((await api.setPrepMode(storeId, mode)).job_id)
@@ -65,13 +72,14 @@ export function PrepToggle({ storeId, prepMode, readOnly = false }: { storeId: s
     <div>
       <p className="mb-1.5 text-sm text-muted">
         준비 기준 {changing && <span className="text-accent">· 다시 계산 중</span>}
-        {readOnly && <span className="text-faint"> · 보기 전용 매장이라 바꿀 수 없음</span>}
+        {onPick && <span className="text-faint"> · 눌러서 비교해 보세요</span>}
+        {readOnly && !onPick && <span className="text-faint"> · 보기 전용 매장이라 바꿀 수 없음</span>}
       </p>
       <div className="flex overflow-hidden rounded-full border border-ink/80" role="group" aria-label="준비 기준">
         {PREP_MODES.map((m, i) => (
           <button
             key={m}
-            disabled={changing || readOnly}
+            disabled={changing || (readOnly && !onPick)}
             onClick={() => choose(m)}
             aria-pressed={m === prepMode}
             className={`px-3.5 py-1.5 text-sm ${i > 0 ? 'border-l border-ink/80' : ''} ${
@@ -267,10 +275,17 @@ export function ForecastView({ storeId, prepMode, readOnly = false, limit }: {
   limit?: number
 }) {
   const { data, error, isLoading } = useQuery({ queryKey: ['forecast', storeId], queryFn: () => api.forecast(storeId) })
+  const [picked, setPicked] = useState<string | null>(null) // 보기 전용 예시에서 눌러 본 준비 기준
   if (isLoading) return <p className="text-muted">불러오는 중…</p>
   if (error || !data) return <p className="text-up">{(error as Error)?.message ?? '예측이 없습니다.'}</p>
 
+  // 보기 전용 예시: 준비 기준을 눌러 보면 서버 없이 그 기준의 개수로 바꿔 보여 준다 (예측할 때 세 기준을 모두 계산해 둔다)
+  const local = readOnly && data.rows.some((r) => r.prep_by_mode)
+  const mode = (local && picked) || prepMode
+  const rows = local ? data.rows.map((r) => ({ ...r, prep_qty: r.prep_by_mode?.[mode] ?? r.prep_qty })) : data.rows
+  // 모델이 매일 살펴보는 정보(검증을 통과한 것)와, 그중 내일 숫자를 실제로 바꾼 정보를 따로 적는다
   const used = data.signals_used.filter((s) => SIGNAL_LABELS[s]).map((s) => SIGNAL_LABELS[s])
+  const moved = [...new Set(data.rows.flatMap((r) => r.reasons.map((x) => SIGNAL_LABELS[x.signal] ?? x.signal)))]
 
   return (
     <div className="space-y-8">
@@ -278,23 +293,37 @@ export function ForecastView({ storeId, prepMode, readOnly = false, limit }: {
         <div>
           <p className="text-sm text-muted">내일 준비표</p>
           <h2 className="mt-0.5 text-3xl font-bold tracking-tight">{fmtDate(data.rows[0].date)}</h2>
-          <p className="mt-2 text-sm text-muted">
-            {used.length ? <>반영한 주변 정보 — {used.join(', ')}</> : '주변 정보 없이 판매 기록만으로 예측했습니다'}
-          </p>
+          {used.length ? (
+            <div className="mt-2 space-y-0.5 text-sm text-muted">
+              <p>
+                내일 숫자를 바꾼 정보 — <b className="text-ink">{moved.length ? moved.join(', ') : '없음 (내일은 평소와 같게 봤어요)'}</b>
+              </p>
+              <p className="text-faint">검증을 통과해 매일 살펴보는 정보 — {used.join(', ')}</p>
+            </div>
+          ) : (
+            <p className="mt-2 text-sm text-muted">주변 정보 없이 판매 기록만으로 예측했습니다</p>
+          )}
         </div>
-        <PrepToggle storeId={storeId} prepMode={prepMode} readOnly={readOnly} />
+        <PrepToggle storeId={storeId} prepMode={mode} readOnly={readOnly} onPick={local ? setPicked : undefined} />
       </div>
 
-      {data.warnings.map((w, i) => (
-        <Notice key={i} w={w} />
-      ))}
+      {data.warnings.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-sm text-muted">
+            <b className="text-ink">AI가 읽은 소식</b> · 이 안내 때문에 준비표 숫자가 바뀌지는 않습니다. 참고해서 판단해 주세요.
+          </p>
+          {data.warnings.map((w, i) => (
+            <Notice key={i} w={w} />
+          ))}
+        </div>
+      )}
 
-      <ForecastTable rows={data.rows} limit={limit} storeId={storeId} />
+      <ForecastTable rows={rows} limit={limit} storeId={storeId} />
 
       <dl className="grid gap-x-8 gap-y-2 text-sm text-muted sm:grid-cols-3">
         <div>
           <dt className="font-semibold text-ink">준비</dt>
-          <dd>고른 준비 기준({prepMode})으로 정한 권장 개수</dd>
+          <dd>고른 준비 기준({mode})으로 정한 권장 개수</dd>
         </div>
         <div>
           <dt className="font-semibold text-ink">예상 범위</dt>
@@ -302,10 +331,12 @@ export function ForecastView({ storeId, prepMode, readOnly = false, limit }: {
         </div>
         <div>
           <dt className="font-semibold text-ink">평소와 다른 점</dt>
-          <dd>날씨·행사 때문에 달라진 정도. 메뉴를 누르면 그래프와 설명</dd>
+          <dd>날씨·행사가 평소와 같았을 때의 예측과 비교한 차이. 메뉴를 누르면 그래프와 설명</dd>
         </div>
       </dl>
-      <p className="text-xs text-faint">{fmtTime(data.generated_at)}에 계산</p>
+      <p className="text-xs text-faint">
+        {readOnly ? '예시: 판매 기록의 마지막 날 다음 날을 미리 계산해 둔 결과입니다.' : `${fmtTime(data.generated_at)}에 계산`}
+      </p>
     </div>
   )
 }

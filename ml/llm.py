@@ -25,7 +25,8 @@ DEFAULTS = {"LLM_PROVIDER": "anthropic",
             "LLM_MODEL_LIGHT": "claude-haiku-5-5"}   # 양이 많은 단순 추출 (행사 글마다 한 번, 값이 Opus의 1/30)
 KEY_NAMES = ("ANTHROPIC_API_KEY", "DATA_GO_KR_KEY", "SEOUL_DATA_KEY", "KAKAO_REST_KEY",
              "NAVER_CLIENT_ID", "NAVER_CLIENT_SECRET",           # .env에 넣는 키 이름 (README '키 준비' 참고)
-             "GOOGLE_CLIENT_ID", "KAKAO_LOGIN", "KAKAO_CLIENT_SECRET", "ADMIN_EMAILS")   # 로그인 설정 (backend/app/auth.py)
+             "GOOGLE_CLIENT_ID", "KAKAO_LOGIN", "KAKAO_CLIENT_SECRET", "ADMIN_EMAILS",   # 로그인 설정 (backend/app/auth.py)
+             "CONTACT_URL")           # 첫 화면의 '사전 신청·문의' 버튼이 여는 주소 (신청 폼, 오픈채팅 등). 없으면 버튼을 숨긴다
 LLM_TIMEOUT_S = 60       # 한 번 부를 때 기다리는 최대 시간 (SDK 기본은 10분이라, 서버가 멈추면 실행 전체가 멈춘 것처럼 보인다)
 LLM_RETRIES = 1          # 실패하면 한 번만 다시
 T = TypeVar("T", bound=BaseModel)

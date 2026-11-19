@@ -135,7 +135,9 @@ class ForecastRow(BaseModel):
     pred: float = Field(ge=0)                   # 예상 판매량 (평균 기대값. 중앙값이 아니다 → ml/models.py)
     p10: float = Field(ge=0)                    # 10%의 날은 이보다 적게 팔림
     p90: float = Field(ge=0)                    # 90%의 날은 이보다 적게 팔림
-    prep_qty: int | None = Field(default=None, ge=0)   # 권장 준비량
+    prep_qty: int | None = Field(default=None, ge=0)   # 권장 준비량 (매장이 고른 준비 기준의 값)
+    prep_by_mode: dict[str, int] | None = None  # 준비 기준마다의 권장 준비량 {"폐기 줄이기": 38, "균형": 41, "품절 줄이기": 47}
+                                                # → 화면이 다시 계산하지 않고 바로 바꿔 보여 줄 수 있다
     model: ModelName
     reasons: list[Reason] = Field(default_factory=list)
 

@@ -8,7 +8,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { AnalysisMap } from './AnalysisMap'
 import type { Job, ProgressEvent } from './api'
 import { CountUp } from './CountUp'
-import { count as cnt, fmtDate, GROUP_LABELS, KIND_COLOR, pct1, rangeScore, won } from './format'
+import { count as cnt, fmtDate, GROUP_LABELS, KIND_COLOR, pct1, won } from './format'
 
 const STEPS = [
   { id: 'ingest', label: '판매 기록' },
@@ -54,7 +54,7 @@ function line(e: ProgressEvent): { tag: string; color: string; text: string } | 
       text: `${e.title} · 규모 ${e.scale}/5 · 우리 가게와의 연관도 ${e.relevance}/5 · ${e.distance_m}m${e.menus.length ? ` · 특히 ${e.menus.slice(0, 3).join(', ')}` : ''}`,
     }
     case 'trial': return {
-      tag: '시험', color: KIND_COLOR.plan,
+      tag: '검증', color: KIND_COLOR.plan,
       text: `${e.groups.length ? `판매 기록 + ${e.groups.map((g) => GROUP_LABELS[g] ?? g).join('·')}` : '판매 기록만'}으로 지난 날들을 맞혀 봤어요 → ${e.miss !== undefined ? `하루 ${cnt(e.miss)}개 틀림` : `오차율 ${pct1(e.wape)}`}`,
     }
     default: return null
@@ -118,7 +118,12 @@ export function AnalysisView({ events, status, error, log, onClose, replay = fal
     articles: all('article').length,
     trends: all('trend').length,
   }
-  const gain = scores ? Math.round((1 - scores.wape / scores.base_wape) * 100) : 0
+  // 화면에 적는 개수(반올림한 값)끼리 계산해 '78개 → 50개, 36% 적음'이 서로 맞게 한다. 개수가 없는 예전 기록은 비율로
+  const gain = !scores
+    ? 0
+    : scores.miss !== undefined && scores.base_miss
+      ? Math.round((1 - Math.round(scores.miss) / Math.round(scores.base_miss)) * 100)
+      : Math.round((1 - scores.wape / scores.base_wape) * 100)
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-gradient-to-b from-accent to-accent-deep text-white">
@@ -225,13 +230,13 @@ export function AnalysisView({ events, status, error, log, onClose, replay = fal
                   </li>
                 ))}
               </ul>
-              <p className="mt-3 text-xs text-muted">지난 기록으로 시험해 실제로 더 정확해진 정보만 써요.</p>
+              <p className="mt-3 text-xs text-muted">지난 기록으로 확인해 실제로 더 정확해진 정보만 써요.</p>
             </Card>
             <Card title="얼마나 맞나">
               {scores?.miss !== undefined && scores.base_miss !== undefined ? (
                 <>
                   <p className="text-4xl font-extrabold tracking-tight tabular-nums">
-                    하루 <CountUp to={Math.max(0, scores.base_miss - scores.miss)} />개
+                    하루 <CountUp to={Math.max(0, Math.round(scores.base_miss) - Math.round(scores.miss))} />개
                   </p>
                   <p className="mt-1 text-sm">
                     '지난주 같은 요일만큼' 준비할 때보다 덜 틀린 개수{gain > 0 && ` (${gain}% 적음)`}
@@ -240,8 +245,8 @@ export function AnalysisView({ events, status, error, log, onClose, replay = fal
                     남거나 모자란 개수 하루 {cnt(scores.base_miss)}개 → {cnt(scores.miss)}개
                     {scores.saved_amount !== undefined && scores.saved_amount > 0 && ` · 판매가로 하루 약 ${won(scores.saved_amount)}`}
                     {scores.days_won !== undefined && scores.test_days ? ` · ${scores.test_days}일 중 ${scores.days_won}일 이김` : ''}
-                    {' '}· 예상 범위 정확도 {pct1(rangeScore(scores.coverage))}
-                    {scores.test_days ? ` · ${scores.final === false ? '검증 기간' : '마지막'} ${scores.test_days}일로 시험` : ''}
+                    {' '}· 실제 판매의 {pct1(scores.coverage)}가 예상 범위 안(목표 80%)
+                    {scores.test_days ? ` · ${scores.final === false ? '검증 기간' : '마지막'} ${scores.test_days}일 기준` : ''}
                   </p>
                 </>
               ) : scores ? (
@@ -253,12 +258,12 @@ export function AnalysisView({ events, status, error, log, onClose, replay = fal
                     오차율 (평균 오차 ÷ 평균 판매량){gain > 0 && ` · '지난주 같은 요일만큼'보다 ${gain}% 적음`}
                   </p>
                   <p className="mt-3 text-xs text-muted">
-                    예상 범위 정확도 {pct1(rangeScore(scores.coverage))} (100%가 만점 · 실제 판매의 {pct1(scores.coverage)}가 범위 안, 목표 80%)
-                    {scores.test_days ? ` · 마지막 ${scores.test_days}일로 시험` : ''}
+                    실제 판매의 {pct1(scores.coverage)}가 예상 범위 안(목표 80%)
+                    {scores.test_days ? ` · 마지막 ${scores.test_days}일 기준` : ''}
                   </p>
                 </>
               ) : (
-                <p className="text-sm text-muted">기록이 짧아 최종 시험 없이 검증 기간 결과만 있어요.</p>
+                <p className="text-sm text-muted">검증 결과가 아직 없어요.</p>
               )}
             </Card>
             <Card title={forecast ? `${fmtDate(forecast.date)} 준비` : '내일 준비'}>

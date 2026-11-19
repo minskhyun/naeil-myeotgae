@@ -9,7 +9,7 @@ import { useState, type ReactNode } from 'react'
 import { api } from './api'
 import { BacktestView, BarRow } from './BacktestView'
 import { ForecastTable, Notice, PrepToggle } from './ForecastView'
-import { count, fmtDate, fmtTime, GROUP_LABELS, pct1, rangeScore, won } from './format'
+import { count, fmtDate, fmtTime, GROUP_LABELS, pct1, won } from './format'
 import { Modal } from './Modal'
 import { SourcesView } from './SourcesView'
 import { periodName, verdict } from './verdict'
@@ -97,10 +97,10 @@ export function Dashboard({ storeId, storeName, prepMode, readOnly, onReplay }: 
         />
         <Tile
           label="지난주 방식보다 덜 틀린 양"
-          value={v ? (v.baseMiss > v.mineMiss ? `하루 ${count(v.baseMiss - v.mineMiss)}개` : '차이 없음') : '–'}
+          value={v ? (v.saved > 0 ? `하루 ${count(v.saved)}개` : '차이 없음') : '–'}
           note={
             v
-              ? `남거나 모자란 개수 ${count(v.baseMiss)}개 → ${count(v.mineMiss)}개${v.money !== null && v.money > 0 ? ` · 판매가로 약 ${won(v.money)}` : ''} · ${periodName(v)}`
+              ? `남거나 모자란 개수 ${count(v.baseShown)}개 → ${count(v.mineShown)}개${v.money !== null && v.money > 0 ? ` · 판매가로 약 ${won(v.money)}` : ''} · ${periodName(v)} 기준`
               : '검증 결과가 없어요'
           }
         />
@@ -116,7 +116,8 @@ export function Dashboard({ storeId, storeName, prepMode, readOnly, onReplay }: 
         <Card title="메뉴별 준비표">
           <ForecastTable rows={fc.rows} limit={MENUS_SHOWN} compact storeId={storeId} />
           <p className="mt-3 text-xs leading-relaxed text-faint">
-            준비 = 고른 준비 기준({prepMode})의 권장 개수 · 예상 범위 = 실제 판매가 들어올 것으로 보는 구간(세로 눈금이 예상값) · 평소와 다른 점에
+            준비 = 고른 준비 기준({prepMode})의 권장 개수 · 예상 범위 = 실제 판매가 들어올 것으로 보는 구간(세로 눈금이 예상값) · 평소와 다른 점 = 날씨·행사가
+            평소와 같았을 때의 예측과 비교한 차이 ·
             메뉴를 누르면 그래프와 설명 · {fmtTime(fc.generated_at)}에 계산
           </p>
         </Card>
@@ -125,6 +126,7 @@ export function Dashboard({ storeId, storeName, prepMode, readOnly, onReplay }: 
           <Card title="AI 주의 안내">
             {fc.warnings.length ? (
               <div className="space-y-3">
+                <p className="text-xs leading-relaxed text-faint">AI가 읽은 소식이에요. 이 안내 때문에 준비표 숫자가 바뀌지는 않으니, 참고해서 판단해 주세요.</p>
                 {fc.warnings.map((w, i) => (
                   <Notice key={i} w={w} />
                 ))}
@@ -149,7 +151,7 @@ export function Dashboard({ storeId, storeName, prepMode, readOnly, onReplay }: 
             ) : (
               <p className="text-sm text-muted">검증 결과가 없습니다.</p>
             )}
-            <p className="mt-3 text-xs text-faint">지난 기록으로 시험해 예측이 실제로 나아진 정보만 써요.</p>
+            <p className="mt-3 text-xs text-faint">지난 기록으로 확인해 예측이 실제로 나아진 정보만 써요.</p>
           </Card>
 
           <Card title="얼마나 맞나" onMore={() => setDetail('backtest')}>
@@ -161,7 +163,7 @@ export function Dashboard({ storeId, storeName, prepMode, readOnly, onReplay }: 
                   {periodName(v)} 동안 하루에 남거나 모자란 개수(모든 메뉴 합, 짧을수록 좋음).{' '}
                   {v.gain > 0 ? (
                     <b className="text-ink">
-                      지난주만큼 준비할 때보다 하루 {count(v.baseMiss - v.mineMiss)}개({v.gain}%) 덜 틀려요
+                      지난주만큼 준비할 때보다 하루 {count(v.saved)}개({v.gain}%) 덜 틀려요
                       {v.money !== null && v.money > 0 && `. 판매가로 하루 약 ${won(v.money)}`}.
                     </b>
                   ) : (
@@ -176,14 +178,14 @@ export function Dashboard({ storeId, storeName, prepMode, readOnly, onReplay }: 
                 </p>
                 <p className="mt-3 flex items-baseline justify-between gap-3 border-t border-rule pt-3 text-sm">
                   <span>
-                    예상 범위 정확도 <span className="text-faint">(100%가 만점)</span>
+                    예상 범위 안에 든 비율 <span className="text-faint">(목표 80%)</span>
                   </span>
-                  <b className="text-lg tabular-nums">{pct1(rangeScore(v.mine.coverage_80))}</b>
+                  <b className="text-lg tabular-nums">{pct1(v.mine.coverage_80)}</b>
                 </p>
-                <p className="mt-1 text-xs text-faint">실제 판매의 {pct1(v.mine.coverage_80)}가 범위 안 · 목표 80%를 맞추면 100%</p>
+                <p className="mt-1 text-xs text-faint">실제 판매가 예상 범위 안에 들어온 비율이에요. 80%에 가까울수록 범위를 알맞게 잡은 것입니다.</p>
               </>
             ) : (
-              <p className="text-sm text-muted">기록이 짧아 최종 시험 없이 검증 기간 결과만 있어요. '자세히'에서 볼 수 있습니다.</p>
+              <p className="text-sm text-muted">검증 결과가 아직 없어요.</p>
             )}
           </Card>
         </div>

@@ -9,7 +9,8 @@ export type ForecastRow = {
   pred: number // 예상 판매량 (평균 기대값)
   p10: number // 예상 범위 아래 끝
   p90: number // 예상 범위 위 끝
-  prep_qty: number | null // 준비 권장량
+  prep_qty: number | null // 준비 권장량 (매장이 고른 준비 기준의 값)
+  prep_by_mode?: Record<string, number> | null // 준비 기준마다의 권장량 → 다시 계산하지 않고 바로 바꿔 보여 준다
   model: string
   reasons: Reason[]
 }
@@ -168,7 +169,7 @@ async function call<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const api = {
   // google_client_id가 있으면 구글 로그인 버튼을, kakao_login이면 카카오 로그인 버튼을 보여 준다
-  config: () => call<{ demo_mode: boolean; google_client_id: string | null; kakao_login: boolean }>('/config'),
+  config: () => call<{ demo_mode: boolean; google_client_id: string | null; kakao_login: boolean; contact_url?: string | null }>('/config'),
   me: () => call<User | null>('/auth/me'),
   loginGoogle: (credential: string) =>
     call<User>('/auth/google', { method: 'POST', headers: JSON_BODY, body: JSON.stringify({ credential }) }),

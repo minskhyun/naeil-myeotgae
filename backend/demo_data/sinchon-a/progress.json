@@ -700,8 +700,8 @@
   "base_wape": 0.2975,
   "coverage": 0.7482,
   "test_days": 28,
-  "miss": 50.5,
-  "base_miss": 77.9,
+  "miss": 50.46,
+  "base_miss": 77.89,
   "days_won": 25,
   "final": true
  },

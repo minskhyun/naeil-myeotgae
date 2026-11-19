@@ -176,10 +176,12 @@ def predict_next_day(sales: pd.DataFrame, signals: pd.DataFrame | None, groups: 
     reasons = explain(model, rows, q["p50"], usual_values(train, model.signal_cols, kinds),
                       signal_sources(signals, store_id, target, close_time) if names else {})
     prep = prep_qty(q, prep_mode)
+    by_mode = {mode: prep_qty(q, mode) for mode in PREP_MODES}       # 화면에서 준비 기준을 바꿔 볼 때 쓰는 값
     out_rows = [
         ForecastRow(date=target.date(), menu=rows.at[i, "menu"],
                     pred=round(float(q.at[i, "pred"]), 1), p10=round(float(q.at[i, "p10"]), 1),
-                    p90=round(float(q.at[i, "p90"]), 1), prep_qty=int(prep[i]), model=model_name, reasons=reasons[i])
+                    p90=round(float(q.at[i, "p90"]), 1), prep_qty=int(prep[i]),
+                    prep_by_mode={mode: int(v[i]) for mode, v in by_mode.items()}, model=model_name, reasons=reasons[i])
         for i in range(len(rows))
     ]
     return Forecast(store_id=store_id, generated_at=dt.datetime.now().replace(microsecond=0),

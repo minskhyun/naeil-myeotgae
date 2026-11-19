@@ -244,7 +244,7 @@ def step_evaluate(args, out: Path) -> str:
     mine, base = picked, next((s for s in rows if s.model == "M0"), None)
     if mine and base:
         days = mine.days or None
-        per_day = lambda s: round((s.over + s.under) / max(s.days, 1), 1)                 # noqa: E731  하루에 남거나 모자란 개수
+        per_day = lambda s: round((s.over + s.under) / max(s.days, 1), 2)                 # noqa: E731  하루에 남거나 모자란 개수
         saved = round((base.amount - mine.amount) / max(mine.days, 1)) if mine.amount is not None and base.amount is not None else None
         progress.emit("scores", model=bt.chosen_model, wape=round(mine.wape, 4), base_wape=round(base.wape, 4),
                       coverage=round(mine.coverage_80, 4), test_days=days, miss=per_day(mine), base_miss=per_day(base),

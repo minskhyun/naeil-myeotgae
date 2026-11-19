@@ -60,6 +60,7 @@ from backend.app import auth
 from contracts.schemas import DEFAULT_CLOSE_TIME, BacktestResult, Forecast, SalesHistory, SourceReport, StoreConfig
 from ml import paths, progress
 from ml.features import load_sales
+from ml.llm import settings as env_settings
 from ml.predict import PREP_MODES, recent_history
 
 Me = Depends(auth.current_user)     # 요청을 보낸 사람 (로그인 안 했으면 None)
@@ -112,8 +113,11 @@ def config():
     """화면이 처음에 물어본다: 시연 모드면 '데이터 올리기'와 준비 방식 바꾸기를 숨긴다.
     google_client_id가 있으면 구글 로그인 버튼을, kakao_login이면 카카오 로그인 버튼을 보여 준다
     (클라이언트 ID는 공개돼도 되는 값. 시연 모드는 보기 전용이라 로그인이 없다)."""
+    contact = (env_settings().get("CONTACT_URL") or "").strip()
     return {"demo_mode": DEMO_MODE, "google_client_id": None if DEMO_MODE else auth.CLIENT_ID,
-            "kakao_login": not DEMO_MODE and bool(auth.KAKAO_KEY)}
+            "kakao_login": not DEMO_MODE and bool(auth.KAKAO_KEY),
+            # 첫 화면의 '사전 신청·문의' 버튼이 여는 주소. 웹 주소일 때만 내보낸다 (.env 또는 서버 환경 변수 CONTACT_URL)
+            "contact_url": contact if contact.startswith(("https://", "http://")) else None}
 
 
 @app.get("/api/stores")

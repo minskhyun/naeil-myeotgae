@@ -59,7 +59,8 @@ def _login(who: str) -> TestClient:
 
 def test_logged_out_sees_only_demo_and_cannot_change(site):
     guest = TestClient(main.app)
-    assert guest.get("/api/config").json() == {"demo_mode": False, "google_client_id": "test-client-id", "kakao_login": False}
+    assert guest.get("/api/config").json() == {"demo_mode": False, "google_client_id": "test-client-id", "kakao_login": False,
+                                               "contact_url": None}
     assert guest.get("/api/auth/me").json() is None
     assert guest.get("/api/stores").json() == [dict(store_id="sinchon-a", name="sinchon-a", prep_mode="균형", can_edit=False, demo=True)]
     assert guest.get("/api/stores/sinchon-a/forecast").status_code == 200

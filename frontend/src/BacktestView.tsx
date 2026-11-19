@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { api, type ModelScore } from './api'
-import { count, fmtDate, GROUP_LABELS, missPerDay, MODEL_LABELS, pct1, rangeScore, won } from './format'
+import { count, fmtDate, GROUP_LABELS, missPerDay, MODEL_LABELS, pct1, won } from './format'
 import { periodName, verdict } from './verdict'
 
 const base = (m: string) => m.slice(0, 2) // "M3(채택 신호만)" → "M3"
@@ -19,7 +19,8 @@ export function BarRow({ label, value, max, strong }: { label: string; value: nu
 }
 
 // 주변 정보 묶음마다 썼는지와 그 이유 (첫 화면에서는 이것만 따로 보여 준다)
-export function Decisions({ storeId }: { storeId: string }) {
+// noDataText: 자료가 없어 평가하지 못한 묶음에 대신 적을 말 (가상 예시는 일부 정보를 아예 모으지 않았다)
+export function Decisions({ storeId, noDataText }: { storeId: string; noDataText?: string }) {
   const { data } = useQuery({ queryKey: ['backtest', storeId], queryFn: () => api.backtest(storeId) })
   if (!data) return null
   return (
@@ -31,7 +32,7 @@ export function Decisions({ storeId }: { storeId: string }) {
           <li key={d.signal_group} className="grid grid-cols-[6rem_1fr] gap-3 py-3 text-sm sm:grid-cols-[8rem_4rem_1fr]">
             <span className="font-semibold">{GROUP_LABELS[d.signal_group] ?? d.signal_group}</span>
             <span className={d.adopted ? 'font-semibold text-accent' : 'text-faint'}>{d.adopted ? '씀' : '안 씀'}</span>
-            <span className="col-span-2 text-muted sm:col-span-1">{d.reason}</span>
+            <span className="col-span-2 text-muted sm:col-span-1">{noDataText && d.folds_total === 0 && !d.adopted ? noDataText : d.reason}</span>
           </li>
         ))}
       </ul>
@@ -46,7 +47,7 @@ export function BacktestView({ storeId, hideDecisions = false }: { storeId: stri
   if (error || !data) return <p className="text-up">{(error as Error)?.message ?? '검증 결과가 없습니다.'}</p>
 
   const span = (p: [string, string]) => Math.round((Date.parse(p[1]) - Date.parse(p[0])) / 86400000) + 1
-  const cvDays = data.folds.reduce((sum, f) => sum + span(f), 0)
+  const cvDays = data.cv_scores[0]?.days || data.folds.reduce((sum, f) => sum + span(f), 0) // 실제로 채점한 날 수 (휴무일 제외)
   const cvMiss = (s: ModelScore) => missPerDay(s, cvDays)
   const cvMax = Math.max(...data.cv_scores.map(cvMiss))
   // 실제로 쓰는 방법의 줄: 고른 신호 조합이 기본 M1~M3와 다르면 '(채택 신호만)' 줄이 따로 있다
@@ -62,10 +63,10 @@ export function BacktestView({ storeId, hideDecisions = false }: { storeId: stri
         <p className="text-sm text-muted">얼마나 맞나</p>
         {v ? (
           <h2 className="mt-1 max-w-3xl text-2xl font-bold leading-snug tracking-tight sm:text-[28px]">
-            {periodName(v)} 동안 하루 평균 {count(v.mineMiss)}개가 남거나 모자랐습니다.{' '}
+            {periodName(v)} 동안 하루 평균 {count(v.mineShown)}개가 남거나 모자랐습니다.{' '}
             <span className="text-muted">
-              '지난주 같은 요일만큼' 준비하는 방법(하루 {count(v.baseMiss)}개)
-              {v.gain > 0 ? `보다 하루 ${count(v.baseMiss - v.mineMiss)}개(${v.gain}%) 적습니다.` : '보다 나아지지 않았습니다.'}
+              '지난주 같은 요일만큼' 준비하는 방법(하루 {count(v.baseShown)}개)
+              {v.saved > 0 ? `보다 하루 ${count(v.saved)}개(${v.gain}%) 적습니다.` : '보다 나아지지 않았습니다.'}
               {v.mine.days_won != null && ` ${v.days}일 중 ${v.mine.days_won}일은 내일몇개가 덜 틀렸습니다.`}
               {v.money !== null && v.money > 0 && ` 판매가로 환산하면 하루 약 ${won(v.money)}입니다.`}
             </span>
@@ -75,12 +76,13 @@ export function BacktestView({ storeId, hideDecisions = false }: { storeId: stri
         )}
         {v && !v.final && (
           <p className="mt-3 text-sm text-muted">
-            기록이 짧아 최종 시험 기간을 따로 두지 못했습니다. 검증 기간 결과입니다: 그날그날 전날까지의 기록만 보고 예측한 뒤 실제와 비교했습니다.
+            기록이 짧아 마지막 확인 기간을 따로 두지 못했습니다. 검증 기간 결과입니다: 그날그날 전날까지의 기록만 보고 예측한 뒤 실제와 비교했습니다.
           </p>
         )}
         {data.test_period && (
           <p className="mt-3 text-sm text-muted">
-            시험 기간 {fmtDate(data.test_period[0])} ~ {fmtDate(data.test_period[1])}. 그날그날 전날까지의 기록만 보고 예측한 뒤 실제와 비교했습니다.
+            마지막 확인 기간 {fmtDate(data.test_period[0])} ~ {fmtDate(data.test_period[1])}. 방법을 다 정한 뒤 딱 한 번, 그날그날 전날까지의 기록만 보고 예측해 실제와
+            비교했습니다.
           </p>
         )}
       </header>
@@ -91,27 +93,28 @@ export function BacktestView({ storeId, hideDecisions = false }: { storeId: stri
           <dd className="mt-1 text-xl font-semibold">{name(picked)}</dd>
         </div>
         <div className="border-t border-rule py-4 sm:border-t-0 sm:px-6">
-          <dt className="text-sm text-muted">남거나 모자란 개수 (하루, {v?.final === false ? '검증 기간' : '시험 기간'})</dt>
-          <dd className="mt-1 text-xl font-semibold tabular-nums">{v ? `${count(v.mineMiss)}개` : '–'}</dd>
-          {v?.mine.days ? (
+          <dt className="text-sm text-muted">남거나 모자란 개수 (하루, {v ? periodName(v) : '확인 기간'} 기준)</dt>
+          <dd className="mt-1 text-xl font-semibold tabular-nums">{v ? `${count(v.mineShown)}개` : '–'}</dd>
+          {v && v.overShown !== null ? (
             <dd className="mt-1 text-sm text-muted">
-              남는 쪽 {count((v.mine.over ?? 0) / v.mine.days)}개 · 모자란 쪽 {count((v.mine.under ?? 0) / v.mine.days)}개 (모든 메뉴 합)
+              남는 쪽 {count(v.overShown)}개 + 모자란 쪽 {count(v.mineShown - v.overShown)}개 (모든 메뉴 합)
             </dd>
           ) : null}
         </div>
         <div className="border-t border-rule py-4 sm:border-t-0 sm:pl-6">
-          <dt className="text-sm text-muted">예상 범위 정확도</dt>
+          <dt className="text-sm text-muted">예상 범위 안에 든 비율</dt>
           <dd className="mt-1 text-xl font-semibold tabular-nums">
-            {v ? pct1(rangeScore(v.mine.coverage_80)) : '–'} <span className="text-sm font-normal text-muted">100%가 만점</span>
+            {v ? pct1(v.mine.coverage_80) : '–'} <span className="text-sm font-normal text-muted">목표 80%</span>
           </dd>
-          {v && <dd className="mt-1 text-sm text-muted">실제 판매의 {pct1(v.mine.coverage_80)}가 범위 안 · 목표 80%를 맞추면 100%</dd>}
+          {v && <dd className="mt-1 text-sm text-muted">실제 판매가 예상 범위 안에 들어온 비율. 80%에 가까울수록 범위를 알맞게 잡은 것</dd>}
         </div>
       </dl>
 
       <section>
         <h3 className="text-lg font-semibold">방법별 하루에 남거나 모자란 개수</h3>
         <p className="mt-1 text-sm text-muted">
-          검증 기간 {data.folds.length}구간 평균. 예측대로 준비했다면 남았을 개수 + 모자랐을 개수(모든 메뉴 합), 짧을수록 좋습니다.
+          검증 기간 {cvDays}일({data.folds.length}구간) 기준. 예측대로 준비했다면 남았을 개수 + 모자랐을 개수(모든 메뉴 합), 짧을수록 좋습니다.
+          {v?.final && ` 위의 숫자(${periodName(v)} 기준)와는 기간이 달라 값이 조금 다릅니다.`}
         </p>
         <div className="mt-4">
           {data.cv_scores.map((s) => (
@@ -122,10 +125,12 @@ export function BacktestView({ storeId, hideDecisions = false }: { storeId: stri
 
       {!hideDecisions && <Decisions storeId={storeId} />}
 
-      <section className="text-sm leading-relaxed text-muted">
-        <h3 className="font-semibold text-ink">데이터 메모</h3>
-        <p className="mt-1 max-w-3xl">{data.data_note}</p>
-      </section>
+      <details className="text-sm leading-relaxed text-muted">
+        <summary className="cursor-pointer font-semibold text-ink underline-offset-4 hover:underline">자세한 검증 기록 보기</summary>
+        <p className="mt-2 max-w-3xl">
+          {data.data_note} <span className="text-faint">(M0 = 지난주 같은 요일만큼, M1 = 판매 기록만, M2 = + 날씨, M3 = + 학사일정·행사·유행)</span>
+        </p>
+      </details>
     </div>
   )
 }

@@ -51,13 +51,14 @@ function Choice({ what, evidence, reason }: { what: string; evidence?: string; r
 }
 
 // AI(정보원 선택 에이전트)가 이 매장에 고른 정보원과 이유
-function Plan({ plan, nNearby }: { plan: SourcePlan; nNearby: number | null }) {
+// brief: 첫 화면의 예시용 — 고른 정보원만 보이고, 아직 수집기가 없는 후보는 접어 둔다
+function Plan({ plan, nNearby, brief = false }: { plan: SourcePlan; nNearby: number | null; brief?: boolean }) {
   const byRule = plan.method !== 'llm'
   return (
     <>
       <p className="text-sm text-muted">
         매장 주변 시설{nNearby ? ` ${nNearby}곳` : ''}을 보고{' '}
-        {byRule ? '거리 규칙으로 정했습니다.' : `AI(${plan.model ?? 'LLM'})가 골랐고, 고른 근거가 실제 주변 시설 목록에 있는지 코드가 다시 확인했습니다.`}
+        {byRule ? '거리 규칙으로 정했습니다.' : 'AI가 골랐고, 고른 근거가 실제 주변 시설 목록에 있는지 코드가 다시 확인했습니다.'}
       </p>
       <ul className="mt-2 divide-y divide-rule border-y border-rule">
         {plan.weather?.use && <Choice what="날씨" reason={plan.weather.reason} />}
@@ -70,8 +71,10 @@ function Plan({ plan, nNearby }: { plan: SourcePlan; nNearby: number | null }) {
         )}
       </ul>
       {!!plan.candidates?.length && (
-        <div className="mt-5">
-          <h4 className="text-sm font-semibold">AI가 중요하다고 봤지만 아직 수집기가 없는 정보원</h4>
+        <details className="mt-5" open={!brief}>
+          <summary className="cursor-pointer text-sm font-semibold underline-offset-4 hover:underline">
+            AI가 중요하다고 봤지만 아직 가져올 방법이 없는 정보원 {plan.candidates.length}개
+          </summary>
           <ul className="mt-1 divide-y divide-rule text-sm">
             {plan.candidates.map((c) => (
               <li key={c.source} className="grid gap-x-4 gap-y-0.5 py-2 text-muted sm:grid-cols-[11rem_1fr]">
@@ -82,7 +85,7 @@ function Plan({ plan, nNearby }: { plan: SourcePlan; nNearby: number | null }) {
               </li>
             ))}
           </ul>
-        </div>
+        </details>
       )}
     </>
   )
@@ -112,12 +115,15 @@ export function SourcesView({ storeId, brief = false }: { storeId: string; brief
 
       <Section title="AI가 고른 정보원">
         {data.plan ? (
-          <Plan plan={data.plan} nNearby={data.n_nearby} />
+          <Plan plan={data.plan} nNearby={data.n_nearby} brief={brief} />
         ) : (
           <p className="text-sm text-muted">정보원 선택 기록이 없습니다 (매장 주소 없이 실행했거나 주변 시설을 조회하지 못한 경우).</p>
         )}
       </Section>
 
+      {brief && !!data.notes.length && (
+        <p className="rounded-2xl bg-warn-soft px-4 py-3 text-sm text-warn">{data.notes[0]} 위의 정보원 선택은 실제 신촌 주소로 AI를 돌린 결과입니다.</p>
+      )}
       <Section title="모은 정보" sub="정보마다 며칠치를 어디서 가져왔는지입니다.">
         {signals.length ? (
           <ul className="divide-y divide-rule border-y border-rule">
