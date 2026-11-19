@@ -23,7 +23,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from agent import collectors_bridge, events, naver, relevance
-from agent.special_days import special_day_names, special_day_signals
+from agent.special_days import special_day_signals
 from contracts.schemas import CollectionItem, SignalRow, StoreConfig
 from ml import progress
 from ml.paths import RAW
@@ -62,11 +62,10 @@ def public_data(job: CollectJob) -> Result:
 
 
 def special_days(job: CollectJob) -> Result:
-    """발렌타인·빼빼로데이·크리스마스 같은 기념일."""
+    """발렌타인·빼빼로데이·크리스마스 같은 기념일: 당일·앞둔 날 표시 + 기념일마다, 메뉴마다의 연관도(LLM이 1~5로)."""
     rows = special_day_signals(job.store.store_id, job.start, job.end)
-    for date, name in special_day_names(job.start, job.end)[-4:]:        # 화면에는 가까운 날 몇 개만
-        progress.emit("special", date=date, name=name)
-    return rows, [], []
+    more, notes = relevance.special_impact(job.store, job.menus, job.start, job.end, job.work_dir)
+    return rows + more, [], notes
 
 
 def event_posts(job: CollectJob) -> Result:

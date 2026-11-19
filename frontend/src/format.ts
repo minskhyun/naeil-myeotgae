@@ -13,6 +13,7 @@ export const SIGNAL_LABELS: Record<string, string> = {
   event_impact: '행사 영향',
   special_day: '기념일',
   special_lead: '기념일 앞둔 날',
+  special_impact: '기념일 영향',
   trend_level: '검색량 유행',
 }
 

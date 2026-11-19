@@ -54,7 +54,8 @@ SIGNAL_GROUPS = {
     # special_day = 기념일 당일(발렌타인·빼빼로데이·크리스마스 등을 하나로 묶은 표시)
     # special_lead = 기념일을 앞둔 날: 전날 7, 이틀 전 6, …, 일주일 전 1 (그 밖의 날 0). 수요는 당일만이 아니라
     #                며칠 전부터 움직이므로(선물용 빵·케이크 예약 등) 다가오는 정도를 알려 준다. agent/special_days.py가 만든다
-    "special": ["special_day", "special_lead"],
+    # special_impact = 기념일마다·메뉴마다의 연관도(LLM이 1~5로) × 다가온 정도 (메뉴별, agent/relevance.py)
+    "special": ["special_day", "special_lead", "special_impact"],
 }
 SPECIAL_LEAD_DAYS = 7    # 기념일 며칠 전부터 '앞둔 날'로 볼지
 ALL_SIGNALS = {name for names in SIGNAL_GROUPS.values() for name in names}

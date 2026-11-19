@@ -94,3 +94,32 @@ def test_no_events_or_llm_failure(monkeypatch, tmp_path):
     monkeypatch.setenv("LLM_PROVIDER", "fake")
     rows, notes = event_impact(STORE, MENUS, [FESTIVAL], D1, D2, tmp_path)                  # LLM이 안 되면 보통 점수(3)로 계산
     assert rows[0].value == pytest.approx(event_weight(3, 3, 0.2), abs=1e-4) and "보통 점수" in notes[1]
+
+
+# ---------------------------------------------------------------- 기념일
+
+def test_special_impact_differs_by_day_and_menu(monkeypatch, tmp_path):
+    """기념일마다, 메뉴마다 다르다: 빼빼로데이는 과자류에 크고 커피에는 작다. 다가올수록 커진다."""
+    from agent.relevance import SpecialRating, SpecialRatingList, special_impact
+    asked = []
+
+    def provider(user, **_):
+        import json
+        names = json.loads(user)["special_days"]
+        asked.append(names)
+        return SpecialRatingList(ratings=[SpecialRating(name=n, relevance=2, reason="선물용 과자를 사는 날",
+                                                        menus=[MenuScore(menu="휘낭시에", score=5)]) for n in names])
+    monkeypatch.setitem(llm.PROVIDERS, "fake", provider)
+    monkeypatch.setenv("LLM_PROVIDER", "fake")
+    rows, notes = special_impact(STORE, ["휘낭시에", "아메리카노"], D1, D2, tmp_path)       # 11월: 빼빼로데이(11/11)
+    value = {(str(r.date), r.menu): r.value for r in rows}
+    assert value[("2026-11-11", "휘낭시에")] == 1.0 and value[("2026-11-11", "아메리카노")] == 0.4      # 당일: 5/5, 2/5
+    assert value[("2026-11-10", "휘낭시에")] == pytest.approx(7 / 8) and value[("2026-11-04", "휘낭시에")] == pytest.approx(1 / 8)
+    assert ("2026-11-03", "휘낭시에") not in value and ("2026-11-12", "휘낭시에") not in value            # 일주일 전부터 당일까지만
+    assert {r.signal for r in rows} == {"special_impact"} and all(r.published_at.year == 2025 for r in rows)
+    assert asked == [["빼빼로데이"]] and notes == ["기념일 평가 1개 (새로 물은 것 1개)"]
+
+    special_impact(STORE, ["휘낭시에", "아메리카노"], D1, D2, tmp_path)                    # 같은 기념일은 다시 묻지 않는다
+    assert len(asked) == 1
+    assert special_impact(STORE, [], D1, D2, tmp_path) == ([], [])                         # 메뉴가 없으면 LLM도 안 부른다
+    assert special_impact(STORE, ["휘낭시에"], dt.date(2026, 6, 1), dt.date(2026, 6, 30), tmp_path) == ([], [])   # 기념일이 없는 달

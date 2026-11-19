@@ -36,7 +36,10 @@ function line(e: ProgressEvent): { tag: string; color: string; text: string } | 
     case 'academic': return { tag: '학교 일정', color: KIND_COLOR.academic, text: `시험·방학·축제 ${e.days}일` }
     case 'event': return { tag: e.source === '뉴스·블로그' ? '소식 속 행사' : '근처 행사', color: e.source === '뉴스·블로그' ? KIND_COLOR.news : KIND_COLOR.event, text: `${e.title}${e.place ? ` · ${e.place}` : ''}` }
     case 'article': return { tag: '읽은 글', color: KIND_COLOR.article, text: e.title }
-    case 'special': return { tag: '기념일', color: KIND_COLOR.special, text: `${e.name} (${e.date})` }
+    case 'special': return {
+      tag: '기념일', color: KIND_COLOR.special,
+      text: `${e.name} (${e.date})${e.relevance ? ` · 우리 가게와의 연관도 ${e.relevance}/5` : ''}${e.menus?.length ? ` · 특히 ${e.menus.slice(0, 3).join(', ')}` : ''}`,
+    }
     case 'trend': return { tag: '검색량', color: KIND_COLOR.trend, text: `${e.menu} ${e.pct > 0 ? '+' : ''}${e.pct}%` }
     case 'rating': return {
       tag: 'AI의 평가', color: KIND_COLOR.plan,

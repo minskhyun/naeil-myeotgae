@@ -1,4 +1,4 @@
-"""근처 행사를 '이 가게에 얼마나 영향을 줄 만한가'로 따진다 → 메뉴별 신호 event_impact.
+"""근처 행사와 기념일을 '이 가게·이 메뉴에 얼마나 영향을 줄 만한가'로 따진다 → 메뉴별 신호 event_impact, special_impact.
 
 행사라고 다 같지 않다: 3만 명 축제와 20명 북토크, 가게 앞 행사와 1km 밖 행사, 아이스 음료가 팔릴 야외 행사와
 우리 메뉴와 상관없는 행사. 세 가지를 따진다.
@@ -14,6 +14,10 @@
 - 시점 규칙: 행사가 공개(등록)될 때마다 그날의 합이 한 줄씩 늘어난다. 예측 시각에는 그때까지 공개된 행사만 들어간다.
 - 같은 행사는 다시 묻지 않는다 ({work_dir}/event_ratings.json). 새로 생긴 행사만 BATCH개씩 묶어 묻는다.
 - 부르는 곳: agent/collect.py의 collect_all (정보원들이 찾은 행사 목록 job.found를 받아서)
+
+기념일도 같은 방식 (파일 아래쪽): 기념일에는 규모·거리가 없으므로 '기념일마다, 메뉴마다의 연관도'만 매긴다.
+    special_impact(날짜, 메뉴) = (그 메뉴의 연관도/5) × 다가온 정도 (당일 1, 일주일 전 1/8)
+  부르는 곳: agent/collect.py의 special_days
 """
 import datetime as dt
 import hashlib
@@ -23,8 +27,11 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
+from agent.special_days import SOURCE_URL as SPECIAL_URL
+from agent.special_days import special_day_names
 from contracts.schemas import SignalRow, StoreConfig
 from ml import progress
+from ml.features import SPECIAL_LEAD_DAYS
 from ml.llm import ask
 
 REACH_KM = 1.0             # 이 거리에서 가까움이 0이 된다 (그보다 먼 행사는 MIN_CLOSENESS)
@@ -179,3 +186,87 @@ def event_impact(store: StoreConfig, menus: list[str], events: list[dict], start
                       distance_m=round(e["distance_km"] * 1000),
                       menus=[m for m, s in r["menus"].items() if s >= max(4, r["relevance"])])    # 특히 관련 깊은 메뉴만
     return impact_rows(store.store_id, events, ratings, menus, start, end), notes
+
+
+# ---------------------------------------------------------------- 기념일: 기념일마다, 메뉴마다 다르다
+
+SPECIAL_RATINGS_FILE = "special_ratings.json"
+
+SPECIAL_SYSTEM = """당신은 카페·베이커리 수요 예측 서비스의 '기념일 평가' 담당입니다.
+판매량을 예측하지 않습니다. 주어진 가게와 기념일 목록을 보고, 기념일마다 아래 값만 매깁니다.
+
+relevance (1~5) 이 기념일이 이 가게의 판매에 영향을 줄 가능성 (가게 전체 기준).
+  1 = 거의 무관,  3 = 보통,  5 = 매우 큼 (예: 케이크를 파는 가게의 크리스마스)
+
+menus 가게 메뉴 중 이 기념일에 '전체와 다르게' 영향받을 메뉴만 적습니다 (메뉴 이름은 목록에 있는 그대로, 점수 1~5).
+  예: 빼빼로데이 → 초콜릿·과자류 5, 커피 2.  크리스마스 → 케이크류 5.  특별히 다른 메뉴가 없으면 빈 목록.
+
+reason 그렇게 본 이유 한 문장.
+
+한국의 일반적인 소비 습관을 기준으로 판단합니다. 모든 기념일에 대해 name을 그대로 돌려줍니다."""
+
+
+class SpecialRating(BaseModel):
+    name: str
+    relevance: int
+    menus: list[MenuScore]
+    reason: str
+
+
+class SpecialRatingList(BaseModel):
+    ratings: list[SpecialRating]
+
+
+def rate_specials(store: StoreConfig, menus: list[str], names: list[str], work_dir: Path) -> tuple[dict[str, dict], list[str]]:
+    """기념일마다 이 가게·메뉴와의 연관도를 매긴다 → ({기념일 이름: 평가}, 메모). 이미 매긴 기념일은 저장된 것을 쓴다."""
+    path = Path(work_dir) / SPECIAL_RATINGS_FILE
+    ratings = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+    new = [n for n in names if n not in ratings]
+    notes = []
+    if new:
+        shown = menus[:MAX_MENUS]
+        user = json.dumps(dict(store=dict(name=store.name or store.store_id, category=store.category), menus=shown, special_days=new),
+                          ensure_ascii=False)
+        try:
+            for r in ask(SPECIAL_SYSTEM, user, SpecialRatingList, Path(work_dir) / "llm_cache_ratings", max_tokens=4000).ratings:
+                if r.name in new:
+                    ratings[r.name] = dict(relevance=_clamp(r.relevance), reason=r.reason,
+                                           menus={m.menu: _clamp(m.score) for m in r.menus if m.menu in shown})
+            Path(work_dir).mkdir(parents=True, exist_ok=True)
+            path.write_text(json.dumps(ratings, ensure_ascii=False, indent=1), encoding="utf-8")
+        except Exception as e:                               # 평가 없이 (보통 점수로) 진행
+            notes.append(f"기념일 평가 실패({type(e).__name__}) → 보통 점수로 계산")
+    notes.insert(0, f"기념일 평가 {len(names)}개 (새로 물은 것 {len(new)}개)")
+    return ratings, notes
+
+
+def special_impact(store: StoreConfig, menus: list[str], start: dt.date, end: dt.date,
+                   work_dir: Path) -> tuple[list[SignalRow], list[str]]:
+    """기념일과 그 앞 며칠 → 메뉴별 신호 special_impact = (그 메뉴의 연관도/5) × 다가온 정도.
+    다가온 정도: 당일 1, 전날 7/8, …, 일주일 전 1/8 (special_lead와 같은 기간).
+    빼빼로데이와 크리스마스가 다르고, 같은 기념일이라도 메뉴마다 다르다는 것을 모델에 알려 준다.
+    기념일이 범위에 없거나 메뉴가 없으면 아무것도 하지 않는다 (LLM도 안 부름)."""
+    ahead = end + dt.timedelta(days=SPECIAL_LEAD_DAYS)
+    days = dict(special_day_names(start, ahead))             # {날짜: 이름}
+    if not days or not menus:
+        return [], []
+    ratings, notes = rate_specials(store, menus, sorted(set(days.values())), work_dir)
+    rows = []
+    day = start
+    while day <= end:
+        left = next((n for n in range(0, SPECIAL_LEAD_DAYS + 1) if day + dt.timedelta(days=n) in days), None)
+        if left is not None:
+            special = day + dt.timedelta(days=left)
+            r = ratings.get(days[special], {})
+            closeness = (SPECIAL_LEAD_DAYS + 1 - left) / (SPECIAL_LEAD_DAYS + 1)
+            for m in menus:
+                score = r.get("menus", {}).get(m, r.get("relevance", NEUTRAL))      # 메뉴별 점수가 없으면 가게 전체 점수
+                rows.append(SignalRow(date=day, store_id=store.store_id, signal="special_impact", menu=m,
+                                      value=round(score / 5 * closeness, 4), source_url=SPECIAL_URL,
+                                      published_at=dt.datetime(special.year - 1, 1, 1), kind="calendar"))
+        day += dt.timedelta(days=1)
+    for special, name in sorted(days.items())[-4:]:          # 화면: 가까운 기념일 몇 개와 그 평가
+        r = ratings.get(name, {})
+        progress.emit("special", date=special, name=name, relevance=r.get("relevance"), reason=r.get("reason"),
+                      menus=[m for m, s in r.get("menus", {}).items() if s >= max(4, r.get("relevance", NEUTRAL))])
+    return rows, notes

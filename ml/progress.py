@@ -20,7 +20,7 @@
     academic  학교 일정             days
     event     근처 행사             title, place, lat, lon, start, end, source, url
     article   읽은 글               title, url
-    special   기념일               date, name
+    special   기념일               date, name, relevance(1~5, LLM), menus[특히 관련 있는 메뉴], reason
     trend     메뉴 검색량            menu, pct
     rating    행사 평가 (LLM)       title, scale(1~5), relevance(1~5), distance_m, menus[특히 관련 있는 메뉴], reason
     trial     검증 중 시험 한 번     groups[정보 묶음], wape
