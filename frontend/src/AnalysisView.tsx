@@ -20,8 +20,11 @@ const STEPS = [
 // 알림이 한꺼번에 몰려와도 이 간격대로 하나씩 풀어 놓는다 → 서버가 잠깐 조용해도 화면은 계속 움직인다
 const PAUSE: Record<string, number> = {
   step: 120, status: 260, store: 2000, sales: 500, places: 1500, plan: 1500, weather: 700, academic: 700,
-  event: 700, article: 450, special: 400, trend: 450, rating: 600, trial: 500, decision: 650, scores: 500, forecast: 500,
+  event: 700, article: 450, special: 400, trend_span: 700, trend: 450, rating: 600, trial: 500, decision: 650, scores: 500, forecast: 500,
 }
+
+// 가져온 기간을 괄호로 (예전 기록에는 기간이 없다 → 빈 글자)
+const span = (e: { first?: string; last?: string }) => (e.first && e.last ? ` (${e.first} ~ ${e.last})` : '')
 
 // 들어온 정보 목록의 한 줄: 종류(색 이름표) + 내용
 function line(e: ProgressEvent): { tag: string; color: string; text: string } | null {
@@ -32,15 +35,19 @@ function line(e: ProgressEvent): { tag: string; color: string; text: string } | 
       tag: 'AI의 선택', color: KIND_COLOR.plan,
       text: `이 매장에 맞는 정보원을 골랐어요${e.radius_m ? ` · 행사는 반경 ${e.radius_m}m` : ''}${e.picks.length ? ` · 근거 시설 ${e.picks.length}곳` : ''}`,
     }
-    case 'weather': return { tag: '날씨', color: KIND_COLOR.weather, text: `${e.days}일치 기록과 예보` }
-    case 'academic': return { tag: '학교 일정', color: KIND_COLOR.academic, text: `시험·방학·축제 ${e.days}일` }
+    case 'weather': return { tag: '날씨', color: KIND_COLOR.weather, text: `${e.days}일치 기록과 예보${span(e)}` }
+    case 'academic': return {
+      tag: '학교 일정', color: KIND_COLOR.academic,
+      text: `${[e.exams && `시험 기간 ${e.exams}번`, e.vacations && `방학 ${e.vacations}번`, e.festivals && `축제 ${e.festivals}번`].filter(Boolean).join(' · ') || '시험·방학·축제'} · 모두 ${e.days}일${span(e)}`,
+    }
     case 'event': return { tag: e.source === '뉴스·블로그' ? '소식 속 행사' : '근처 행사', color: e.source === '뉴스·블로그' ? KIND_COLOR.news : KIND_COLOR.event, text: `${e.title}${e.place ? ` · ${e.place}` : ''}` }
     case 'article': return { tag: '읽은 글', color: KIND_COLOR.article, text: e.title }
     case 'special': return {
       tag: '기념일', color: KIND_COLOR.special,
       text: `${e.name} (${e.date})${e.relevance ? ` · 우리 가게와의 연관도 ${e.relevance}/5` : ''}${e.menus?.length ? ` · 특히 ${e.menus.slice(0, 3).join(', ')}` : ''}`,
     }
-    case 'trend': return { tag: '검색량', color: KIND_COLOR.trend, text: `${e.menu} ${e.pct > 0 ? '+' : ''}${e.pct}%` }
+    case 'trend_span': return { tag: '검색량', color: KIND_COLOR.trend, text: `메뉴 ${e.menus}개의 ${e.days}일치 검색량${span(e)}` }
+    case 'trend': return { tag: '검색량', color: KIND_COLOR.trend, text: `${e.menu} · 요즘 일주일 ${e.pct > 0 ? '+' : ''}${e.pct}% (그 전 4주와 비교)` }
     case 'rating': return {
       tag: 'AI의 평가', color: KIND_COLOR.plan,
       text: `${e.title} · 규모 ${e.scale}/5 · 우리 가게와의 연관도 ${e.relevance}/5 · ${e.distance_m}m${e.menus.length ? ` · 특히 ${e.menus.slice(0, 3).join(', ')}` : ''}`,

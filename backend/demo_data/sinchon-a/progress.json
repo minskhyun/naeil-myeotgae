@@ -585,11 +585,18 @@
  },
  {
   "kind": "weather",
-  "days": 366
+  "days": 366,
+  "first": "2025-11-01",
+  "last": "2026-11-01"
  },
  {
   "kind": "academic",
-  "days": 182
+  "days": 182,
+  "first": "2025-12-08",
+  "last": "2026-10-23",
+  "exams": 4,
+  "vacations": 2,
+  "festivals": 2
  },
  {
   "kind": "step",

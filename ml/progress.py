@@ -16,12 +16,13 @@
     sales     판매 기록             days, menus, first, last
     places    주변 시설             count, places[{name, group, lat, lon, distance_m}]
     plan      AI가 고른 정보원       method, model, radius_m, reason, picks[{what, name, lat, lon, reason}]
-    weather   날씨                 days
-    academic  학교 일정             days
+    weather   날씨                 days, first, last (가져온 기간)
+    academic  학교 일정             days, first, last, exams·vacations·festivals(각각 몇 번)
     event     근처 행사             title, place, lat, lon, start, end, source, url
     article   읽은 글               title, url
     special   기념일               date, name, relevance(1~5, LLM), menus[특히 관련 있는 메뉴], reason
-    trend     메뉴 검색량            menu, pct
+    trend_span 검색량을 가져온 기간    menus, days, first, last
+    trend     메뉴 검색량            menu, pct (예측 날짜 기준: 최근 7일이 그 전 4주보다 몇 % 늘었나)
     rating    행사 평가 (LLM)       title, scale(1~5), relevance(1~5), distance_m, menus[특히 관련 있는 메뉴], reason
     trial     검증 중 시험 한 번     groups[정보 묶음], wape
     decision  정보를 쓸지 판정        group, adopted, reason

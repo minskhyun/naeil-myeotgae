@@ -118,9 +118,7 @@ def _tell_demo_surroundings(store_id: str, out: Path) -> None:
         progress.emit("step", step="collect", status="start")
         collectors_bridge.tell_plan(store_id, work_dir)
     signals = load_signals(out / "signals.csv")
-    days = lambda names: int(signals.loc[signals["signal"].isin(names), "date"].nunique())     # noqa: E731
-    progress.emit("weather", days=days(["temp_mean", "rain_mm"]))
-    progress.emit("academic", days=days(collectors_bridge.ACADEMIC_COLS))
+    collectors_bridge.tell_coverage({name: set(pd.to_datetime(g).dt.date) for name, g in signals.groupby("signal")["date"]})
     progress.emit("step", step="collect", status="done")
 
 

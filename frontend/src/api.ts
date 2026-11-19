@@ -120,12 +120,13 @@ export type ProgressEvent =
   | { kind: 'sales'; days: number; menus: number; first: string; last: string }
   | { kind: 'places'; count: number; places: { name: string; group: string; lat: number; lon: number; distance_m: number }[] }
   | { kind: 'plan'; method?: string; model?: string; radius_m?: number; reason?: string; picks: { what: string; name: string; lat: number; lon: number; reason?: string }[] }
-  | { kind: 'weather'; days: number }
-  | { kind: 'academic'; days: number }
+  | { kind: 'weather'; days: number; first?: string; last?: string } // first~last = 가져온 기간 (판매 기록 기간 전체)
+  | { kind: 'academic'; days: number; first?: string; last?: string; exams?: number; vacations?: number; festivals?: number }
   | { kind: 'event'; title: string; place?: string; lat: number; lon: number; start: string; end: string; source: string; url?: string }
   | { kind: 'article'; title: string; url: string }
   | { kind: 'special'; date: string; name: string; relevance?: number; menus?: string[]; reason?: string } // relevance·menus = AI가 매긴 연관도
-  | { kind: 'trend'; menu: string; pct: number }
+  | { kind: 'trend_span'; menus: number; days: number; first: string; last: string } // 검색량을 가져온 기간
+  | { kind: 'trend'; menu: string; pct: number } // 예측 날짜 기준: 최근 7일이 그 전 4주보다 몇 % 늘었나
   | { kind: 'rating'; title: string; scale: number; relevance: number; distance_m: number; menus: string[]; reason: string } // AI가 매긴 행사의 규모·연관도
   | { kind: 'trial'; groups: string[]; wape: number } // 검증 중: 이 정보 묶음을 넣어 시험했더니 오차가 이만큼
   | { kind: 'decision'; group: string; adopted: boolean; reason: string }

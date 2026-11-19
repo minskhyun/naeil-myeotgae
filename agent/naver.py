@@ -192,7 +192,7 @@ def menu_trend(store_id: str, menus: list[str], start: dt.date, target: dt.date,
     last = min(target - dt.timedelta(days=TREND_LAG_DAYS), today - dt.timedelta(days=1))
     menus = menus[:MAX_TREND_MENUS]
     series = fetch_trend(menus, first, last, post)
-    rows, items, changed = [], [], []
+    rows, items, changed, latest = [], [], [], []
     for menu, searches in series.items():
         level = trend_level(searches, target)[pd.Timestamp(start):].dropna()
         for day, value in level.items():
@@ -202,7 +202,7 @@ def menu_trend(store_id: str, menus: list[str], start: dt.date, target: dt.date,
                                   kind="observed"))
         now_level = level.get(pd.Timestamp(target))
         if now_level is not None:
-            progress.emit("trend", menu=menu, pct=round((float(now_level) - 1) * 100))    # 화면: 메뉴별 검색량 변화
+            latest.append((menu, round((float(now_level) - 1) * 100)))
         if now_level is None or abs(now_level - 1) * 100 < TREND_ALERT_PCT:
             continue
         pct = (now_level - 1) * 100
@@ -212,6 +212,11 @@ def menu_trend(store_id: str, menus: list[str], start: dt.date, target: dt.date,
         items.append(CollectionItem(date=target, title=f"검색량 변화: {menu}", text=text, source_url=TREND_PAGE,
                                     published_at=dt.datetime.combine(target - dt.timedelta(days=1), dt.time(9))))
         changed.append(f"{menu} {pct:+.0f}%")
+    if rows:                                # 화면: 가져온 기간 전체(모델이 배우는 재료)를 먼저, 그다음 메뉴별 요즘 변화
+        days = {r.date for r in rows}
+        progress.emit("trend_span", menus=len({r.menu for r in rows}), days=len(days), first=min(days), last=max(days))
+    for menu, pct in latest:
+        progress.emit("trend", menu=menu, pct=pct)
     note = (f"메뉴 검색량 {len(series)}개" + (f"(요청 실패 {len(menus) - len(series)}개)" if len(series) < len(menus) else "")
             + f" → 유행 신호 {len({r.menu for r in rows})}개 메뉴"
             + (f", 크게 바뀐 메뉴: {', '.join(changed)}" if changed else ", 크게 바뀐 메뉴 없음"))

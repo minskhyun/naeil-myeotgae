@@ -39,6 +39,7 @@ OBSERVED_PROXY = "#관측값을-예보-대신-사용"     # 이 표시가 붙은
 KMA_OBSERVED = "https://data.kma.go.kr"
 KMA_FORECAST = "https://www.data.go.kr/data/15084084/openapi.do"
 ACADEMIC_COLS = ["exam_period", "vacation", "festival"]
+PERIOD_GAP_DAYS = 7          # 학교 일정이 이만큼 넘게 끊기면 다른 기간으로 센다 (시험 기간 몇 번, 방학 몇 번)
 MAX_EVENT_DAYS = 14                            # 수집기(seoul_events)와 같은 기준 (이보다 긴 상설 전시는 신호가 안 됨)
 # 수집기의 단계 이름 → 화면에 보여 줄 '지금 하는 일'
 STAGE_TEXT = {"kakao": "매장 주변 시설을 살펴보는 중", "agent": "AI가 이 매장에 맞는 정보원을 고르는 중",
@@ -116,12 +117,31 @@ def tell_plan(store_id: str, work_dir: Path, told: set | None = None) -> None:
                       reason=events.get("reason"), picks=[p for p in picks if p["lat"]])
 
 
+def periods(days) -> int:
+    """날짜들이 몇 번의 기간인지 (PERIOD_GAP_DAYS 넘게 끊기면 다른 기간). 예: 시험 기간 5번, 방학 2번."""
+    days = sorted(days)
+    return sum(1 for i, d in enumerate(days) if i == 0 or (d - days[i - 1]).days > PERIOD_GAP_DAYS)
+
+
+def tell_coverage(dates: dict[str, set[dt.date]]) -> None:
+    """화면에 알리기: 날씨·학교 일정을 언제부터 언제까지 가져왔는지. dates = {신호 이름: 값이 있는 날짜들}.
+    예측할 하루치가 아니라 판매 기록 기간 전체를 가져온다 (모델이 지난 시험·방학 때의 판매를 보고 배워야 하므로)."""
+    weather = dates.get("temp_mean", set()) | dates.get("rain_mm", set())
+    if weather:
+        progress.emit("weather", days=len(weather), first=min(weather), last=max(weather))
+    school = set().union(*(dates.get(name, set()) for name in ACADEMIC_COLS))
+    if school:
+        progress.emit("academic", days=len(school), first=min(school), last=max(school),
+                      exams=periods(dates.get("exam_period", ())), vacations=periods(dates.get("vacation", ())),
+                      festivals=periods(dates.get("festival", ())))
+
+
 def tell_results(store_id: str, work_dir: Path, rows: list[SignalRow], around: dt.date) -> None:
-    """수집이 끝난 뒤: 날씨·학교 일정이 며칠치인지, 근처 서울 문화행사(around에 가까운 것부터 일부)."""
-    days = lambda names: len({r.date for r in rows if r.signal in names})     # noqa: E731
-    progress.emit("weather", days=days({"temp_mean", "rain_mm"}))
-    if days(set(ACADEMIC_COLS)):
-        progress.emit("academic", days=days(set(ACADEMIC_COLS)))
+    """수집이 끝난 뒤: 날씨·학교 일정을 가져온 기간, 근처 서울 문화행사(around에 가까운 것부터 일부)."""
+    dates: dict[str, set[dt.date]] = {}
+    for r in rows:
+        dates.setdefault(r.signal, set()).add(r.date)
+    tell_coverage(dates)
     path = Path(work_dir) / EVENTS
     events = json.loads(path.read_text(encoding="utf-8")) if path.exists() else []
     mine = [e for e in events if e.get("source") == "seoul_culture" and e.get("store_id") == store_id and e.get("lat")]
