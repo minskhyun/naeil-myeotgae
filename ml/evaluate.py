@@ -23,8 +23,8 @@ from pathlib import Path
 
 import pandas as pd
 
-from contracts.schemas import BacktestResult, SharedLearning
-from ml import progress, shared
+from contracts.schemas import BacktestResult
+from ml import progress
 from ml.calibration import apply_calibration, below_rates, check_calibration, fit_calibration
 from ml.features import (DEFAULT_CLOSE_TIME, FEATURE_SETS, SIGNAL_GROUPS, available_signals, base_level, build_frame,
                          signals_in)
@@ -247,17 +247,14 @@ def comparison_table(cv: CrossValidator, cv_m0: pd.DataFrame, adopted: list[str]
 # ---------------------------------------------------------------- 5. 최종 테스트
 
 def final_test(frame: pd.DataFrame, plan: FoldPlan, adopted: list[str], shifts: dict | None,
-               model_kwargs: dict, learn_from: pd.DataFrame | None = None) -> tuple[list[dict], dict, int]:
+               model_kwargs: dict) -> tuple[list[dict], dict, int]:
     """위에서 모두 정한 뒤 딱 한 번: M0 vs 채택 모델(보정 적용).
-    learn_from: 다른 매장과 함께 배운 모델이 채택됐을 때의 학습용 표 (내 매장 + 다른 매장). 채점은 내 매장 줄만.
     돌려주는 값: (점수 두 줄, 보정 전후 비교, 품절로 채점에서 뺀 행 수).  테스트 구간이 없으면 ([], {}, 0)."""
     if plan.test is None:
         return [], {}, 0
     chosen = model_label(adopted)
     t_m0 = cross_val_predict(frame, "M0", [plan.test])
-    t_raw = cross_val_predict(frame if learn_from is None else learn_from, chosen, [plan.test], groups=adopted, **model_kwargs)
-    if learn_from is not None:
-        t_raw = shared.mine(t_raw, str(frame["store_id"].iloc[0]))
+    t_raw = cross_val_predict(frame, chosen, [plan.test], groups=adopted, **model_kwargs)
     t_final = apply_calibration(t_raw, shifts) if shifts is not None else t_raw
     effect = {}
     if shifts is not None:
@@ -293,33 +290,9 @@ def data_note(plan: FoldPlan, n_combos: int, adopted: list[str], cv_m0: pd.DataF
 
 # ---------------------------------------------------------------- 전체
 
-def compare_shared(frame: pd.DataFrame, partners: list, names: list[str], plan: FoldPlan, adopted: list[str],
-                   own_cv: pd.DataFrame, model_kwargs: dict) -> tuple[SharedLearning, pd.DataFrame, pd.DataFrame]:
-    """다른 매장과 함께 배운 모델이 내 기록만으로 배운 모델보다 나은가 (같은 검증 구간, 내 매장 줄만 채점).
-    돌려주는 값: (판정, 함께 배운 모델의 예측표, 함께 배울 때의 학습용 표).  기준은 신호 채택과 같다 (beats)."""
-    store_id, label = str(frame["store_id"].iloc[0]), model_label(adopted)
-    both = shared.pooled(frame, partners, names)
-    shared_cv = shared.mine(cross_val_predict(both, label, plan.folds, groups=adopted, **model_kwargs), store_id)
-    own, mixed = score(own_cv, label), score(shared_cv, label)
-    ok, improved, change = beats(mixed, own)
-    n = len(own["wape_by_fold"])
-    if ok:
-        reason = f"다른 매장 {len(partners)}곳과 함께 배우니 검증 {n}개 구간 중 {improved}개에서 오차가 줄어 사용함 (전체 오차 {-change:.1f}% 감소)"
-    elif change < 0:
-        reason = (f"다른 매장 {len(partners)}곳과 함께 배운 모델은 오차를 {-change:.1f}% 줄였지만 기준({MIN_GAIN_PCT:g}%·과반 구간)에 못 미쳐 "
-                  "내 매장 기록만으로 배운 모델을 씀")
-    else:
-        reason = f"다른 매장 {len(partners)}곳과 함께 배운 모델이 더 정확하지 않아(오차 {change:+.1f}%) 내 매장 기록만으로 배운 모델을 씀"
-    verdict = SharedLearning(partners=len(partners), weight=shared.PARTNER_WEIGHT, adopted=ok,
-                             wape_own=round(own["wape"], 4), wape_shared=round(mixed["wape"], 4), reason=reason)
-    progress.emit("shared", partners=len(partners), adopted=ok, wape_own=verdict.wape_own, wape_shared=verdict.wape_shared)
-    return verdict, shared_cv, both
-
-
 def run_backtest(sales: pd.DataFrame, signals: pd.DataFrame | None = None,
-                 close_time: str = DEFAULT_CLOSE_TIME, partners: list | None = None, **model_kwargs) -> BacktestResult:
-    """매장 하나의 판매(+신호) → BacktestResult.  model_kwargs는 테스트용 (예: iterations=30).
-    partners: 함께 배울 다른 매장들 [(판매, 신호, 영업 종료 시각)] (ml/shared.py). 있으면 함께 배운 모델과도 비교한다."""
+                 close_time: str = DEFAULT_CLOSE_TIME, **model_kwargs) -> BacktestResult:
+    """매장 하나의 판매(+신호) → BacktestResult.  model_kwargs는 테스트용 (예: iterations=30)."""
     store_ids = sales["store_id"].unique()
     if len(store_ids) != 1:
         raise ValueError(f"매장 하나씩 평가합니다. 받은 매장: {list(store_ids)}")
@@ -335,11 +308,6 @@ def run_backtest(sales: pd.DataFrame, signals: pd.DataFrame | None = None,
     cv = CrossValidator(frame, plan.folds, model_kwargs)
     adopted, decisions, n_combos = choose_signals(frame, plan, cv)                  # 2
     chosen_cv = cv.run(adopted)[0]
-    sharing, learn_from = None, None                                                # 2-1. 다른 매장과 함께 배운 모델이 더 나은가
-    if partners:
-        sharing, shared_cv, both = compare_shared(frame, partners, names, plan, adopted, chosen_cv, model_kwargs)
-        if sharing.adopted:
-            chosen_cv, learn_from = shared_cv, both
     cv_m0 = cross_val_predict(frame, "M0", plan.folds)
     cv_scores = comparison_table(cv, cv_m0, adopted)                                # 3
 
@@ -348,7 +316,7 @@ def run_backtest(sales: pd.DataFrame, signals: pd.DataFrame | None = None,
     calibration = dict(method="conformal-ratio", **check, n_rows=len(scored(chosen_cv)),
                        shifts={k: round(v, 4) for k, v in shifts.items()} if shifts else {})
 
-    test_scores, effect, n_sold_out_test = final_test(frame, plan, adopted, shifts, model_kwargs, learn_from)   # 5
+    test_scores, effect, n_sold_out_test = final_test(frame, plan, adopted, shifts, model_kwargs)   # 5
     calibration.update(effect)
     n_sold_out = int(cv_m0["sold_out"].astype(bool).sum()) + n_sold_out_test
 
@@ -358,9 +326,8 @@ def run_backtest(sales: pd.DataFrame, signals: pd.DataFrame | None = None,
         folds=[(day(s), day(e)) for s, e in plan.folds],
         test_period=(day(plan.test[0]), day(plan.test[1])) if plan.test else None,
         cv_scores=cv_scores, decisions=decisions, chosen_model=model_label(adopted), test_scores=test_scores,
-        data_note=data_note(plan, n_combos, adopted, cv_m0, chosen_cv, n_sold_out, check["reason"])       # 6
-        + (f". {sharing.reason}" if sharing else ""),
-        calibration=calibration, shared=sharing,
+        data_note=data_note(plan, n_combos, adopted, cv_m0, chosen_cv, n_sold_out, check["reason"]),      # 6
+        calibration=calibration,
     )
 
 

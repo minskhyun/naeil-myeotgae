@@ -21,7 +21,6 @@ from contracts.schemas import DEFAULT_PREP_MODE, BacktestResult, Forecast, Forec
 from ml.calibration import apply_calibration
 from ml.features import (DEFAULT_CLOSE_TIME, DERIVED_SIGNALS, SPECIAL_LEAD_DAYS, ZERO_FILL_KINDS, available_signals,
                          base_level, build_frame, issue_time)
-from ml import shared
 from ml.models import make_model
 from ml.paths import ARTIFACTS
 
@@ -117,13 +116,12 @@ def explain(model, rows: pd.DataFrame, p50: pd.Series, usual: dict[str, float],
 def predict_next_day(sales: pd.DataFrame, signals: pd.DataFrame | None, groups: list[str], model_name: str,
                      calibration: dict[str, float] | None = None, close_time: str = DEFAULT_CLOSE_TIME,
                      prep_mode: str = DEFAULT_PREP_MODE, target_date=None, menus: list[str] | None = None,
-                     partners: list | None = None, **model_kwargs) -> Forecast:
+                     **model_kwargs) -> Forecast:
     """판매 기록 + 신호 → 다음 날(또는 target_date) Forecast.
 
     groups       채택된 신호 묶음 (예: ["weather", "events"])
     model_name   backtest의 chosen_model ("M1"~"M3")
     calibration  채택된 범위 보정 이동량 (없으면 None)
-    partners     함께 배울 다른 매장들 [(판매, 신호, 영업 종료 시각)]. 검증에서 채택됐을 때만 넘어온다 (ml/shared.py)
     menus        지금 파는 메뉴 목록 (store.json의 "menus"). 있으면 이 메뉴만 예측 (단종 메뉴 제외).
                  없으면 최근 14일 안에 팔린 메뉴를 모두 예측. 학습에는 단종 메뉴 기록도 그대로 쓴다.
     """
@@ -149,11 +147,7 @@ def predict_next_day(sales: pd.DataFrame, signals: pd.DataFrame | None, groups: 
         raise ValueError(f"{target.date()}에 예측할 메뉴가 없습니다 (최근 14일 안에 팔린 메뉴가 없음).")
 
     # 전체 기록으로 다시 학습 → 예측 (+ 채택된 범위 보정)
-    learn = train
-    if partners:                                   # 다른 매장의 줄도 함께 (예측 날짜보다 앞선 것만: 시점 규칙)
-        learn = shared.pooled(train, partners, names)
-        learn = learn[learn["qty"].notna() & (learn["date"] < target)]
-    model = make_model(model_name, groups=groups, **model_kwargs).fit(learn)
+    model = make_model(model_name, groups=groups, **model_kwargs).fit(train)
     q = model.predict(rows)
     if calibration:
         q = apply_calibration(q.assign(base=base_level(rows)), calibration)
@@ -171,11 +165,9 @@ def predict_next_day(sales: pd.DataFrame, signals: pd.DataFrame | None, groups: 
                     rows=out_rows, signals_used=list(model.signal_cols), warnings=[])
 
 
-def predict_from_backtest(sales, signals, backtest: BacktestResult, partners: list | None = None, **kwargs) -> Forecast:
-    """backtest.json의 결정(채택 신호·모델·범위 보정·함께 배우기)을 그대로 따라 예측한다."""
+def predict_from_backtest(sales, signals, backtest: BacktestResult, **kwargs) -> Forecast:
+    """backtest.json의 결정(채택 신호·모델·범위 보정)을 그대로 따라 예측한다."""
     groups = [d.signal_group for d in backtest.decisions if d.adopted]
-    if backtest.shared is not None and backtest.shared.adopted:      # 검증에서 채택됐을 때만 다른 매장과 함께 배운다
-        kwargs["partners"] = partners
     cal = backtest.calibration
     shifts = cal.shifts if cal is not None and cal.adopted else None
     return predict_next_day(sales, signals, groups, backtest.chosen_model, shifts, **kwargs)

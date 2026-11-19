@@ -110,23 +110,6 @@ export function BacktestView({ storeId, hideDecisions = false }: { storeId: stri
 
       {!hideDecisions && <Decisions storeId={storeId} />}
 
-      {data.shared && (
-        <section>
-          <h3 className="text-lg font-semibold">다른 매장과 함께 배우기</h3>
-          <p className="mt-1 text-sm text-muted">
-            함께 배우기를 켠 다른 매장 {data.shared.partners}곳의 기록을 더해 배운 모델과, 이 매장 기록만으로 배운 모델을 같은 기간에서 비교했습니다.
-          </p>
-          <div className="mt-4">
-            <BarRow label="이 매장 기록만" value={data.shared.wape_own} max={Math.max(data.shared.wape_own, data.shared.wape_shared)} strong={!data.shared.adopted} />
-            <BarRow label="다른 매장과 함께" value={data.shared.wape_shared} max={Math.max(data.shared.wape_own, data.shared.wape_shared)} strong={data.shared.adopted} />
-          </div>
-          <p className="mt-3 text-sm">
-            <span className={data.shared.adopted ? 'font-semibold text-accent' : 'font-semibold'}>{data.shared.adopted ? '씀' : '안 씀'}</span>
-            <span className="text-muted"> — {data.shared.reason}</span>
-          </p>
-        </section>
-      )}
-
       <section className="text-sm leading-relaxed text-muted">
         <h3 className="font-semibold text-ink">데이터 메모</h3>
         <p className="mt-1 max-w-3xl">{data.data_note}</p>

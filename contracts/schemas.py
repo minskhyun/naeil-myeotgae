@@ -38,7 +38,6 @@ class StoreConfig(BaseModel):
     category: str = "카페"                       # 업종 (정보원 선택 에이전트에게 알려 줌)
     menus: list[str] | None = None              # 지금 파는 메뉴 (없으면 최근 14일 안에 팔린 메뉴 전부)
     area_keywords: list[str] | None = None      # 뉴스 검색에 쓸 동네 이름 (없으면 주소에서 뽑음)
-    share_learning: bool = False                # 다른 매장과 함께 배우기 (켠 매장끼리만 서로의 기록으로 학습, ml/shared.py)
 
     @classmethod
     def read(cls, path) -> "StoreConfig":
@@ -219,16 +218,6 @@ class Calibration(BaseModel):
     test_below_after: dict[str, float] | None = None
 
 
-class SharedLearning(BaseModel):
-    """다른 매장과 함께 배운 모델을 쓸지 판정 (ml/shared.py). 내 기록만으로 배운 모델과 검증 구간에서 비교한다."""
-    partners: int                               # 함께 배운 다른 매장 수
-    weight: float                               # 다른 매장 줄 하나의 무게 (내 매장 줄 = 1)
-    adopted: bool                               # 함께 배운 모델을 쓰는가
-    wape_own: float                             # 내 기록만으로 배운 모델의 검증 오차
-    wape_shared: float                          # 함께 배운 모델의 검증 오차 (내 매장 줄만 채점)
-    reason: str                                 # 화면에 그대로 보여 줄 한 문장
-
-
 class BacktestResult(BaseModel):
     """한 매장의 모델 비교·신호 채택 결과 → backtest.json"""
     store_id: str
@@ -241,4 +230,3 @@ class BacktestResult(BaseModel):
     test_scores: list[ModelScore]               # 최종 테스트 (M0 vs 채택 모델), 한 번만 계산
     data_note: str                              # 예: "판매 기록 34일. 검증 구간이 짧아 결과의 변동이 큼"
     calibration: Calibration | None = None      # 범위 보정 (없어도 됨)
-    shared: SharedLearning | None = None        # 다른 매장과 함께 배우기 (함께 배울 매장이 없으면 None)

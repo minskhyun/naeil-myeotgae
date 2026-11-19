@@ -100,8 +100,6 @@ class CatBoostQuantile:
 
         X = rows[self.features]
         y = rows["qty"] / base_level(rows)
-        # 줄마다의 무게 (없으면 모두 1). 다른 매장과 함께 배울 때 내 매장 줄을 더 믿게 한다 (ml/shared.py)
-        weight = rows["weight"] if "weight" in rows else None
         self.models = [CatBoostRegressor(
             loss_function="MultiQuantile:alpha=" + ",".join(map(str, QUANTILES)),
             iterations=iterations, depth=depth, learning_rate=self.learning_rate,
@@ -110,7 +108,7 @@ class CatBoostQuantile:
             # 이 데이터에서 약 12배 빠르고 정확도는 같았다 (메뉴 11개, 매장 1개).
             one_hot_max_size=255,
             verbose=False, allow_writing_files=False,
-        ).fit(X, y, sample_weight=weight) for k in range(self.n_seeds)]
+        ).fit(X, y) for k in range(self.n_seeds)]
         self.n_train, self.short_mode = len(rows), short
         return self
 

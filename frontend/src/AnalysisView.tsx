@@ -20,7 +20,7 @@ const STEPS = [
 // 알림이 한꺼번에 몰려와도 이 간격대로 하나씩 풀어 놓는다 → 서버가 잠깐 조용해도 화면은 계속 움직인다
 const PAUSE: Record<string, number> = {
   step: 120, status: 260, store: 2000, sales: 500, places: 1500, plan: 1500, weather: 700, academic: 700,
-  event: 700, article: 450, special: 400, trend: 450, rating: 600, trial: 500, shared: 700, decision: 650, scores: 500, forecast: 500,
+  event: 700, article: 450, special: 400, trend: 450, rating: 600, trial: 500, decision: 650, scores: 500, forecast: 500,
 }
 
 // 들어온 정보 목록의 한 줄: 종류(색 이름표) + 내용
@@ -44,10 +44,6 @@ function line(e: ProgressEvent): { tag: string; color: string; text: string } | 
     case 'rating': return {
       tag: 'AI의 평가', color: KIND_COLOR.plan,
       text: `${e.title} · 규모 ${e.scale}/5 · 우리 가게와의 연관도 ${e.relevance}/5 · ${e.distance_m}m${e.menus.length ? ` · 특히 ${e.menus.slice(0, 3).join(', ')}` : ''}`,
-    }
-    case 'shared': return {
-      tag: '함께 배우기', color: KIND_COLOR.plan,
-      text: `다른 매장 ${e.partners}곳과 함께 배운 모델 → 틀린 양 ${pct1(e.wape_shared)} (이 매장 기록만 ${pct1(e.wape_own)}) · ${e.adopted ? '함께 배운 모델을 써요' : '이 매장 기록만 써요'}`,
     }
     case 'trial': return {
       tag: '시험', color: KIND_COLOR.plan,

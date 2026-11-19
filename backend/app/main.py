@@ -267,8 +267,7 @@ def _my_store(store_id: str, created_at: str | None, mine: bool) -> dict:
     fc = folder / "forecast.json"
     updated = dt.datetime.fromtimestamp(fc.stat().st_mtime).isoformat(timespec="seconds") if fc.exists() else None
     return dict(store_id=store_id, name=store.name or store_id, address=store.address, close_time=store.close_time,
-                created_at=created_at, updated_at=updated, ready=fc.exists(), running=store_id in RUNNING, mine=mine,
-                share_learning=store.share_learning)
+                created_at=created_at, updated_at=updated, ready=fc.exists(), running=store_id in RUNNING, mine=mine)
 
 
 @app.get("/api/my/stores")
@@ -377,7 +376,6 @@ def _start(store_id: str, args: list[str]) -> dict:
 def run_store(store_id: str, pos: UploadFile = File(..., description="POS 엑셀·CSV (토스·OKPOS)"),
               close_time: str | None = Form(None, description="영업 종료 시각 HH:MM"),
               address: str | None = Form(None, description="매장 주소 → 주변 정보 자동 수집"),
-              share: bool | None = Form(None, description="다른 매장과 함께 배우기 (켠 매장끼리만 서로의 기록으로 학습)"),
               user: auth.User | None = Me):
     folder = _store_dir(store_id)
     _read_only()
@@ -400,8 +398,6 @@ def run_store(store_id: str, pos: UploadFile = File(..., description="POS 엑셀
         args += ["--close-time", close_time]
     if address and address.strip():
         args += ["--address", address.strip()]
-    if share is not None:
-        args += ["--share", "on" if share else "off"]
     return _start(store_id, args)
 
 
