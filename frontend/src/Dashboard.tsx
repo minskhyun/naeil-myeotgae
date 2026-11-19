@@ -10,7 +10,7 @@ import { api } from './api'
 import { BacktestView, BarRow } from './BacktestView'
 import { WeekdayBars } from './ForecastCharts'
 import { ForecastTable, Notice, PrepToggle } from './ForecastView'
-import { average, count, dayPrefix, fmtDate, GROUP_LABELS, pct1, rangeScore, sameWeekday, weekdayName } from './format'
+import { average, count, dayPrefix, fmtDate, GROUP_LABELS, pct1, RANGE_TARGET_TEXT, sameWeekday, weekdayName } from './format'
 import { Modal } from './Modal'
 import { SourcesView } from './SourcesView'
 import { periodName, verdict } from './verdict'
@@ -171,12 +171,12 @@ export function Dashboard({ storeId, storeName, prepMode, readOnly, onReplay }: 
                 </p>
                 <BarRow label="지난주대로 준비" value={v.baseMiss} max={Math.max(v.baseMiss, v.mineMiss)} strong={false} />
                 <BarRow label="내일몇개" value={v.mineMiss} max={Math.max(v.baseMiss, v.mineMiss)} strong />
-                <p
-                  className="mt-4 flex items-baseline justify-between gap-3 border-t border-rule pt-4 text-sm"
-                  title={`실제 판매의 ${pct1(v.mine.coverage_80)}가 예상 범위 안 · 목표 80%를 맞추면 100%`}
-                >
-                  <span className="text-muted">예상 범위 정확도</span>
-                  <b className="text-lg tabular-nums">{pct1(rangeScore(v.mine.coverage_80))}</b>
+                <p className="mt-4 flex items-baseline justify-between gap-3 border-t border-rule pt-4 text-sm">
+                  <span className="text-muted">예상 범위 안에 든 비율</span>
+                  <span className="text-muted">
+                    <b className="mr-2 text-lg tabular-nums text-ink">{pct1(v.mine.coverage_80)}</b>
+                    {RANGE_TARGET_TEXT}
+                  </span>
                 </p>
               </div>
             ) : (

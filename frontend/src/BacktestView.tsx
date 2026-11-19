@@ -5,7 +5,7 @@
 import { useQuery } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 import { api, type ModelScore, type SignalDecision } from './api'
-import { count, fmtDate, GROUP_LABELS, missPerDay, MODEL_LABELS, pct1, rangeScore } from './format'
+import { count, fmtDate, GROUP_LABELS, missPerDay, MODEL_LABELS, pct1, RANGE_TARGET_TEXT } from './format'
 import { periodName, verdict } from './verdict'
 
 const base = (m: string) => m.slice(0, 2) // "M3(채택 신호만)" → "M3"
@@ -101,7 +101,7 @@ export function BacktestView({ storeId, hideDecisions = false }: { storeId: stri
       {v && (
         <div className="grid gap-3 sm:grid-cols-3">
           <Stat label="하루 오차" value={`${count(v.mineShown)}개`} note={`지난주대로 준비하면 ${count(v.baseShown)}개`} />
-          <Stat label="예상 범위 정확도" value={pct1(rangeScore(v.mine.coverage_80))} note={`범위 안에 든 비율 ${pct1(v.mine.coverage_80)} · 목표 80%`} />
+          <Stat label="예상 범위 안에 든 비율" value={pct1(v.mine.coverage_80)} note={RANGE_TARGET_TEXT} />
           <Stat label="쓰는 정보" value={<span className="text-xl">{used.length ? `판매 기록 + ${used.join('·')}` : '판매 기록'}</span>} />
         </div>
       )}
@@ -127,7 +127,7 @@ export function BacktestView({ storeId, hideDecisions = false }: { storeId: stri
           <li>하루 오차 = 예측대로 준비했다면 남았을 개수 + 모자랐을 개수 (모든 메뉴 합, 하루 평균)</li>
           <li>지난주대로 준비 = 지난주 같은 요일에 팔린 만큼 준비하는 방법</li>
           <li>
-            범위 정확도 = 실제 판매가 예상 범위 안에 든 비율({v ? pct1(v.mine.coverage_80) : '–'})을 목표 80%에 견준 점수. 80%를 정확히 맞추면 100%
+            예상 범위는 실제 판매 10번 중 8번이 그 안에 들도록 만듭니다. 80%보다 낮으면 범위가 좁다는 뜻, 높으면 넓다는 뜻입니다.
           </li>
           {data.test_period && (
             <li>
