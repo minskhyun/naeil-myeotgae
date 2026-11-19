@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { api, PREP_MODES, type ForecastRow, type SalesHistory, type Warning } from './api'
 import { CountUp } from './CountUp'
 import { BarsLegend, DayBars, Spark } from './ForecastCharts'
-import { average, count, dayWord, fmtDate, fmtTime, sameWeekday, shortReason, SIGNAL_LABELS, signedPct, weekdayName } from './format'
+import { average, count, dayPrefix, dayWord, fmtDate, sameWeekday, shortReason, SIGNAL_LABELS, signedPct, weekdayName } from './format'
 import { useJob } from './useJob'
 
 // 예상 범위 그림: 가는 선 위에 범위(굵은 선, 왼쪽에서 자라남)와 예상값(눈금). narrow = 좁은 칸용
@@ -23,23 +23,27 @@ function Range({ row, max, narrow = false }: { row: ForecastRow; max: number; na
   )
 }
 
-// AI 주의 안내 한 건: 상황 · 안내 문장 · 원문 인용과 링크
+// AI가 읽은 소식 한 건: 상황 한 줄 · 안내 문장. 근거(원문 인용과 링크)는 접어 두고 누르면 펼친다
 export function Notice({ w }: { w: Warning }) {
-  const scope = w.menu_scope.includes('*') ? '전체 메뉴' : w.menu_scope.join(', ')
   return (
     <section className="rounded-2xl border-l-4 border-warn bg-warn-soft px-5 py-4">
-      <p className="text-sm font-semibold text-warn">
-        주의 · {w.situation_type} — 손님 {w.direction} 가능 ({scope}, 영향 {w.strength})
+      <p className="text-sm font-bold text-warn">
+        {w.situation_type} · 손님 {w.direction} 가능
       </p>
       <p className="mt-1.5 text-[17px] leading-relaxed">{w.message}</p>
-      {w.evidence.map((e, i) => (
-        <blockquote key={i} className="mt-2 border-l border-warn/40 pl-3 text-sm leading-relaxed text-muted">
-          {e.quote}{' '}
-          <a href={e.source_url} target="_blank" rel="noreferrer" className="whitespace-nowrap text-warn underline underline-offset-2">
-            원문
-          </a>
-        </blockquote>
-      ))}
+      {w.evidence.length > 0 && (
+        <details className="mt-2 text-sm">
+          <summary className="cursor-pointer font-semibold text-warn underline-offset-4 hover:underline">근거 {w.evidence.length}건</summary>
+          {w.evidence.map((e, i) => (
+            <blockquote key={i} className="mt-2 border-l border-warn/40 pl-3 leading-relaxed text-muted">
+              {e.quote}{' '}
+              <a href={e.source_url} target="_blank" rel="noreferrer" className="whitespace-nowrap text-warn underline underline-offset-2">
+                원문
+              </a>
+            </blockquote>
+          ))}
+        </details>
+      )}
     </section>
   )
 }
@@ -72,8 +76,6 @@ export function PrepToggle({ storeId, prepMode, readOnly = false, onPick }: {
     <div>
       <p className="mb-1.5 text-sm text-muted">
         준비 기준 {changing && <span className="text-accent">· 다시 계산 중</span>}
-        {onPick && <span className="text-faint"> · 눌러서 비교해 보세요</span>}
-        {readOnly && !onPick && <span className="text-faint"> · 보기 전용 매장이라 바꿀 수 없음</span>}
       </p>
       <div className="flex overflow-hidden rounded-full border border-ink/80" role="group" aria-label="준비 기준">
         {PREP_MODES.map((m, i) => (
@@ -105,14 +107,17 @@ function MenuDetail({ row, history }: { row: ForecastRow; history: SalesHistory 
       {history && values ? (
         <>
           <p className="mb-3 text-sm text-muted">
-            지난 4주 {weekdayName(row.date)}요일에 <b className="text-ink">{past.map((v) => count(v)).join(' · ') || '기록 없음'}</b>
-            {usual !== null && <>개 (평균 {count(usual)}개)</>} → {dayWord(row.date)} 예상 <b className="text-ink">{count(row.pred)}개</b>, 범위 {count(row.p10)}–
-            {count(row.p90)}개
+            {usual !== null && (
+              <>
+                지난 4주 {weekdayName(row.date)}요일 평균 <b className="text-ink">{count(usual)}개</b> →{' '}
+              </>
+            )}
+            {dayPrefix(row.date)}예상 <b className="text-ink">{count(row.pred)}개</b>
           </p>
           <DayBars dates={history.dates} values={values} next={{ date: row.date, value: row.pred, lo: row.p10, hi: row.p90 }} height={110} />
         </>
       ) : (
-        <p className="text-sm text-muted">최근 판매 그래프는 예측을 다시 돌리면 보여요.</p>
+        <p className="text-sm text-muted">최근 판매 기록이 없어요.</p>
       )}
       {row.reasons.length > 0 && (
         <ul className="mt-4 space-y-1 text-sm">
@@ -160,33 +165,16 @@ export function ForecastTable({ rows, limit, compact = false, storeId }: {
   const totalPrep = rows.reduce((sum, r) => sum + (r.prep_qty ?? 0), 0)
   const totalPred = Math.round(rows.reduce((sum, r) => sum + r.pred, 0))
   const cols = compact
-    ? 'md:grid-cols-[minmax(7rem,1.2fr)_3.5rem_7.5rem_9.5rem_minmax(6rem,1fr)_1rem]'
+    ? 'md:grid-cols-[minmax(6.5rem,1fr)_3.5rem_7.5rem_8.75rem_minmax(8.5rem,1.1fr)_1rem]'
     : 'md:grid-cols-[minmax(9rem,1.3fr)_5rem_4.5rem_7.5rem_12rem_minmax(9rem,1.4fr)_1rem]'
   const date = rows[0].date
-  const day = dayWord(date) // 예측 날짜를 부르는 말: 오늘 · 내일 · 이날
-  const past = history ? sameWeekday(history.dates, history.total, date) : []
-  const usual = average(past)
-  const diff = usual ? Math.round((totalPred / usual - 1) * 100) : null
 
   return (
     <section className="overflow-hidden rounded-2xl border border-rule bg-sheet">
       {history && (
         <div className="border-b border-rule px-5 pb-4 pt-5">
           <div className="mb-4 flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
-            <div>
-              <h4 className="font-bold">최근 4주 하루 판매량과 {day} 예상</h4>
-              {usual !== null && diff !== null && (
-                <p className="mt-0.5 text-sm text-muted">
-                  지난 4주 {weekdayName(date)}요일은 평균 {count(usual)}개 → {day}은 <b className="text-ink">{count(totalPred)}개</b> 예상
-                  {Math.abs(diff) >= 3 && (
-                    <>
-                      {' '}
-                      (<span className={diff < 0 ? 'text-down' : 'text-up'}>{signedPct(diff)}</span>)
-                    </>
-                  )}
-                </p>
-              )}
-            </div>
+            <h4 className="font-bold">최근 4주 판매</h4>
             <BarsLegend date={date} />
           </div>
           <DayBars dates={history.dates} values={history.total} next={{ date, value: totalPred }} height={compact ? 130 : 160} />
@@ -196,9 +184,9 @@ export function ForecastTable({ rows, limit, compact = false, storeId }: {
         <span>메뉴</span>
         <span className="text-right">준비</span>
         {!compact && <span className="text-right">예상</span>}
-        <span>최근 4주 → {day}</span>
+        <span>최근 4주</span>
         <span>예상 범위</span>
-        <span>평소와 다른 점</span>
+        <span>평소 대비</span>
         <span />
       </div>
       <ol>
@@ -232,7 +220,7 @@ export function ForecastTable({ rows, limit, compact = false, storeId }: {
               <span className="hidden md:block">
                 <Range row={r} max={max} narrow={compact} />
               </span>
-              <span className="col-span-2 text-sm text-muted md:col-span-1">
+              <span className="col-span-2 text-sm text-muted md:col-span-1 md:whitespace-nowrap">
                 {r.reasons.length ? (
                   r.reasons.map((x, k) => (
                     <span key={x.signal} title={x.text}>
@@ -241,7 +229,7 @@ export function ForecastTable({ rows, limit, compact = false, storeId }: {
                     </span>
                   ))
                 ) : (
-                  <span className="text-faint">평소와 같음</span>
+                  <span className="text-faint">–</span>
                 )}
               </span>
               <span className={`hidden text-faint transition-transform md:block ${open === r.menu ? 'rotate-180' : ''}`} aria-hidden>
@@ -284,8 +272,7 @@ export function ForecastView({ storeId, prepMode, readOnly = false, limit }: {
   const local = readOnly && data.rows.some((r) => r.prep_by_mode)
   const mode = (local && picked) || prepMode
   const rows = local ? data.rows.map((r) => ({ ...r, prep_qty: r.prep_by_mode?.[mode] ?? r.prep_qty })) : data.rows
-  // 모델이 매일 살펴보는 정보(검증을 통과한 것)와, 그중 내일 숫자를 실제로 바꾼 정보를 따로 적는다
-  const used = data.signals_used.filter((s) => SIGNAL_LABELS[s]).map((s) => SIGNAL_LABELS[s])
+  // 이날 숫자를 실제로 바꾼 정보 (메뉴마다의 '평소 대비' 이유에서 모은다)
   const day = dayWord(data.rows[0].date)
   const moved = [...new Set(data.rows.flatMap((r) => r.reasons.map((x) => SIGNAL_LABELS[x.signal] ?? x.signal)))]
 
@@ -293,27 +280,24 @@ export function ForecastView({ storeId, prepMode, readOnly = false, limit }: {
     <div className="space-y-8">
       <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
         <div>
-          <p className="text-sm text-muted">{day === '이날' ? '준비표' : `${day} 준비표`}</p>
-          <h2 className="mt-0.5 text-3xl font-bold tracking-tight">{fmtDate(data.rows[0].date)}</h2>
-          {used.length ? (
-            <div className="mt-2 space-y-0.5 text-sm text-muted">
-              <p>
-                {day} 숫자를 바꾼 정보 — <b className="text-ink">{moved.length ? moved.join(', ') : `없음 (${day}은 평소와 같게 봤어요)`}</b>
-              </p>
-              <p className="text-faint">검증을 통과해 매일 살펴보는 정보 — {used.join(', ')}</p>
-            </div>
-          ) : (
-            <p className="mt-2 text-sm text-muted">주변 정보 없이 판매 기록만으로 예측했습니다</p>
+          <p className="text-sm font-semibold text-muted">{day === '이날' ? '준비표' : `${day} 준비표`}</p>
+          <h2 className="mt-0.5 text-3xl font-extrabold tracking-tight">{fmtDate(data.rows[0].date)}</h2>
+          {moved.length > 0 && (
+            <ul className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+              <li className="text-muted">반영한 정보</li>
+              {moved.map((m) => (
+                <li key={m} className="rounded-full bg-accent-soft px-3 py-1 font-bold text-accent">
+                  {m}
+                </li>
+              ))}
+            </ul>
           )}
         </div>
         <PrepToggle storeId={storeId} prepMode={mode} readOnly={readOnly} onPick={local ? setPicked : undefined} />
       </div>
 
       {data.warnings.length > 0 && (
-        <div className="space-y-2">
-          <p className="text-sm text-muted">
-            <b className="text-ink">AI가 읽은 소식</b> · 이 안내 때문에 준비표 숫자가 바뀌지는 않습니다. 참고해서 판단해 주세요.
-          </p>
+        <div className="space-y-3">
           {data.warnings.map((w, i) => (
             <Notice key={i} w={w} />
           ))}
@@ -322,23 +306,6 @@ export function ForecastView({ storeId, prepMode, readOnly = false, limit }: {
 
       <ForecastTable rows={rows} limit={limit} storeId={storeId} />
 
-      <dl className="grid gap-x-8 gap-y-2 text-sm text-muted sm:grid-cols-3">
-        <div>
-          <dt className="font-semibold text-ink">준비</dt>
-          <dd>고른 준비 기준({mode})으로 정한 권장 개수</dd>
-        </div>
-        <div>
-          <dt className="font-semibold text-ink">예상 범위</dt>
-          <dd>실제 판매가 들어올 것으로 보는 구간. 넓을수록 불확실</dd>
-        </div>
-        <div>
-          <dt className="font-semibold text-ink">평소와 다른 점</dt>
-          <dd>날씨·행사가 평소와 같았을 때의 예측과 비교한 차이. 메뉴를 누르면 그래프와 설명</dd>
-        </div>
-      </dl>
-      <p className="text-xs text-faint">
-        {readOnly ? '예시: 판매 기록의 마지막 날 다음 날을 미리 계산해 둔 결과입니다.' : `${fmtTime(data.generated_at)}에 계산`}
-      </p>
     </div>
   )
 }

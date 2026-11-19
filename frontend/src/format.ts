@@ -111,3 +111,8 @@ export function dayWord(iso: string): '오늘' | '내일' | '이날' {
   const gap = Math.round((asDate(iso).getTime() - today) / 86400000)
   return gap === 0 ? '오늘' : gap === 1 ? '내일' : '이날'
 }
+// 문장 앞에 붙이는 꼴: '오늘 ' · '내일 ' · '' (오늘도 내일도 아니면 아무 말도 붙이지 않는다 → "준비할 개수", "예상")
+export const dayPrefix = (iso: string) => {
+  const word = dayWord(iso)
+  return word === '이날' ? '' : `${word} `
+}

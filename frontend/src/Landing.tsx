@@ -11,15 +11,15 @@ import { BacktestView, Decisions } from './BacktestView'
 import { ForecastView } from './ForecastView'
 import { count } from './format'
 import { SourcesView } from './SourcesView'
-import { periodName, verdict } from './verdict'
+import { verdict } from './verdict'
 
 const FIRST_EXAMPLE = 'sinchon-a' // 보여 줄 예시 매장 (주변 정보와 주의 안내가 다 있는 가상 매장). 없으면 목록의 첫 매장
 const REAL_EXAMPLE = 'fr-bakery' // 공개된 실제 판매 기록으로 돌린 결과 (예시 3 아래에 요약을 보여 준다)
 const MENUS_SHOWN = 8 // 예시 준비표에 처음 보여 줄 메뉴 수
 const HOW = [
-  { title: '판매 기록 올리기', text: '포스에서 내려받은 엑셀·CSV 파일과 가게 위치만 알려 주세요. 1분이면 됩니다.' },
-  { title: 'AI가 주변을 살펴요', text: '날씨, 학교 일정, 근처 행사와 소식, 메뉴 검색량을 지도 위에서 모으고, 예측에 도움이 되는지 지난 기록으로 확인합니다.' },
-  { title: '내일 준비표 완성', text: '메뉴마다 몇 개 준비하면 좋을지와 그 이유를 알려 드려요.' },
+  { title: '판매 기록 올리기', text: '포스에서 내려받은 파일과 가게 위치만 있으면 돼요.' },
+  { title: 'AI가 주변을 살펴요', text: '날씨·학교 일정·근처 행사를 모아, 도움이 되는 것만 골라요.' },
+  { title: '내일 준비표 완성', text: '메뉴마다 몇 개 준비할지와 그 이유를 알려 드려요.' },
 ]
 const NAV = [
   { href: '#example', text: '예시 보기' },
@@ -83,16 +83,14 @@ function RealData() {
   return (
     <div className="mt-6 rounded-3xl bg-accent-soft px-6 py-6 sm:px-8">
       <p className="text-sm font-bold text-accent">실제 판매 기록으로도 확인했어요</p>
-      <p className="mt-2 max-w-3xl leading-relaxed">
-        공개된 프랑스 빵집의 실제 판매 기록에 같은 방법을 썼을 때, {periodName(v)} 동안 하루에 남거나 모자란 개수가{' '}
+      <p className="mt-2 text-lg leading-relaxed">
+        공개된 프랑스 빵집의 판매 기록에서 하루 오차가{' '}
         <b>
           {count(v.baseShown)}개 → {count(v.mineShown)}개
         </b>
-        로 줄었습니다({v.gain}% 적음).
-        {' '}위치를 알 수 없는 가게라
-        주변 정보 없이 판매 기록만 쓴 결과입니다.{' '}
-        <a href={`?store=${REAL_EXAMPLE}#example`} className="font-semibold text-accent underline underline-offset-4">
-          이 가게의 결과 보기
+        로 줄었어요 ({v.gain}% 감소).{' '}
+        <a href={`?store=${REAL_EXAMPLE}#example`} className="text-base font-semibold text-accent underline underline-offset-4">
+          결과 보기
         </a>
       </p>
     </div>
@@ -147,15 +145,13 @@ export function Landing({ login, contactUrl = null }: { login: LoginConfig | nul
           <p className="font-semibold text-white/80">카페·베이커리를 위한 내일 판매 예측</p>
           <h2 className="mt-3 text-5xl font-extrabold tracking-tight sm:text-6xl">내일 몇 개 만들까요?</h2>
           <p className="mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-white/90">
-            판매 기록에 날씨·학교 일정·근처 행사 같은 주변 정보를 더해, 내일 메뉴별로 얼마나 팔릴지와 몇 개 준비하면 좋을지 알려 드려요. 주변
-            정보는 우리 가게에서 실제로 도움이 된 것만 씁니다.
+            판매 기록에 날씨·학교 일정·근처 행사를 더해, 내일 메뉴별로 몇 개 준비하면 좋을지 알려 드려요.
           </p>
           {!!past?.length && (
             <div className="mt-8">
               <button onClick={() => setReplaying(true)} className="rounded-full bg-white px-7 py-3 text-base font-bold text-ink shadow-xl hover:bg-paper">
                 AI가 분석하는 과정 보기
               </button>
-              <p className="mt-2 text-sm text-white/75">예시 매장을 분석했을 때의 녹화본이에요.</p>
             </div>
           )}
           {loginFailed && (
@@ -176,7 +172,6 @@ export function Landing({ login, contactUrl = null }: { login: LoginConfig | nul
         <section>
           <div className="text-center">
             <h2 className="text-3xl font-extrabold tracking-tight">세 단계면 내일 준비표 완성!</h2>
-            <p className="mt-3 text-muted">어려운 설정은 없어요. 주변 정보는 저희가 찾습니다.</p>
           </div>
           <ol className="mt-10 grid gap-5 md:grid-cols-3">
             {HOW.map((h, i) => (
@@ -196,25 +191,24 @@ export function Landing({ login, contactUrl = null }: { login: LoginConfig | nul
           <>
             <div className="space-y-10">
               {virtual && (
-                <p className="mx-auto max-w-3xl rounded-2xl bg-warn-soft px-5 py-4 text-center text-sm leading-relaxed text-warn">
-                  아래 예시는 <b>가상으로 만든 매장</b>입니다. 판매 기록도 날씨·학사일정·행사도 가상이라, 숫자는 화면이 무엇을 보여 주는지의 예시이지
-                  성능을 주장하는 것이 아닙니다.
+                <p className="mx-auto w-fit rounded-full bg-warn-soft px-5 py-2 text-sm font-semibold text-warn">
+                  아래는 가상으로 만든 예시 매장입니다
                 </p>
               )}
               <Part n={1} id="example" title="내일 메뉴별로 몇 개 준비할지"
-                lead="메뉴마다 내일 예상 판매량과 예상 범위, 준비 권장량을 보여 주고, 날씨나 행사 때문에 평소와 달라진 이유를 함께 적어요. 메뉴를 누르면 최근 4주 그래프가 펼쳐집니다.">
+                lead="메뉴마다 준비할 개수와 평소와 달라진 이유를 보여 줘요. 메뉴를 누르면 그래프가 펼쳐집니다.">
                 <ForecastView storeId={store.store_id} prepMode={store.prep_mode} readOnly limit={MENUS_SHOWN} />
               </Part>
             </div>
 
             <Part n={2} title="어떤 주변 정보를 썼나"
-              lead="매장 주변을 살펴 날씨·학교 일정·행사 같은 정보를 모읍니다. 그중 지난 기록으로 확인해 예측을 실제로 더 정확하게 만든 정보만 써요.">
+              lead="모은 정보 중에서 예측이 실제로 더 정확해진 것만 써요.">
               <div className="space-y-10">
                 <Decisions storeId={store.store_id}
-                  noDataText={virtual ? '이 가상 예시에서는 모으지 않은 정보입니다. 실제 매장에서는 모아서 같은 방식으로 확인합니다.' : undefined} />
+                  noDataText={virtual ? '이 예시에서는 모으지 않음' : undefined} />
                 <details>
                   <summary className="cursor-pointer text-sm font-semibold underline-offset-4 hover:underline">
-                    AI가 어떤 정보원을 왜 골랐는지, 무엇을 모았는지 자세히 보기
+                    AI가 고른 정보원 자세히 보기
                   </summary>
                   <div className="mt-8">
                     <SourcesView storeId={store.store_id} brief />
@@ -225,7 +219,7 @@ export function Landing({ login, contactUrl = null }: { login: LoginConfig | nul
 
             <div>
               <Part n={3} id="accuracy" title="얼마나 맞나"
-                lead="지난 기록에서 그날그날 전날까지의 자료만 보고 예측한 뒤 실제 판매와 비교한 결과예요. 가게마다 따로 확인해 그대로 보여 드립니다.">
+                lead="지난 날짜를 전날까지의 기록만 보고 맞혀 본 뒤, 실제 판매와 비교했어요.">
                 <BacktestView storeId={store.store_id} hideDecisions />
               </Part>
               {store.store_id !== REAL_EXAMPLE && <RealData />}
@@ -257,7 +251,7 @@ export function Landing({ login, contactUrl = null }: { login: LoginConfig | nul
           {login ? (
             <>
               <p className="mx-auto mt-3 mb-7 max-w-xl text-white/75">
-                로그인한 뒤 매장 이름, 위치, 닫는 시간을 적고 판매 기록 파일을 올리면 됩니다. 올린 자료와 결과는 본인만 볼 수 있어요.
+                로그인하고 판매 기록 파일을 올리면 됩니다. 올린 자료는 본인만 볼 수 있어요.
               </p>
               <div className="flex justify-center">
                 <LoginButtons login={login} />
@@ -266,8 +260,7 @@ export function Landing({ login, contactUrl = null }: { login: LoginConfig | nul
           ) : (
             <>
               <p className="mx-auto mt-3 max-w-xl text-white/75">
-                지금 보시는 것은 시연용 화면이라 예시 매장의 결과만 보여 주고, 파일 올리기는 꺼져 있습니다.
-                {contactUrl ? ' 내 가게 판매 기록으로 써 보고 싶다면 신청해 주세요.' : ''}
+                {contactUrl ? '내 가게 판매 기록으로 써 보고 싶다면 신청해 주세요.' : '지금은 예시 매장만 볼 수 있는 시연용 화면입니다.'}
               </p>
               {contact && <div className="mt-7 flex justify-center">{contact}</div>}
             </>
@@ -280,7 +273,7 @@ export function Landing({ login, contactUrl = null }: { login: LoginConfig | nul
           <div>
             <p className="text-base font-extrabold text-ink">내일몇개</p>
             <p className="mt-2 leading-relaxed">
-              팀 PREDICTOR가 만든 시연 단계의 서비스입니다. 2026 연세 캠퍼스타운 AI 스타트업 해커톤 출품작입니다.
+              팀 PREDICTOR · 2026 연세 캠퍼스타운 AI 스타트업 해커톤 출품작
             </p>
             {contactUrl && (
               <a href={contactUrl} target="_blank" rel="noreferrer" className="mt-3 inline-block font-semibold text-accent underline underline-offset-4">
@@ -291,13 +284,9 @@ export function Landing({ login, contactUrl = null }: { login: LoginConfig | nul
           <div>
             <p className="font-semibold text-ink">올린 자료를 어떻게 다루나요</p>
             <ul className="mt-2 list-disc space-y-1.5 pl-5 leading-relaxed">
-              <li>올린 판매 기록과 그 결과는 로그인한 본인만 볼 수 있습니다.</li>
-              <li>'매장 관리'에서 매장을 지우면 판매 기록, 결과, 올린 파일이 서버에서 함께 지워집니다.</li>
-              <li>
-                주변 정보를 고르고 소식을 읽는 데 외부 AI 서비스(Anthropic의 Claude)를 씁니다. 이때 가게 이름·위치, 메뉴 이름, 내일 예측 숫자가
-                전달됩니다.
-              </li>
-              <li>이 화면의 예시는 가상으로 만든 매장과 공개된 판매 기록으로 만든 것입니다.</li>
+              <li>올린 판매 기록과 결과는 본인만 볼 수 있습니다.</li>
+              <li>매장을 지우면 판매 기록, 결과, 올린 파일이 서버에서 함께 지워집니다.</li>
+              <li>주변 정보를 읽는 데 외부 AI(Anthropic Claude)를 쓰며, 가게 이름·위치와 메뉴 이름, 예측 숫자가 전달됩니다.</li>
             </ul>
           </div>
         </div>

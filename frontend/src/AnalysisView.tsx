@@ -8,7 +8,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { AnalysisMap } from './AnalysisMap'
 import type { Job, ProgressEvent } from './api'
 import { CountUp } from './CountUp'
-import { count as cnt, fmtDate, GROUP_LABELS, KIND_COLOR, pct1, rangeScore, won } from './format'
+import { count as cnt, fmtDate, GROUP_LABELS, KIND_COLOR, pct1 } from './format'
 
 const STEPS = [
   { id: 'ingest', label: '판매 기록' },
@@ -24,38 +24,35 @@ const PAUSE: Record<string, number> = {
   event: 700, article: 450, special: 400, trend_span: 700, trend: 450, rating: 600, trial: 500, decision: 650, scores: 500, forecast: 500,
 }
 
-// 가져온 기간을 괄호로 (예전 기록에는 기간이 없다 → 빈 글자)
-const span = (e: { first?: string; last?: string }) => (e.first && e.last ? ` (${e.first} ~ ${e.last})` : '')
-
-// 들어온 정보 목록의 한 줄: 종류(색 이름표) + 내용
+// 들어온 정보 목록의 한 줄: 종류(색 이름표) + 내용. 한 줄에 들어갈 만큼 짧게 쓴다
 function line(e: ProgressEvent): { tag: string; color: string; text: string } | null {
   switch (e.kind) {
-    case 'sales': return { tag: '판매 기록', color: KIND_COLOR.sales, text: `${e.days}일 · 메뉴 ${e.menus}개 (${e.first} ~ ${e.last})` }
-    case 'places': return { tag: '주변 시설', color: KIND_COLOR.places, text: `${e.count}곳을 살펴봤어요` }
+    case 'sales': return { tag: '판매 기록', color: KIND_COLOR.sales, text: `${e.days}일 · 메뉴 ${e.menus}개` }
+    case 'places': return { tag: '주변 시설', color: KIND_COLOR.places, text: `${e.count}곳` }
     case 'plan': return {
       tag: 'AI의 선택', color: KIND_COLOR.plan,
-      text: `이 매장에 맞는 정보원을 골랐어요${e.radius_m ? ` · 행사는 반경 ${e.radius_m}m` : ''}${e.picks.length ? ` · 근거 시설 ${e.picks.length}곳` : ''}`,
+      text: `이 매장에 맞는 정보원을 골랐어요${e.radius_m ? ` · 행사 반경 ${e.radius_m}m` : ''}`,
     }
-    case 'weather': return { tag: '날씨', color: KIND_COLOR.weather, text: `${e.days}일치 기록과 예보${span(e)}` }
+    case 'weather': return { tag: '날씨', color: KIND_COLOR.weather, text: `${e.days}일치` }
     case 'academic': return {
       tag: '학교 일정', color: KIND_COLOR.academic,
-      text: `${[e.exams && `시험 기간 ${e.exams}번`, e.vacations && `방학 ${e.vacations}번`, e.festivals && `축제 ${e.festivals}번`].filter(Boolean).join(' · ') || '시험·방학·축제'} · 모두 ${e.days}일${span(e)}`,
+      text: [e.exams && `시험 ${e.exams}번`, e.vacations && `방학 ${e.vacations}번`, e.festivals && `축제 ${e.festivals}번`].filter(Boolean).join(' · ') || `${e.days}일`,
     }
     case 'event': return { tag: e.source === '뉴스·블로그' ? '소식 속 행사' : '근처 행사', color: e.source === '뉴스·블로그' ? KIND_COLOR.news : KIND_COLOR.event, text: `${e.title}${e.place ? ` · ${e.place}` : ''}` }
     case 'article': return { tag: '읽은 글', color: KIND_COLOR.article, text: e.title }
     case 'special': return {
       tag: '기념일', color: KIND_COLOR.special,
-      text: `${e.name} (${e.date})${e.relevance ? ` · 우리 가게와의 연관도 ${e.relevance}/5` : ''}${e.menus?.length ? ` · 특히 ${e.menus.slice(0, 3).join(', ')}` : ''}`,
+      text: `${e.name}${e.relevance ? ` · 연관도 ${e.relevance}/5` : ''}`,
     }
-    case 'trend_span': return { tag: '검색량', color: KIND_COLOR.trend, text: `메뉴 ${e.menus}개의 ${e.days}일치 검색량${span(e)}` }
-    case 'trend': return { tag: '검색량', color: KIND_COLOR.trend, text: `${e.menu} · 요즘 일주일 ${e.pct > 0 ? '+' : ''}${e.pct}% (그 전 4주와 비교)` }
+    case 'trend_span': return { tag: '검색량', color: KIND_COLOR.trend, text: `메뉴 ${e.menus}개 · ${e.days}일치` }
+    case 'trend': return { tag: '검색량', color: KIND_COLOR.trend, text: `${e.menu} ${e.pct > 0 ? '+' : ''}${e.pct}%` }
     case 'rating': return {
       tag: 'AI의 평가', color: KIND_COLOR.plan,
-      text: `${e.title} · 규모 ${e.scale}/5 · 우리 가게와의 연관도 ${e.relevance}/5 · ${e.distance_m}m${e.menus.length ? ` · 특히 ${e.menus.slice(0, 3).join(', ')}` : ''}`,
+      text: `${e.title} · 규모 ${e.scale}/5 · 연관도 ${e.relevance}/5`,
     }
     case 'trial': return {
       tag: '검증', color: KIND_COLOR.plan,
-      text: `${e.groups.length ? `판매 기록 + ${e.groups.map((g) => GROUP_LABELS[g] ?? g).join('·')}` : '판매 기록만'}으로 지난 날들을 맞혀 봤어요 → ${e.miss !== undefined ? `하루 ${cnt(e.miss)}개 틀림` : `오차율 ${pct1(e.wape)}`}`,
+      text: `${e.groups.length ? `판매 기록 + ${e.groups.map((g) => GROUP_LABELS[g] ?? g).join('·')}` : '판매 기록만'} → ${e.miss !== undefined ? `하루 오차 ${cnt(e.miss)}개` : `오차율 ${pct1(e.wape)}`}`,
     }
     default: return null
   }
@@ -230,36 +227,25 @@ export function AnalysisView({ events, status, error, log, onClose, replay = fal
                   </li>
                 ))}
               </ul>
-              <p className="mt-3 text-xs text-muted">지난 기록으로 확인해 실제로 더 정확해진 정보만 써요.</p>
             </Card>
             <Card title="얼마나 맞나">
-              {scores?.miss !== undefined && scores.base_miss !== undefined ? (
+              {scores ? (
                 <>
-                  <p className="text-4xl font-extrabold tracking-tight tabular-nums">
-                    하루 <CountUp to={Math.max(0, Math.round(scores.base_miss) - Math.round(scores.miss))} />개
+                  <p className="text-sm text-muted">지난주대로 준비할 때보다</p>
+                  <p className="mt-1 text-4xl font-extrabold tracking-tight tabular-nums">
+                    {gain > 0 ? (
+                      <>
+                        <CountUp to={gain} />% 덜 틀려요
+                      </>
+                    ) : (
+                      '비슷해요'
+                    )}
                   </p>
-                  <p className="mt-1 text-sm">
-                    '지난주 같은 요일만큼' 준비할 때보다 덜 틀린 개수{gain > 0 && ` (${gain}% 적음)`}
-                  </p>
-                  <p className="mt-3 text-xs text-muted">
-                    남거나 모자란 개수 하루 {cnt(scores.base_miss)}개 → {cnt(scores.miss)}개
-                    {scores.saved_amount !== undefined && scores.saved_amount > 0 && ` · 판매가로 하루 약 ${won(scores.saved_amount)}`}
-                    {' '}· 예상 범위 정확도 {pct1(rangeScore(scores.coverage))}(100%가 만점)
-                    {scores.test_days ? ` · ${scores.final === false ? '검증 기간' : '마지막'} ${scores.test_days}일 기준` : ''}
-                  </p>
-                </>
-              ) : scores ? (
-                <>
-                  <p className="text-4xl font-extrabold tracking-tight tabular-nums">
-                    <CountUp to={scores.wape * 100} format={(v) => v.toFixed(1)} />%
-                  </p>
-                  <p className="mt-1 text-sm">
-                    오차율 (평균 오차 ÷ 평균 판매량){gain > 0 && ` · '지난주 같은 요일만큼'보다 ${gain}% 적음`}
-                  </p>
-                  <p className="mt-3 text-xs text-muted">
-                    예상 범위 정확도 {pct1(rangeScore(scores.coverage))} (100%가 만점 · 실제 판매의 {pct1(scores.coverage)}가 범위 안, 목표 80%)
-                    {scores.test_days ? ` · 마지막 ${scores.test_days}일 기준` : ''}
-                  </p>
+                  {scores.miss !== undefined && scores.base_miss !== undefined && (
+                    <p className="mt-3 text-sm text-muted">
+                      하루 오차 {cnt(scores.base_miss)}개 → <b className="text-ink">{cnt(scores.miss)}개</b>
+                    </p>
+                  )}
                 </>
               ) : (
                 <p className="text-sm text-muted">검증 결과가 아직 없어요.</p>

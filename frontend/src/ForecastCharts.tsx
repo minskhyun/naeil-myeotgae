@@ -5,7 +5,7 @@
 // 움직임(막대가 자라고 선이 그려짐)은 index.css의 nm-bar · nm-line · nm-dotin 이 맡는다.
 import { useState } from 'react'
 import { CountUp } from './CountUp'
-import { asDate, count, dayWord, WEEKDAYS } from './format'
+import { asDate, count, dayPrefix, dayWord, WEEKDAYS } from './format'
 
 const short = (iso: string) => `${asDate(iso).getMonth() + 1}/${asDate(iso).getDate()}`
 
@@ -68,7 +68,7 @@ export function DayBars({ dates, values, next, height = 150 }: {
             {hover === dates.length &&
               next.lo !== undefined &&
               next.hi !== undefined &&
-              tip(dates.length, `${day} 예상 ${count(next.value)}개 · 범위 ${count(next.lo)}–${count(next.hi)}개`, next.hi)}
+              tip(dates.length, `${dayPrefix(next.date)}예상 ${count(next.value)}개 · 범위 ${count(next.lo)}–${count(next.hi)}개`, next.hi)}
             <span
               className="nm-bar w-full rounded-t-[4px] bg-accent"
               style={{ height: pct(next.value), minHeight: 2, animationDelay: `${dates.length * 22 + 120}ms` }}
@@ -105,7 +105,6 @@ export function DayBars({ dates, values, next, height = 150 }: {
 
 // 그래프 아래의 색 설명 (회색 두 가지와 파랑)
 export function BarsLegend({ date }: { date: string }) {
-  const day = dayWord(date)
   const item = (color: string, text: string) => (
     <span className="flex items-center gap-1.5">
       <i className={`h-2.5 w-2.5 rounded-[3px] ${color}`} />
@@ -114,9 +113,8 @@ export function BarsLegend({ date }: { date: string }) {
   )
   return (
     <p className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
-      {item('bg-ink/45', `${WEEKDAYS[asDate(date).getDay()]}요일 (${day}과 같은 요일)`)}
-      {item('bg-ink/15', '다른 요일')}
-      {item('bg-accent', `${day} 예상`)}
+      {item('bg-ink/45', `${WEEKDAYS[asDate(date).getDay()]}요일`)}
+      {item('bg-accent', `${dayPrefix(date)}예상`)}
     </p>
   )
 }
