@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { api, PREP_MODES, type ForecastRow, type SalesHistory, type Warning } from './api'
 import { CountUp } from './CountUp'
 import { BarsLegend, DayBars, Spark } from './ForecastCharts'
-import { average, count, dayPrefix, dayWord, fmtDate, sameWeekday, shortReason, SIGNAL_LABELS, signedPct, weekdayName } from './format'
+import { average, count, dayPrefix, dayWord, fmtDate, rangeText, sameWeekday, shortReason, SIGNAL_LABELS, SITUATION_LABELS, signedPct, weekdayName } from './format'
 import { useJob } from './useJob'
 
 // 예상 범위 그림: 가는 선 위에 범위(굵은 선, 왼쪽에서 자라남)와 예상값(눈금). narrow = 좁은 칸용
@@ -17,7 +17,7 @@ function Range({ row, max, narrow = false }: { row: ForecastRow; max: number; na
         <div className="nm-fade absolute top-0 h-3 w-0.5 -translate-x-1/2 bg-ink" style={{ left: x(row.pred), animationDelay: '500ms' }} />
       </div>
       <span className="text-sm text-muted tabular-nums">
-        {Math.round(row.p10)}–{Math.round(row.p90)}
+        {rangeText(row.p10, row.p90)}
       </span>
     </div>
   )
@@ -28,7 +28,7 @@ export function Notice({ w }: { w: Warning }) {
   return (
     <section className="rounded-2xl border-l-4 border-warn bg-warn-soft px-5 py-4">
       <p className="text-sm font-bold text-warn">
-        {w.situation_type} · 손님 {w.direction} 가능
+        {SITUATION_LABELS[w.situation_type] ?? w.situation_type} · 손님 {w.direction} 가능
       </p>
       <p className="mt-1.5 text-[17px] leading-relaxed">{w.message}</p>
       {w.evidence.length > 0 && (
@@ -215,7 +215,7 @@ export function ForecastTable({ rows, limit, compact = false, storeId }: {
                 <span className="md:hidden">예상 </span>
                 {Math.round(r.pred)}
                 <span className="md:hidden">
-                  {' '}· 범위 {Math.round(r.p10)}–{Math.round(r.p90)}
+                  {' '}· 범위 {rangeText(r.p10, r.p90)}
                 </span>
               </span>
               <span className="hidden md:block">

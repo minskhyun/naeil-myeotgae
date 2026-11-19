@@ -10,7 +10,7 @@ import { api } from './api'
 import { BacktestView, BarRow } from './BacktestView'
 import { WeekdayBars } from './ForecastCharts'
 import { ForecastTable, Notice, PrepToggle } from './ForecastView'
-import { average, count, dayPrefix, fmtDate, GROUP_LABELS, pct1, RANGE_TARGET_TEXT, sameWeekday, weekdayName } from './format'
+import { average, count, dayPrefix, fmtDate, GROUP_LABELS, pct1, RANGE_TARGET_TEXT, sameWeekday, shortDate, SITUATION_LABELS, weekdayName } from './format'
 import { Modal } from './Modal'
 import { SourcesView } from './SourcesView'
 import { periodName, verdict } from './verdict'
@@ -84,7 +84,11 @@ export function Dashboard({ storeId, storeName, prepMode, readOnly, onReplay }: 
     <div className="space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
         <div>
-          <p className="text-sm font-semibold text-muted">{storeName}</p>
+          {/* 예측 날짜가 오늘·어제로 보일 때 헷갈리지 않게: 어느 날까지의 판매 기록으로 만든 준비표인지 적는다 */}
+          <p className="text-sm font-semibold text-muted">
+            {storeName}
+            {history?.dates.length ? ` · 판매 기록 ${shortDate(history.dates[history.dates.length - 1])}까지` : ''}
+          </p>
           <h2 className="mt-0.5 text-3xl font-extrabold tracking-tight">{fmtDate(date)}</h2>
         </div>
         <PrepToggle storeId={storeId} prepMode={prepMode} readOnly={readOnly} />
@@ -106,7 +110,7 @@ export function Dashboard({ storeId, storeName, prepMode, readOnly, onReplay }: 
         <Tile
           label="주의할 소식"
           value={fc.warnings.length ? `${fc.warnings.length}건` : '없음'}
-          note={fc.warnings.length ? `${fc.warnings[0].situation_type} · 손님 ${fc.warnings[0].direction} 가능` : undefined}
+          note={fc.warnings.length ? `${SITUATION_LABELS[fc.warnings[0].situation_type] ?? fc.warnings[0].situation_type} · 손님 ${fc.warnings[0].direction} 가능` : undefined}
           warn={fc.warnings.length > 0}
         />
       </div>

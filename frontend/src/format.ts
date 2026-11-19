@@ -24,6 +24,22 @@ export const GROUP_LABELS: Record<string, string> = {
   special: '기념일',
 }
 
+// AI 안내의 상황 종류(contracts.Warning.situation_type)를 화면에 적는 말.
+// 계약의 '대형행사'는 작은 북 콘서트에도 붙어 과하게 읽힌다 → 화면에서는 '근처 행사'
+export const SITUATION_LABELS: Record<string, string> = {
+  대형행사: '근처 행사',
+  유행급변: '유행 변화',
+  기상특보: '날씨 특보',
+  휴무가능성: '휴무 가능성',
+  데이터이상: '기록 확인 필요',
+}
+
+// "2026-11-18" → "11월 18일"
+export const shortDate = (iso: string) => {
+  const d = new Date(`${iso}T00:00:00`)
+  return `${d.getMonth() + 1}월 ${d.getDate()}일`
+}
+
 export const SCHOOL_LABELS: Record<string, string> = {
   yonsei: '연세대', sogang: '서강대', ewha: '이화여대',
   sunykorea: '한국뉴욕주립대', utah: '유타대 아시아캠퍼스', gmu: '한국조지메이슨대', ghent: '겐트대 글로벌캠퍼스',
@@ -67,6 +83,9 @@ export const pct1 = (v: number) => `${(v * 100).toFixed(1)}%`
 // Σ|실제−예측| = mae × n 이라 예전 결과 파일에서도 계산된다. days가 없는 예전 파일은 fallbackDays(구간의 날짜 수)로 나눈다
 export const missPerDay = (s: { mae: number; n: number; days?: number }, fallbackDays = 1) => (s.mae * s.n) / (s.days || fallbackDays || 1)
 export const count = (v: number) => Math.round(v).toLocaleString('ko-KR')
+// 예상 범위 표기: 아래 끝은 내림, 위 끝은 올림 (바깥쪽으로 반올림). 범위를 좁혀 적지 않기 위해서다.
+// 가까운 수로 반올림하면 4.6개(1.9~5.1)가 "5개, 범위 2–5"로 보여 예상값이 범위 끝에 붙은 것처럼 읽힌다.
+export const rangeText = (lo: number, hi: number) => `${Math.floor(lo + 1e-6).toLocaleString('ko-KR')}–${Math.ceil(hi - 1e-6).toLocaleString('ko-KR')}`
 // 금액: 1만 원 이상은 '12.3만 원', 그 아래는 천 원 단위
 export const won = (v: number) => (Math.abs(v) >= 10000 ? `${(v / 10000).toFixed(1)}만 원` : `${count(Math.round(v / 100) * 100)}원`)
 // 지난주 방식보다 하루에 덜 틀린 금액 (판매가를 아는 매장만)

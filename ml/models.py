@@ -129,6 +129,10 @@ class CatBoostQuantile:
         out = _finalize(ratio * base[:, None], frame.index)  # 비율 × 평소 수준 = 판매량
         mean = np.mean([m.predict(X) for m in self.mean_models], axis=0) * base
         out["pred"] = np.clip(mean, out["p10"], out["p90"])  # 예상 판매량 = 평균. 예상 범위 밖으로는 나가지 않게
+        # 평균이 범위 밖이면 평균 모델과 분위 모델이 어긋난 것 = 그만큼 불확실하다 → 범위를 평균까지 넓힌다 (11/20).
+        # 그대로 두면 예상값이 범위 끝에 딱 붙어 "예상 20개, 범위 12~20개"처럼 보인다. pred와 오차 점수는 달라지지 않는다.
+        mean = np.clip(mean, 0, None)
+        out["p10"], out["p90"] = np.minimum(out["p10"], mean), np.maximum(out["p90"], mean)
         return out
 
 

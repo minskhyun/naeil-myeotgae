@@ -5,7 +5,7 @@
 // 움직임(막대가 자라고 선이 그려짐)은 index.css의 nm-bar · nm-line · nm-dotin 이 맡는다.
 import { useState } from 'react'
 import { CountUp } from './CountUp'
-import { asDate, count, dayPrefix, dayWord, WEEKDAYS } from './format'
+import { asDate, count, dayPrefix, dayWord, rangeText, WEEKDAYS } from './format'
 
 const short = (iso: string) => `${asDate(iso).getMonth() + 1}/${asDate(iso).getDate()}`
 
@@ -70,7 +70,7 @@ export function DayBars({ dates, values, next, height = 150 }: {
             {hover === dates.length &&
               next.lo !== undefined &&
               next.hi !== undefined &&
-              tip(dates.length, `${dayPrefix(next.date)}예상 ${count(next.value)}개 · 범위 ${count(next.lo)}–${count(next.hi)}개`, next.hi)}
+              tip(dates.length, `${dayPrefix(next.date)}예상 ${count(next.value)}개 · 범위 ${rangeText(next.lo, next.hi)}개`, next.hi)}
             <span
               className="nm-bar w-full rounded-t-[4px] bg-accent"
               style={{ height: pct(next.value), minHeight: 2, animationDelay: `${dates.length * 22 + 120}ms` }}
