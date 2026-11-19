@@ -201,6 +201,26 @@ def event_rows(store_id: str, events: list[dict], lo: dt.date, hi: dt.date
     return rows, items
 
 
+def nearby_events(store_id: str, work_dir: Path, lo: dt.date, hi: dt.date) -> list[dict]:
+    """lo~hi에 열리는 근처 서울 문화행사 목록 (agent/relevance.py가 규모·연관도를 따질 때 쓰는 모양).
+    event_rows와 같은 행사만: 확인된 것, MAX_EVENT_DAYS일 이하."""
+    path = Path(work_dir) / EVENTS
+    out = []
+    for e in json.loads(path.read_text(encoding="utf-8")) if path.exists() else []:
+        if e.get("source") != "seoul_culture" or e.get("store_id") != store_id or not e.get("verified", True):
+            continue
+        s, t = dt.date.fromisoformat(e["start_date"]), dt.date.fromisoformat(e["end_date"])
+        if (t - s).days + 1 > MAX_EVENT_DAYS or t < lo or s > hi:
+            continue
+        reg = e.get("published_at")
+        published = (to_kst(reg).normalize() + pd.Timedelta(hours=23, minutes=59)).to_pydatetime() \
+            if reg else dt.datetime.now().replace(microsecond=0)
+        out.append(dict(title=e["title"], place=e.get("place", ""), category=e.get("category", ""), start=s, end=t,
+                        distance_km=float(e.get("distance_m") or 0) / 1000, published_at=published, url=e.get("source_url", ""),
+                        cancelled=False, snippet=None))
+    return out
+
+
 def signals_from_collectors(store_id: str, lo: dt.date, hi: dt.date, work_dir: Path
                             ) -> tuple[list[SignalRow], list[CollectionItem], list[str]]:
     """work_dir의 수집 결과 → (신호 줄, 행사 원문, 메모)."""

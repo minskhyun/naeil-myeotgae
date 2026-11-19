@@ -130,38 +130,41 @@ def read_sources(path: Path) -> list[tuple[str, dt.datetime | None]]:
 
 def page_event_signals(store_id: str, lat: float, lon: float, sources: list[tuple[str, dt.datetime | None]],
                        start: dt.date, end: dt.date, cache_dir: Path, fetch=fetch_page, geocode=find_place,
-                       now: dt.datetime | None = None) -> tuple[list[SignalRow], list[CollectionItem], list[str]]:
+                       now: dt.datetime | None = None, found: list | None = None
+                       ) -> tuple[list[SignalRow], list[CollectionItem], list[str]]:
     """글 주소들 → (nearby_event 줄, 원문, 메모). 취소 공지는 value=0 줄 (가장 늦게 공개된 값이 쓰이므로 취소가 반영됨).
     글은 READERS개씩 동시에 읽는다 (글 받기와 LLM 호출이 기다리는 시간이라 동시에 해도 된다).
     TIME_BUDGET_S 안에 못 끝낸 글은 건너뛴다: 사이트 하나가 느려도 전체가 멈추지 않게.
     결과는 글 순서대로 합치므로, 동시에 읽어도 결과는 차례로 읽은 것과 같다.
+    found를 주면 신호가 된 행사를 거기에 담는다 (agent/relevance.py가 규모·연관도를 따질 때 쓴다).
     fetch·geocode·now는 테스트에서 바꿔 끼우는 자리다 (인터넷 없이 시험)."""
     now = now or dt.datetime.now().replace(microsecond=0)
     done = {"n": 0}
 
-    def read(source) -> tuple[list[SignalRow], list[CollectionItem], list[str]]:
+    def read(source) -> tuple[list[SignalRow], list[CollectionItem], list[str], list[dict]]:
         """글 하나: 받기 → LLM이 행사 추출 → 장소를 좌표로 → 매장 근처만."""
         url, pub = source
         published = pub or now
-        rows, items, notes = [], [], []
+        rows, items, notes, near = [], [], [], []
         try:
             title, text = fetch(url)
         except Exception as e:
-            return rows, items, [f"글을 못 받음({type(e).__name__}): {url}"]
+            return rows, items, [f"글을 못 받음({type(e).__name__}): {url}"], near
         done["n"] += 1
         progress.status(f"근처 소식을 읽는 중 ({done['n']}/{len(sources)}번째 글)")
         progress.emit("article", title=title, url=url)                      # 화면: 지금 읽는 글
         try:
             found = extract_events(title, text, published, cache_dir)
         except Exception as e:                                              # LLM이 응답하지 않으면 이 글만 건너뛴다
-            return rows, items, [f"글에서 행사를 뽑지 못함({type(e).__name__}): {url}"]
+            return rows, items, [f"글에서 행사를 뽑지 못함({type(e).__name__}): {url}"], near
         for ev in found:
             try:
                 elat, elon, _ = geocode(ev.place)
             except Exception:
                 notes.append(f"장소를 찾지 못해 건너뜀: {ev.place} ({url})")
                 continue
-            if distance_km(lat, lon, elat, elon) > NEAR_KM:
+            far = distance_km(lat, lon, elat, elon)
+            if far > NEAR_KM:
                 continue
             last = ev.end_date or ev.start_date
             progress.emit("event", title=ev.title or title, place=ev.place, lat=elat, lon=elon, start=ev.start_date,
@@ -171,11 +174,13 @@ def page_event_signals(store_id: str, lat: float, lon: float, sources: list[tupl
                     items.append(CollectionItem(date=ev.start_date, title=f"[새로 엶] {ev.title or title}", text=text,
                                                 source_url=url, published_at=published))
                 continue
+            near.append(dict(title=ev.title or title, place=ev.place, category="뉴스·블로그", start=ev.start_date, end=last,
+                             distance_km=far, published_at=published, url=url, cancelled=ev.cancelled, snippet=ev.quote))
             for d in _days(ev.start_date, last, start, end):
                 rows.append(_event_row(store_id, d, 0.0 if ev.cancelled else 1.0, url, published))
                 items.append(CollectionItem(date=d, title=ev.title or title, text=text, source_url=url,
                                             published_at=published))
-        return rows, items, notes
+        return rows, items, notes, near
 
     pool = ThreadPoolExecutor(READERS)
     jobs = [pool.submit(read, source) for source in sources]
@@ -186,8 +191,10 @@ def page_event_signals(store_id: str, lat: float, lon: float, sources: list[tupl
         if not job.done() or job.cancelled():
             late += 1
             continue
-        r, i, n = job.result()
+        r, i, n, near = job.result()
         rows, items, notes = rows + r, items + i, notes + n
+        if found is not None:
+            found.extend(near)
     if late:
         notes.append(f"시간 안에 못 읽은 글 {late}개는 건너뜀 ({TIME_BUDGET_S}초 제한)")
     return rows, items, notes

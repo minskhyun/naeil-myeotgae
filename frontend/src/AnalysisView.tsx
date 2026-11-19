@@ -20,7 +20,7 @@ const STEPS = [
 // 알림이 한꺼번에 몰려와도 이 간격대로 하나씩 풀어 놓는다 → 서버가 잠깐 조용해도 화면은 계속 움직인다
 const PAUSE: Record<string, number> = {
   step: 120, status: 260, store: 2000, sales: 500, places: 1500, plan: 1500, weather: 700, academic: 700,
-  event: 700, article: 450, special: 400, trend: 450, trial: 500, decision: 650, scores: 500, forecast: 500,
+  event: 700, article: 450, special: 400, trend: 450, rating: 600, trial: 500, decision: 650, scores: 500, forecast: 500,
 }
 
 // 들어온 정보 목록의 한 줄: 종류(색 이름표) + 내용
@@ -38,6 +38,10 @@ function line(e: ProgressEvent): { tag: string; color: string; text: string } | 
     case 'article': return { tag: '읽은 글', color: KIND_COLOR.article, text: e.title }
     case 'special': return { tag: '기념일', color: KIND_COLOR.special, text: `${e.name} (${e.date})` }
     case 'trend': return { tag: '검색량', color: KIND_COLOR.trend, text: `${e.menu} ${e.pct > 0 ? '+' : ''}${e.pct}%` }
+    case 'rating': return {
+      tag: 'AI의 평가', color: KIND_COLOR.plan,
+      text: `${e.title} · 규모 ${e.scale}/5 · 우리 가게와의 연관도 ${e.relevance}/5 · ${e.distance_m}m${e.menus.length ? ` · 특히 ${e.menus.slice(0, 3).join(', ')}` : ''}`,
+    }
     case 'trial': return {
       tag: '시험', color: KIND_COLOR.plan,
       text: `${e.groups.length ? `판매 기록 + ${e.groups.map((g) => GROUP_LABELS[g] ?? g).join('·')}` : '판매 기록만'}으로 지난 날들을 맞혀 봤어요 → 틀린 양 ${pct1(e.wape)}`,

@@ -22,6 +22,7 @@
     article   읽은 글               title, url
     special   기념일               date, name
     trend     메뉴 검색량            menu, pct
+    rating    행사 평가 (LLM)       title, scale(1~5), relevance(1~5), distance_m, menus[특히 관련 있는 메뉴], reason
     trial     검증 중 시험 한 번     groups[정보 묶음], wape
     decision  정보를 쓸지 판정        group, adopted, reason
     scores    검증 결과             model, wape, base_wape, coverage, test_days

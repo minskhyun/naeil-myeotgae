@@ -30,7 +30,8 @@ RECENT_DAYS = 28            # 연속값 신호의 '평소 값' = 최근 28일 �
 # 평소 값이 정해져 있는 신호: 비 안 옴(0), 최근 평균과 같은 기온(0), 평소와 같은 검색량(1배)
 FIXED_USUAL = {"rain_mm": 0.0, "temp_diff": 0.0, "trend_level": 1.0}
 EVENT_TEXT = {"exam_period": "시험기간이라", "vacation": "방학 기간이라",
-              "festival": "축제 기간이라", "nearby_event": "근처 행사가 있어", "special_day": "기념일이라"}
+              "festival": "축제 기간이라", "nearby_event": "근처 행사가 있어", "special_day": "기념일이라",
+              "event_impact": "이 메뉴와 관련 있는 근처 행사가 있어"}
 
 
 # ---------------------------------------------------------------- 준비량
