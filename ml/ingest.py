@@ -117,7 +117,7 @@ def read_pos(path, pos_type: str = "auto") -> tuple[pd.DataFrame, dict]:
         if hit:
             money[role] = hit[0]
     if "amount" in money:
-        df["amount"] = _parse_qty(body.iloc[:, money["amount"]]).fillna(0)
+        df["amount"] = _parse_qty(body.iloc[:, money["amount"]])          # 금액이 빈 줄은 빈 값 그대로 (판매가 계산에서 뺀다)
         if "vat" in money and header[money["amount"]] == "공급가액":
             df["amount"] += _parse_qty(body.iloc[:, money["vat"]]).fillna(0)
     # 판매 시각: 따로 열이 있거나, 날짜 칸에 시각이 같이 들어 있는 경우 (영수증 단위 파일)
@@ -137,8 +137,8 @@ def read_pos(path, pos_type: str = "auto") -> tuple[pd.DataFrame, dict]:
                dropped_cancel=int((is_cancel & ~is_total & ~is_blank).sum()),
                dropped_non_menu=int(is_other.sum()), non_menu=sorted(df.loc[is_other, "menu_raw"].unique()))
     df = df[~(is_total | is_blank | is_cancel | is_other)]
-    if "amount" in df:                                              # 메뉴별 판매가 = 금액 합 ÷ 수량 합
-        sums = df.groupby("menu_raw")[["amount", "qty"]].sum()
+    if "amount" in df:                                              # 메뉴별 판매가 = 금액 합 ÷ 수량 합 (금액을 아는 줄만)
+        sums = df[df["amount"].notna()].groupby("menu_raw")[["amount", "qty"]].sum()
         sums = sums[(sums["qty"] > 0) & (sums["amount"] > 0)]
         log["prices"] = {m: round(float(a / q)) for m, a, q in sums.itertuples()}
 

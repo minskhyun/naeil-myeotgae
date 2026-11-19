@@ -149,7 +149,8 @@ def test_unit_prices_from_amount_columns(tmp_path):
     from ml.ingest import ingest_store
     p = tmp_path / "items.csv"
     p.write_text("일자,품목명,수량,공급가액,부가세\n20261001,소금빵,10,30000,3000\n20261002,소금빵,10,30000,3000\n"
-                 "20261001,아메리카노,4,16000,1600\n20261002,서비스 쿠키,2,0,0\n", encoding="utf-8")
+                 "20261001,아메리카노,4,16000,1600\n20261002,서비스 쿠키,2,0,0\n"
+                 "20261003,아메리카노,6,,\n", encoding="utf-8")                   # 금액을 못 읽은 줄은 판매가 계산에서 뺀다
     ingest_store(p, "s", tmp_path / "out")
     assert json.loads((tmp_path / "out" / "menu_prices.json").read_text(encoding="utf-8")) == {"소금빵": 3300, "아메리카노": 4400}
 
