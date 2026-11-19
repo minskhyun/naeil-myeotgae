@@ -157,23 +157,18 @@ def beats(after: dict, before: dict) -> tuple[bool, int, float]:
 
 def pick_combo(scores: dict[tuple, dict]) -> list[str]:
     """{조합(묶음 이름 튜플): 교차검증 점수} → 고른 조합.  () = 신호 없음(M1).
-    1) 신호 없음보다 beats()를 통과한 조합 중 전체 WAPE가 가장 낮은 것
-    2) 그 조합 안의 묶음마다 '빼면 나빠지는가'(beats)를 확인해, 제 몫을 못 하는 묶음을 하나씩 뺀다
-       (빼도 가장 덜 나빠지는 것부터). 남은 조합이 신호 없음보다 낫지 않으면 [] (신호 없이 M1).
-    1등만 고르면 우연히 좋게 나온 조합을 고를 위험이 커서 이 조건들을 둔다."""
-    passing = [c for c in scores if c and beats(scores[c], scores[()])[0]]
-    if not passing:
-        return []
-    combo = min(passing, key=lambda c: scores[c]["wape"])
-    without = lambda c, g: tuple(x for x in c if x != g)
-    while combo:
-        weak = [g for g in combo if not beats(scores[combo], scores[without(combo, g)])[0]]
-        if not weak:
-            break
-        combo = without(combo, min(weak, key=lambda g: scores[without(combo, g)]["wape"]))
-        if combo and not beats(scores[combo], scores[()])[0]:
-            return []
-    return list(combo)
+    아래 두 조건을 모두 채우는 조합 가운데 전체 WAPE가 가장 낮은 것을 고른다. 없으면 [] (신호 없이 M1).
+      1) 신호 없음보다 낫다 (beats)
+      2) 무임승차하는 묶음이 없다: 묶음을 하나씩 빼 보면 매번 나빠진다 (beats)
+    WAPE 1등만 고르면 우연히 좋게 나온 조합이나, 한 묶음 덕에 좋아진 조합에 다른 묶음이 얹혀 가는 것을 고를 위험이 커서 2)를 둔다.
+
+    11/19 고침: 전에는 WAPE 1등 조합에서 약한 묶음을 하나씩 빼 나가다가, 도중의 조합이 1)을 못 채우면 '채택 없음'으로 끝냈다.
+    그래서 혼자서도 기준을 통과하는 묶음이 있는데 채택되지 않는 일이 있었다 (첫 실매장: 날씨 −4.9%, 2구간 모두 개선인데 미채택).
+    기준(MIN_GAIN_PCT, 과반 구간)은 그대로다."""
+    without = lambda c, g: tuple(x for x in c if x != g)      # noqa: E731
+    solid = [c for c in scores if c and beats(scores[c], scores[()])[0]
+             and all(beats(scores[c], scores[without(c, g)])[0] for g in c)]
+    return list(min(solid, key=lambda c: scores[c]["wape"])) if solid else []
 
 
 def decide(group: str, signals: list[str], before: dict | None, after: dict | None,
