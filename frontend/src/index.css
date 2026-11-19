@@ -114,3 +114,24 @@ body {
 
 .nm-rise { animation: nm-rise 0.45s ease-out both; }
 .nm-blink { animation: nm-blink 1.2s ease-in-out infinite; }
+
+/* ------------------------------------------------------------------ 준비표의 그래프 (ForecastCharts.tsx · ForecastView.tsx)
+   막대는 아래에서 자라고, 범위 띠는 왼쪽에서 자라고, 추이선은 왼쪽부터 그려지고, 내일 예상 점은 통 튀며 나타난다.
+   하나씩 차례로 나오게 하려면 요소의 animation-delay 를 준다. 움직임을 줄이도록 설정한 사람에게는 바로 보여 준다. */
+@keyframes nm-grow-y { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+@keyframes nm-grow-x { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes nm-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes nm-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes nm-dotin {
+  0% { transform: scale(0); opacity: 0; }
+  60% { transform: scale(1.6); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.nm-bar { transform-origin: bottom; animation: nm-grow-y 0.65s cubic-bezier(0.2, 0.9, 0.25, 1.15) both; }
+.nm-band { transform-origin: left; animation: nm-grow-x 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.nm-line { stroke-dasharray: 1; animation: nm-draw 0.9s ease-out both; }
+.nm-fade { animation: nm-fade-in 0.4s ease-out both; }
+.nm-dotin { transform-box: fill-box; transform-origin: center; animation: nm-dotin 0.5s ease-out both; }
+@media (prefers-reduced-motion: reduce) {
+  .nm-bar, .nm-band, .nm-line, .nm-fade, .nm-dotin, .nm-rise { animation: none; }
+}

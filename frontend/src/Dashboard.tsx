@@ -121,10 +121,10 @@ export function Dashboard({ storeId, storeName, prepMode, readOnly, onReplay }: 
 
       <div className="grid gap-5 lg:grid-cols-[1.75fr_1fr]">
         <Card title="메뉴별 준비표">
-          <ForecastTable rows={fc.rows} limit={MENUS_SHOWN} compact />
+          <ForecastTable rows={fc.rows} limit={MENUS_SHOWN} compact storeId={storeId} />
           <p className="mt-3 text-xs leading-relaxed text-faint">
             준비 = 고른 준비 기준({prepMode})의 권장 개수 · 예상 범위 = 실제 판매가 들어올 것으로 보는 구간(세로 눈금이 예상값) · 평소와 다른 점에
-            마우스를 올리면 설명 · {fmtTime(fc.generated_at)}에 계산
+            메뉴를 누르면 그래프와 설명 · {fmtTime(fc.generated_at)}에 계산
           </p>
         </Card>
 

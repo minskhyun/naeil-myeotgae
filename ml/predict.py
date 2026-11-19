@@ -17,7 +17,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from contracts.schemas import DEFAULT_PREP_MODE, BacktestResult, Forecast, ForecastRow, Reason
+from contracts.schemas import DEFAULT_PREP_MODE, BacktestResult, Forecast, ForecastRow, Reason, SalesHistory
 from ml.calibration import apply_calibration
 from ml.features import (DEFAULT_CLOSE_TIME, DERIVED_SIGNALS, SPECIAL_LEAD_DAYS, ZERO_FILL_KINDS, available_signals,
                          base_level, build_frame, issue_time)
@@ -112,6 +112,23 @@ def explain(model, rows: pd.DataFrame, p50: pd.Series, usual: dict[str, float],
                                          text=reason_text(sig, float(value[i]), float(pct[i])),
                                          source_url=sources.get(sig)))
     return [sorted(r, key=lambda x: -abs(x.effect_pct)) for r in reasons]       # 효과가 큰 것부터
+
+
+# ---------------------------------------------------------------- 최근 판매 (화면 그래프용)
+
+HISTORY_DAYS = 28            # 준비표 그래프에 보여 줄 날 수 (4주 = 같은 요일이 네 번)
+
+
+def recent_history(sales: pd.DataFrame, menus: list[str], days: int = HISTORY_DAYS) -> SalesHistory:
+    """마지막 판매일까지 최근 days일의 실제 판매: 하루 전체 합계 + menus의 메뉴별 판매량.
+    예측에는 쓰지 않는다. 화면이 '최근 4주와 내일 예상'을 나란히 그릴 때 쓴다. 기록이 없는 날(휴무)은 None."""
+    sales = sales.assign(date=pd.to_datetime(sales["date"]))
+    dates = pd.date_range(end=sales["date"].max(), periods=days)
+    total = sales.groupby("date")["qty"].sum().reindex(dates)
+    wide = sales[sales["menu"].isin(menus)].pivot_table(index="date", columns="menu", values="qty", aggfunc="sum").reindex(dates)
+    clean = lambda s: [None if pd.isna(v) else float(v) for v in s]      # noqa: E731
+    return SalesHistory(dates=[d.date() for d in dates], total=clean(total),
+                        menus={m: clean(wide[m]) for m in menus if m in wide})
 
 
 # ---------------------------------------------------------------- 내일 예측

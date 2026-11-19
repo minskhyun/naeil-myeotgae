@@ -7,6 +7,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { AnalysisMap } from './AnalysisMap'
 import type { Job, ProgressEvent } from './api'
+import { CountUp } from './CountUp'
 import { count as cnt, fmtDate, GROUP_LABELS, KIND_COLOR, pct1, rangeScore, won } from './format'
 
 const STEPS = [
@@ -58,21 +59,6 @@ function line(e: ProgressEvent): { tag: string; color: string; text: string } | 
     }
     default: return null
   }
-}
-
-// 0에서 목표 숫자까지 올라가는 숫자
-function CountUp({ to, format = (v) => String(Math.round(v)) }: { to: number; format?: (v: number) => string }) {
-  const [v, setV] = useState(0)
-  useEffect(() => {
-    let step = 0
-    const timer = window.setInterval(() => {
-      step += 1
-      setV(to * (1 - (1 - step / 30) ** 3)) // 처음엔 빠르게, 끝에서 천천히
-      if (step >= 30) window.clearInterval(timer)
-    }, 30)
-    return () => window.clearInterval(timer)
-  }, [to])
-  return <>{format(v)}</>
 }
 
 function Card({ title, children }: { title: string; children: ReactNode }) {

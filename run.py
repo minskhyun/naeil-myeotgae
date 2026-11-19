@@ -42,7 +42,7 @@ from ml.evaluate import run_backtest, write_backtest
 from ml.features import load_sales, load_signals, to_kst
 from ml.ingest import ingest_store
 from ml.paths import ARTIFACTS, RAW, SAMPLE
-from ml.predict import predict_from_backtest, write_forecast
+from ml.predict import predict_from_backtest, recent_history, write_forecast
 
 STEPS = ["ingest", "evaluate", "predict"]
 PROGRESS_FILE = "progress.json"        # 실행 중에 알린 것 전부 (ml/progress.py) → 웹의 '분석 과정 다시 보기'
@@ -273,6 +273,8 @@ def step_predict(args, out: Path) -> str:
         except Exception as e:                                # 안내는 부가 기능: 실패해도 예측은 저장
             note += f", 경고 생성 실패({type(e).__name__}) → 경고 없이 저장"
     write_forecast(fc, out.parent)
+    history = recent_history(sales, [r.menu for r in fc.rows])           # 준비표 그래프의 재료 (최근 4주 실제 판매)
+    (out / "history.json").write_text(history.model_dump_json(indent=1), encoding="utf-8")
     top = sorted(fc.rows, key=lambda r: r.pred, reverse=True)[:5]
     progress.emit("forecast", date=fc.rows[0].date, menus=len(fc.rows), warnings=[w.message for w in fc.warnings],
                   top=[dict(menu=r.menu, prep=r.prep_qty, pred=round(r.pred)) for r in top])

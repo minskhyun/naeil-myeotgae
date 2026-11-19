@@ -34,6 +34,9 @@ export type Forecast = {
   warnings: Warning[]
 }
 
+// 최근 4주의 실제 판매 (준비표 그래프의 재료). 날짜는 오래된 날부터, 휴무일은 null
+export type SalesHistory = { dates: string[]; total: (number | null)[]; menus: Record<string, (number | null)[]> }
+
 export type ModelScore = {
   model: string
   wape: number
@@ -178,6 +181,7 @@ export const api = {
   deleteStore: (id: string) => call<{ ok: boolean }>(`/my/stores/${id}`, { method: 'DELETE' }),
   stores: () => call<StoreInfo[]>('/stores'),
   forecast: (id: string) => call<Forecast>(`/stores/${id}/forecast`),
+  history: (id: string) => call<SalesHistory>(`/stores/${id}/history`), // 준비표 그래프의 재료
   backtest: (id: string) => call<Backtest>(`/stores/${id}/backtest`),
   sources: (id: string) => call<SourceReport>(`/stores/${id}/sources`),
   progress: (id: string) => call<ProgressEvent[]>(`/stores/${id}/progress`), // 마지막 분석 때 알린 것 (다시 보기)

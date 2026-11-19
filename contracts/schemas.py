@@ -223,6 +223,13 @@ class Calibration(BaseModel):
     test_below_after: dict[str, float] | None = None
 
 
+class SalesHistory(BaseModel):
+    """준비표 그래프의 재료: 최근 며칠의 실제 판매 → history.json (ml/predict.py의 recent_history)"""
+    dates: list[dt.date]                        # 예측 날짜 바로 전날까지, 오래된 날부터
+    total: list[float | None]                   # 하루 전체 판매 개수 (휴무일은 None)
+    menus: dict[str, list[float | None]]        # 메뉴별 하루 판매 개수 (휴무일·기록 없는 날은 None)
+
+
 class BacktestResult(BaseModel):
     """한 매장의 모델 비교·신호 채택 결과 → backtest.json"""
     store_id: str

@@ -75,7 +75,7 @@ def test_demo_mode_is_read_only(client, monkeypatch):
 
 
 def test_demo_data_follows_contracts():
-    from contracts.schemas import BacktestResult, Forecast, SourceReport
+    from contracts.schemas import BacktestResult, Forecast, SalesHistory, SourceReport
     folder = Path(main.__file__).resolve().parents[1] / "demo_data"
     stores = sorted(d.name for d in folder.iterdir() if d.is_dir())
     assert stores == ["fr-bakery", "sinchon-a"]
@@ -83,6 +83,15 @@ def test_demo_data_follows_contracts():
         Forecast.model_validate_json((folder / s / "forecast.json").read_text(encoding="utf-8"))
         SourceReport.model_validate_json((folder / s / "sources_report.json").read_text(encoding="utf-8"))
         BacktestResult.model_validate_json((folder / s / "backtest.json").read_text(encoding="utf-8"))
+        SalesHistory.model_validate_json((folder / s / "history.json").read_text(encoding="utf-8"))    # 준비표 그래프의 재료
     import json                                                                 # 첫 화면의 '분석 과정 보기'가 재생하는 녹화본
     kinds = [e["kind"] for e in json.loads((folder / "sinchon-a" / "progress.json").read_text(encoding="utf-8"))]
     assert {"store", "places", "plan", "trial", "decision", "scores", "forecast"} <= set(kinds)
+
+
+def test_history_endpoint_serves_chart_data():
+    """준비표 그래프의 재료: 시연 매장은 history.json 그대로 (최근 4주, 예측한 메뉴들)."""
+    r = TestClient(main.app).get("/api/stores/sinchon-a/history")
+    assert r.status_code == 200
+    body = r.json()
+    assert len(body["dates"]) == 28 == len(body["total"]) and "소금빵" in body["menus"]

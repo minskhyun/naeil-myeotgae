@@ -57,9 +57,10 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from backend.app import auth
-from contracts.schemas import DEFAULT_CLOSE_TIME, BacktestResult, Forecast, SourceReport, StoreConfig
+from contracts.schemas import DEFAULT_CLOSE_TIME, BacktestResult, Forecast, SalesHistory, SourceReport, StoreConfig
 from ml import paths, progress
-from ml.predict import PREP_MODES
+from ml.features import load_sales
+from ml.predict import PREP_MODES, recent_history
 
 Me = Depends(auth.current_user)     # 요청을 보낸 사람 (로그인 안 했으면 None)
 
@@ -146,6 +147,17 @@ def backtest(store_id: str, user: auth.User | None = Me):
 @app.get("/api/stores/{store_id}/sources", response_model=SourceReport)
 def sources(store_id: str, user: auth.User | None = Me):
     return SourceReport.model_validate_json(_read(store_id, "sources_report.json", user))
+
+
+@app.get("/api/stores/{store_id}/history", response_model=SalesHistory)
+def history(store_id: str, user: auth.User | None = Me):
+    """준비표 그래프의 재료: 최근 4주 실제 판매 (run.py가 예측할 때 history.json으로 남긴다).
+    이 파일이 생기기 전에 분석한 매장은 판매 기록에서 바로 계산해 준다."""
+    folder = _store_dir(store_id)
+    if (folder / "history.json").exists() or not (folder / "sales_clean.csv").exists():
+        return SalesHistory.model_validate_json(_read(store_id, "history.json", user))
+    fc = Forecast.model_validate_json(_read(store_id, "forecast.json", user))
+    return recent_history(load_sales(folder / "sales_clean.csv"), [r.menu for r in fc.rows])
 
 
 @app.get("/api/stores/{store_id}/progress")

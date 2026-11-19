@@ -88,3 +88,14 @@ export const KIND_COLOR: Record<string, string> = {
   sales: '#15171c',
   article: '#f43f8e',
 }
+
+// ---- 요일 (준비표의 그래프와 문장이 쓴다)
+export const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
+export const asDate = (iso: string) => new Date(`${iso}T00:00:00`)
+export const weekdayName = (iso: string) => WEEKDAYS[asDate(iso).getDay()]
+// 내일(nextDate)과 같은 요일의 지난 판매 (오래된 것부터, 휴무일은 뺀다)
+export function sameWeekday(dates: string[], values: (number | null)[], nextDate: string): number[] {
+  const weekday = asDate(nextDate).getDay()
+  return values.filter((v, i): v is number => v !== null && asDate(dates[i]).getDay() === weekday)
+}
+export const average = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null)
