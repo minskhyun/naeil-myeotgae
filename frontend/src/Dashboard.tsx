@@ -9,7 +9,7 @@ import { useState, type ReactNode } from 'react'
 import { api } from './api'
 import { BacktestView, BarRow } from './BacktestView'
 import { ForecastTable, Notice, PrepToggle } from './ForecastView'
-import { average, count, dayPrefix, fmtDate, GROUP_LABELS, pct1, rangeScore, sameWeekday, weekdayName, won } from './format'
+import { average, count, dayPrefix, fmtDate, GROUP_LABELS, pct1, rangeScore, sameWeekday, weekdayName } from './format'
 import { Modal } from './Modal'
 import { SourcesView } from './SourcesView'
 import { periodName, verdict } from './verdict'
@@ -31,10 +31,10 @@ function Tile({ label, value, note, warn = false, help }: { label: string; value
   )
 }
 
-// 본문의 카드 한 장: 제목 (+ '자세히') · 내용
-function Card({ title, onMore, children }: { title: string; onMore?: () => void; children: ReactNode }) {
+// 본문의 카드 한 장: 제목 (+ '자세히') · 내용. grow = 줄에서 남는 높이를 이 카드가 채운다
+function Card({ title, onMore, grow = false, children }: { title: string; onMore?: () => void; grow?: boolean; children: ReactNode }) {
   return (
-    <section className="min-w-0 rounded-3xl bg-sheet p-5 shadow-sm sm:p-6">
+    <section className={`min-w-0 rounded-3xl bg-sheet p-5 shadow-sm sm:p-6 ${grow ? 'flex-1' : ''}`}>
       <div className="mb-4 flex items-center justify-between gap-3">
         <h3 className="text-lg font-bold">{title}</h3>
         {onMore && (
@@ -81,14 +81,7 @@ export function Dashboard({ storeId, storeName, prepMode, readOnly, onReplay }: 
           <p className="text-sm font-semibold text-muted">{storeName}</p>
           <h2 className="mt-0.5 text-3xl font-extrabold tracking-tight">{fmtDate(date)}</h2>
         </div>
-        <div className="flex flex-wrap items-end gap-3">
-          {onReplay && (
-            <button onClick={onReplay} className="rounded-full bg-accent-soft px-4 py-1.5 text-sm font-semibold text-accent hover:bg-accent hover:text-white">
-              분석 과정 다시 보기
-            </button>
-          )}
-          <PrepToggle storeId={storeId} prepMode={prepMode} readOnly={readOnly} />
-        </div>
+        <PrepToggle storeId={storeId} prepMode={prepMode} readOnly={readOnly} />
       </div>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -117,7 +110,8 @@ export function Dashboard({ storeId, storeName, prepMode, readOnly, onReplay }: 
           <ForecastTable rows={fc.rows} limit={MENUS_SHOWN} compact storeId={storeId} />
         </Card>
 
-        <div className="min-w-0 space-y-5">
+        {/* 오른쪽 줄은 왼쪽 준비표와 아래 끝을 맞춘다: 남는 높이는 맨 아래 칸(분석 과정 다시 보기, 없으면 '얼마나 맞나')이 채운다 */}
+        <div className="flex min-w-0 flex-col gap-5">
           <Card title="주의할 소식">
             {fc.warnings.length ? (
               <div className="space-y-3">
@@ -149,7 +143,7 @@ export function Dashboard({ storeId, storeName, prepMode, readOnly, onReplay }: 
             )}
           </Card>
 
-          <Card title="얼마나 맞나" onMore={() => setDetail('backtest')}>
+          <Card title="얼마나 맞나" onMore={() => setDetail('backtest')} grow={!onReplay}>
             {v ? (
               <div title={`${periodName(v)} 기준 · ${MISS_HELP}`}>
                 <p className="mb-3 text-2xl font-extrabold tracking-tight">
@@ -163,23 +157,30 @@ export function Dashboard({ storeId, storeName, prepMode, readOnly, onReplay }: 
                 </p>
                 <BarRow label="지난주대로 준비" value={v.baseMiss} max={Math.max(v.baseMiss, v.mineMiss)} strong={false} />
                 <BarRow label="내일몇개" value={v.mineMiss} max={Math.max(v.baseMiss, v.mineMiss)} strong />
-                <dl className="mt-4 space-y-2 border-t border-rule pt-4 text-sm">
-                  {v.money !== null && v.money > 0 && (
-                    <div className="flex items-baseline justify-between gap-3">
-                      <dt className="text-muted">줄인 오차를 판매가로</dt>
-                      <dd className="text-lg font-bold tabular-nums">하루 {won(v.money)}</dd>
-                    </div>
-                  )}
-                  <div className="flex items-baseline justify-between gap-3">
-                    <dt className="text-muted">범위 정확도</dt>
-                    <dd className="text-lg font-bold tabular-nums">{pct1(rangeScore(v.mine.coverage_80))}</dd>
-                  </div>
-                </dl>
+                <p className="mt-4 flex items-baseline justify-between gap-3 border-t border-rule pt-4 text-sm">
+                  <span className="text-muted">범위 정확도</span>
+                  <b className="text-lg tabular-nums">{pct1(rangeScore(v.mine.coverage_80))}</b>
+                </p>
               </div>
             ) : (
               <p className="text-muted">검증 결과가 아직 없어요.</p>
             )}
           </Card>
+
+          {onReplay && (
+            <button
+              onClick={onReplay}
+              className="group flex min-h-32 flex-1 flex-col justify-between rounded-3xl bg-gradient-to-br from-accent to-accent-deep p-6 text-left text-white shadow-sm transition hover:brightness-110"
+            >
+              <span className="text-sm font-semibold text-white/75">AI가 주변을 살펴본 과정</span>
+              <span className="flex items-center justify-between gap-3 text-xl font-extrabold tracking-tight">
+                분석 과정 다시 보기
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white/20 transition group-hover:bg-white group-hover:text-accent" aria-hidden>
+                  ▶
+                </span>
+              </span>
+            </button>
+          )}
         </div>
       </div>
 

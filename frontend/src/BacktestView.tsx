@@ -5,7 +5,7 @@
 import { useQuery } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 import { api, type ModelScore, type SignalDecision } from './api'
-import { count, fmtDate, GROUP_LABELS, missPerDay, MODEL_LABELS, pct1, rangeScore, won } from './format'
+import { count, fmtDate, GROUP_LABELS, missPerDay, MODEL_LABELS, pct1, rangeScore } from './format'
 import { periodName, verdict } from './verdict'
 
 const base = (m: string) => m.slice(0, 2) // "M3(채택 신호만)" → "M3"
@@ -102,11 +102,7 @@ export function BacktestView({ storeId, hideDecisions = false }: { storeId: stri
         <div className="grid gap-3 sm:grid-cols-3">
           <Stat label="하루 오차" value={`${count(v.mineShown)}개`} note={`지난주대로 준비하면 ${count(v.baseShown)}개`} />
           <Stat label="범위 정확도" value={pct1(rangeScore(v.mine.coverage_80))} />
-          {v.money !== null && v.money > 0 ? (
-            <Stat label="줄인 오차를 판매가로" value={`하루 ${won(v.money)}`} />
-          ) : (
-            <Stat label="쓰는 정보" value={<span className="text-xl">{used.length ? `판매 기록 + ${used.join('·')}` : '판매 기록'}</span>} />
-          )}
+          <Stat label="쓰는 정보" value={<span className="text-xl">{used.length ? `판매 기록 + ${used.join('·')}` : '판매 기록'}</span>} />
         </div>
       )}
 
