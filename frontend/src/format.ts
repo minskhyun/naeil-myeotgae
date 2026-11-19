@@ -75,7 +75,7 @@ export const savedPerDay = (mine: { amount?: number | null; days?: number }, bas
 
 // 예상 범위는 실제 판매의 80%가 들어오도록 만든다. 화면에는 실제로 든 비율을 그대로 적고 목표(80%)를 옆에 둔다
 // (목표에 견준 점수로 바꿔 적으면 숫자가 실제보다 좋아 보인다)
-export const RANGE_TARGET_TEXT = '목표 80%'
+export const RANGE_TARGET_TEXT = '80%가 이상적' // '목표 80%'라고 적으면 못 채운 점수처럼 읽힌다. 80%보다 높아도(범위가 넓다) 좋은 것이 아니다
 
 // '분석 중' 화면에서 정보 종류마다 쓰는 색 (지도의 표시와 목록의 이름표가 같은 색)
 export const KIND_COLOR: Record<string, string> = {
