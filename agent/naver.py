@@ -75,10 +75,15 @@ def _request(path: str, params: dict | None = None, body: dict | None = None) ->
 
 # ---------------------------------------------------------------- 1. 뉴스·블로그
 
-def area_keywords(store: StoreConfig) -> list[str]:
-    """매장 설정의 area_keywords, 없으면 주소에서 도로·구 이름을 뽑는다 ('서울숲2길' → '서울숲', '성동구' → '성동')."""
+def area_keywords(store: StoreConfig, station: str | None = None) -> list[str]:
+    """근처 소식을 검색할 동네 이름. 순서: 매장 설정의 area_keywords → 가장 가까운 역 이름(station) → 주소에서 뽑은 말.
+    역 이름 하나만 쓰는 이유: 재 보니 '신촌' 하나로 찾을 때 근처 행사가 가장 많이 나왔다. 주소에서 뽑은 '서대문'·'연세'는
+    구청 소식·병원 학술행사가 섞이고, 말을 여럿 쓰면 읽을 글 MAX_ARTICLES개 안에서 좋은 글이 밀려난다 (ml/REVIEW.md E).
+    주소에서 뽑기: 도로·구 이름 ('서울숲2길' → '서울숲', '성동구' → '성동')."""
     if store.area_keywords:
         return list(store.area_keywords)
+    if station:
+        return [station]
     out = []
     for tok in (store.address or "").split():
         m = re.fullmatch(r"(.+?)\d*(?:길|로)", tok) or re.fullmatch(r"(.+?)(?:구|동)", tok)

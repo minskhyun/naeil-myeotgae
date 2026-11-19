@@ -22,7 +22,7 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from agent import collectors_bridge, events, naver, relevance
+from agent import collectors_bridge, events, geocode, naver, relevance
 from agent.special_days import special_day_signals
 from contracts.schemas import CollectionItem, SignalRow, StoreConfig
 from ml import progress
@@ -74,7 +74,8 @@ def event_posts(job: CollectJob) -> Result:
     sources = events.read_sources(job.sources_path) if job.sources_path and Path(job.sources_path).exists() else []
     if naver.has_keys():
         try:
-            found, n = naver.news_sources(naver.area_keywords(job.store))
+            station = geocode.nearest_station(job.store.lat, job.store.lon)      # 동네 이름 = 가장 가까운 역
+            found, n = naver.news_sources(naver.area_keywords(job.store, station))
             known = {url for url, _ in sources}
             sources += [s for s in found if s[0] not in known]
             notes += n

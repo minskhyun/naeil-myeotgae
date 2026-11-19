@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { api, type ModelScore } from './api'
-import { fmtDate, GROUP_LABELS, MODEL_LABELS, pct1 } from './format'
+import { avgSold, fmtDate, GROUP_LABELS, MODEL_LABELS, num1, pct1, rangeScore } from './format'
 
 const base = (m: string) => m.slice(0, 2) // "M3(채택 신호만)" → "M3"
 
@@ -65,7 +65,7 @@ export function BacktestView({ storeId, hideDecisions = false }: { storeId: stri
         <p className="text-sm text-muted">얼마나 맞나</p>
         {tChosen && tM0 ? (
           <h2 className="mt-1 max-w-3xl text-2xl font-bold leading-snug tracking-tight sm:text-[28px]">
-            마지막 {testDays}일 동안 틀린 양은 판매량의 {pct1(tChosen.wape)}였습니다.{' '}
+            마지막 {testDays}일 동안 오차율은 {pct1(tChosen.wape)}였습니다.{' '}
             <span className="text-muted">
               '지난주 같은 요일만큼' 준비하는 방법({pct1(tM0.wape)})
               {gain !== null && gain > 0 ? `보다 ${gain}% 적습니다.` : '보다 나아지지 않았습니다.'}
@@ -87,20 +87,28 @@ export function BacktestView({ storeId, hideDecisions = false }: { storeId: stri
           <dd className="mt-1 text-xl font-semibold">{name(picked)}</dd>
         </div>
         <div className="border-t border-rule py-4 sm:border-t-0 sm:px-6">
-          <dt className="text-sm text-muted">틀린 양 (시험 기간)</dt>
+          <dt className="text-sm text-muted">오차율 (시험 기간)</dt>
           <dd className="mt-1 text-xl font-semibold tabular-nums">{tChosen ? pct1(tChosen.wape) : '–'}</dd>
+          {tChosen && (
+            <dd className="mt-1 text-sm text-muted">
+              메뉴 하나가 하루 평균 {num1(avgSold(tChosen))}개 팔릴 때 평균 {num1(tChosen.mae)}개 틀림
+            </dd>
+          )}
         </div>
         <div className="border-t border-rule py-4 sm:border-t-0 sm:pl-6">
-          <dt className="text-sm text-muted">실제가 예상 범위 안에 든 비율</dt>
+          <dt className="text-sm text-muted">예상 범위 정확도</dt>
           <dd className="mt-1 text-xl font-semibold tabular-nums">
-            {tChosen ? pct1(tChosen.coverage_80) : '–'} <span className="text-sm font-normal text-muted">목표 80%</span>
+            {tChosen ? pct1(rangeScore(tChosen.coverage_80)) : '–'} <span className="text-sm font-normal text-muted">100%가 만점</span>
           </dd>
+          {tChosen && (
+            <dd className="mt-1 text-sm text-muted">실제 판매의 {pct1(tChosen.coverage_80)}가 범위 안 · 목표 80%를 맞추면 100%</dd>
+          )}
         </div>
       </dl>
 
       <section>
-        <h3 className="text-lg font-semibold">방법별 틀린 양</h3>
-        <p className="mt-1 text-sm text-muted">검증 기간 {data.folds.length}구간 합계. 틀린 개수의 합 ÷ 실제 판매량의 합, 짧을수록 좋습니다.</p>
+        <h3 className="text-lg font-semibold">방법별 오차율</h3>
+        <p className="mt-1 text-sm text-muted">검증 기간 {data.folds.length}구간 합계. 오차율 = 평균 오차(개) ÷ 평균 판매량(개), 짧을수록 좋습니다.</p>
         <div className="mt-4">
           {data.cv_scores.map((s) => (
             <BarRow key={s.model} label={name(s.model)} value={s.wape} max={cvMax} strong={s.model === picked} />

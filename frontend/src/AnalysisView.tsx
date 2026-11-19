@@ -7,7 +7,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { AnalysisMap } from './AnalysisMap'
 import type { Job, ProgressEvent } from './api'
-import { fmtDate, GROUP_LABELS, KIND_COLOR, pct1 } from './format'
+import { fmtDate, GROUP_LABELS, KIND_COLOR, pct1, rangeScore } from './format'
 
 const STEPS = [
   { id: 'ingest', label: '판매 기록' },
@@ -54,7 +54,7 @@ function line(e: ProgressEvent): { tag: string; color: string; text: string } | 
     }
     case 'trial': return {
       tag: '시험', color: KIND_COLOR.plan,
-      text: `${e.groups.length ? `판매 기록 + ${e.groups.map((g) => GROUP_LABELS[g] ?? g).join('·')}` : '판매 기록만'}으로 지난 날들을 맞혀 봤어요 → 틀린 양 ${pct1(e.wape)}`,
+      text: `${e.groups.length ? `판매 기록 + ${e.groups.map((g) => GROUP_LABELS[g] ?? g).join('·')}` : '판매 기록만'}으로 지난 날들을 맞혀 봤어요 → 오차율 ${pct1(e.wape)}`,
     }
     default: return null
   }
@@ -245,12 +245,13 @@ export function AnalysisView({ events, status, error, log, onClose, replay = fal
               {scores ? (
                 <>
                   <p className="text-4xl font-extrabold tracking-tight tabular-nums">
-                    <CountUp to={scores.coverage * 100} />%
+                    <CountUp to={scores.wape * 100} format={(v) => v.toFixed(1)} />%
                   </p>
-                  <p className="mt-1 text-sm">실제 판매가 예상 범위 안에 든 비율</p>
+                  <p className="mt-1 text-sm">
+                    오차율 (평균 오차 ÷ 평균 판매량){gain > 0 && ` · '지난주 같은 요일만큼'보다 ${gain}% 적음`}
+                  </p>
                   <p className="mt-3 text-xs text-muted">
-                    틀린 양 {pct1(scores.wape)}
-                    {gain > 0 && ` · '지난주 같은 요일만큼'보다 ${gain}% 적음`}
+                    예상 범위 정확도 {pct1(rangeScore(scores.coverage))} (100%가 만점 · 실제 판매의 {pct1(scores.coverage)}가 범위 안, 목표 80%)
                     {scores.test_days ? ` · 마지막 ${scores.test_days}일로 시험` : ''}
                   </p>
                 </>

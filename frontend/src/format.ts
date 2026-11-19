@@ -58,6 +58,17 @@ export const shortReason = (r: Reason) => `${SIGNAL_LABELS[r.signal] ?? r.signal
 // 0.191 → "19.1%"
 export const pct1 = (v: number) => `${(v * 100).toFixed(1)}%`
 
+// ---- 얼마나 맞나: 화면에 보여 주는 두 숫자
+// 오차율 = 평균 오차(개) ÷ 평균 판매량(개). 서버의 wape와 같은 값이다 (Σ|실제−예측| ÷ Σ실제 = 평균 오차 ÷ 평균 판매량)
+// 예: 메뉴 하나가 하루 평균 20개 팔리는데 평균 4개 틀리면 20%
+export const avgSold = (s: { mae: number; wape: number }) => (s.wape > 0 ? s.mae / s.wape : 0) // 메뉴 하나의 하루 평균 판매량
+export const num1 = (v: number) => v.toFixed(1)
+
+// 범위 정확도: 예상 범위는 실제 판매의 80%가 들어오도록 만든다 → 80%를 정확히 맞추면 100%(만점).
+// 모자라면(범위가 좁다) 그만큼 깎고, 넘쳐도(범위가 쓸데없이 넓다) 같은 만큼 깎는다. 예: 75% → 93.8%, 90% → 87.5%
+export const RANGE_TARGET = 0.8
+export const rangeScore = (coverage: number) => Math.max(0, 1 - Math.abs(coverage - RANGE_TARGET) / RANGE_TARGET)
+
 // '분석 중' 화면에서 정보 종류마다 쓰는 색 (지도의 표시와 목록의 이름표가 같은 색)
 export const KIND_COLOR: Record<string, string> = {
   places: '#8a9bbd',

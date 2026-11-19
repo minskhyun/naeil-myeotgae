@@ -90,6 +90,36 @@ def _kakao(query: str) -> list | None:
     return None
 
 
+STATION_RADIUS_M = 1000               # 이 거리 안의 지하철역만 '우리 동네 역'으로 본다
+
+
+def _kakao_stations(lat: float, lon: float) -> list:
+    """카카오 로컬: 좌표 근처 지하철역(분류 SW8)을 가까운 순으로."""
+    q = urllib.parse.urlencode({"category_group_code": "SW8", "y": lat, "x": lon, "radius": STATION_RADIUS_M,
+                                "sort": "distance", "size": 3})
+    req = urllib.request.Request(f"{KAKAO}/search/category.json?{q}",
+                                 headers={"Authorization": f"KakaoAK {settings()['KAKAO_REST_KEY']}"})
+    with urllib.request.urlopen(req, timeout=15) as r:
+        return json.loads(r.read().decode("utf-8"))["documents"]
+
+
+def nearest_station(lat: float | None, lon: float | None, search=None) -> str | None:
+    """가장 가까운 지하철역 이름에서 '역'과 노선을 뗀 것 ('신촌역 2호선' → '신촌'). 없거나 못 찾으면 None.
+    역 이름은 사람들이 그 동네를 부르는 이름이라, 근처 소식을 검색하는 말로 쓴다 (agent/naver.py의 area_keywords).
+    search는 테스트에서 바꿔 끼우는 자리다."""
+    if lat is None or lon is None or not (search or settings().get("KAKAO_REST_KEY")):
+        return None
+    try:
+        places = (search or _kakao_stations)(lat, lon)
+    except Exception:
+        return None
+    for p in places:
+        m = re.match(r"(.{2,}?)역(?:\s|$)", p.get("place_name", ""))
+        if m:
+            return m.group(1)
+    return None
+
+
 def place_queries(place: str) -> list[str]:
     """LLM이 적은 장소 → 카카오에 넣어 볼 검색어들 (정확한 것부터).
     "서울 성수동 '플레임그라운드(Flameground by BURGER KING)'" → ['플레임그라운드', ..., '서울 성수동 플레임그라운드', ...]

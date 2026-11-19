@@ -11,6 +11,22 @@ from contracts.schemas import StoreConfig
 def test_area_keywords():
     assert naver.area_keywords(StoreConfig(store_id="s", address="서울 성동구 서울숲2길 12-7")) == ["성동", "서울숲"]
     assert naver.area_keywords(StoreConfig(store_id="s", address="x", area_keywords=["성수", "서울숲"])) == ["성수", "서울숲"]
+    store = StoreConfig(store_id="s", address="서울 서대문구 연세로 12")
+    assert naver.area_keywords(store, "신촌") == ["신촌"]                       # 가까운 역 이름이 있으면 그것 하나만
+    assert naver.area_keywords(StoreConfig(store_id="s", address="x", area_keywords=["성수"]), "뚝섬") == ["성수"]   # 사람이 정한 것이 먼저
+
+
+def test_nearest_station_name():
+    from agent.geocode import nearest_station
+    found = lambda lat, lon: [dict(place_name="신촌역 2호선"), dict(place_name="서강대역 경의중앙선")]     # noqa: E731
+    assert nearest_station(37.55, 126.93, found) == "신촌"                     # '역'과 노선을 뗀다
+    assert nearest_station(37.55, 126.93, lambda lat, lon: [dict(place_name="홍대입구역")]) == "홍대입구"
+    assert nearest_station(37.55, 126.93, lambda lat, lon: []) is None          # 근처에 역이 없음
+    assert nearest_station(None, None, found) is None                           # 좌표가 없는 매장
+
+    def broken(lat, lon):
+        raise TimeoutError
+    assert nearest_station(37.55, 126.93, broken) is None                       # 못 찾아도 수집은 계속 (주소에서 뽑은 말로)
 
 
 def test_menu_keyword():

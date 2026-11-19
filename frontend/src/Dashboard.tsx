@@ -1,6 +1,6 @@
 // 로그인 뒤의 분석 결과 화면: 한 매장의 내일 준비를 한눈에.
 //   맨 위   날짜 · 준비 기준
-//   요약    숫자 네 칸 (준비할 양 · 평소와 다른 메뉴 · 얼마나 맞나 · 주의할 소식)
+//   요약    숫자 네 칸 (준비할 양 · 평소와 다른 메뉴 · 오차율 · 주의할 소식)
 //   본문    왼쪽: 메뉴별 준비표      오른쪽: AI 주의 안내 · 예측에 쓴 주변 정보 · 얼마나 맞나
 // 자세한 내용(주변 정보 전체, 검증 전체)은 길게 늘어놓지 않고 '자세히'를 누르면 창으로 뜬다.
 // 조각들은 기존 화면의 것을 그대로 쓴다 (ForecastView.tsx, BacktestView.tsx, SourcesView.tsx).
@@ -9,7 +9,7 @@ import { useState, type ReactNode } from 'react'
 import { api, type ModelScore } from './api'
 import { BacktestView, BarRow } from './BacktestView'
 import { ForecastTable, Notice, PrepToggle } from './ForecastView'
-import { fmtDate, fmtTime, GROUP_LABELS, pct1 } from './format'
+import { avgSold, fmtDate, fmtTime, GROUP_LABELS, num1, pct1, rangeScore } from './format'
 import { Modal } from './Modal'
 import { SourcesView } from './SourcesView'
 
@@ -97,9 +97,9 @@ export function Dashboard({ storeId, storeName, prepMode, readOnly, onReplay }: 
           note={more + less ? `평소보다 많이 ${more}개 · 적게 ${less}개` : '모든 메뉴가 평소와 비슷해요'}
         />
         <Tile
-          label="예상 범위 안에 든 비율"
-          value={mine ? `${Math.round(mine.coverage_80 * 100)}%` : '–'}
-          note={mine ? `목표 80% · 틀린 양 ${pct1(mine.wape)}` : '기록이 짧아 최종 시험이 없어요'}
+          label="오차율"
+          value={mine ? pct1(mine.wape) : '–'}
+          note={mine ? `하루 평균 ${num1(avgSold(mine))}개 파는 메뉴에서 ${num1(mine.mae)}개 틀림` : '기록이 짧아 최종 시험이 없어요'}
         />
         <Tile
           label="주의할 소식"
@@ -155,9 +155,16 @@ export function Dashboard({ storeId, storeName, prepMode, readOnly, onReplay }: 
                 <BarRow label="지난주 같은 요일만큼" value={base.wape} max={Math.max(base.wape, mine.wape)} strong={false} />
                 <BarRow label="내일몇개 예측" value={mine.wape} max={Math.max(base.wape, mine.wape)} strong />
                 <p className="mt-3 text-sm text-muted">
-                  틀린 양(짧을수록 좋음).{' '}
+                  오차율 = 평균 오차 ÷ 평균 판매량(짧을수록 좋음).{' '}
                   {gain !== null && gain > 0 ? <b className="text-ink">지난주만큼 준비할 때보다 {gain}% 적게 틀려요.</b> : '지난주만큼 준비하는 것보다 나아지지 않았어요.'}
                 </p>
+                <p className="mt-3 flex items-baseline justify-between gap-3 border-t border-rule pt-3 text-sm">
+                  <span>
+                    예상 범위 정확도 <span className="text-faint">(100%가 만점)</span>
+                  </span>
+                  <b className="text-lg tabular-nums">{pct1(rangeScore(mine.coverage_80))}</b>
+                </p>
+                <p className="mt-1 text-xs text-faint">실제 판매의 {pct1(mine.coverage_80)}가 범위 안 · 목표 80%를 맞추면 100%</p>
               </>
             ) : (
               <p className="text-sm text-muted">기록이 짧아 최종 시험 없이 검증 기간 결과만 있어요. '자세히'에서 볼 수 있습니다.</p>
