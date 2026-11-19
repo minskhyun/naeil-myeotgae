@@ -24,6 +24,7 @@ from pathlib import Path
 import pandas as pd
 
 from contracts.schemas import BacktestResult
+from ml import progress
 from ml.calibration import apply_calibration, below_rates, check_calibration, fit_calibration
 from ml.features import (DEFAULT_CLOSE_TIME, FEATURE_SETS, SIGNAL_GROUPS, available_signals, base_level, build_frame,
                          signals_in)
@@ -96,8 +97,9 @@ def cross_val_predict(frame: pd.DataFrame, model_name: str, folds, **model_kwarg
         valid = labeled[(labeled["date"] >= start) & (labeled["date"] <= end)]
         model = make_model(model_name, **model_kwargs).fit(train)
         pred = model.predict(valid)
-        out.append(valid[KEEP_COLS].join(pred).assign(fold=k, train_last=train["date"].max(),
-                                                      base=base_level(valid)))
+        keep = KEEP_COLS + [c for c in ("price",) if c in valid]             # 판매가(있으면): 금액 환산에 쓴다
+        out.append(valid[keep].join(pred).assign(fold=k, train_last=train["date"].max(),
+                                                 base=base_level(valid)))
     return pd.concat(out, ignore_index=True)
 
 
@@ -118,6 +120,8 @@ class CrossValidator:
             label = model_label(groups)
             preds = cross_val_predict(self.frame, label, self.folds, groups=list(groups), **self.model_kwargs)
             self._done[key] = (preds, score(preds, label))
+            s = self._done[key][1]                                              # 화면: 방금 시험한 조합과 하루에 틀린 개수
+            progress.emit("trial", groups=list(groups), wape=round(s["wape"], 4), miss=round(miss_per_day(s), 1))
         return self._done[key]
 
 
@@ -126,6 +130,12 @@ class CrossValidator:
 GROUP_LABELS = {"weather": "날씨", "events": "학사일정·행사", "trend": "유행", "special": "기념일"}
 MIN_GAIN_PCT = 3.0   # 전체 오차가 이만큼(%) 이상 줄어야 '나아졌다'고 본다.
 # 11/17 리허설: 관계없는 신호(검증 기간 내내 0인 기념일)를 넣기만 해도 나무 모양이 바뀌어 오차가 2%쯤 흔들렸다.
+
+
+def miss_per_day(s) -> float:
+    """점수 한 줄 → 하루에 남거나 모자란 개수 (모든 메뉴 합)."""
+    s = s if isinstance(s, dict) else s.model_dump()
+    return (s["over"] + s["under"]) / max(s["days"], 1)
 
 
 def model_label(groups) -> str:
@@ -289,8 +299,10 @@ def data_note(plan: FoldPlan, n_combos: int, adopted: list[str], cv_m0: pd.DataF
 # ---------------------------------------------------------------- 전체
 
 def run_backtest(sales: pd.DataFrame, signals: pd.DataFrame | None = None,
-                 close_time: str = DEFAULT_CLOSE_TIME, **model_kwargs) -> BacktestResult:
-    """매장 하나의 판매(+신호) → BacktestResult.  model_kwargs는 테스트용 (예: iterations=30)."""
+                 close_time: str = DEFAULT_CLOSE_TIME, prices: dict[str, float] | None = None,
+                 **model_kwargs) -> BacktestResult:
+    """매장 하나의 판매(+신호) → BacktestResult.  model_kwargs는 테스트용 (예: iterations=30).
+    prices = {메뉴: 판매가(원)} 를 주면 남거나 모자란 개수를 금액으로도 환산한다 (ModelScore.amount). 예측에는 쓰지 않는다."""
     store_ids = sales["store_id"].unique()
     if len(store_ids) != 1:
         raise ValueError(f"매장 하나씩 평가합니다. 받은 매장: {list(store_ids)}")
@@ -301,6 +313,8 @@ def run_backtest(sales: pd.DataFrame, signals: pd.DataFrame | None = None,
         signals = signals[signals["store_id"] == store_id]
         names = available_signals(SIGNAL_GROUPS, signals)
     frame = build_frame(sales, signals, names, close_time=close_time)
+    if prices:
+        frame["price"] = frame["menu"].map(prices)
 
     plan = plan_folds(frame.loc[frame["qty"].notna(), "date"])                      # 1
     cv = CrossValidator(frame, plan.folds, model_kwargs)

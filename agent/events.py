@@ -13,6 +13,7 @@ import json
 import math
 import re
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor, wait
 from html.parser import HTMLParser
 from pathlib import Path
 
@@ -21,11 +22,15 @@ from pydantic import BaseModel
 
 from agent.geocode import geocode as find_place
 from contracts.schemas import CollectionItem, SignalRow
+from ml import progress
 from ml.llm import ask
 
 NEAR_KM = 1.0              # 매장에서 이 거리 안이면 '근처' (걸어서 15분 안팎)
 MAX_EVENT_DAYS = 7         # 이보다 긴 행사는 신호로 쓰지 않는다
 MAX_PAGE_CHARS = 6000      # 글은 앞 6000자까지만 LLM에 넘긴다
+READERS = 6                # 글을 동시에 몇 개씩 읽을지
+FETCH_TIMEOUT_S = 8        # 글 하나를 받는 데 기다리는 최대 시간
+TIME_BUDGET_S = 90         # 글 읽기 전체에 쓰는 최대 시간 (넘으면 남은 글은 건너뜀)
 
 
 def distance_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
@@ -67,7 +72,7 @@ EXTRACT_SYSTEM = """당신은 카페·베이커리 수요 예측 서비스의 '�
 주어진 글에서 매장 손님 수에 영향을 줄 만한 행사(팝업스토어, 축제, 공연, 대형 모임, 도로 통제·공사 등)만 뽑습니다.
 규칙:
 - 날짜는 글에 적힌 것만 씁니다. '이번 주말'처럼 날짜를 확정할 수 없으면 그 행사는 뽑지 않습니다. 연도가 없으면 글의 공개일을 기준으로 정합니다.
-- place는 글에 적힌 장소 이름·주소를 그대로 씁니다. 지어내지 않습니다.
+- place는 글에 적힌 장소 이름·주소를 그대로 씁니다. 글에 주소가 있으면 주소까지 함께 적습니다. 지어내지 않습니다.
 - quote에는 날짜와 장소가 적힌 문장을 원문에서 글자 그대로 복사합니다.
 - 판매량·손님 수 같은 숫자를 추정하지 않습니다.
 - 해당하는 행사가 없으면 빈 목록을 돌려줍니다."""
@@ -94,7 +99,7 @@ def fetch_page(url: str) -> tuple[str, str]:
     """글 주소 → (제목, 본문 글자). 네이버 블로그는 휴대폰 주소로 받아야 본문이 나온다."""
     url = url.replace("://blog.naver.com", "://m.blog.naver.com")
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (naeil-myeotgae prototype)"})
-    with urllib.request.urlopen(req, timeout=30) as r:
+    with urllib.request.urlopen(req, timeout=FETCH_TIMEOUT_S) as r:
         raw = r.read().decode(r.headers.get_content_charset() or "utf-8", errors="replace")
     title = re.search(r"<title[^>]*>(.*?)</title>", raw, re.S | re.I)
     p = _Text()
@@ -106,7 +111,7 @@ def fetch_page(url: str) -> tuple[str, str]:
 def extract_events(title: str, text: str, published: dt.datetime, cache_dir: Path) -> list[EventInfo]:
     """글 하나 → 행사 목록 (같은 글은 다시 부르지 않는다). 근거 문장이 글에 그대로 없으면 버린다."""
     user = json.dumps(dict(title=title, published_at=str(published.date()), text=text), ensure_ascii=False)
-    result = ask(EXTRACT_SYSTEM, user, EventList, cache_dir, max_tokens=8000)
+    result = ask(EXTRACT_SYSTEM, user, EventList, cache_dir, max_tokens=8000, light=True)   # 글마다 한 번 → 가벼운 모델
     return [e for e in result.events
             if e.is_event and e.start_date and e.quote and e.quote in (title + "\n" + text)]
 
@@ -125,34 +130,71 @@ def read_sources(path: Path) -> list[tuple[str, dt.datetime | None]]:
 
 def page_event_signals(store_id: str, lat: float, lon: float, sources: list[tuple[str, dt.datetime | None]],
                        start: dt.date, end: dt.date, cache_dir: Path, fetch=fetch_page, geocode=find_place,
-                       now: dt.datetime | None = None) -> tuple[list[SignalRow], list[CollectionItem], list[str]]:
+                       now: dt.datetime | None = None, found: list | None = None
+                       ) -> tuple[list[SignalRow], list[CollectionItem], list[str]]:
     """글 주소들 → (nearby_event 줄, 원문, 메모). 취소 공지는 value=0 줄 (가장 늦게 공개된 값이 쓰이므로 취소가 반영됨).
+    글은 READERS개씩 동시에 읽는다 (글 받기와 LLM 호출이 기다리는 시간이라 동시에 해도 된다).
+    TIME_BUDGET_S 안에 못 끝낸 글은 건너뛴다: 사이트 하나가 느려도 전체가 멈추지 않게.
+    결과는 글 순서대로 합치므로, 동시에 읽어도 결과는 차례로 읽은 것과 같다.
+    found를 주면 신호가 된 행사를 거기에 담는다 (agent/relevance.py가 규모·연관도를 따질 때 쓴다).
     fetch·geocode·now는 테스트에서 바꿔 끼우는 자리다 (인터넷 없이 시험)."""
     now = now or dt.datetime.now().replace(microsecond=0)
-    rows, items, notes = [], [], []
-    for url, pub in sources:
+    done = {"n": 0}
+
+    def read(source) -> tuple[list[SignalRow], list[CollectionItem], list[str], list[dict]]:
+        """글 하나: 받기 → LLM이 행사 추출 → 장소를 좌표로 → 매장 근처만."""
+        url, pub = source
         published = pub or now
+        rows, items, notes, near = [], [], [], []
         try:
             title, text = fetch(url)
         except Exception as e:
-            notes.append(f"글을 못 받음({type(e).__name__}): {url}")
-            continue
-        for ev in extract_events(title, text, published, cache_dir):
+            return rows, items, [f"글을 못 받음({type(e).__name__}): {url}"], near
+        done["n"] += 1
+        progress.status(f"근처 소식을 읽는 중 ({done['n']}/{len(sources)}번째 글)")
+        progress.emit("article", title=title, url=url)                      # 화면: 지금 읽는 글
+        try:
+            found = extract_events(title, text, published, cache_dir)
+        except Exception as e:                                              # LLM이 응답하지 않으면 이 글만 건너뛴다
+            return rows, items, [f"글에서 행사를 뽑지 못함({type(e).__name__}): {url}"], near
+        for ev in found:
             try:
                 elat, elon, _ = geocode(ev.place)
             except Exception:
                 notes.append(f"장소를 찾지 못해 건너뜀: {ev.place} ({url})")
                 continue
-            if distance_km(lat, lon, elat, elon) > NEAR_KM:
+            far = distance_km(lat, lon, elat, elon)
+            if far > NEAR_KM:
                 continue
             last = ev.end_date or ev.start_date
+            progress.emit("event", title=ev.title or title, place=ev.place, lat=elat, lon=elon, start=ev.start_date,
+                          end=last, source="뉴스·블로그", url=url, cancelled=ev.cancelled or None)
             if (last - ev.start_date).days + 1 > MAX_EVENT_DAYS:   # 긴 팝업: 신호는 없이, 여는 날 원문만
                 if start <= ev.start_date <= end:
                     items.append(CollectionItem(date=ev.start_date, title=f"[새로 엶] {ev.title or title}", text=text,
                                                 source_url=url, published_at=published))
                 continue
+            near.append(dict(title=ev.title or title, place=ev.place, category="뉴스·블로그", start=ev.start_date, end=last,
+                             distance_km=far, published_at=published, url=url, cancelled=ev.cancelled, snippet=ev.quote))
             for d in _days(ev.start_date, last, start, end):
                 rows.append(_event_row(store_id, d, 0.0 if ev.cancelled else 1.0, url, published))
                 items.append(CollectionItem(date=d, title=ev.title or title, text=text, source_url=url,
                                             published_at=published))
+        return rows, items, notes, near
+
+    pool = ThreadPoolExecutor(READERS)
+    jobs = [pool.submit(read, source) for source in sources]
+    wait(jobs, timeout=TIME_BUDGET_S)
+    pool.shutdown(wait=False, cancel_futures=True)              # 아직 안 끝난 글은 기다리지 않는다
+    rows, items, notes, late = [], [], [], 0
+    for job in jobs:                                            # 글 순서대로 합친다
+        if not job.done() or job.cancelled():
+            late += 1
+            continue
+        r, i, n, near = job.result()
+        rows, items, notes = rows + r, items + i, notes + n
+        if found is not None:
+            found.extend(near)
+    if late:
+        notes.append(f"시간 안에 못 읽은 글 {late}개는 건너뜀 ({TIME_BUDGET_S}초 제한)")
     return rows, items, notes

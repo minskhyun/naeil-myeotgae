@@ -10,7 +10,10 @@ export const SIGNAL_LABELS: Record<string, string> = {
   vacation: '방학',
   festival: '축제',
   nearby_event: '근처 행사',
+  event_impact: '행사 영향',
   special_day: '기념일',
+  special_lead: '기념일 앞둔 날',
+  special_impact: '기념일 영향',
   trend_level: '검색량 유행',
 }
 
@@ -54,3 +57,34 @@ export const shortReason = (r: Reason) => `${SIGNAL_LABELS[r.signal] ?? r.signal
 
 // 0.191 → "19.1%"
 export const pct1 = (v: number) => `${(v * 100).toFixed(1)}%`
+
+// ---- 얼마나 맞나: 화면에 보여 주는 두 숫자
+// 남거나 모자란 개수 (하루, 모든 메뉴 합) = 예측대로 준비했다면 남았을 개수 + 모자랐을 개수.
+// 비율(오차율)로 보여 주지 않는 이유: 하루 한두 개 팔리는 메뉴는 한 개만 틀려도 50~100%가 되어 숫자가 뜻 없이 커진다.
+// Σ|실제−예측| = mae × n 이라 예전 결과 파일에서도 계산된다. days가 없는 예전 파일은 fallbackDays(구간의 날짜 수)로 나눈다
+export const missPerDay = (s: { mae: number; n: number; days?: number }, fallbackDays = 1) => (s.mae * s.n) / (s.days || fallbackDays || 1)
+export const count = (v: number) => Math.round(v).toLocaleString('ko-KR')
+// 금액: 1만 원 이상은 '12.3만 원', 그 아래는 천 원 단위
+export const won = (v: number) => (Math.abs(v) >= 10000 ? `${(v / 10000).toFixed(1)}만 원` : `${count(Math.round(v / 100) * 100)}원`)
+// 지난주 방식보다 하루에 덜 틀린 금액 (판매가를 아는 매장만)
+export const savedPerDay = (mine: { amount?: number | null; days?: number }, base: { amount?: number | null }) =>
+  mine.amount != null && base.amount != null && mine.days ? (base.amount - mine.amount) / mine.days : null
+
+// 범위 정확도: 예상 범위는 실제 판매의 80%가 들어오도록 만든다 → 80%를 정확히 맞추면 100%(만점).
+// 모자라면(범위가 좁다) 그만큼 깎고, 넘쳐도(범위가 쓸데없이 넓다) 같은 만큼 깎는다. 예: 75% → 93.8%, 90% → 87.5%
+export const RANGE_TARGET = 0.8
+export const rangeScore = (coverage: number) => Math.max(0, 1 - Math.abs(coverage - RANGE_TARGET) / RANGE_TARGET)
+
+// '분석 중' 화면에서 정보 종류마다 쓰는 색 (지도의 표시와 목록의 이름표가 같은 색)
+export const KIND_COLOR: Record<string, string> = {
+  places: '#8a9bbd',
+  plan: '#2b66f6',
+  event: '#ff7a45',
+  news: '#f43f8e',
+  weather: '#0ea5e9',
+  academic: '#8b5cf6',
+  special: '#f59e0b',
+  trend: '#10b981',
+  sales: '#15171c',
+  article: '#f43f8e',
+}

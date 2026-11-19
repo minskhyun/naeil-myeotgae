@@ -114,6 +114,8 @@ def select_events(rows, store, radius_m, fetched_at):
             "title": row.get("TITLE", "").strip(),
             "place": row.get("PLACE", "").strip(),
             "distance_m": round(dist),
+            "lat": round(pos[0], 6),
+            "lon": round(pos[1], 6),
             "start_date": start.isoformat(),
             "end_date": end.isoformat(),
             "source_url": row.get("HMPG_ADDR") or row.get("ORG_LINK") or "",

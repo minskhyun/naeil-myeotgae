@@ -25,6 +25,7 @@ import numpy as np
 import pandas as pd
 
 from contracts.schemas import CollectionItem, SignalRow, StoreConfig
+from ml import progress
 from ml.llm import settings
 
 HOST = "https://naverapihub.apigw.ntruss.com"
@@ -74,10 +75,15 @@ def _request(path: str, params: dict | None = None, body: dict | None = None) ->
 
 # ---------------------------------------------------------------- 1. 뉴스·블로그
 
-def area_keywords(store: StoreConfig) -> list[str]:
-    """매장 설정의 area_keywords, 없으면 주소에서 도로·구 이름을 뽑는다 ('서울숲2길' → '서울숲', '성동구' → '성동')."""
+def area_keywords(store: StoreConfig, area: str | None = None) -> list[str]:
+    """근처 소식을 검색할 동네 이름. 순서: 매장 설정의 area_keywords → 동 이름(area, geocode.area_name) → 주소에서 뽑은 말.
+    동네 이름 하나만 쓰는 이유: 재 보니 '신촌' 하나로 찾을 때 근처 행사가 가장 많이 나왔다. 주소에서 뽑은 '서대문'·'연세'는
+    구청 소식·병원 학술행사가 섞이고, 말을 여럿 쓰면 읽을 글 MAX_ARTICLES개 안에서 좋은 글이 밀려난다 (ml/REVIEW.md E).
+    주소에서 뽑기: 도로·구 이름 ('서울숲2길' → '서울숲', '성동구' → '성동')."""
     if store.area_keywords:
         return list(store.area_keywords)
+    if area:
+        return [area]
     out = []
     for tok in (store.address or "").split():
         m = re.fullmatch(r"(.+?)\d*(?:길|로)", tok) or re.fullmatch(r"(.+?)(?:구|동)", tok)
@@ -133,8 +139,11 @@ def news_sources(areas: list[str], search=None, now: dt.datetime | None = None
 # ---------------------------------------------------------------- 2. 메뉴 검색량 유행
 
 def menu_keyword(menu: str) -> str:
-    """POS 메뉴 이름 → 검색어. 아이스/핫 표기·괄호를 뗀다 ('아메리카노(ICE)' → '아메리카노')."""
-    s = re.sub(r"\((?:ice|iced|hot)\)|아이스|따뜻한|\b(?:ice|iced|hot)\b", "", menu, flags=re.I)
+    """POS 메뉴 이름 → 검색어. 아이스/핫 표기·괄호를 뗀다 ('아메리카노(ICE)' → '아메리카노').
+    한글 이름 뒤에 영어 이름을 괄호로 붙인 메뉴는 한글 이름만 쓴다 ('카페라떼 (Cafe latte)' → '카페라떼')."""
+    if re.search(r"[가-힣]", re.sub(r"\([^)가-힣]*\)?", "", menu)):
+        menu = re.sub(r"\([^)가-힣]*\)?", "", menu)
+    s = re.sub(r"\((?:ice|iced|hot)\)|아이스(?!티)|따뜻한|\b(?:ice|iced|hot)\b", "", menu, flags=re.I)
     return " ".join(re.sub(r"[()\[\]]", " ", s).split())
 
 
@@ -191,7 +200,7 @@ def menu_trend(store_id: str, menus: list[str], start: dt.date, target: dt.date,
     last = min(target - dt.timedelta(days=TREND_LAG_DAYS), today - dt.timedelta(days=1))
     menus = menus[:MAX_TREND_MENUS]
     series = fetch_trend(menus, first, last, post)
-    rows, items, changed = [], [], []
+    rows, items, changed, latest = [], [], [], []
     for menu, searches in series.items():
         level = trend_level(searches, target)[pd.Timestamp(start):].dropna()
         for day, value in level.items():
@@ -200,6 +209,8 @@ def menu_trend(store_id: str, menus: list[str], start: dt.date, target: dt.date,
                                   value=round(float(value), 3), source_url=TREND_PAGE, published_at=published,
                                   kind="observed"))
         now_level = level.get(pd.Timestamp(target))
+        if now_level is not None:
+            latest.append((menu, round((float(now_level) - 1) * 100)))
         if now_level is None or abs(now_level - 1) * 100 < TREND_ALERT_PCT:
             continue
         pct = (now_level - 1) * 100
@@ -209,6 +220,11 @@ def menu_trend(store_id: str, menus: list[str], start: dt.date, target: dt.date,
         items.append(CollectionItem(date=target, title=f"검색량 변화: {menu}", text=text, source_url=TREND_PAGE,
                                     published_at=dt.datetime.combine(target - dt.timedelta(days=1), dt.time(9))))
         changed.append(f"{menu} {pct:+.0f}%")
+    if rows:                                # 화면: 가져온 기간 전체(모델이 배우는 재료)를 먼저, 그다음 메뉴별 요즘 변화
+        days = {r.date for r in rows}
+        progress.emit("trend_span", menus=len({r.menu for r in rows}), days=len(days), first=min(days), last=max(days))
+    for menu, pct in latest:
+        progress.emit("trend", menu=menu, pct=pct)
     note = (f"메뉴 검색량 {len(series)}개" + (f"(요청 실패 {len(menus) - len(series)}개)" if len(series) < len(menus) else "")
             + f" → 유행 신호 {len({r.menu for r in rows})}개 메뉴"
             + (f", 크게 바뀐 메뉴: {', '.join(changed)}" if changed else ", 크게 바뀐 메뉴 없음"))

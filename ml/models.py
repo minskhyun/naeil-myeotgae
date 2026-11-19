@@ -3,7 +3,7 @@
 모든 모델은 같은 모양으로 쓴다:
     model = make_model("M1").fit(train_frame)
     out = model.predict(frame)      # DataFrame[p10, p40, p50, p60, p80, p90, pred], frame과 같은 index
-                                    # pred = p50 (예상 판매량)
+                                    # pred = 예상 판매량. M0은 p50, CatBoost는 평균(기대값)
 
 - M0  지난주 같은 요일 그대로. 사장님 감과 비슷한 수준 → 이걸 못 이기면 모델이 의미 없다
 - M1  CatBoost, 판매 이력·달력 변수만
@@ -60,6 +60,11 @@ class CatBoostQuantile:
         예측 = (비율 예측) × base
     이렇게 하면 하루 60개짜리 소금빵과 10개짜리 식빵을 한 모델이 같은 '비율' 단위로 배운다.
 
+    예상 판매량(pred)은 중앙값(p50)이 아니라 **평균(기대값)** 이다 (11/19). 평균을 배우는 모델(RMSE)을 따로 둔다.
+    하루에 0~2개 팔리는 메뉴는 중앙값이 0이라, 그런 메뉴가 많은 매장에서는 중앙값의 합이 실제 판매의 절반밖에
+    안 됐다 (첫 실매장: 주말 합계 −54%, 평균으로 바꾸면 −19% = 지난주 같은 요일 방식과 같은 수준).
+    많이 팔리는 메뉴는 평균과 중앙값이 거의 같아 달라지는 것이 없다. pred는 예상 범위 [p10, p90] 안에 둔다.
+
     시드만 다른 모델 3개를 학습해 평균한다 (11/15). 시드 하나만 바꿔도 검증 WAPE가 0.275~0.285로 흔들리고
     신호 채택이 뒤집혔다. 3개 평균이면 시작 시드 4가지에서 채택이 모두 같았다 (시간은 약 2.5배).
     """
@@ -100,23 +105,31 @@ class CatBoostQuantile:
 
         X = rows[self.features]
         y = rows["qty"] / base_level(rows)
-        self.models = [CatBoostRegressor(
-            loss_function="MultiQuantile:alpha=" + ",".join(map(str, QUANTILES)),
-            iterations=iterations, depth=depth, learning_rate=self.learning_rate,
-            random_seed=self.random_seed + k, cat_features=[c for c in CATEGORICAL_FEATURES if c in self.features],
-            # 범주(메뉴 등)가 255개 이하면 원-핫 인코딩. CatBoost 기본 방식(target statistics)보다
-            # 이 데이터에서 약 12배 빠르고 정확도는 같았다 (메뉴 11개, 매장 1개).
-            one_hot_max_size=255,
-            verbose=False, allow_writing_files=False,
-        ).fit(X, y) for k in range(self.n_seeds)]
+
+        def train_one(loss: str, seed: int) -> CatBoostRegressor:
+            return CatBoostRegressor(
+                loss_function=loss, iterations=iterations, depth=depth, learning_rate=self.learning_rate,
+                random_seed=seed, cat_features=[c for c in CATEGORICAL_FEATURES if c in self.features],
+                # 범주(메뉴 등)가 255개 이하면 원-핫 인코딩. CatBoost 기본 방식(target statistics)보다
+                # 이 데이터에서 약 12배 빠르고 정확도는 같았다 (메뉴 11개, 매장 1개).
+                one_hot_max_size=255,
+                verbose=False, allow_writing_files=False,
+            ).fit(X, y)
+
+        seeds = [self.random_seed + k for k in range(self.n_seeds)]
+        self.models = [train_one("MultiQuantile:alpha=" + ",".join(map(str, QUANTILES)), s) for s in seeds]   # 범위·준비량
+        self.mean_models = [train_one("RMSE", s) for s in seeds]                                             # 예상 판매량(평균)
         self.n_train, self.short_mode = len(rows), short
         return self
 
     def predict(self, frame: pd.DataFrame) -> pd.DataFrame:
         X = frame[self.features]
         ratio = np.mean([m.predict(X) for m in self.models], axis=0)   # (행 수, 분위 수) 비율 예측, 시드 평균
-        q = ratio * base_level(frame).to_numpy()[:, None]   # 비율 × 평소 수준 = 판매량
-        return _finalize(q, frame.index)
+        base = base_level(frame).to_numpy()
+        out = _finalize(ratio * base[:, None], frame.index)  # 비율 × 평소 수준 = 판매량
+        mean = np.mean([m.predict(X) for m in self.mean_models], axis=0) * base
+        out["pred"] = np.clip(mean, out["p10"], out["p90"])  # 예상 판매량 = 평균. 예상 범위 밖으로는 나가지 않게
+        return out
 
 
 def make_model(name: str, **kwargs):

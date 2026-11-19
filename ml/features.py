@@ -46,12 +46,18 @@ SIGNAL_GROUPS = {
     "weather": ["temp_diff", "rain_mm"],       # temp_diff = 기온 − 최근 28일 평균 (파생 신호, 아래 DERIVED_SIGNALS)
     # *_diff = 학사일정 − 최근 28일 평균 (파생). 방학이 시작되면 '최근 평균'이 한동안 학기 수준이라 늦게 따라간다.
     # 그 늦음을 모델이 알 수 있게 '기간이 바뀐 지 얼마나 됐는지'를 준다 (11/15: 검증 WAPE 0.279→0.219, bias +5%→+1%)
-    "events":  ["exam_period", "vacation", "festival", "nearby_event",
+    # event_impact = 근처 행사를 규모 × 가게·메뉴와의 연관도 × 가까움으로 따진 값 (메뉴별, agent/relevance.py). nearby_event는 건수만
+    "events":  ["exam_period", "vacation", "festival", "nearby_event", "event_impact",
                 "exam_period_diff", "vacation_diff", "festival_diff"],
     # 메뉴별 신호: 그 메뉴 이름의 검색량이 '최근 7일 ÷ 그 전 28일' (1 = 평소와 같음). agent/naver.py가 만든다
     "trend":   ["trend_level"],
-    "special": ["special_day"],                # 기념일(발렌타인·빼빼로데이·크리스마스 등)을 하나로 묶은 표시
+    # special_day = 기념일 당일(발렌타인·빼빼로데이·크리스마스 등을 하나로 묶은 표시)
+    # special_lead = 기념일을 앞둔 날: 전날 7, 이틀 전 6, …, 일주일 전 1 (그 밖의 날 0). 수요는 당일만이 아니라
+    #                며칠 전부터 움직이므로(선물용 빵·케이크 예약 등) 다가오는 정도를 알려 준다. agent/special_days.py가 만든다
+    # special_impact = 기념일마다·메뉴마다의 연관도(LLM이 1~5로) × 다가온 정도 (메뉴별, agent/relevance.py)
+    "special": ["special_day", "special_lead", "special_impact"],
 }
+SPECIAL_LEAD_DAYS = 7    # 기념일 며칠 전부터 '앞둔 날'로 볼지
 ALL_SIGNALS = {name for names in SIGNAL_GROUPS.values() for name in names}
 # 화면 비교표에 보여 주는 기본 모델 정의 (실제로 쓸 조합은 evaluate.py가 매장마다 고른다)
 FEATURE_SETS = {"M1": [], "M2": ["weather"], "M3": ["weather", "events", "trend", "special"]}
@@ -145,7 +151,9 @@ def _store_trend(frame: pd.DataFrame) -> pd.DataFrame:
 
 def _latest_wide(s: pd.DataFrame, keys: list[str]) -> pd.DataFrame:
     """(keys, signal)마다 가장 늦게 공개된 값만 남겨 세로형 → 가로형 (신호 이름이 열이 된다)."""
-    return s.sort_values("published_at").groupby(keys + ["signal"])["value"].last().unstack("signal").reset_index()
+    # kind="stable": 공개 시각이 같은 줄이 여럿이면 원래 순서의 마지막 줄이 남는다 (정렬 방식에 따라 결과가 흔들리지 않게)
+    return (s.sort_values("published_at", kind="stable").groupby(keys + ["signal"])["value"].last()
+            .unstack("signal").reset_index())
 
 
 def attach_signals(frame: pd.DataFrame, signals: pd.DataFrame, signal_names: list[str],

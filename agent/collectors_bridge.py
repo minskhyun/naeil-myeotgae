@@ -28,6 +28,7 @@ from pathlib import Path
 import pandas as pd
 
 from contracts.schemas import CollectionItem, SignalRow, StoreConfig
+from ml import progress
 from ml.features import to_kst
 from ml.paths import ROOT
 
@@ -38,7 +39,14 @@ OBSERVED_PROXY = "#관측값을-예보-대신-사용"     # 이 표시가 붙은
 KMA_OBSERVED = "https://data.kma.go.kr"
 KMA_FORECAST = "https://www.data.go.kr/data/15084084/openapi.do"
 ACADEMIC_COLS = ["exam_period", "vacation", "festival"]
+PERIOD_GAP_DAYS = 7          # 학교 일정이 이만큼 넘게 끊기면 다른 기간으로 센다 (시험 기간 몇 번, 방학 몇 번)
 MAX_EVENT_DAYS = 14                            # 수집기(seoul_events)와 같은 기준 (이보다 긴 상설 전시는 신호가 안 됨)
+# 수집기의 단계 이름 → 화면에 보여 줄 '지금 하는 일'
+STAGE_TEXT = {"kakao": "매장 주변 시설을 살펴보는 중", "agent": "AI가 이 매장에 맞는 정보원을 고르는 중",
+              "build_external_daily": "지난 날씨 기록을 받는 중", "forecast": "날씨 예보를 받는 중",
+              "academic": "학교 일정을 읽는 중", "seoul_events": "서울시 문화행사를 찾는 중"}
+MAX_PLACES_SHOWN = 70                          # 화면(지도)에 알릴 주변 시설 수 (가까운 순)
+MAX_EVENTS_SHOWN = 15                          # 화면(지도)에 알릴 서울 문화행사 수 (예측 날짜에 가까운 순)
 
 
 # ---------------------------------------------------------------- 수집기 실행
@@ -59,15 +67,88 @@ def ensure_store(store: StoreConfig, work_dir: Path) -> None:
 
 
 def run_collectors(store_id: str, start: dt.date, end: dt.date, work_dir: Path) -> tuple[bool, list[str]]:
-    """python -m collectors.run_all 을 backend/에서 실행 (결과는 work_dir에). 돌려주는 값: (성공 여부, 출력 마지막 몇 줄)."""
+    """python -m collectors.run_all 을 backend/에서 실행 (결과는 work_dir에). 돌려주는 값: (성공 여부, 출력 마지막 몇 줄).
+    수집기가 단계를 시작할 때마다('=== 이름 ===' 줄) 화면에 알린다: 지금 하는 일, 방금 끝난 단계가 찾은 것."""
     work_dir = Path(work_dir).resolve()        # 수집기는 backend/에서 돌므로 절대 경로로 넘긴다
     (work_dir / DAILY).unlink(missing_ok=True)  # 실패했을 때 지난번 결과를 이번 것으로 착각하지 않도록 먼저 지운다
     cmd = [sys.executable, "-m", "collectors.run_all", "--store", store_id,
            "--start", start.isoformat(), "--end", end.isoformat()]
-    proc = subprocess.run(cmd, cwd=BACKEND, capture_output=True, text=True, encoding="utf-8", errors="replace",
-                          env={**os.environ, "COLLECTORS_WORK_DIR": str(work_dir)})
-    lines = [hide_keys(l) for l in (proc.stdout + proc.stderr).splitlines() if l.strip()]
+    proc = subprocess.Popen(cmd, cwd=BACKEND, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8",
+                            errors="replace", env={**os.environ, "COLLECTORS_WORK_DIR": str(work_dir), "PYTHONIOENCODING": "utf-8"})
+    lines, told = [], set()
+    for line in proc.stdout:
+        if line.strip():
+            lines.append(hide_keys(line.rstrip()))
+        stage = re.fullmatch(r"=== (\w+) ===", line.strip())
+        if stage:
+            tell_plan(store_id, work_dir, told)              # 앞 단계(주변 시설, 정보원 선택)가 끝났으면 그 결과를 알린다
+            progress.status(STAGE_TEXT.get(stage.group(1), stage.group(1)))
+    proc.wait()
+    tell_plan(store_id, work_dir, told)
     return proc.returncode == 0 and (work_dir / DAILY).exists(), lines[-6:]
+
+
+# ---------------------------------------------------------------- 화면에 알리기 (ml/progress.py)
+
+def tell_plan(store_id: str, work_dir: Path, told: set | None = None) -> None:
+    """주변 시설(가까운 순 일부)과 AI가 고른 정보원을 알린다. told: 이미 알린 것 (같은 것을 두 번 알리지 않게)."""
+    told = told if told is not None else set()
+    work_dir = Path(work_dir)
+    nearby, plan = work_dir / f"{store_id}_nearby.json", work_dir / f"{store_id}_sources.json"
+    places = json.loads(nearby.read_text(encoding="utf-8"))["places"] if nearby.exists() else []
+    if places and "places" not in told:
+        told.add("places")
+        near = sorted((p for p in places if p.get("lat") and p.get("distance_m") is not None), key=lambda p: p["distance_m"])
+        progress.emit("places", count=len(places), places=[
+            dict(name=p["name"], group=p["group"], lat=p["lat"], lon=p["lon"], distance_m=p["distance_m"])
+            for p in near[:MAX_PLACES_SHOWN]])
+    if plan.exists() and "plan" not in told:
+        told.add("plan")
+        data, where = json.loads(plan.read_text(encoding="utf-8")), {p["name"]: p for p in places}
+        picks = []                                           # 고른 정보원마다: 무엇을 · 근거가 된 시설(지도 위치) · 이유
+        for a in data.get("academic") or []:
+            at = where.get(a.get("evidence"), {})
+            picks.append(dict(what="학교 일정", name=a.get("evidence"), lat=at.get("lat"), lon=at.get("lon"), reason=a.get("reason")))
+        events = data.get("events") or {}
+        for name in (events.get("evidence") or [])[:6]:
+            at = where.get(name, {})
+            picks.append(dict(what="근처 행사", name=name, lat=at.get("lat"), lon=at.get("lon"), reason=events.get("reason")))
+        progress.emit("plan", method=data.get("method"), model=data.get("model"), radius_m=events.get("radius_m"),
+                      reason=events.get("reason"), picks=[p for p in picks if p["lat"]])
+
+
+def periods(days) -> int:
+    """날짜들이 몇 번의 기간인지 (PERIOD_GAP_DAYS 넘게 끊기면 다른 기간). 예: 시험 기간 5번, 방학 2번."""
+    days = sorted(days)
+    return sum(1 for i, d in enumerate(days) if i == 0 or (d - days[i - 1]).days > PERIOD_GAP_DAYS)
+
+
+def tell_coverage(dates: dict[str, set[dt.date]]) -> None:
+    """화면에 알리기: 날씨·학교 일정을 언제부터 언제까지 가져왔는지. dates = {신호 이름: 값이 있는 날짜들}.
+    예측할 하루치가 아니라 판매 기록 기간 전체를 가져온다 (모델이 지난 시험·방학 때의 판매를 보고 배워야 하므로)."""
+    weather = dates.get("temp_mean", set()) | dates.get("rain_mm", set())
+    if weather:
+        progress.emit("weather", days=len(weather), first=min(weather), last=max(weather))
+    school = set().union(*(dates.get(name, set()) for name in ACADEMIC_COLS))
+    if school:
+        progress.emit("academic", days=len(school), first=min(school), last=max(school),
+                      exams=periods(dates.get("exam_period", ())), vacations=periods(dates.get("vacation", ())),
+                      festivals=periods(dates.get("festival", ())))
+
+
+def tell_results(store_id: str, work_dir: Path, rows: list[SignalRow], around: dt.date) -> None:
+    """수집이 끝난 뒤: 날씨·학교 일정을 가져온 기간, 근처 서울 문화행사(around에 가까운 것부터 일부)."""
+    dates: dict[str, set[dt.date]] = {}
+    for r in rows:
+        dates.setdefault(r.signal, set()).add(r.date)
+    tell_coverage(dates)
+    path = Path(work_dir) / EVENTS
+    events = json.loads(path.read_text(encoding="utf-8")) if path.exists() else []
+    mine = [e for e in events if e.get("source") == "seoul_culture" and e.get("store_id") == store_id and e.get("lat")]
+    mine.sort(key=lambda e: abs((dt.date.fromisoformat(e["start_date"]) - around).days))
+    for e in mine[:MAX_EVENTS_SHOWN]:
+        progress.emit("event", title=e["title"], place=e.get("place"), lat=e["lat"], lon=e["lon"], start=e["start_date"],
+                      end=e["end_date"], source="서울시 문화행사", url=e.get("source_url"))
 
 
 def hide_keys(text: str) -> str:
@@ -138,6 +219,26 @@ def event_rows(store_id: str, events: list[dict], lo: dt.date, hi: dt.date
             rows.append(SignalRow(date=d, store_id=store_id, signal="nearby_event", value=float(n),
                                   source_url=e["source_url"], published_at=published, kind="event"))
     return rows, items
+
+
+def nearby_events(store_id: str, work_dir: Path, lo: dt.date, hi: dt.date) -> list[dict]:
+    """lo~hi에 열리는 근처 서울 문화행사 목록 (agent/relevance.py가 규모·연관도를 따질 때 쓰는 모양).
+    event_rows와 같은 행사만: 확인된 것, MAX_EVENT_DAYS일 이하."""
+    path = Path(work_dir) / EVENTS
+    out = []
+    for e in json.loads(path.read_text(encoding="utf-8")) if path.exists() else []:
+        if e.get("source") != "seoul_culture" or e.get("store_id") != store_id or not e.get("verified", True):
+            continue
+        s, t = dt.date.fromisoformat(e["start_date"]), dt.date.fromisoformat(e["end_date"])
+        if (t - s).days + 1 > MAX_EVENT_DAYS or t < lo or s > hi:
+            continue
+        reg = e.get("published_at")
+        published = (to_kst(reg).normalize() + pd.Timedelta(hours=23, minutes=59)).to_pydatetime() \
+            if reg else dt.datetime.now().replace(microsecond=0)
+        out.append(dict(title=e["title"], place=e.get("place", ""), category=e.get("category", ""), start=s, end=t,
+                        distance_km=float(e.get("distance_m") or 0) / 1000, published_at=published, url=e.get("source_url", ""),
+                        cancelled=False, snippet=None))
+    return out
 
 
 def signals_from_collectors(store_id: str, lo: dt.date, hi: dt.date, work_dir: Path

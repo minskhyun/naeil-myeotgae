@@ -15,6 +15,7 @@
 """
 import json
 import re
+import threading
 import time
 import urllib.error
 import urllib.parse
@@ -30,6 +31,7 @@ RETRIES = 3                           # 일시적 실패 때 다시 시도하는
 CACHE_PATH = RAW / "geocode_cache.json"
 _last_call = 0.0
 _cache: dict[str, list | None] | None = None      # 주소 → [위도, 경도, 이름] 또는 None(못 찾음)
+_LOCK = threading.Lock()              # 글을 여러 개 동시에 읽어도 좌표 찾기는 한 번에 하나씩
 
 
 def _load() -> dict:
@@ -88,6 +90,33 @@ def _kakao(query: str) -> list | None:
     return None
 
 
+def _kakao_regions(lat: float, lon: float) -> list:
+    """카카오 로컬: 좌표가 속한 동 (법정동 B, 행정동 H)."""
+    q = urllib.parse.urlencode({"y": lat, "x": lon})
+    req = urllib.request.Request(f"{KAKAO}/geo/coord2regioncode.json?{q}",
+                                 headers={"Authorization": f"KakaoAK {settings()['KAKAO_REST_KEY']}"})
+    with urllib.request.urlopen(req, timeout=15) as r:
+        return json.loads(r.read().decode("utf-8"))["documents"]
+
+
+def area_name(lat: float | None, lon: float | None, search=None) -> str | None:
+    """매장이 있는 동네 이름 = 행정동 이름에서 번호와 '동'을 뗀 것 ('신촌동' → '신촌', '성수1가1동' → '성수', '송도3동' → '송도').
+    없거나 못 찾으면 None. 근처 소식을 검색하는 말로 쓴다 (agent/naver.py의 area_keywords).
+    가장 가까운 역 이름도 써 봤지만 동네 이름이 아닌 역이 있었다 (송도의 '캠퍼스타운역'). search는 테스트에서 바꿔 끼우는 자리다."""
+    if lat is None or lon is None or not (search or settings().get("KAKAO_REST_KEY")):
+        return None
+    try:
+        regions = (search or _kakao_regions)(lat, lon)
+    except Exception:
+        return None
+    for kind in ("H", "B"):                                   # 행정동이 먼저 (법정동은 '창천동'처럼 덜 쓰는 이름이 많다)
+        for r in regions:
+            m = re.fullmatch(r"([가-힣]{2,}?)(?:제?\d+가?)*동(?:\d+가)?", r.get("region_3depth_name", ""))
+            if r.get("region_type") == kind and m:
+                return m.group(1)
+    return None
+
+
 def place_queries(place: str) -> list[str]:
     """LLM이 적은 장소 → 카카오에 넣어 볼 검색어들 (정확한 것부터).
     "서울 성수동 '플레임그라운드(Flameground by BURGER KING)'" → ['플레임그라운드', ..., '서울 성수동 플레임그라운드', ...]
@@ -112,6 +141,11 @@ def place_queries(place: str) -> list[str]:
 def geocode(address: str, search=None) -> tuple[float, float, str]:
     """주소 → (위도, 경도, 찾은 이름). 끝까지 못 찾으면 ValueError.
     search를 주면(테스트) 카카오는 건너뛰고 그 함수로 OpenStreetMap 방식만 쓴다."""
+    with _LOCK:
+        return _geocode(address, search)
+
+
+def _geocode(address: str, search=None) -> tuple[float, float, str]:
     address = " ".join(address.split())
     cache = _load()
     if address in cache:

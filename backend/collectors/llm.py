@@ -16,7 +16,8 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-MAX_RETRIES = 4
+MAX_RETRIES = 2
+TIMEOUT_S = 120            # 한 번 부를 때 기다리는 최대 시간 (SDK 기본 10분이면 서버가 멈출 때 수집 전체가 멈춘 것처럼 보인다)
 MAX_TOKENS = 32000
 SYSTEM = "요청한 형식의 JSON만 출력한다. 설명, 코드 블록 표시(```), 앞뒤 문장을 붙이지 않는다."
 
@@ -69,7 +70,7 @@ def llm_json(prompt: str):
 
 def _call_claude(key: str, model: str, prompt: str) -> str:
     import anthropic
-    client = anthropic.Anthropic(api_key=key, max_retries=MAX_RETRIES)
+    client = anthropic.Anthropic(api_key=key, max_retries=MAX_RETRIES, timeout=TIMEOUT_S)
     with client.messages.stream(model=model, max_tokens=MAX_TOKENS, thinking={"type": "adaptive"}, system=SYSTEM,
                                 messages=[{"role": "user", "content": prompt}]) as stream:
         message = stream.get_final_message()

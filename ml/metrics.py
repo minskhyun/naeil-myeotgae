@@ -53,7 +53,18 @@ def score(preds: pd.DataFrame, model: str) -> dict:
         pinball_p10=pinball(y, d["p10"], 0.1), pinball_p90=pinball(y, d["p90"], 0.9),
         coverage_80=coverage(y, d["p10"], d["p90"]), n=len(d),
         wape_by_fold=[wape(g["qty"], g["pred"]) for _, g in d.groupby("fold")],
+        **miss_counts(d),
     )
+
+
+def miss_counts(d: pd.DataFrame) -> dict:
+    """예측대로 준비했다면 남거나 모자랐을 개수 (비율이 아니라 개수) → over, under, days, amount.
+    amount = 그 개수 × 메뉴 판매가의 합. 예측표에 price 열이 있을 때만 (판매가를 모르는 메뉴는 0원으로 친다)."""
+    diff = d["pred"] - d["qty"]
+    out = dict(over=float(diff.clip(lower=0).sum()), under=float((-diff).clip(lower=0).sum()), days=int(d["date"].nunique()) if "date" in d else 0)
+    if "price" in d and d["price"].notna().any():
+        out["amount"] = float((diff.abs() * d["price"].fillna(0)).sum())
+    return out
 
 
 def bootstrap_wape_change(base: pd.DataFrame, other: pd.DataFrame, block: int = 7, n_boot: int = 1000,

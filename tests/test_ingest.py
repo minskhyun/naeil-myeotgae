@@ -37,6 +37,28 @@ def test_read_pos_fixtures(expected, name, pos_type, receipt):
         assert log["dropped_cancel"] == 1 and {"first_time", "last_time"} <= set(df.columns)
 
 
+def test_item_sales_workbook_with_monthly_sheets(tmp_path):
+    """상품별 매출 엑셀: 열 이름이 '품목명', 달마다 시트가 따로. 금액권·충전은 메뉴가 아니므로 뺀다."""
+    head = ["일자", "품목코드", "품목명", "규격", "수량", "공급가액", "부가세"]
+    sep = pd.DataFrame([head, [20260929, "00001", "아메리카노 (Americano)", "수량", 120, 360000, 36000],
+                        [20260929, "00380", "충전(Charge)", "수량", 2, 4000, 400],
+                        [20260930, "00001", "아메리카노 (Americano)", "수량", 0, 0, 0]])
+    octo = pd.DataFrame([head, [20261001, "00001", "아메리카노 (Americano)", "수량", 122, 366000, 36600],
+                         [20261001, "00210", "10000원 ", "수량", 3, 30000, 3000],
+                         [20261001, "00044", "소금빵 (Salt bread)", "수량", 4, 12000, 1200]])
+    memo = pd.DataFrame([["메모"], ["이 시트는 표가 아님"]])
+    p = tmp_path / "items.xlsx"
+    with pd.ExcelWriter(p) as w:
+        for name, sheet in (("9월", sep), ("10월", octo), ("메모", memo)):
+            sheet.to_excel(w, sheet_name=name, header=False, index=False)
+    df, log = read_pos(p)
+    assert log["pos_type"] == "items" and log["sheets"] == 2                 # 머리글이 같은 두 시트만 이어 읽음
+    assert log["non_menu"] == ["10000원", "충전(Charge)"] and log["dropped_non_menu"] == 2
+    got = {(d.strftime("%m-%d"), m): q for d, m, q in df[["date", "menu_raw", "qty"]].itertuples(index=False)}
+    assert got == {("09-29", "아메리카노 (Americano)"): 120, ("09-30", "아메리카노 (Americano)"): 0,
+                   ("10-01", "아메리카노 (Americano)"): 122, ("10-01", "소금빵 (Salt bread)"): 4}
+
+
 def test_header_not_found_gives_hint(tmp_path):
     p = tmp_path / "weird.csv"
     p.write_text("거래번호,품목,개수\n1,소금빵,3\n", encoding="utf-8")
@@ -119,3 +141,19 @@ def test_run_with_pos_file(tmp_path):
         assert (out / name).exists(), name
     cands = json.loads((out / "menu_merge_candidates.json").read_text(encoding="utf-8"))
     assert {"a": "아메리카노(ICE)", "b": "아이스 아메리카노", "score": 1.0} in cands
+
+
+def test_unit_prices_from_amount_columns(tmp_path):
+    """금액 열이 있으면 메뉴별 판매가(금액 합 ÷ 수량 합, 공급가액이면 부가세 포함)를 menu_prices.json에 남긴다."""
+    import json
+    from ml.ingest import ingest_store
+    p = tmp_path / "items.csv"
+    p.write_text("일자,품목명,수량,공급가액,부가세\n20261001,소금빵,10,30000,3000\n20261002,소금빵,10,30000,3000\n"
+                 "20261001,아메리카노,4,16000,1600\n20261002,서비스 쿠키,2,0,0\n", encoding="utf-8")
+    ingest_store(p, "s", tmp_path / "out")
+    assert json.loads((tmp_path / "out" / "menu_prices.json").read_text(encoding="utf-8")) == {"소금빵": 3300, "아메리카노": 4400}
+
+    q = tmp_path / "no_amount.csv"                                   # 금액 열이 없으면 파일을 만들지 않는다
+    q.write_text("날짜,상품명,수량\n2026-10-01,소금빵,10\n", encoding="utf-8")
+    ingest_store(q, "s", tmp_path / "out2")
+    assert not (tmp_path / "out2" / "menu_prices.json").exists()

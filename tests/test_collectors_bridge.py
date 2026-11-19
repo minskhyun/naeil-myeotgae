@@ -81,3 +81,20 @@ def test_hide_keys_in_logs():
     from agent.collectors_bridge import hide_keys
     line = "403 Forbidden for url: http://apis.data.go.kr/x?serviceKey=abc123SECRET&solYear=2026 KEY=zz"
     assert "abc123SECRET" not in hide_keys(line) and "serviceKey=***&solYear=2026" in hide_keys(line)
+
+
+def test_tell_coverage_says_the_whole_period():
+    """화면 알림: 날씨·학교 일정을 하루치가 아니라 기간 전체로 가져왔다는 것 (언제부터 언제까지, 시험·방학이 몇 번)."""
+    from agent import collectors_bridge as bridge
+    from ml import progress
+    day = lambda m, d: dt.date(2026, m, d)                                     # noqa: E731
+    exams = {day(4, d) for d in range(20, 26)} | {day(6, d) for d in range(15, 21)}        # 중간·기말 = 2번
+    assert bridge.periods(exams) == 2 and bridge.periods([]) == 0
+    progress.reset()
+    bridge.tell_coverage({"temp_mean": {day(1, 1), day(6, 30)}, "exam_period": exams, "vacation": {day(6, 22), day(6, 23)}})
+    weather, school = progress.EVENTS
+    assert weather == dict(kind="weather", days=2, first=day(1, 1), last=day(6, 30))
+    assert school == dict(kind="academic", days=14, first=day(4, 20), last=day(6, 23), exams=2, vacations=1, festivals=0)
+    progress.reset()
+    bridge.tell_coverage({})                                                   # 가져온 것이 없으면 알리지 않는다
+    assert progress.EVENTS == []

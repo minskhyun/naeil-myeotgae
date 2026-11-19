@@ -6,7 +6,7 @@ export type Reason = { signal: string; effect_pct: number; text: string; source_
 export type ForecastRow = {
   date: string
   menu: string
-  pred: number // 예상 판매량 (= p50)
+  pred: number // 예상 판매량 (평균 기대값)
   p10: number // 예상 범위 아래 끝
   p90: number // 예상 범위 위 끝
   prep_qty: number | null // 준비 권장량
@@ -42,6 +42,10 @@ export type ModelScore = {
   coverage_80: number
   n: number
   wape_by_fold: number[]
+  over?: number // 예측대로 준비했다면 남았을 개수 합
+  under?: number // 모자랐을 개수 합
+  days?: number // 채점한 날짜 수
+  amount?: number | null // 남거나 모자란 개수를 판매가로 환산한 금액 합(원). 판매가를 모르면 없음
 }
 
 export type SignalDecision = {
@@ -88,8 +92,51 @@ export type SourceReport = {
   notes: string[]
 }
 
-// 매장 목록의 한 줄 (GET /api/stores)
-export type StoreInfo = { store_id: string; name: string; prep_mode: string }
+// 매장 목록의 한 줄 (GET /api/stores). can_edit: 내가 고칠 수 있는 매장인지 (시연 매장·시연 모드는 false)
+// demo: 누구나 보는 예시 매장인지 → 로그인 전 첫 화면(Landing.tsx)에만 보여 준다
+export type StoreInfo = { store_id: string; name: string; prep_mode: string; can_edit: boolean; demo: boolean }
+
+// 로그인한 사람 (GET /api/auth/me). 서버 규칙은 backend/app/auth.py
+// provider: 어느 로그인인지. 카카오는 이메일 제공에 동의하지 않으면 email이 없다
+export type User = { provider: 'google' | 'kakao'; email: string | null; name: string; picture: string | null; is_admin: boolean }
+
+// 이 서버가 쓰는 로그인 방법 (GET /api/config에서 만든다). 하나도 없으면 로그인을 안 쓰는 서버
+export type LoginConfig = { google: string | null; kakao: boolean } // google = 구글 클라이언트 ID
+
+// '내 매장' 목록의 한 줄 (GET /api/my/stores). 아직 준비표가 없는 매장도 나온다
+export type MyStore = {
+  store_id: string
+  name: string
+  address: string | null
+  close_time: string
+  created_at: string | null
+  updated_at: string | null // 마지막으로 준비표를 만든 때
+  ready: boolean // 준비표가 있는지
+  running: boolean // 지금 계산 중인지
+  mine: boolean // 내가 만든 매장인지 (관리자는 남의 매장도 본다)
+}
+
+// 실행 중에 서버가 알려 주는 것 한 건 (ml/progress.py가 내보낸다) → '분석 중' 화면(AnalysisView.tsx)이 지도와 목록에 그린다
+export type ProgressEvent =
+  | { kind: 'step'; step: 'ingest' | 'collect' | 'evaluate' | 'predict'; status: 'start' | 'done'; note?: string }
+  | { kind: 'status'; text: string } // 지금 하는 일 한 줄
+  | { kind: 'store'; name: string; address?: string; lat?: number; lon?: number }
+  | { kind: 'sales'; days: number; menus: number; first: string; last: string }
+  | { kind: 'places'; count: number; places: { name: string; group: string; lat: number; lon: number; distance_m: number }[] }
+  | { kind: 'plan'; method?: string; model?: string; radius_m?: number; reason?: string; picks: { what: string; name: string; lat: number; lon: number; reason?: string }[] }
+  | { kind: 'weather'; days: number; first?: string; last?: string } // first~last = 가져온 기간 (판매 기록 기간 전체)
+  | { kind: 'academic'; days: number; first?: string; last?: string; exams?: number; vacations?: number; festivals?: number }
+  | { kind: 'event'; title: string; place?: string; lat: number; lon: number; start: string; end: string; source: string; url?: string }
+  | { kind: 'article'; title: string; url: string }
+  | { kind: 'special'; date: string; name: string; relevance?: number; menus?: string[]; reason?: string } // relevance·menus = AI가 매긴 연관도
+  | { kind: 'trend_span'; menus: number; days: number; first: string; last: string } // 검색량을 가져온 기간
+  | { kind: 'trend'; menu: string; pct: number } // 예측 날짜 기준: 최근 7일이 그 전 4주보다 몇 % 늘었나
+  | { kind: 'rating'; title: string; scale: number; relevance: number; distance_m: number; menus: string[]; reason: string } // AI가 매긴 행사의 규모·연관도
+  | { kind: 'trial'; groups: string[]; wape: number; miss?: number } // miss = 하루에 남거나 모자란 개수.
+  // 검증 중: 이 정보 묶음을 넣어 시험했더니 오차가 이만큼
+  | { kind: 'decision'; group: string; adopted: boolean; reason: string }
+  | { kind: 'scores'; model: string; wape: number; base_wape: number; coverage: number; test_days?: number; miss?: number; base_miss?: number; saved_amount?: number }
+  | { kind: 'forecast'; date: string; menus: number; top: { menu: string; prep: number | null; pred: number }[]; warnings: string[] }
 
 // 실행 작업 (예측 돌리기). 화면은 useJob.ts로 상태를 물어본다
 export type Job = {
@@ -97,26 +144,43 @@ export type Job = {
   store_id: string
   status: 'running' | 'done' | 'error'
   log: string[]
+  events: ProgressEvent[] // 실행 중에 찾은 것 한 건씩
   error: string | null
 }
 
 export const PREP_MODES = ['폐기 줄이기', '균형', '품절 줄이기'] as const
 
+const JSON_BODY = { 'Content-Type': 'application/json' }
+
 async function call<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`/api${path}`, init)
   if (!res.ok) {
     const body = await res.json().catch(() => null)
-    throw new Error(body?.detail ?? `요청 실패 (${res.status})`)
+    const detail = body?.detail
+    throw new Error(typeof detail === 'string' ? detail : `요청 실패 (${res.status})`)
   }
   return res.json()
 }
 
 export const api = {
-  config: () => call<{ demo_mode: boolean }>('/config'),
+  // google_client_id가 있으면 구글 로그인 버튼을, kakao_login이면 카카오 로그인 버튼을 보여 준다
+  config: () => call<{ demo_mode: boolean; google_client_id: string | null; kakao_login: boolean }>('/config'),
+  me: () => call<User | null>('/auth/me'),
+  loginGoogle: (credential: string) =>
+    call<User>('/auth/google', { method: 'POST', headers: JSON_BODY, body: JSON.stringify({ credential }) }),
+  logout: () => call<{ ok: boolean }>('/auth/logout', { method: 'POST' }),
+  // 내 매장 관리 (로그인한 사람만). 매장 ID는 서버가 지어 준다
+  myStores: () => call<MyStore[]>('/my/stores'),
+  createStore: (name: string, closeTime: string) =>
+    call<MyStore>('/my/stores', { method: 'POST', headers: JSON_BODY, body: JSON.stringify({ name, close_time: closeTime }) }),
+  renameStore: (id: string, name: string) =>
+    call<MyStore>(`/my/stores/${id}`, { method: 'PATCH', headers: JSON_BODY, body: JSON.stringify({ name }) }),
+  deleteStore: (id: string) => call<{ ok: boolean }>(`/my/stores/${id}`, { method: 'DELETE' }),
   stores: () => call<StoreInfo[]>('/stores'),
   forecast: (id: string) => call<Forecast>(`/stores/${id}/forecast`),
   backtest: (id: string) => call<Backtest>(`/stores/${id}/backtest`),
   sources: (id: string) => call<SourceReport>(`/stores/${id}/sources`),
+  progress: (id: string) => call<ProgressEvent[]>(`/stores/${id}/progress`), // 마지막 분석 때 알린 것 (다시 보기)
   job: (jobId: string) => call<Job>(`/jobs/${jobId}`),
   demo: () => call<Job>('/stores/sinchon-a/demo', { method: 'POST' }),
   setPrepMode: (id: string, prepMode: string) => {
