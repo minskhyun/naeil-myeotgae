@@ -89,6 +89,9 @@ export function UploadView({ onStarted, busy = false, account = false, initialTa
   const [typedAddress, setAddress] = useState<string | null>(null)
   const closeTime = typedClose ?? chosen?.close_time ?? '21:00'
   const address = typedAddress ?? chosen?.address ?? ''
+  // 다른 매장과 함께 배우기 (기본은 끔. 있는 매장이면 저장된 설정)
+  const [typedShare, setShare] = useState<boolean | null>(null)
+  const share = typedShare ?? chosen?.share_learning ?? false
   const [pos, setPos] = useState<File>()
   const [error, setError] = useState<string | null>(null)
   const [sending, setSending] = useState(false) // 파일을 보내는 중
@@ -108,7 +111,7 @@ export function UploadView({ onStarted, busy = false, account = false, initialTa
 
   // 준비표 만들기: 새 매장이면 먼저 매장을 만들어 ID를 받고, 그 매장에 파일을 올린다
   const run = async () => {
-    const opts = { closeTime, address: address.trim() }
+    const opts = { closeTime, address: address.trim(), share }
     if (!account) return api.run(storeId, pos!, opts)
     let id = target
     if (id === NEW) {
@@ -155,11 +158,24 @@ export function UploadView({ onStarted, busy = false, account = false, initialTa
         </div>
       </Step>
 
-      <Step n={2} title="판매 기록 파일">
+      <Step n={2} title="함께 배우기">
+        <label className="flex cursor-pointer items-start gap-3 rounded-2xl bg-paper px-4 py-3.5">
+          <input type="checkbox" checked={share} onChange={(e) => setShare(e.target.checked)} className="mt-1 h-4 w-4 accent-accent" />
+          <span>
+            <span className="font-medium">다른 매장과 함께 배우기</span>
+            <span className="mt-1 block text-sm text-muted">
+              켜면 이 매장의 기록이 함께 배우기를 켠 다른 매장의 예측 학습에 쓰이고, 그 매장들의 기록도 내 예측 학습에 쓰여요.
+              판매 기록 자체는 서로에게 보이지 않습니다. 지난 기록으로 시험해 실제로 더 정확해질 때만 사용하고, 결과는 '얼마나 맞나'에 적습니다.
+            </span>
+          </span>
+        </label>
+      </Step>
+
+      <Step n={3} title="판매 기록 파일">
         <PosFile file={pos} onPick={setPos} />
       </Step>
 
-      <Step n={3} title="분석">
+      <Step n={4} title="분석">
         <div className="flex flex-wrap items-center gap-3">
           <button disabled={!pos || running || !closeTime || (isNew && !name.trim())} onClick={() => start(run)}
             className="rounded-full bg-accent px-7 py-3 font-bold text-white hover:bg-accent-deep disabled:cursor-not-allowed disabled:opacity-40">

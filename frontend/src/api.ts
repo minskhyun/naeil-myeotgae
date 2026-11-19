@@ -65,6 +65,8 @@ export type Backtest = {
   test_scores: ModelScore[]
   data_note: string
   calibration?: { adopted: boolean; reason: string } | null
+  // 다른 매장과 함께 배운 모델을 쓸지 판정 (함께 배울 매장이 없으면 null)
+  shared?: { partners: number; weight: number; adopted: boolean; wape_own: number; wape_shared: number; reason: string } | null
 }
 
 // 정보원 선택 에이전트의 계획 (backend/collectors/agent.py가 만든 것 그대로)
@@ -110,6 +112,7 @@ export type MyStore = {
   ready: boolean // 준비표가 있는지
   running: boolean // 지금 계산 중인지
   mine: boolean // 내가 만든 매장인지 (관리자는 남의 매장도 본다)
+  share_learning: boolean // 다른 매장과 함께 배우기를 켰는지
 }
 
 // 실행 중에 서버가 알려 주는 것 한 건 (ml/progress.py가 내보낸다) → '분석 중' 화면(AnalysisView.tsx)이 지도와 목록에 그린다
@@ -127,6 +130,7 @@ export type ProgressEvent =
   | { kind: 'special'; date: string; name: string; relevance?: number; menus?: string[]; reason?: string } // relevance·menus = AI가 매긴 연관도
   | { kind: 'trend'; menu: string; pct: number }
   | { kind: 'rating'; title: string; scale: number; relevance: number; distance_m: number; menus: string[]; reason: string } // AI가 매긴 행사의 규모·연관도
+  | { kind: 'shared'; partners: number; adopted: boolean; wape_own: number; wape_shared: number } // 다른 매장과 함께 배운 모델과의 비교
   | { kind: 'trial'; groups: string[]; wape: number } // 검증 중: 이 정보 묶음을 넣어 시험했더니 오차가 이만큼
   | { kind: 'decision'; group: string; adopted: boolean; reason: string }
   | { kind: 'scores'; model: string; wape: number; base_wape: number; coverage: number; test_days?: number }
@@ -183,11 +187,12 @@ export const api = {
     return call<Job>(`/stores/${id}/settings`, { method: 'POST', body: form })
   },
   // 사장님은 POS 파일과 주소만 준다. 주변 정보는 서버가 주소로 자동 수집한다.
-  run: (id: string, pos: File, opts: { closeTime?: string; address?: string }) => {
+  run: (id: string, pos: File, opts: { closeTime?: string; address?: string; share?: boolean }) => {
     const form = new FormData()
     form.append('pos', pos)
     if (opts.closeTime) form.append('close_time', opts.closeTime)
     if (opts.address) form.append('address', opts.address)
+    if (opts.share !== undefined) form.append('share', String(opts.share))
     return call<Job>(`/stores/${id}/run`, { method: 'POST', body: form })
   },
 }

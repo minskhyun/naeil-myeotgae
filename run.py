@@ -36,7 +36,7 @@ from agent import collect, collectors_bridge, geocode
 from agent.collectors_bridge import OBSERVED_PROXY
 from agent.report import write_report
 from contracts.schemas import BacktestResult, CollectionItem, SignalRow, StoreConfig
-from ml import progress
+from ml import progress, shared
 from ml.alerts import make_warnings
 from ml.evaluate import run_backtest, write_backtest
 from ml.features import load_sales, load_signals, to_kst
@@ -162,6 +162,8 @@ def _store_setup(args, out: Path) -> tuple[StoreConfig, str]:
             note = f"위치 {found.split(',')[0]} ({lat:.4f}, {lon:.4f})"
         except Exception as e:                                  # 위치를 못 찾아도 예측은 계속 (주변 정보 없이)
             note = f"주소로 위치를 찾지 못함({type(e).__name__}) → 주변 정보 없이 진행"
+    if args.share:                                              # 함께 배우기 켜기·끄기 (주지 않으면 그대로)
+        store.share_learning = args.share == "on"
     store.write(path)
     return store, note
 
@@ -229,12 +231,32 @@ def _import_collection(path: Path, out: Path, append: bool = False) -> str:
     return f"원문 {len(items)}개"
 
 
+def _partners(store: StoreConfig, out: Path) -> list[shared.Partner]:
+    """함께 배울 다른 매장들: 이 매장이 '함께 배우기'를 켰을 때만, 같은 설정을 켠 다른 매장의 정리된 기록.
+    같은 결과 폴더(out의 옆 폴더들)에서 찾는다. 최근에 갱신된 순으로 MAX_PARTNERS곳까지."""
+    if not store.share_learning:
+        return []
+    found = []
+    for folder in sorted(out.parent.iterdir(), key=lambda p: p.stat().st_mtime, reverse=True):
+        files = folder / "store.json", folder / "sales_clean.csv"
+        if folder == out or not all(f.exists() for f in files):
+            continue
+        other = StoreConfig.read(files[0])
+        if other.share_learning:
+            signals = load_signals(folder / "signals.csv") if (folder / "signals.csv").exists() else None
+            found.append((load_sales(files[1]), signals, other.close_time))
+    return found[:shared.MAX_PARTNERS]
+
+
 # ---------------------------------------------------------------- 2. evaluate
 
 def step_evaluate(args, out: Path) -> str:
     store, sales, signals = _load(out)
     progress.status("지난 기록으로 예측을 시험해, 어떤 정보가 실제로 도움이 되는지 확인하는 중")
-    bt = run_backtest(sales, signals, close_time=store.close_time, **args.model_kwargs)
+    partners = _partners(store, out)
+    if partners:
+        progress.status(f"다른 매장 {len(partners)}곳과 함께 배운 모델도 시험하는 중")
+    bt = run_backtest(sales, signals, close_time=store.close_time, partners=partners, **args.model_kwargs)
     write_backtest(bt, out.parent)
     for d in bt.decisions:                                    # 화면: 정보 묶음마다 쓸지 말지
         progress.emit("decision", group=d.signal_group, adopted=d.adopted, reason=d.reason)
@@ -245,7 +267,8 @@ def step_evaluate(args, out: Path) -> str:
         progress.emit("scores", model=bt.chosen_model, wape=round(mine.wape, 4), base_wape=round(base.wape, 4),
                       coverage=round(mine.coverage_80, 4), test_days=days)
     adopted = [d.signal_group for d in bt.decisions if d.adopted] or ["없음"]
-    return f"선택 모델 {bt.chosen_model}, 채택 신호 {', '.join(adopted)}"
+    together = "" if bt.shared is None else f", 함께 배우기 {bt.shared.partners}곳 {'사용' if bt.shared.adopted else '사용 안 함'}"
+    return f"선택 모델 {bt.chosen_model}, 채택 신호 {', '.join(adopted)}{together}"
 
 
 # ---------------------------------------------------------------- 3. predict
@@ -254,8 +277,8 @@ def step_predict(args, out: Path) -> str:
     store, sales, signals = _load(out)
     progress.status("내일 메뉴별 판매량을 예측하는 중")
     bt = BacktestResult.model_validate_json(_need(out / "backtest.json", "evaluate").read_text(encoding="utf-8"))
-    fc = predict_from_backtest(sales, signals, bt, close_time=store.close_time, prep_mode=store.prep_mode,
-                               menus=store.menus, **args.model_kwargs)
+    fc = predict_from_backtest(sales, signals, bt, partners=_partners(store, out), close_time=store.close_time,
+                               prep_mode=store.prep_mode, menus=store.menus, **args.model_kwargs)
     note = ""
     if store.menus is not None:                               # 오타·아직 안 판 신메뉴는 예측할 수 없으니 알려 준다
         missing = sorted(set(store.menus) - {r.menu for r in fc.rows})
@@ -290,6 +313,7 @@ def parse_args(argv=None):
     p.add_argument("--pos-type", default="auto", choices=["auto", "toss", "okpos"])
     p.add_argument("--address", help="매장 주소 → 위치를 찾아 날씨·행사·뉴스를 자동 수집 (store.json에 저장)")
     p.add_argument("--close-time", help="영업 종료 시각 HH:MM (store.json이 없을 때만 씀, 기본 21:00)")
+    p.add_argument("--share", choices=["on", "off"], help="다른 매장과 함께 배우기 켜기·끄기 (store.json에 저장, 기본 끔)")
     p.add_argument("--signals", help="[개발용] 외부 신호 파일 (SignalRow 형식 .json/.csv). 주면 자동 수집을 하지 않음")
     p.add_argument("--collection", help="[개발용] AI 주의 안내용 원문 모음 (CollectionItem 형식 .json)")
     p.add_argument("--from-step", default="ingest", choices=STEPS, help="이 단계부터 실행")

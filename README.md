@@ -199,6 +199,7 @@ cd frontend && npm run build && npm run lint
 │   ├── alerts.py           AI 주의 안내
 │   ├── llm.py              .env 설정 읽기, Claude 호출과 응답 저장
 │   ├── progress.py         실행 중에 찾은 것을 한 건씩 알리기 (웹의 '분석 중' 화면용)
+│   ├── shared.py           다른 매장과 함께 배우기 (여러 매장의 기록을 한 모델이, 내 매장 기록에 더 무게)
 │   ├── paths.py            폴더 위치
 │   ├── calendar_kr.py      공휴일 목록
 │   ├── sample_data.py      가상 매장 만들기
@@ -252,6 +253,7 @@ cd frontend && npm run build && npm run lint
 | 준비 방식·근거 문장 바꾸기 | `ml/predict.py`의 `PREP_MODES`, `reason_text` |
 | AI 주의 안내의 규칙 바꾸기 | `ml/alerts.py`의 `SYSTEM` |
 | 매장 설정 칸 추가 | `contracts/schemas.py`의 `StoreConfig` |
+| 다른 매장과 함께 배우는 정도 바꾸기 | `ml/shared.py`의 `PARTNER_WEIGHT`(다른 매장 줄의 무게), 누구와 섞을지는 `run.py`의 `_partners` |
 | LLM 모델·제공자 바꾸기 | `.env`의 `LLM_MODEL`·`LLM_MODEL_LIGHT`, `ml/llm.py`의 `PROVIDERS` |
 | 로그인·권한 규칙 바꾸기 | `backend/app/auth.py`의 `can_read`·`can_write`·`check_write` (화면은 `frontend/src/Auth.tsx`) |
 | 내 매장 관리 바꾸기 | `backend/app/main.py`의 `/api/my/stores`, `frontend/src/StoresView.tsx` (한 사람당 매장 수는 `auth.MAX_STORES`) |
