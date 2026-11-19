@@ -101,19 +101,17 @@ export function BacktestView({ storeId, hideDecisions = false }: { storeId: stri
       {v && (
         <div className="grid gap-3 sm:grid-cols-3">
           <Stat label="하루 오차" value={`${count(v.mineShown)}개`} note={`지난주대로 준비하면 ${count(v.baseShown)}개`} />
-          <Stat label="범위 정확도" value={pct1(rangeScore(v.mine.coverage_80))} />
+          <Stat label="예상 범위 정확도" value={pct1(rangeScore(v.mine.coverage_80))} note={`범위 안에 든 비율 ${pct1(v.mine.coverage_80)} · 목표 80%`} />
           <Stat label="쓰는 정보" value={<span className="text-xl">{used.length ? `판매 기록 + ${used.join('·')}` : '판매 기록'}</span>} />
         </div>
       )}
 
-      <section>
-        <h3 className="text-lg font-bold">방법별 하루 오차</h3>
-        <div className="mt-3">
-          {data.cv_scores.map((s) => (
-            <BarRow key={s.model} label={name(s.model)} value={cvMiss(s)} max={cvMax} strong={s.model === picked} />
-          ))}
-        </div>
-      </section>
+      {v && (
+        <section>
+          <BarRow label="지난주대로 준비" value={v.baseMiss} max={Math.max(v.baseMiss, v.mineMiss)} strong={false} />
+          <BarRow label="내일몇개" value={v.mineMiss} max={Math.max(v.baseMiss, v.mineMiss)} strong />
+        </section>
+      )}
 
       {!hideDecisions && (
         <section>
@@ -133,12 +131,17 @@ export function BacktestView({ storeId, hideDecisions = false }: { storeId: stri
           </li>
           {data.test_period && (
             <li>
-              맨 위 숫자는 마지막 확인 기간({fmtDate(data.test_period[0])} ~ {fmtDate(data.test_period[1])}), 막대는 그 앞의 검증 기간 {cvDays}일 기준이라
-              값이 조금 다릅니다.
+              위의 숫자는 모두 마지막 확인 기간({fmtDate(data.test_period[0])} ~ {fmtDate(data.test_period[1])}) 기준입니다.
             </li>
           )}
           <li>{data.data_note}</li>
         </ul>
+        <p className="mt-4 font-semibold text-ink">방법별 하루 오차 (그 앞의 검증 기간 {cvDays}일 기준)</p>
+        <div className="mt-2 max-w-2xl">
+          {data.cv_scores.map((s) => (
+            <BarRow key={s.model} label={name(s.model)} value={cvMiss(s)} max={cvMax} strong={s.model === picked} />
+          ))}
+        </div>
       </details>
     </div>
   )

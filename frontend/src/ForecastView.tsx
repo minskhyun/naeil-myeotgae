@@ -165,9 +165,14 @@ export function ForecastTable({ rows, limit, compact = false, storeId }: {
   const max = Math.max(...shown.map((r) => r.p90)) * 1.05
   const totalPrep = rows.reduce((sum, r) => sum + (r.prep_qty ?? 0), 0)
   const totalPred = Math.round(rows.reduce((sum, r) => sum + r.pred, 0))
+  const why = rows.some((r) => r.reasons.length > 0) // '평소 대비'에 적을 것이 하나라도 있나 (주변 정보를 안 쓰는 매장은 열을 숨긴다)
   const cols = compact
-    ? 'md:grid-cols-[minmax(6.5rem,1fr)_3.5rem_7.5rem_8.75rem_minmax(8.5rem,1.1fr)_1rem]'
-    : 'md:grid-cols-[minmax(9rem,1.3fr)_5rem_4.5rem_7.5rem_12rem_minmax(9rem,1.4fr)_1rem]'
+    ? why
+      ? 'md:grid-cols-[minmax(6.5rem,1fr)_3.5rem_7.5rem_8.75rem_minmax(8.5rem,1.1fr)_1rem]'
+      : 'md:grid-cols-[minmax(8rem,1.4fr)_4rem_8rem_minmax(8.75rem,1fr)_1rem]'
+    : why
+      ? 'md:grid-cols-[minmax(9rem,1.3fr)_5rem_4.5rem_7.5rem_12rem_minmax(9rem,1.4fr)_1rem]'
+      : 'md:grid-cols-[minmax(10rem,1.6fr)_5rem_5rem_8rem_minmax(12rem,1fr)_1rem]'
   const date = rows[0].date
 
   return (
@@ -187,7 +192,7 @@ export function ForecastTable({ rows, limit, compact = false, storeId }: {
         {!compact && <span className="text-right">예상</span>}
         <span>최근 4주</span>
         <span>예상 범위</span>
-        <span>평소 대비</span>
+        {why && <span>평소 대비</span>}
         <span />
       </div>
       <ol>
@@ -221,7 +226,7 @@ export function ForecastTable({ rows, limit, compact = false, storeId }: {
               <span className="hidden md:block">
                 <Range row={r} max={max} narrow={compact} />
               </span>
-              <span className="col-span-2 text-sm text-muted md:col-span-1 md:whitespace-nowrap">
+              <span className={`col-span-2 text-sm text-muted md:col-span-1 md:whitespace-nowrap ${why ? '' : 'hidden'}`}>
                 {r.reasons.length ? (
                   r.reasons.map((x, k) => (
                     <span key={x.signal} title={x.text}>

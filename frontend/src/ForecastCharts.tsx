@@ -51,9 +51,11 @@ export function DayBars({ dates, values, next, height = 150 }: {
             const same = asDate(dates[i]).getDay() === weekday
             return (
               <div key={dates[i]} className={`relative flex h-full flex-1 items-end ${hover === i ? 'bg-ink/5' : ''}`} onMouseEnter={() => setHover(i)}>
-                {hover === i && tip(i, `${short(dates[i])} (${WEEKDAYS[asDate(dates[i]).getDay()]}) · ${v === null ? '기록 없음' : `${count(v)}개`}`, v ?? 0)}
+                {hover === i && tip(i, `${short(dates[i])} (${WEEKDAYS[asDate(dates[i]).getDay()]}) · ${v === null ? '휴무' : `${count(v)}개`}`, v ?? 0)}
                 {v === null ? (
-                  <span className="mx-auto mb-1 h-1 w-1 rounded-full bg-faint/60" />
+                  <span className="flex h-full w-full items-end justify-center rounded-t-[4px] bg-[repeating-linear-gradient(135deg,transparent_0_4px,rgb(21_23_28/0.06)_4px_6px)]">
+                    <span className="mb-1 text-[10px] leading-none text-faint [writing-mode:vertical-rl]">휴무</span>
+                  </span>
                 ) : (
                   <span
                     className={`nm-bar w-full rounded-t-[4px] ${hover === i ? 'bg-ink/70' : same ? 'bg-ink/45' : 'bg-ink/15'}`}

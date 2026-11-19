@@ -171,8 +171,11 @@ export function Dashboard({ storeId, storeName, prepMode, readOnly, onReplay }: 
                 </p>
                 <BarRow label="지난주대로 준비" value={v.baseMiss} max={Math.max(v.baseMiss, v.mineMiss)} strong={false} />
                 <BarRow label="내일몇개" value={v.mineMiss} max={Math.max(v.baseMiss, v.mineMiss)} strong />
-                <p className="mt-4 flex items-baseline justify-between gap-3 border-t border-rule pt-4 text-sm">
-                  <span className="text-muted">범위 정확도</span>
+                <p
+                  className="mt-4 flex items-baseline justify-between gap-3 border-t border-rule pt-4 text-sm"
+                  title={`실제 판매의 ${pct1(v.mine.coverage_80)}가 예상 범위 안 · 목표 80%를 맞추면 100%`}
+                >
+                  <span className="text-muted">예상 범위 정확도</span>
                   <b className="text-lg tabular-nums">{pct1(rangeScore(v.mine.coverage_80))}</b>
                 </p>
               </div>

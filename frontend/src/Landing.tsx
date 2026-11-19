@@ -9,12 +9,9 @@ import { api, type LoginConfig } from './api'
 import { AccountBox, LoginButtons } from './Auth'
 import { BacktestView, Decisions } from './BacktestView'
 import { ForecastView } from './ForecastView'
-import { count } from './format'
 import { SourcesView } from './SourcesView'
-import { verdict } from './verdict'
 
 const FIRST_EXAMPLE = 'sinchon-a' // 보여 줄 예시 매장 (주변 정보와 주의 안내가 다 있는 가상 매장). 없으면 목록의 첫 매장
-const REAL_EXAMPLE = 'fr-bakery' // 공개된 실제 판매 기록으로 돌린 결과 (예시 3 아래에 요약을 보여 준다)
 const MENUS_SHOWN = 8 // 예시 준비표에 처음 보여 줄 메뉴 수
 const HOW = [
   { title: '판매 기록 올리기', text: '포스에서 내려받은 파일과 가게 위치만 있으면 돼요.' },
@@ -76,33 +73,12 @@ function Part({ n, id, title, lead, children }: { n: number; id?: string; title:
   )
 }
 
-// 공개된 실제 판매 기록(프랑스 빵집)으로 같은 방법을 돌린 결과 한 줄 요약. 가상 예시만으로는 "실제로도 되나"에 답이 안 되므로
-function RealData() {
-  const v = verdict(useQuery({ queryKey: ['backtest', REAL_EXAMPLE], queryFn: () => api.backtest(REAL_EXAMPLE), retry: false }).data)
-  if (!v) return null
-  return (
-    <div className="mt-6 rounded-3xl bg-accent-soft px-6 py-6 sm:px-8">
-      <p className="text-sm font-bold text-accent">실제 판매 기록으로도 확인했어요</p>
-      <p className="mt-2 text-lg leading-relaxed">
-        공개된 프랑스 빵집의 판매 기록에서 하루 오차가{' '}
-        <b>
-          {count(v.baseShown)}개 → {count(v.mineShown)}개
-        </b>
-        로 줄었어요 ({v.gain}% 감소).{' '}
-        <a href={`?store=${REAL_EXAMPLE}#example`} className="text-base font-semibold text-accent underline underline-offset-4">
-          결과 보기
-        </a>
-      </p>
-    </div>
-  )
-}
-
 // login: 서버가 쓰는 로그인 방법(구글·카카오). 보기 전용 시연 사이트면 null (로그인 버튼 없음)
 // contactUrl: '사전 신청·문의' 버튼이 여는 주소 (서버 설정). 없으면 버튼을 보여 주지 않는다
 export function Landing({ login, contactUrl = null }: { login: LoginConfig | null; contactUrl?: string | null }) {
   const stores = useQuery({ queryKey: ['stores'], queryFn: api.stores })
   const examples = stores.data?.filter((s) => s.demo) ?? []
-  // 화면에는 가상 매장 하나만 보여 준다. 주소에 ?store=fr-bakery 를 붙이면 다른 예시 매장(공개 실데이터)을 볼 수 있다
+  // 화면에는 가상 매장 하나만 보여 준다 (주소에 ?store=매장ID 를 붙이면 다른 예시 매장. 화면에서 그리로 가는 길은 두지 않는다)
   const params = new URLSearchParams(window.location.search)
   const picked = params.get('store')
   const loginFailed = params.get('login_error') // 카카오 로그인이 실패·취소되면 서버가 ?login_error=kakao 로 돌려보낸다
@@ -147,13 +123,16 @@ export function Landing({ login, contactUrl = null }: { login: LoginConfig | nul
           <p className="mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-white/90">
             판매 기록에 날씨·학교 일정·근처 행사를 더해, 내일 메뉴별로 몇 개 준비하면 좋을지 알려 드려요.
           </p>
-          {!!past?.length && (
-            <div className="mt-8">
-              <button onClick={() => setReplaying(true)} className="rounded-full bg-white px-7 py-3 text-base font-bold text-ink shadow-xl hover:bg-paper">
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <a href="#example" className="rounded-full bg-white px-7 py-3 text-base font-bold text-ink shadow-xl hover:bg-paper">
+              예시 보기
+            </a>
+            {!!past?.length && (
+              <button onClick={() => setReplaying(true)} className="rounded-full bg-white/15 px-7 py-3 text-base font-bold text-white ring-1 ring-white/40 hover:bg-white/25">
                 AI가 분석하는 과정 보기
               </button>
-            </div>
-          )}
+            )}
+          </div>
           {loginFailed && (
             <p className="mx-auto mt-6 max-w-md rounded-full bg-white/15 px-5 py-2 text-sm font-semibold">
               로그인을 마치지 못했어요. 다시 시도해 주세요.
@@ -217,13 +196,10 @@ export function Landing({ login, contactUrl = null }: { login: LoginConfig | nul
               </div>
             </Part>
 
-            <div>
-              <Part n={3} id="accuracy" title="얼마나 맞나"
-                lead="지난 날짜를 전날까지의 기록만 보고 맞혀 본 뒤, 실제 판매와 비교했어요.">
-                <BacktestView storeId={store.store_id} hideDecisions />
-              </Part>
-              {store.store_id !== REAL_EXAMPLE && <RealData />}
-            </div>
+            <Part n={3} id="accuracy" title="얼마나 맞나"
+              lead="지난 날짜를 전날까지의 기록만 보고 맞혀 본 뒤, 실제 판매와 비교했어요.">
+              <BacktestView storeId={store.store_id} hideDecisions />
+            </Part>
           </>
         )}
 
