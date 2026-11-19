@@ -8,6 +8,7 @@
   "kind": "sales",
   "days": 362,
   "menus": 11,
+  "active": 10,
   "first": "2025-11-01",
   "last": "2026-10-31"
  },

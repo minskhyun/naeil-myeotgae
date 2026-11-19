@@ -27,7 +27,13 @@ const PAUSE: Record<string, number> = {
 // 들어온 정보 목록의 한 줄: 종류(색 이름표) + 내용. 한 줄에 들어갈 만큼 짧게 쓴다
 function line(e: ProgressEvent): { tag: string; color: string; text: string } | null {
   switch (e.kind) {
-    case 'sales': return { tag: '판매 기록', color: KIND_COLOR.sales, text: `${e.days}일 · 메뉴 ${e.menus}개` }
+    // 판매를 끝낸 메뉴가 있으면 '지금 파는 메뉴' 수를 적는다 (준비표의 메뉴 수와 같아야 한다)
+    case 'sales':
+      return {
+        tag: '판매 기록',
+        color: KIND_COLOR.sales,
+        text: `${e.days}일 · ${e.active !== undefined && e.active < e.menus ? `지금 파는 메뉴 ${e.active}개` : `메뉴 ${e.menus}개`}`,
+      }
     case 'places': return { tag: '주변 시설', color: KIND_COLOR.places, text: `${e.count}곳` }
     case 'plan': return {
       tag: 'AI의 선택', color: KIND_COLOR.plan,

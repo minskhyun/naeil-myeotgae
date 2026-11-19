@@ -13,7 +13,7 @@
     step      단계 시작·끝          step(ingest|collect|evaluate|predict), status(start|done), note
     status    지금 하는 일 한 줄     text
     store     매장                 name, address, lat, lon
-    sales     판매 기록             days, menus, first, last
+    sales     판매 기록             days, menus, active(지금 파는 메뉴 수: 최근 14일 안에 팔린 것), first, last
     places    주변 시설             count, places[{name, group, lat, lon, distance_m}]
     plan      AI가 고른 정보원       method, model, radius_m, reason, picks[{what, name, lat, lon, reason}]
     weather   날씨                 days, first, last (가져온 기간)

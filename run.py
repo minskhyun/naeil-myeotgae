@@ -102,8 +102,14 @@ def _ingest_demo(args, out: Path) -> str:
 
 
 def _tell_sales(sales: pd.DataFrame) -> None:
-    """화면에 알리기: 판매 기록이 며칠치, 메뉴 몇 개인지."""
-    progress.emit("sales", days=int(sales["date"].nunique()), menus=int(sales["menu"].nunique()),
+    """화면에 알리기: 판매 기록이 며칠치, 메뉴 몇 개인지.
+
+    active = 지금 파는 메뉴 수 (최근 14일 안에 팔린 메뉴. features.build_frame이 예측 대상을 고르는 규칙과 같다).
+    기록에는 있지만 판매를 끝낸 메뉴가 있으면 menus보다 작다 → 화면은 준비표의 메뉴 수와 맞도록 이 값을 보여 준다.
+    """
+    last_sold = sales.groupby("menu")["date"].max()
+    active = int((last_sold >= sales["date"].max() - pd.Timedelta(days=13)).sum())
+    progress.emit("sales", days=int(sales["date"].nunique()), menus=int(sales["menu"].nunique()), active=active,
                   first=sales["date"].min().date(), last=sales["date"].max().date())
 
 

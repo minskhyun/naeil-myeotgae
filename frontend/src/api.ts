@@ -126,7 +126,7 @@ export type ProgressEvent =
   | { kind: 'step'; step: 'ingest' | 'collect' | 'evaluate' | 'predict'; status: 'start' | 'done'; note?: string }
   | { kind: 'status'; text: string } // 지금 하는 일 한 줄
   | { kind: 'store'; name: string; address?: string; lat?: number; lon?: number }
-  | { kind: 'sales'; days: number; menus: number; first: string; last: string }
+  | { kind: 'sales'; days: number; menus: number; active?: number; first: string; last: string } // active = 지금 파는 메뉴 수 (예전 기록에는 없다)
   | { kind: 'places'; count: number; places: { name: string; group: string; lat: number; lon: number; distance_m: number }[] }
   | { kind: 'plan'; method?: string; model?: string; radius_m?: number; reason?: string; picks: { what: string; name: string; lat: number; lon: number; reason?: string }[] }
   | { kind: 'weather'; days: number; first?: string; last?: string } // first~last = 가져온 기간 (판매 기록 기간 전체)
