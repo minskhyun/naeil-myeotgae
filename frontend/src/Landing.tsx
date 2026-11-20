@@ -11,7 +11,6 @@ import { useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react'
 import { AnalysisMap } from './AnalysisMap'
 import { ABOUT_PATH, api, APP_PATH, PREP_MODES, SUPPORT_PATH, type ProgressEvent } from './api'
-import { LoginButton } from './Auth'
 import { useExample } from './example'
 import { ForecastTable, Notice, PrepToggle } from './ForecastView'
 import { cleanTitle, count, dayPrefix, fmtDate, pct1, shortReason } from './format'
@@ -184,12 +183,6 @@ export function Landing({ login, contactUrl, canEnter }: SiteProps) {
             </div>
             {loginFailed && (
               <p className="mt-6 w-fit rounded-lg bg-down-soft px-4 py-2 text-sm font-medium text-down">로그인을 마치지 못했어요. 다시 시도해 주세요.</p>
-            )}
-            {login && !canEnter && (
-              <div className="mt-8 flex flex-col items-start gap-3">
-                <LoginButton login={login} label="로그인하고 시작하기" />
-                <span className="text-sm text-ink-500">로그인하면 내 가게 판매 기록으로 준비표를 만들 수 있어요.</span>
-              </div>
             )}
             {stores.error && <p className="mt-8 text-sm text-down">예시를 불러오지 못했습니다. 백엔드가 켜져 있는지 확인해 주세요.</p>}
           </div>
