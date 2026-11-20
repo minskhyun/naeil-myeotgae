@@ -1,4 +1,4 @@
-"""models.py 테스트: M0 손 계산, CatBoost 출력 모양·분위 순서·품절 제외."""
+"""models.py 테스트: M0 손 계산, CatBoost 출력 모양·분위 순서·품절 제외, 확률 분포에서 나온 범위."""
 from pathlib import Path
 
 import numpy as np
@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 
 from ml.features import SIGNAL_GROUPS, build_frame, load_sales, load_signals
-from ml.models import Q_COLS, make_model
+from ml.models import Q_COLS, SPREAD_RANGE, make_model
 
 SAMPLE = Path(__file__).resolve().parents[1] / "data" / "sample" / "sinchon-a"
 ALL_SIGNALS = [n for names in SIGNAL_GROUPS.values() for n in names]
@@ -44,6 +44,20 @@ def test_catboost_output_shape_and_order(frame, name):
     assert (q >= 0).all()                                 # 음수 없음
     assert (np.diff(q, axis=1) >= 0).all()                # p10 ≤ p40 ≤ p50 ≤ p60 ≤ p80 ≤ p90
     assert ((out["pred"] >= out["p10"]) & (out["pred"] <= out["p90"])).all()   # 예상 판매량(평균)은 범위 안
+
+
+def test_range_comes_from_one_distribution(frame):
+    """범위는 평균 둘레의 확률 분포(음이항)에서 나온다: 분위는 개수(정수)이고, 처음 보는 기간의 적중률이 80% 근처다."""
+    train = frame[frame["date"] < "2026-09-01"]
+    test = frame[(frame["date"] >= "2026-09-01") & frame["qty"].notna() & ~frame["sold_out"].astype(bool)]
+    model = make_model("M1", iterations=50).fit(train)
+    assert SPREAD_RANGE[0] <= model.spread <= SPREAD_RANGE[1]      # 퍼짐은 학습 기간의 마지막 며칠에서 잰 값 하나
+    out = model.predict(test)
+    q = out[["p40", "p50", "p60", "p80"]].to_numpy()
+    assert (q == np.round(q)).all()                                # 분포의 분위는 정수 (양 끝은 평균을 품도록 넓힐 수 있다)
+    inside = ((test["qty"] >= out["p10"]) & (test["qty"] <= out["p90"])).mean()
+    assert 0.7 <= inside <= 0.95                                   # 목표 80% (정수 범위라 조금 넘는 쪽으로 치우친다)
+    assert np.allclose(out["pred"], model.predict_mean(test))      # 예상 판매량 = 평균 그대로
 
 
 def test_pred_is_the_mean_not_the_median():

@@ -348,7 +348,7 @@ python -m collectors.run_all --refresh-events # 서울시 행사 목록 새로 �
 |---|---|
 | 프론트엔드 | React, TypeScript, Vite, Tailwind CSS, TanStack Query, Leaflet(지도, OpenStreetMap) |
 | 백엔드 | Python, FastAPI, SQLite(사용자·로그인·매장 주인), 구글 로그인(Google Identity Services), 카카오 로그인(REST API) |
-| 예측 | CatBoost (다중 분위 회귀), pandas |
+| 예측 | CatBoost (평균 예측) + 음이항 분포로 만든 예상 범위, pandas, scipy |
 | LLM | Claude API (Anthropic SDK, 구조화 출력) |
 | 외부 데이터 | 기상청 ASOS·단기예보, 한국천문연구원 특일 정보, 서울시 문화행사 정보, 카카오 로컬, NAVER API HUB 검색·검색어 트렌드, OpenStreetMap |
 | 배포 | Docker, Render |
