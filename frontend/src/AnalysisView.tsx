@@ -67,7 +67,7 @@ function line(e: ProgressEvent): { tag: string; color: string; text: string } | 
 function Card({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="nm-rise rounded-[32px] bg-white p-6">
-      <h3 className="font-mono text-sm text-ink-500">{title}</h3>
+      <h3 className="text-label text-ink-500">{title}</h3>
       <div className="mt-4">{children}</div>
     </section>
   )
@@ -143,9 +143,9 @@ export function AnalysisView({ events, status, error, log, onClose, replay = fal
         </div>
 
         <header className="mt-5 mb-6">
-          <p className="flex items-center gap-2.5 font-mono text-ink-500">
+          <p className="flex items-center gap-2.5 text-label text-ink-500">
             {!finished && !failed && <span className="nm-blink h-2.5 w-2.5 rounded-full bg-point" />}
-            {failed ? 'Stopped' : finished ? 'Done' : 'Analyzing'}
+            {failed ? '분석 중단' : finished ? '분석 완료' : '분석 중'}
           </p>
           <h2 className="mt-3 text-h1">
             {failed ? '분석을 마치지 못했어요' : finished ? '분석이 끝났어요' : `${store?.name ?? '우리 가게'} 주변을 살펴보고 있어요`}
@@ -168,7 +168,7 @@ export function AnalysisView({ events, status, error, log, onClose, replay = fal
               return (
                 <li key={s.id} className={`flex h-11 items-center gap-2.5 rounded-full px-5 font-medium ${
                   state === 'done' ? 'bg-ink-900 text-white' : state === 'now' ? 'bg-white text-ink-900' : 'bg-pill text-ink-500'}`}>
-                  <span className="font-mono text-xs opacity-70">{String(i + 1).padStart(2, '0')}</span>
+                  <span className="text-xs tabular-nums opacity-70">{String(i + 1).padStart(2, '0')}</span>
                   {s.label}
                   {state === 'done' && <span aria-hidden="true">✓</span>}
                   {state === 'now' && <span className="nm-blink h-2 w-2 rounded-full bg-point" />}
@@ -201,7 +201,7 @@ export function AnalysisView({ events, status, error, log, onClose, replay = fal
           </div>
 
           <section className="flex h-[26rem] min-w-0 flex-col rounded-[32px] bg-white p-6 lg:h-full lg:min-h-60">
-            <h3 className="font-mono text-sm text-ink-500">우리 가게로 들어온 정보 {feed.length > 0 && `· ${feed.length}건`}</h3>
+            <h3 className="text-label text-ink-500">우리 가게로 들어온 정보 {feed.length > 0 && `· ${feed.length}건`}</h3>
             <ul className="mt-3 flex-1 space-y-2 overflow-y-auto pr-1">
               {feed.length === 0 && <li className="text-sm text-ink-700">곧 여기에 하나씩 나타나요.</li>}
               {feed.map((f, i) => (

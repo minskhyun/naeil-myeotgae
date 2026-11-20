@@ -120,7 +120,7 @@ export function Workspace({ login }: { login: LoginConfig | null }) {
         </header>
         <main className="mx-auto grid max-w-content gap-12 px-5 pt-10 pb-24 md:px-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16 lg:pt-20">
           <div className="lg:sticky lg:top-24 lg:self-start">
-            <p className="font-mono text-ink-500">Start</p>
+            <p className="text-label text-ink-500">Start</p>
             <h1 className="nm-enter mt-5 text-title">
               <span>첫 매장을</span>
               <span style={{ animationDelay: '220ms' }}>만들어 볼까요</span>
@@ -129,7 +129,7 @@ export function Workspace({ login }: { login: LoginConfig | null }) {
             <ol className="mt-10 space-y-4">
               {FIRST_STEPS.map((text, i) => (
                 <li key={text} className="flex items-center gap-4 text-lg">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white font-mono text-sm text-ink-700">{i + 1}</span>
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-sm font-semibold tabular-nums text-ink-700">{i + 1}</span>
                   {text}
                 </li>
               ))}

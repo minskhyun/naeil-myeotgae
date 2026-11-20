@@ -7,6 +7,7 @@ import { AnalysisView } from './AnalysisView'
 import { BacktestView, Decisions } from './BacktestView'
 import { ForecastView } from './ForecastView'
 import { Lines, Reveal } from './Reveal'
+import { useSnapScroll } from './scrub'
 import { JoinBand, SiteFooter, SiteHeader, type SiteProps } from './Site'
 import { FAQ, useExample } from './example'
 import { SourcesView } from './SourcesView'
@@ -54,7 +55,7 @@ const AI_JOBS = [
 // 큰 구역 하나: 제목 · 설명 · 내용. id = 다른 화면에서 찾아오는 자리
 function Block({ id, title, lead, children }: { id?: string; title: string; lead?: string; children: ReactNode }) {
   return (
-    <section id={id} className="scroll-mt-24">
+    <section id={id} className="nm-screen mx-auto w-full max-w-content px-5 md:px-10">
       <div className="max-w-3xl">
         <Lines text={title} className="text-title" />
         {lead && (
@@ -75,7 +76,7 @@ function Cards({ items, cols, numbered = false }: { items: { title: string; text
       {items.map((it, i) => (
         <li key={it.title}>
           <Reveal lag={i * 0.1} className="h-full rounded-3xl bg-white px-7 py-8">
-            {numbered && <span className="font-mono text-sm text-ink-500">Step {String(i + 1).padStart(2, '0')}</span>}
+            {numbered && <span className="text-label text-ink-500">Step {String(i + 1).padStart(2, '0')}</span>}
             <h3 className={`text-h3 ${numbered ? 'mt-4' : ''}`}>{it.title}</h3>
             <p className="mt-3 leading-relaxed text-ink-700">{it.text}</p>
           </Reveal>
@@ -88,30 +89,31 @@ function Cards({ items, cols, numbered = false }: { items: { title: string; text
 // 예시 결과의 한 부분: 번호 · 제목 · 한 줄 설명 · 실제 화면
 function Part({ n, title, lead, children }: { n: number; title: string; lead: string; children: ReactNode }) {
   return (
-    <div>
+    <section className="nm-screen mx-auto w-full max-w-content px-5 md:px-10">
       <Reveal>
-        <span className="font-mono text-sm text-ink-500">Example {String(n).padStart(2, '0')}</span>
+        <span className="text-label text-ink-500">Example {String(n).padStart(2, '0')}</span>
         <h3 className="mt-3 text-h2">{title}</h3>
         <p className="mt-2 text-lg text-ink-700">{lead}</p>
       </Reveal>
       <Reveal className="mt-6 rounded-[32px] bg-white p-5 sm:p-8">{children}</Reveal>
-    </div>
+    </section>
   )
 }
 
 export function About({ login, contactUrl, canEnter }: SiteProps) {
+  useSnapScroll()
   const { stores, store, past } = useExample()
   // 예시 매장을 분석했을 때의 과정(녹화본)을 지도 장면으로 다시 본다. 주소로는 ?open=replay
   const [replaying, setReplaying] = useState(new URLSearchParams(window.location.search).get('open') === 'replay')
   const virtual = !!store?.name.includes('가상') // 판매 기록을 가상으로 만든 예시인가 (주변 정보는 실제 주소로 모은 것)
 
   return (
-    <div className="min-h-screen">
+    <div>
       {replaying && past && <AnalysisView events={past} status="done" replay onClose={() => setReplaying(false)} />}
       <SiteHeader login={login} canEnter={canEnter} contactUrl={contactUrl} here="about" />
 
-      <section className="mx-auto max-w-content px-5 pt-20 md:px-10 md:pt-28">
-        <p className="font-mono text-ink-500">About</p>
+      <section className="nm-screen mx-auto w-full max-w-content px-5 md:px-10">
+        <p className="text-label text-ink-500">About</p>
         <h1 className="nm-enter mt-5 text-hero">
           <span style={{ '--i': 0 } as CSSProperties}>판매 기록이</span>
           <span style={{ '--i': 1 } as CSSProperties}>준비표가 되기까지</span>
@@ -121,7 +123,7 @@ export function About({ login, contactUrl, canEnter }: SiteProps) {
         </p>
       </section>
 
-      <main className="mx-auto max-w-content space-y-36 px-5 py-28 md:px-10">
+      <main>
         <Block id="how" title="네 단계로 준비표를 만들어요" lead="사장님이 주시는 것은 판매 기록 파일과 가게 주소 둘뿐이에요.">
           <Cards items={STEPS} cols="md:grid-cols-2 lg:grid-cols-4" numbered />
         </Block>
@@ -132,7 +134,10 @@ export function About({ login, contactUrl, canEnter }: SiteProps) {
 
         <Block title={'주변 정보는\n도움이 될 때만 써요'} lead="날씨가 중요한 가게도 있고 아닌 가게도 있어요. 그래서 가게마다 지난 기록으로 확인해, 아래 조건을 모두 채운 정보만 예측에 넣습니다.">
           <Cards items={RULES} cols="md:grid-cols-2" />
-          <Reveal className="mt-4 rounded-3xl bg-white px-7 py-2">
+        </Block>
+
+        <Block title="이런 정보를 살펴봐요" lead="네 묶음으로 나눠, 묶음마다 위의 조건으로 쓸지 말지를 정해요.">
+          <Reveal className="rounded-3xl bg-white px-7 py-2">
             <ul className="divide-y divide-line">
               {SIGNALS.map((s) => (
                 <li key={s.name} className="flex flex-wrap items-baseline gap-x-6 gap-y-1 py-4">
@@ -152,7 +157,7 @@ export function About({ login, contactUrl, canEnter }: SiteProps) {
           {stores.error && <p className="text-sm text-down">예시를 불러오지 못했습니다. 백엔드가 켜져 있는지 확인해 주세요.</p>}
           {stores.data && !store && <p className="text-ink-700">보여 줄 예시 매장이 아직 없습니다.</p>}
           {store && (
-            <div className="space-y-20">
+            <>
               <div className="flex flex-wrap items-center gap-3">
                 {virtual && (
                   <p className="rounded-md bg-white px-3 py-1.5 text-sm font-medium text-ink-700">
@@ -165,7 +170,11 @@ export function About({ login, contactUrl, canEnter }: SiteProps) {
                   </button>
                 )}
               </div>
-
+            </>
+          )}
+        </Block>
+        {store && (
+            <>
               <Part n={1} title="메뉴별로 몇 개 준비할지" lead="메뉴마다 준비할 개수와 평소와 달라진 이유를 보여 줘요. 메뉴를 누르면 그래프가 펼쳐집니다.">
                 <ForecastView storeId={store.store_id} prepMode={store.prep_mode} readOnly limit={MENUS_SHOWN} />
               </Part>
@@ -185,9 +194,8 @@ export function About({ login, contactUrl, canEnter }: SiteProps) {
               <Part n={3} title="얼마나 맞나" lead="지난 날짜를 전날까지의 기록만 보고 맞혀 본 뒤, 실제 판매와 비교했어요.">
                 <BacktestView storeId={store.store_id} hideDecisions />
               </Part>
-            </div>
+            </>
           )}
-        </Block>
 
         <Block id="faq" title="자주 묻는 질문">
           <Reveal className="divide-y divide-line rounded-3xl bg-white px-6 sm:px-8">
@@ -206,8 +214,10 @@ export function About({ login, contactUrl, canEnter }: SiteProps) {
         </Block>
       </main>
 
-      <JoinBand login={login} canEnter={canEnter} contactUrl={contactUrl} />
-      <SiteFooter contactUrl={contactUrl} />
+      <section className="nm-screen !justify-start !py-0">
+        <JoinBand login={login} canEnter={canEnter} contactUrl={contactUrl} fill />
+        <SiteFooter contactUrl={contactUrl} />
+      </section>
     </div>
   )
 }

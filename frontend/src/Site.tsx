@@ -76,10 +76,11 @@ export function SiteHeader({ login, canEnter, contactUrl, here }: SiteProps & { 
 }
 
 // 맨 아래의 어두운 띠: 들어갈 수 있으면 '분석하러 가기', 아니면 로그인(또는 문의)
-export function JoinBand({ login, canEnter, contactUrl, title = '내 가게로 해 보기' }: SiteProps & { title?: string }) {
+// fill = 놓인 칸의 남는 높이를 채우고 내용을 가운데에 둔다 (한 화면을 바닥글과 나눠 쓸 때)
+export function JoinBand({ login, canEnter, contactUrl, title = '내 가게로 해 보기', fill = false }: SiteProps & { title?: string; fill?: boolean }) {
   return (
-    <section className="bg-ink-900 text-white">
-      <div className="mx-auto max-w-content px-5 py-28 text-center md:px-10">
+    <section className={`bg-ink-900 text-white ${fill ? 'flex flex-1 flex-col justify-center' : ''}`}>
+      <div className="mx-auto w-full max-w-content px-5 py-28 text-center md:px-10">
         <h2 className="whitespace-pre-line text-title">{title}</h2>
         {canEnter ? (
           <div className="mt-10 flex justify-center">

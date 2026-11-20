@@ -222,33 +222,43 @@ body {
   .nm-bar, .nm-band, .nm-line, .nm-fade, .nm-dotin, .nm-rise { animation: none; }
 }
 
-/* ------------------------------------------------------------------ 스크롤 스크러빙 (scrub.ts · Reveal.tsx · Landing.tsx)
-   움직임을 시간이 아니라 스크롤 위치에 묶는다: 내리면 진행하고 올리면 되감긴다. 진행도는 요소의 CSS 변수로 받는다.
+/* ------------------------------------------------------------------ 한 화면에 한 내용 (첫 화면 · 소개)
+   구역(nm-screen) 하나가 화면 하나를 채우고, 스크롤은 구역의 첫머리에서 멈춘다 (scrub.ts의 useSnapScroll이 html에 nm-snap을 붙인다).
+   머리말(높이 4rem)이 위에 붙어 있으므로 그만큼 아래에서 멈춘다. 화면보다 긴 구역(예시 매장의 실제 화면)은 그 안에서 그냥 스크롤된다.
+   좁거나 낮은 화면에서는 멈추지 않고 평소처럼 흐른다 (내용이 한 화면에 들어가지 않는다). */
+html.nm-snap { scroll-snap-type: y mandatory; scroll-padding-top: 4rem; }
+.nm-screen { scroll-snap-align: start; min-height: calc(100svh - 4rem); display: flex; flex-direction: column; justify-content: center; padding-block: 2.5rem; }
+@media (max-width: 1023px), (max-height: 719px) {
+  html.nm-snap { scroll-snap-type: none; }
+  .nm-screen { min-height: 0; padding-block: 4.5rem; }
+}
 
-   1) 떠오르는 칸 (Reveal): --p = 0(화면 아래 끝에 막 닿음) ~ 1(다 올라옴).
-      안에 든 그래프의 움직임(nm-bar 등)은 칸이 절반쯤 보일 때(nm-in)까지 멈춰 둔다. */
-.nm-reveal { opacity: var(--p, 0); transform: translateY(calc((1 - var(--p, 0)) * 56px)) scale(calc(0.97 + var(--p, 0) * 0.03)); will-change: opacity, transform; }
+/* ------------------------------------------------------------------ 화면에 들어올 때 나타나기 (Reveal.tsx)
+   구역이 화면에 들어오면(nm-in) 그 안의 칸들이 한 번 나타난다. --d = 차례로 나오게 늦추는 시간.
+   안에 든 그래프의 움직임(nm-bar 등)은 그때까지 멈춰 둔다. */
+.nm-reveal { opacity: 0; transform: translateY(44px); transition: opacity 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) var(--d, 0ms), transform 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) var(--d, 0ms); }
+.nm-reveal.nm-in { opacity: 1; transform: none; }
 .nm-reveal:not(.nm-in) :is(.nm-bar, .nm-band, .nm-line, .nm-fade, .nm-dotin) { animation-play-state: paused; }
 
-/* 2) 커지는 칸 (Reveal의 zoom): 화면에 올라오는 동안 조금 작고 모서리가 둥글다가, 다 올라오면 제 크기로 펴진다 */
-.nm-zoom { transform: scale(calc(0.86 + var(--p, 0) * 0.14)); border-radius: calc(56px - var(--p, 0) * 24px); will-change: transform; }
+/* 커지는 칸 (zoom): 조금 작고 모서리가 더 둥글다가 제 크기로 펴진다 */
+.nm-zoom { opacity: 0; transform: scale(0.9); border-radius: 56px; transition: opacity 0.6s ease-out, transform 1.1s cubic-bezier(0.2, 0.7, 0.2, 1), border-radius 1.1s cubic-bezier(0.2, 0.7, 0.2, 1); }
+.nm-zoom.nm-in { opacity: 1; transform: none; border-radius: 32px; }
 
-/* 3) 줄마다 떠오르는 글 (Reveal의 lines · Lines): 줄(자식 요소)이 --i 순서대로, 흐릿했다가 또렷해지며 조금 아래에서 올라온다 */
-.nm-lines > * { display: block; --q: clamp(0, calc((var(--p, 0) - var(--i, 0) * 0.16) * 2.6), 1);
-  opacity: var(--q); transform: translateY(calc((1 - var(--q)) * 0.55em)); filter: blur(calc((1 - var(--q)) * 10px)); will-change: opacity, transform, filter; }
-
-/* 화면을 열자마자 보이는 맨 위의 글은 스크롤이 아니라 시간으로 같은 움직임을 한 번 한다 (줄마다 조금씩 늦게) */
+/* 줄마다 떠오르는 글 (lines · Lines): 줄(자식 요소)이 --i 순서대로, 흐릿했다가 또렷해지며 조금 아래에서 올라온다.
+   nm-enter = 화면을 열자마자 보이는 맨 위의 글 (기다리지 않고 바로 같은 움직임) */
 @keyframes nm-line-in {
   from { opacity: 0; transform: translateY(0.55em); filter: blur(10px); }
   to { opacity: 1; transform: none; filter: blur(0); }
 }
-.nm-enter > * { display: block; animation: nm-line-in 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both; animation-delay: calc(var(--i, 0) * 140ms + 80ms); }
+.nm-lines > * { display: block; opacity: 0; }
+.nm-lines.nm-in > *, .nm-enter > * { display: block; animation: nm-line-in 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both; animation-delay: calc(var(--d, 0ms) + var(--i, 0) * 140ms + 80ms); }
 
-/* 움직임 줄이기를 켠 사람: 스크롤에 묶지 않고 처음부터 다 보여 준다 */
+/* 움직임 줄이기를 켠 사람: 처음부터 다 보여 주고, 스크롤도 멈추지 않는다 */
 @media (prefers-reduced-motion: reduce) {
-  .nm-reveal { opacity: 1; transform: none; }
-  .nm-zoom { transform: none; border-radius: 32px; }
-  .nm-lines > *, .nm-enter > * { opacity: 1; transform: none; filter: none; animation: none; }
+  html.nm-snap { scroll-snap-type: none; }
+  .nm-reveal, .nm-zoom { opacity: 1; transform: none; transition: none; }
+  .nm-zoom { border-radius: 32px; }
+  .nm-lines > *, .nm-lines.nm-in > *, .nm-enter > * { opacity: 1; transform: none; filter: none; animation: none; }
 }
 
 /* ------------------------------------------------------------------ 첫 화면 머리의 배경 지도 (AnalysisMap의 ambient)
