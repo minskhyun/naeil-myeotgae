@@ -39,6 +39,7 @@
 
   /* 글자 크기 (크기 / 줄 간격 · 굵기 · 자간) */
   --text-display: 64px; --text-display--line-height: 72px; --text-display--font-weight: 700; --text-display--letter-spacing: -0.03em;
+  --text-hero: 84px;    --text-hero--line-height: 92px;    --text-hero--font-weight: 700;    --text-hero--letter-spacing: -0.035em;  /* 첫 화면 머리 제목 (명세의 display보다 크게: 11/20 사용자 요청) */
   --text-h1: 40px;      --text-h1--line-height: 48px;      --text-h1--font-weight: 700;      --text-h1--letter-spacing: -0.025em;
   --text-h2: 28px;      --text-h2--line-height: 36px;      --text-h2--font-weight: 700;      --text-h2--letter-spacing: -0.02em;
   --text-h3: 20px;      --text-h3--line-height: 28px;      --text-h3--font-weight: 600;      --text-h3--letter-spacing: -0.01em;
@@ -55,6 +56,7 @@
 @media (max-width: 767px) {
   :root {
     --text-display: 44px; --text-display--line-height: 52px;
+    --text-hero: 46px;    --text-hero--line-height: 54px;
     --text-h1: 30px;      --text-h1--line-height: 38px;
     --text-h2: 22px;      --text-h2--line-height: 30px;
   }
@@ -69,6 +71,10 @@ body {
 /* 자주 쓰는 모양 (명세 5장). 버튼 높이 48px(lg)·40px(md), 모서리 8px, 글자 16px 500 */
 @utility btn {
   @apply inline-flex h-12 items-center justify-center rounded-lg px-5 text-base font-medium transition-colors duration-150;
+}
+/* 화면에서 가장 중요한 버튼 (첫 화면의 '예시 보기', '분석 및 예측하기'): 높이 60px, 글자 18px */
+@utility btn-xl {
+  @apply inline-flex h-15 items-center justify-center rounded-xl px-8 text-lg font-semibold transition-colors duration-150;
 }
 @utility btn-md {
   @apply inline-flex h-10 items-center justify-center rounded-lg px-5 text-sm font-medium transition-colors duration-150;
@@ -205,3 +211,20 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .nm-bar, .nm-band, .nm-line, .nm-fade, .nm-dotin, .nm-rise { animation: none; }
 }
+
+/* ------------------------------------------------------------------ 스크롤하면 나타나기 (Reveal.tsx)
+   화면에 들어오기 전에는 살짝 아래에서 투명하게 기다리다가, 들어오면 올라오며 나타난다 (한 번만).
+   안에 든 그래프의 움직임(nm-bar 등)도 그때까지 멈춰 두었다가 함께 시작한다. */
+.nm-reveal { opacity: 0; transform: translateY(32px); transition: opacity 0.75s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.75s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.nm-reveal.nm-in { opacity: 1; transform: none; }
+.nm-reveal:not(.nm-in) :is(.nm-bar, .nm-band, .nm-line, .nm-fade, .nm-dotin) { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) {
+  .nm-reveal { opacity: 1; transform: none; transition: none; }
+}
+
+/* ------------------------------------------------------------------ 첫 화면 머리의 배경 지도 (AnalysisMap의 ambient)
+   지도 그림은 흑백으로 옅게 깔고, 그 위의 주황 표시만 또렷하게 둔다. */
+.nm-map-ambient .leaflet-tile-pane { filter: grayscale(1) brightness(1.06); opacity: 0.4; }
+.nm-map-ambient .leaflet-container { background: #fff; cursor: default; }
+.nm-map-ambient .leaflet-control-attribution { font-size: 10px; background: rgb(255 255 255 / 0.7); }
+

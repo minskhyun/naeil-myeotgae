@@ -162,7 +162,7 @@ export function UploadView({ onStarted, busy = false, account = false, initialTa
       <Step n={3} title="분석">
         <div className="flex flex-wrap items-center gap-3">
           <button disabled={!pos || running || !closeTime || (isNew && !name.trim())} onClick={() => start(run)}
-            className="btn btn-primary">
+            className="btn-xl btn-primary">
             {sending ? '보내는 중…' : '분석 및 예측하기'}
           </button>
           {!account && (

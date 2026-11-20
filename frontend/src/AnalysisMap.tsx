@@ -21,6 +21,18 @@ const EDGE: Record<string, Spot> = {
   article: [0.0068, 0.0085],
 }
 
+// 배경용(ambient) 지도에서 위치 없는 정보의 이름표가 뜨는 자리: 칸의 [가로, 세로] 비율. 가운데 글을 피해 가장자리에 둔다
+const AMBIENT_SLOTS: Record<string, [number, number]> = {
+  weather: [0.1, 0.2],
+  academic: [0.88, 0.22],
+  special: [0.08, 0.55],
+  trend: [0.91, 0.52],
+  sales: [0.15, 0.8],
+  article: [0.85, 0.78],
+}
+const AMBIENT_ZOOM = 17 // 배경용은 더 가까이 본다 (주변 시설의 점이 화면 가득 퍼지게)
+const AMBIENT_STORE_Y = 0.86 // 배경용에서 가게가 놓이는 세로 위치 (가운데 글 아래)
+
 const escapeHtml = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)
 
 // 화면 위치가 정해진 HTML 표시 (크기 0인 자리 표시에 안쪽 요소를 올린다)
@@ -39,15 +51,19 @@ function curve(from: Spot, to: Spot): Spot[] {
   })
 }
 
-export function AnalysisMap({ events }: { events: ProgressEvent[] }) {
+// ambient = 첫 화면 머리의 배경으로 쓸 때: 만질 수 없고(끌기·확대 없음, 페이지 스크롤을 가로채지 않는다),
+//           가게로 날아가지 않고 처음부터 가게 둘레를 보여 주며, 다 그린 뒤에도 주변의 점에서 빛줄기가 계속 들어온다.
+export function AnalysisMap({ events, ambient = false }: { events: ProgressEvent[]; ambient?: boolean }) {
   const box = useRef<HTMLDivElement>(null)
   const map = useRef<L.Map | null>(null)
   const store = useRef<{ at: Spot; pin: L.Marker } | null>(null)
   const drawn = useRef(0)
+  const spots = useRef<Spot[]>([]) // 지도에 찍은 점들 (배경용에서 빛줄기가 출발할 곳)
 
   // 지도 만들기 (한 번). 처음에는 서울 전체를 보여 주다가, 매장 위치를 알게 되면 날아간다
   useEffect(() => {
-    const m = L.map(box.current!, { center: SEOUL, zoom: 11, zoomControl: false, attributionControl: true })
+    const still = ambient ? { dragging: false, scrollWheelZoom: false, doubleClickZoom: false, touchZoom: false, boxZoom: false, keyboard: false } : {}
+    const m = L.map(box.current!, { center: SEOUL, zoom: 11, zoomControl: false, attributionControl: true, ...still })
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '&copy; OpenStreetMap',
@@ -55,6 +71,7 @@ export function AnalysisMap({ events }: { events: ProgressEvent[] }) {
     map.current = m
     drawn.current = 0
     store.current = null
+    spots.current = []
     const resized = new ResizeObserver(() => m.invalidateSize()) // 칸 크기가 바뀌면 지도도 다시 맞춘다
     resized.observe(box.current!)
     return () => {
@@ -62,7 +79,7 @@ export function AnalysisMap({ events }: { events: ProgressEvent[] }) {
       m.remove()
       map.current = null
     }
-  }, [])
+  }, [ambient])
 
   // 새로 들어온 알림만 그린다
   useEffect(() => {
@@ -90,8 +107,16 @@ export function AnalysisMap({ events }: { events: ProgressEvent[] }) {
     const fromEdge = (kind: string, label: string) => {
       const s = store.current
       if (!s) return
-      const [dLat, dLon] = EDGE[kind] ?? EDGE.article
-      const at: Spot = [s.at[0] + dLat * (0.85 + Math.random() * 0.3), s.at[1] + dLon * (0.85 + Math.random() * 0.3)]
+      let at: Spot
+      if (ambient) {
+        const [fx, fy] = AMBIENT_SLOTS[kind] ?? AMBIENT_SLOTS.article
+        const size = m.getSize()
+        const p = m.containerPointToLatLng([size.x * (fx + (Math.random() - 0.5) * 0.05), size.y * (fy + (Math.random() - 0.5) * 0.08)])
+        at = [p.lat, p.lng]
+      } else {
+        const [dLat, dLon] = EDGE[kind] ?? EDGE.article
+        at = [s.at[0] + dLat * (0.85 + Math.random() * 0.3), s.at[1] + dLon * (0.85 + Math.random() * 0.3)]
+      }
       const chip = mark(at, `<div class="nm-chip" style="--c:${KIND_COLOR[kind]}">${escapeHtml(label)}</div>`, 500).addTo(m)
       window.setTimeout(() => chip.remove(), 2700)
       flow(at, KIND_COLOR[kind])
@@ -104,11 +129,16 @@ export function AnalysisMap({ events }: { events: ProgressEvent[] }) {
         const at: Spot = [e.lat, e.lon]
         const html = `<div class="nm-store"><u></u><u></u><i></i><span>${escapeHtml(e.name)}</span></div>`
         store.current = { at, pin: mark(at, html, 1000).addTo(m) }
-        m.flyTo(at, 15, { duration: 1.8 })
+        if (ambient) {
+          // 가게가 칸의 아래쪽(AMBIENT_STORE_Y)에 오도록, 그만큼 위쪽을 지도의 가운데로 잡는다
+          const center = m.project(at, AMBIENT_ZOOM).subtract([0, (AMBIENT_STORE_Y - 0.5) * m.getSize().y])
+          m.setView(m.unproject(center, AMBIENT_ZOOM), AMBIENT_ZOOM, { animate: false })
+        } else m.flyTo(at, 15, { duration: 1.8 })
       } else if (e.kind === 'places') {
         e.places.forEach((p, i) => {
           const html = `<i class="nm-dot" style="--c:${KIND_COLOR.places};animation-delay:${i * 18}ms"></i>`
           mark([p.lat, p.lon], html).addTo(m)
+          spots.current.push([p.lat, p.lon])
         })
       } else if (e.kind === 'plan') {
         if (store.current && e.radius_m) {
@@ -133,7 +163,15 @@ export function AnalysisMap({ events }: { events: ProgressEvent[] }) {
       else if (e.kind === 'article') fromEdge('article', '소식 읽는 중')
     }
     drawn.current = events.length
-  }, [events])
 
-  return <div ref={box} className="nm-map h-full w-full" />
+    // 배경용: 다 그린 뒤에도 살아 있게, 주변의 점 하나에서 가게로 빛줄기를 가끔 보낸다
+    if (!ambient) return
+    const timer = window.setInterval(() => {
+      const from = spots.current[Math.floor(Math.random() * spots.current.length)]
+      if (from) flow(from, KIND_COLOR.places)
+    }, 1100)
+    return () => window.clearInterval(timer)
+  }, [events, ambient])
+
+  return <div ref={box} className={`nm-map h-full w-full ${ambient ? 'nm-map-ambient' : ''}`} />
 }

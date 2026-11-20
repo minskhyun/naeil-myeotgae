@@ -107,7 +107,7 @@ export function Workspace({ login }: { login: LoginConfig | null }) {
             <p className="mt-2 mb-5 text-ink-700">
               매장 이름, 위치, 닫는 시간을 적고 포스에서 내려받은 판매 기록 파일을 올리면 내일 준비표가 만들어집니다.
             </p>
-            <button onClick={() => openUpload(null)} className="btn btn-primary">
+            <button onClick={() => openUpload(null)} className="btn-xl btn-primary">
               {addLabel}
             </button>
           </section>

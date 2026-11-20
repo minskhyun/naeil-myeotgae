@@ -3,12 +3,14 @@
 //   → 자주 묻는 질문 → 써 보기(로그인 또는 문의) → 맨 아래 안내(자료 보관, 만든 사람)
 // 예시 매장 = 서버가 demo로 표시한 매장 (가상 매장). 로그인하면 이 화면 대신 Workspace.tsx가 나온다.
 import { useQuery } from '@tanstack/react-query'
-import { useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { AnalysisMap } from './AnalysisMap'
 import { AnalysisView } from './AnalysisView'
-import { api, type LoginConfig } from './api'
+import { api, type LoginConfig, type ProgressEvent } from './api'
 import { AccountBox, LoginButtons } from './Auth'
 import { BacktestView, Decisions } from './BacktestView'
 import { ForecastView } from './ForecastView'
+import { Reveal } from './Reveal'
 import { SourcesView } from './SourcesView'
 
 const FIRST_EXAMPLE = 'sinchon-a' // 보여 줄 예시 매장 (주변 정보와 주의 안내가 다 있는 가상 매장). 없으면 목록의 첫 매장
@@ -59,16 +61,36 @@ const FAQ = [
   },
 ]
 
+// 첫머리의 배경: 예시 매장의 분석 기록으로 '지도에서 정보를 모으는 장면'을 되풀이해 보여 준다 (만질 수 없는 배경).
+//   가게와 주변 시설·AI가 고른 곳을 차례로 찍은 뒤, 날씨·학교 일정·소식 같은 정보가 가장자리에서 가게로 계속 들어온다.
+const HERO_FIRST: ProgressEvent['kind'][] = ['store', 'places', 'plan', 'event']
+const HERO_LOOP: ProgressEvent['kind'][] = ['sales', 'weather', 'academic', 'special', 'trend_span', 'article']
+function HeroMap({ events }: { events: ProgressEvent[] }) {
+  const first = useMemo(() => HERO_FIRST.flatMap((k) => events.filter((e) => e.kind === k)), [events])
+  const loop = useMemo(() => events.filter((e) => HERO_LOOP.includes(e.kind)), [events])
+  const [n, setN] = useState(1) // 지금까지 지도에 넘긴 알림 수 (처음에 가게 하나)
+  useEffect(() => {
+    if (!loop.length && n >= first.length) return
+    const timer = window.setTimeout(() => setN((v) => v + 1), n < first.length ? 900 : 1700)
+    return () => window.clearTimeout(timer)
+  }, [n, first.length, loop.length])
+  const shown = useMemo(
+    () => [...first.slice(0, n), ...Array.from({ length: Math.max(0, n - first.length) }, (_, i) => loop[i % loop.length])],
+    [first, loop, n],
+  )
+  return <AnalysisMap events={shown} ambient />
+}
+
 // 예시 한 부분: 가운데 제목 · 한 줄 설명 · 흰 카드에 담은 실제 화면. id = 맨 위 메뉴가 찾아오는 자리
 function Part({ n, id, title, lead, children }: { n: number; id?: string; title: string; lead: string; children: ReactNode }) {
   return (
     <section id={id} className="scroll-mt-24">
-      <div className="mx-auto max-w-3xl text-center">
+      <Reveal className="mx-auto max-w-3xl text-center">
         <span className="tag bg-surface text-ink-700">예시 {n}</span>
-        <h2 className="mt-3 text-h2">{title}</h2>
-        <p className="mt-3 text-ink-700">{lead}</p>
-      </div>
-      <div className="mt-8 rounded-3xl border border-line bg-white p-5 sm:p-8">{children}</div>
+        <h2 className="mt-3 text-h1">{title}</h2>
+        <p className="mt-3 text-body-lg text-ink-700">{lead}</p>
+      </Reveal>
+      <Reveal className="mt-10 rounded-3xl border border-line bg-white p-5 sm:p-8">{children}</Reveal>
     </section>
   )
 }
@@ -93,10 +115,13 @@ export function Landing({ login, contactUrl = null }: { login: LoginConfig | nul
     retry: false,
   }).data
   const [replaying, setReplaying] = useState(params.get('open') === 'replay')
+  // 첫머리 배경 지도: 매장 위치가 있는 분석 기록이 있을 때만. 움직임을 줄이도록 설정한 사람에게는 보여 주지 않는다
+  const calm = useMemo(() => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false, [])
+  const heroMap = !calm && !replaying && past?.some((e) => e.kind === 'store' && e.lat)
   // 주요 버튼은 잉크 배경 + 흰 글자. 어두운 띠 위(onDark)에서는 흰 버튼
   const contact = (onDark = false) =>
     contactUrl && (
-      <a href={contactUrl} target="_blank" rel="noreferrer" className={onDark ? 'btn bg-white text-ink-900 hover:bg-surface' : 'btn-md btn-primary'}>
+      <a href={contactUrl} target="_blank" rel="noreferrer" className={onDark ? 'btn-xl bg-white text-ink-900 hover:bg-surface' : 'btn-md btn-primary'}>
         사전 신청·문의
       </a>
     )
@@ -118,19 +143,26 @@ export function Landing({ login, contactUrl = null }: { login: LoginConfig | nul
         </div>
       </header>
 
-      <section className="border-b border-line bg-white">
-        <div className="mx-auto max-w-content px-5 py-20 text-center sm:py-28 md:px-10">
+      {/* 첫머리: 뒤에는 지도에서 정보를 모으는 장면(넓은 화면만), 앞에는 흰 판 위의 인사말. 가게 표시는 판 아래쪽에 보인다 */}
+      <section className="relative overflow-hidden border-b border-line bg-white">
+        {heroMap && (
+          <div className="nm-fade absolute inset-0 hidden md:block" aria-hidden>
+            <HeroMap events={past!} />
+          </div>
+        )}
+        <div className={`pointer-events-none relative mx-auto max-w-content px-5 pt-16 text-center md:px-10 md:pt-24 ${heroMap ? 'pb-16 md:pb-60' : 'pb-16 md:pb-24'}`}>
+          <div className={`pointer-events-auto mx-auto max-w-4xl rounded-3xl px-5 py-10 md:px-12 md:py-14 ${heroMap ? 'md:bg-white/90' : ''}`}>
           <p className="text-body-lg text-ink-700">카페·베이커리를 위한 내일 판매 예측</p>
-          <h2 className="mt-3 text-display">내일 몇 개 만들까요?</h2>
-          <p className="mx-auto mt-5 max-w-2xl text-body-lg text-ink-700">
+          <h2 className="mt-3 text-hero">내일 몇 개 만들까요?</h2>
+          <p className="mx-auto mt-6 max-w-2xl text-xl leading-8 text-ink-700">
             판매 기록에 날씨·학교 일정·근처 행사를 더해, 내일 메뉴별로 몇 개 준비하면 좋을지 알려 드려요.
           </p>
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-            <a href="#example" className="btn btn-primary">
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
+            <a href="#example" className="btn-xl btn-primary">
               예시 보기
             </a>
             {!!past?.length && (
-              <button onClick={() => setReplaying(true)} className="btn btn-secondary">
+              <button onClick={() => setReplaying(true)} className="btn-xl btn-secondary">
                 AI가 분석하는 과정 보기
               </button>
             )}
@@ -146,20 +178,23 @@ export function Landing({ login, contactUrl = null }: { login: LoginConfig | nul
               <span className="text-sm text-ink-500">로그인하면 내 가게 판매 기록으로 준비표를 만들 수 있어요.</span>
             </div>
           )}
+          </div>
         </div>
       </section>
 
       <main className="mx-auto max-w-content space-y-32 px-5 py-24 md:px-10">
         <section>
-          <div className="text-center">
-            <h2 className="text-h2">세 단계면 내일 준비표가 완성됩니다</h2>
-          </div>
-          <ol className="mt-10 grid gap-5 md:grid-cols-3">
+          <Reveal className="text-center">
+            <h2 className="text-h1">세 단계면 내일 준비표가 완성됩니다</h2>
+          </Reveal>
+          <ol className="mt-12 grid gap-5 md:grid-cols-3">
             {HOW.map((h, i) => (
-              <li key={h.title} className="rounded-2xl bg-surface px-6 py-10 text-center">
-                <span className="tag bg-white text-ink-700">STEP {i + 1}</span>
-                <h3 className="mt-4 text-h3">{h.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-ink-700">{h.text}</p>
+              <li key={h.title}>
+                <Reveal delay={i * 140} className="h-full rounded-2xl bg-surface px-6 py-12 text-center">
+                  <span className="tag bg-white text-ink-700">STEP {i + 1}</span>
+                  <h3 className="mt-4 text-2xl font-semibold tracking-tight">{h.title}</h3>
+                  <p className="mt-3 text-base leading-relaxed text-ink-700">{h.text}</p>
+                </Reveal>
               </li>
             ))}
           </ol>
@@ -206,8 +241,10 @@ export function Landing({ login, contactUrl = null }: { login: LoginConfig | nul
         )}
 
         <section id="faq" className="scroll-mt-24">
-          <h2 className="text-center text-h2">자주 묻는 질문</h2>
-          <div className="mx-auto mt-8 max-w-3xl divide-y divide-line rounded-2xl border border-line bg-white px-6 sm:px-8">
+          <Reveal>
+            <h2 className="text-center text-h1">자주 묻는 질문</h2>
+          </Reveal>
+          <Reveal className="mx-auto mt-10 max-w-3xl divide-y divide-line rounded-2xl border border-line bg-white px-6 sm:px-8">
             {FAQ.map((f) => (
               <details key={f.q} className="group py-5">
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-semibold">
@@ -219,13 +256,13 @@ export function Landing({ login, contactUrl = null }: { login: LoginConfig | nul
                 <p className="mt-3 text-sm leading-relaxed text-ink-700">{f.a}</p>
               </details>
             ))}
-          </div>
+          </Reveal>
         </section>
       </main>
 
       <section className="bg-ink-900 text-white">
         <div className="mx-auto max-w-content px-5 py-24 text-center md:px-10">
-          <h2 className="text-h2">내 가게로 해 보기</h2>
+          <h2 className="text-h1">내 가게로 해 보기</h2>
           {login ? (
             <>
               <p className="mx-auto mt-3 mb-7 max-w-xl text-white/75">
