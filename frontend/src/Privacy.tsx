@@ -50,10 +50,10 @@ function Table({ head, rows }: { head: string[]; rows: string[][] }) {
   )
 }
 
-export function Privacy({ login, contactUrl, canEnter }: SiteProps) {
+export function Privacy({ login, contactUrl, canEnter, viewOnly }: SiteProps) {
   return (
     <div>
-      <SiteHeader login={login} canEnter={canEnter} contactUrl={contactUrl} here="none" />
+      <SiteHeader login={login} canEnter={canEnter} viewOnly={viewOnly} contactUrl={contactUrl} here="none" />
       <main className="mx-auto max-w-3xl px-5 pt-16 pb-28 md:px-10">
         <h1 className="text-title">개인정보처리방침</h1>
         <p className="mt-5 text-lg leading-8 text-ink-700">

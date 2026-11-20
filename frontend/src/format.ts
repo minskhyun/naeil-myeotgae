@@ -94,6 +94,11 @@ export const count = (v: number) => Math.round(v).toLocaleString('ko-KR')
 // 예상 범위 표기: 아래 끝은 내림, 위 끝은 올림 (바깥쪽으로 반올림). 범위를 좁혀 적지 않기 위해서다.
 // 가까운 수로 반올림하면 4.6개(1.9~5.1)가 "5개, 범위 2–5"로 보여 예상값이 범위 끝에 붙은 것처럼 읽힌다.
 export const rangeText = (lo: number, hi: number) => `${Math.floor(lo + 1e-6).toLocaleString('ko-KR')}–${Math.ceil(hi - 1e-6).toLocaleString('ko-KR')}`
+// 분석 화면으로 가는 버튼의 글. viewOnly = 보기 전용 시연 사이트 (예시 매장을 보기만 한다)
+export const enterLabel = (viewOnly?: boolean) => (viewOnly ? '예시 분석 화면 보기' : '분석하러 가기')
+// 예상 판매 합계 = 메뉴마다 화면에 보이는 예상 개수(반올림한 정수)의 합. 합을 반올림하지 않는다:
+// 준비 기준이 '균형'이면 준비 개수가 메뉴마다 이 정수와 같으므로(ml/predict.py의 prep_qty), 이렇게 해야 합계도 서로 같다
+export const expectedTotal = (rows: { pred: number }[]) => rows.reduce((sum, r) => sum + Math.round(r.pred), 0)
 // 금액: 1만 원 이상은 '12.3만 원', 그 아래는 천 원 단위
 export const won = (v: number) => (Math.abs(v) >= 10000 ? `${(v / 10000).toFixed(1)}만 원` : `${count(Math.round(v / 100) * 100)}원`)
 // 지난주 방식보다 하루에 덜 틀린 금액 (판매가를 아는 매장만)

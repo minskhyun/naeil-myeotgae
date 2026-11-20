@@ -89,7 +89,7 @@ export function BacktestView({ storeId, hideDecisions = false }: { storeId: stri
           <h2 className="mt-1 text-h1">
             {v.saved > 0 ? (
               <>
-                지난주 그대로 준비할 때보다 <span className="text-point">정확도 {v.gain}% 향상</span>
+                지난주 그대로 준비할 때보다 <span className="text-point">오차 {v.gain}% 감소</span>
               </>
             ) : (
               '지난주 그대로 준비하는 것과 비슷해요'

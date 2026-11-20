@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { api, PREP_MODES, type ForecastRow, type SalesHistory, type Warning } from './api'
 import { CountUp } from './CountUp'
 import { BarsLegend, DayBars, Spark } from './ForecastCharts'
-import { average, count, dayPrefix, dayWord, fmtDate, rangeText, sameWeekday, shortReason, SIGNAL_LABELS, SITUATION_LABELS, signedPct, weekdayName } from './format'
+import { average, count, dayPrefix, dayWord, expectedTotal, fmtDate, rangeText, sameWeekday, shortReason, SIGNAL_LABELS, signedPct, SITUATION_LABELS, weekdayName } from './format'
 import { useJob } from './useJob'
 
 // 예상 범위 그림: 가는 선 위에 범위(굵은 선, 왼쪽에서 자라남)와 예상값(눈금). narrow = 좁은 칸용
@@ -169,7 +169,7 @@ export function ForecastTable({ rows, limit, compact = false, storeId }: {
   const shown = cut && !showAll ? sorted.slice(0, cut) : sorted
   const max = Math.max(...shown.map((r) => r.p90)) * 1.05
   const totalPrep = rows.reduce((sum, r) => sum + (r.prep_qty ?? 0), 0)
-  const totalPred = Math.round(rows.reduce((sum, r) => sum + r.pred, 0))
+  const totalPred = expectedTotal(rows)
   const why = rows.some((r) => r.reasons.length > 0) // '평소 대비'에 적을 것이 하나라도 있나 (주변 정보를 안 쓰는 매장은 열을 숨긴다)
   const cols = compact
     ? why

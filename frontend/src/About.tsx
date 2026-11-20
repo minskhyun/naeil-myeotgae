@@ -111,7 +111,7 @@ function Part({ title, lead, children }: { title: string; lead: string; children
   )
 }
 
-export function About({ login, contactUrl, canEnter }: SiteProps) {
+export function About({ login, contactUrl, canEnter, viewOnly }: SiteProps) {
   useSnapScroll()
   const { stores, store, past } = useExample()
   // 예시 매장을 분석했을 때의 과정(녹화본)을 지도 장면으로 다시 본다. 주소로는 ?open=replay
@@ -121,7 +121,7 @@ export function About({ login, contactUrl, canEnter }: SiteProps) {
   return (
     <div>
       {replaying && past && <AnalysisView events={past} status="done" replay onClose={() => setReplaying(false)} />}
-      <SiteHeader login={login} canEnter={canEnter} contactUrl={contactUrl} here="about" />
+      <SiteHeader login={login} canEnter={canEnter} viewOnly={viewOnly} contactUrl={contactUrl} here="about" />
 
       <section className="nm-screen mx-auto w-full max-w-content px-5 md:px-10">
         <h1 className="nm-enter text-hero">
@@ -228,7 +228,7 @@ export function About({ login, contactUrl, canEnter }: SiteProps) {
       </main>
 
       <section className="nm-screen !justify-start !py-0">
-        <JoinBand login={login} canEnter={canEnter} contactUrl={contactUrl} fill />
+        <JoinBand login={login} canEnter={canEnter} viewOnly={viewOnly} contactUrl={contactUrl} fill />
         <SiteFooter contactUrl={contactUrl} />
       </section>
     </div>

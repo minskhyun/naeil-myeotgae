@@ -1,5 +1,5 @@
 // 첫 화면 ('/'): 제품이 무엇을 해 주는지를 큰 문장과 실제 화면 조각으로 차례로 보여 준다.
-//   첫머리(왼쪽에 한 문장, 오른쪽 바탕에 지도 장면) → 01 주변 소식을 모으고 → 02 메뉴마다 알려 주고(작은 기능 넷) → 03 남길 일·모자랄 일을 줄이고
+//   첫머리(왼쪽에 한 문장, 오른쪽 바탕에 지도 장면) → 사장님의 고충 → 손실이 얼마나 줄어드나(비율, 금액은 예) → 01 주변 소식을 모으고 → 02 메뉴마다 알려 주고(작은 기능 넷) → 03 남길 일·모자랄 일을 줄이고
 //   → 숫자로 본 결과 → 더 알아보기(소개로) → 내 가게로 해 보기
 // 한 화면에 한 내용: 구역(Screen) 하나가 화면 하나를 채우고, 스크롤은 구역마다 멈춘다 (index.css의 nm-screen · nm-snap).
 // 어떻게 예측하는지, 어떻게 검증했는지는 여기서 길게 설명하지 않는다: 소개(About.tsx)에 있다. 여기서는 숫자 몇 개만.
@@ -13,7 +13,7 @@ import { AnalysisMap } from './AnalysisMap'
 import { ABOUT_PATH, api, APP_PATH, PREP_MODES, SUPPORT_PATH, type ProgressEvent } from './api'
 import { useExample } from './example'
 import { ForecastTable, Notice, PrepToggle } from './ForecastView'
-import { cleanTitle, count, dayPrefix, fmtDate, pct1, shortReason } from './format'
+import { cleanTitle, count, dayPrefix, enterLabel, expectedTotal, fmtDate, pct1, shortReason } from './format'
 import { CountWhenSeen, Lines, Reveal } from './Reveal'
 import { ArrowLink, JoinBand, SiteFooter, SiteHeader, type SiteProps } from './Site'
 import { useSnapScroll } from './scrub'
@@ -47,6 +47,30 @@ function Screen({ id, className = '', children }: { id?: string; className?: str
     </section>
   )
 }
+
+// 사장님의 고충 (첫머리 바로 아래). 팀이 한 사장님 인터뷰에서 (2026년 11월, 사용자가 준 정리본). 가게 이름은 적지 않는다.
+// 말하려는 것: 준비량은 대부분 경험과 감으로 정하는데, **그렇게 해도 내일을 맞히기는 어렵다.**
+// ★ 누구의 말인지 섞지 않는다.
+//   quotes = 인터뷰에서 들은 말 (따옴표로 적는다. 정리본의 문장 그대로이고, 고쳐 쓰지 않는다)
+//   hard   = 그 말에서 우리가 짚는 점 (사장님의 말이 아니다 → 주황 글씨로 따로 적고, 아래에 그렇게 밝힌다)
+//   who    = 어느 가게 사장님인지 (동네와 업종까지만)
+const PAINS = [
+  {
+    who: '이대 앞 카페 사장님',
+    quotes: ['20년 경력으로 감으로 맞춘다.', '예측이 어려워서 오히려 적게 준비해 품절되게 한다.'],
+    hard: '20년이 쌓여도 감으로 맞춘다',
+  },
+  {
+    who: '연대 동문 베이커리 사장님',
+    quotes: ['평일은 지난 통계를 참고하지만 주말은 예약 손님에 맞춰 그때그때 준비한다.'],
+    hard: '주말에는 기댈 숫자가 없다',
+  },
+]
+const MONTH_DAYS = 30 // 한 달 금액으로 바꿀 때 곱하는 날 수 (매일 여는 가게로 본다)
+// 원가율: 원가 ÷ 판매가. ★ 가정한 값이다 (판매 기록에는 원가가 없다). 금액 예시에만 쓰고, 화면에 가정이라고 적는다.
+//   남아서 버린 것도 모자라서 못 판 것도 '원가'로 셈한다 (못 판 것의 손해는 사실 판매가 − 원가라서, 이렇게 하면 작게 잡은 값이 된다)
+const COST_RATIO = 0.35
+const manwon = (v: number) => `${Math.round(v / 10000).toLocaleString('ko-KR')}만 원`
 
 // 큰 구역의 머리: 왼쪽에 큰 제목 · 설명, 오른쪽에 세로선으로 나눈 짧은 항목들
 function Chapter({ title, lead, points }: { title: string; lead?: string; points?: { name: string; text: string }[] }) {
@@ -102,7 +126,7 @@ function Stat({ children, label, lag = 0 }: { children: ReactNode; label: string
   )
 }
 
-export function Landing({ login, contactUrl, canEnter }: SiteProps) {
+export function Landing({ login, contactUrl, canEnter, viewOnly }: SiteProps) {
   useSnapScroll()
   const { stores, store, past } = useExample()
   const id = store?.store_id
@@ -122,6 +146,22 @@ export function Landing({ login, contactUrl, canEnter }: SiteProps) {
     .sort((a, b) => Math.abs(b.reasons[0].effect_pct) - Math.abs(a.reasons[0].effect_pct))
     .slice(0, 5)
   const total = (m: string) => rows.reduce((sum, r) => sum + (r.prep_by_mode?.[m] ?? r.prep_qty ?? 0), 0)
+  // 손실이 얼마나 줄었나 (첫머리 아래의 구역): 금액·남는 것·모자란 것 각각 '지난주 그대로'와 견준 비율. 판매가를 아는 매장만.
+  // 비율은 원가로 셈하든 판매가로 셈하든 같다 (모든 메뉴에 같은 원가율을 곱하므로)
+  const loss = (() => {
+    if (!v || v.money == null || v.money <= 0) return null
+    const { mine, base, days } = v
+    if (mine.amount == null || !base.amount || mine.over == null || !base.over || mine.under == null || !base.under) return null
+    const cut = (after: number, before: number) => Math.round((1 - after / before) * 100)
+    return {
+      money: v.money * COST_RATIO, // 하루에 줄어든 금액 (원가 기준 = 판매가 기준 × 원가율)
+      cut: cut(mine.amount, base.amount),
+      overCut: cut(mine.over, base.over),
+      underCut: cut(mine.under, base.under),
+      over: [base.over / days, mine.over / days],
+      under: [base.under / days, mine.under / days],
+    }
+  })()
   // 01의 화면 조각에 적을 '모은 정보' (예시 매장의 분석 기록에서)
   const got = <K extends ProgressEvent['kind']>(kind: K) => (past ?? []).filter((e) => e.kind === kind) as Extract<ProgressEvent, { kind: K }>[]
   const school = got('academic')[0]
@@ -143,7 +183,7 @@ export function Landing({ login, contactUrl, canEnter }: SiteProps) {
 
   return (
     <div>
-      <SiteHeader login={login} canEnter={canEnter} contactUrl={contactUrl} here="home" />
+      <SiteHeader login={login} canEnter={canEnter} viewOnly={viewOnly} contactUrl={contactUrl} here="home" />
 
       {/* 1. 첫머리: 왼쪽에 한 문장과 버튼 (화면을 열면 줄마다 떠오른다), 오른쪽 바탕에는 가게 주변의 정보를 모으는 지도 장면.
              지도는 칸으로 나누지 않는다: 가장자리가 바탕색으로 풀려 글 옆에 스며들고, 넓은 화면에서는 머리말 밑까지 올라간다.
@@ -171,10 +211,10 @@ export function Landing({ login, contactUrl, canEnter }: SiteProps) {
               <div className="mt-10 flex flex-wrap items-center gap-3" style={{ '--i': 4 } as CSSProperties}>
                 {canEnter ? (
                   <ArrowLink href={APP_PATH} dark>
-                    분석하러 가기
+                    {enterLabel(viewOnly)}
                   </ArrowLink>
                 ) : (
-                  <ArrowLink href="#features" dark>
+                  <ArrowLink href="#why" dark>
                     어떤 서비스인가요
                   </ArrowLink>
                 )}
@@ -189,7 +229,89 @@ export function Landing({ login, contactUrl, canEnter }: SiteProps) {
         </div>
       </section>
 
-      {/* 2. 01 모으기 */}
+      {/* 2. 사장님의 고충: 경험과 감으로 정해도 내일은 맞히기 어렵다.
+             칸마다 위는 인터뷰에서 들은 말(따옴표), 아래 주황 글씨는 우리가 본 어려움. 어두운 띠는 숫자로 본 어려움 (예시 매장) */}
+      <Screen id="why">
+        <Lines text={'경험과 감으로 정해도\n내일은 맞히기 어려워요'} className="text-title" />
+        <ul className="mt-10 grid gap-5 lg:grid-cols-2">
+          {PAINS.map((pain, i) => (
+            <li key={pain.who}>
+              <Reveal lag={0.15 + i * 0.12} className="flex h-full flex-col rounded-[32px] bg-white px-8 py-8">
+                <span className="text-label text-ink-500">{pain.who}</span>
+                {pain.quotes.map((quote) => (
+                  <p key={quote} className="mt-4 text-h2">
+                    “{quote}”
+                  </p>
+                ))}
+                <p className="mt-auto flex items-start gap-2 pt-6 text-lg font-semibold text-point-text">
+                  <span aria-hidden>→</span>
+                  {pain.hard}
+                </p>
+              </Reveal>
+            </li>
+          ))}
+        </ul>
+        <Reveal lag={0.5} className="mt-5 flex flex-wrap items-center justify-between gap-x-10 gap-y-2 rounded-[32px] bg-ink-900 px-8 py-7 text-white">
+          <p className="text-h2">날씨, 시험, 축제, 방학… 내일을 흔드는 일이 많아요</p>
+          {v && (
+            <p className="text-lg text-white/75">
+              지난주 그대로 준비하면 하루 <b className="font-semibold text-white">{count(v.baseShown)}개</b>가 남거나 모자라요 (예시 매장)
+            </p>
+          )}
+        </Reveal>
+        <Reveal as="p" lag={0.6} className="mt-5 text-sm text-ink-500">
+          2026년 11월 사장님 인터뷰에서 (가게 이름은 밝히지 않아요). 주황 글씨는 사장님의 말이 아니라 저희가 본 어려움이에요.
+        </Reveal>
+      </Screen>
+
+      {/* 3. 손실이 얼마나 줄어드나: 비율을 크게 보여 주고, 금액은 예시 매장으로 든 예로만 적는다.
+             비율 = '지난주 그대로'와 견줘 줄어든 정도. 금액 = 줄어든 개수 × 메뉴의 원가 (원가 = 판매가 × 가정한 원가율) */}
+      {v && loss && (
+        <Screen>
+          <Lines text={'지난주 그대로 준비할 때보다\n손실이 이만큼 줄어요'} className="text-title" />
+          <div className="mt-12 grid gap-5 lg:grid-cols-[1.35fr_1fr_1fr]">
+            <Reveal lag={0.15} className="rounded-[32px] bg-ink-900 px-8 py-10 text-white">
+              <p className="text-lg text-white/75">남거나 모자라서 잃는 금액이</p>
+              <p className="mt-3 whitespace-nowrap text-hero text-point tabular-nums">
+                <CountWhenSeen to={loss.cut} />%<span className="ml-3 text-h1 text-white">줄어요</span>
+              </p>
+              <p className="mt-5 text-lg text-white/75">지난주 그대로 준비할 때의 손실을 100으로 보면</p>
+            </Reveal>
+            <Reveal lag={0.27} className="rounded-[32px] bg-white px-8 py-10">
+              <p className="text-lg text-ink-700">남아서 버리는 것이</p>
+              <p className="mt-3 whitespace-nowrap text-display tabular-nums">
+                <CountWhenSeen to={loss.overCut} />%<span className="ml-2 text-h2">줄어요</span>
+              </p>
+              <p className="mt-5 text-lg text-ink-700">
+                하루 {count(loss.over[0])}개 → {count(loss.over[1])}개
+              </p>
+            </Reveal>
+            <Reveal lag={0.39} className="rounded-[32px] bg-white px-8 py-10">
+              <p className="text-lg text-ink-700">모자라서 못 파는 것이</p>
+              <p className="mt-3 whitespace-nowrap text-display tabular-nums">
+                <CountWhenSeen to={loss.underCut} />%<span className="ml-2 text-h2">줄어요</span>
+              </p>
+              <p className="mt-5 text-lg text-ink-700">
+                하루 {count(loss.under[0])}개 → {count(loss.under[1])}개
+              </p>
+            </Reveal>
+          </div>
+          <Reveal lag={0.5} className="mt-5 flex flex-wrap items-center justify-between gap-x-10 gap-y-3 rounded-[32px] bg-white px-8 py-7">
+            <p className="text-lg text-ink-700">
+              <b className="font-semibold text-ink-900">예를 들면</b> 하루 {count(Math.round(expectedTotal(rows) / 50) * 50)}개쯤 파는 예시 매장에서는
+            </p>
+            <p className="whitespace-nowrap text-h1 tabular-nums">
+              한 달 약 {manwon(loss.money * MONTH_DAYS)} 아껴요
+              <span className="ml-3 text-lg font-normal tracking-normal text-ink-500">하루 약 {manwon(loss.money)}</span>
+            </p>
+          </Reveal>
+          <Reveal as="p" lag={0.6} className="mt-5 max-w-3xl text-sm leading-relaxed text-ink-500">
+            예시 매장(판매 기록은 가상)의 {periodName(v)}을 맞혀 본 결과예요. 금액은 줄어든 개수에 원가를 곱한 값이고, 원가는 판매가의 {Math.round(COST_RATIO * 100)}%로 잡았어요(가정).
+          </Reveal>
+        </Screen>
+      )}
+
+      {/* 4. 01 모으기 */}
       <Screen id="features">
         <Chapter
           title={'가게 주변 소식을\n한곳에 모아서 보여 주고'}
@@ -341,9 +463,9 @@ export function Landing({ login, contactUrl, canEnter }: SiteProps) {
       {/* 6. 숫자 몇 개 (검증은 여기서 길게 말하지 않는다 → 소개) */}
       {v && (
         <Screen>
-          <Chapter title={'지난주 그대로 준비할 때보다\n정확도가 올라가요'} />
+          <Chapter title={'지난주 그대로 준비할 때보다\n오차가 줄어요'} />
           <div className="mt-12 grid gap-5 md:grid-cols-3">
-            <Stat lag={0.2} label="정확도 향상 (남거나 모자라는 개수가 줄어든 비율)">
+            <Stat lag={0.2} label="오차 감소 (남거나 모자라는 개수가 줄어든 비율)">
               <span className="text-point">
                 <CountWhenSeen to={Math.max(v.gain, 0)} />%
               </span>
@@ -387,7 +509,7 @@ export function Landing({ login, contactUrl, canEnter }: SiteProps) {
 
       {/* 8. 마무리: 내 가게로 해 보기 + 바닥글 */}
       <section className="nm-screen !justify-start !py-0">
-        <JoinBand login={login} canEnter={canEnter} contactUrl={contactUrl} title={'내일 준비,\n이제 기록으로 하세요'} fill />
+        <JoinBand login={login} canEnter={canEnter} viewOnly={viewOnly} contactUrl={contactUrl} title={'내일 준비,\n이제 기록으로 하세요'} fill />
         <SiteFooter contactUrl={contactUrl} />
       </section>
     </div>

@@ -2,14 +2,16 @@
 import { useEffect, useRef, type ReactNode } from 'react'
 import { ABOUT_PATH, APP_PATH, PRIVACY_PATH, SUPPORT_PATH, TERMS_PATH, type LoginConfig } from './api'
 import { AccountBox, LoginButton } from './Auth'
+import { enterLabel } from './format'
 import { Logo } from './Logo'
 import { watchScroll } from './scrub'
 
 // 이 화면들에 공통으로 넘기는 것
 //   login       서버가 쓰는 로그인 방법. 보기 전용 시연 사이트면 null
+//   viewOnly    보기 전용 시연 사이트인가: 분석 화면에는 들어가지만 예시 매장을 보기만 한다 (버튼의 글이 달라진다)
 //   canEnter    분석 화면에 들어갈 수 있는 사람인가 (로그인했거나, 로그인을 안 쓰는 서버) → '분석하러 가기' 버튼
 //   contactUrl  '사전 신청·문의' 버튼이 여는 주소 (서버 설정). 없으면 버튼을 보여 주지 않는다
-export type SiteProps = { login: LoginConfig | null; canEnter: boolean; contactUrl: string | null }
+export type SiteProps = { login: LoginConfig | null; canEnter: boolean; viewOnly?: boolean; contactUrl: string | null }
 
 // 화살표가 달린 알약 버튼. dark = 잉크색 바탕(가장 중요한 버튼), onDark = 어두운 띠 위에 놓는 흰 버튼, 둘 다 아니면 회색 바탕
 export function ArrowLink({ href, onClick, children, dark = false, onDark = false }: {
@@ -60,7 +62,7 @@ export function HelpButton() {
 
 // 머리말: 맨 위에서는 바탕 없이 화면과 이어지고, 스크롤하면 흰 바탕과 선이 생긴다. here = 지금 보는 화면
 // 메뉴는 셋: 홈 · 소개 · 고객지원 ('none' = 메뉴에 없는 화면: 개인정보처리방침)
-export function SiteHeader({ login, canEnter, contactUrl, here }: SiteProps & { here: 'home' | 'about' | 'support' | 'none' }) {
+export function SiteHeader({ login, canEnter, viewOnly, contactUrl, here }: SiteProps & { here: 'home' | 'about' | 'support' | 'none' }) {
   const bar = useRef<HTMLElement>(null)
   useEffect(() => watchScroll(() => bar.current?.toggleAttribute('data-scrolled', window.scrollY >= 8)), [])
   const tab = (path: string, text: string, on: boolean) => (
@@ -86,7 +88,7 @@ export function SiteHeader({ login, canEnter, contactUrl, here }: SiteProps & { 
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
           {canEnter && (
             <a href={APP_PATH} className="btn-md btn-primary">
-              분석하러 가기
+              {enterLabel(viewOnly)}
             </a>
           )}
           {login ? <AccountBox login={login} /> : !canEnter && contactUrl && <ContactLink url={contactUrl} className="btn-md btn-primary" />}
@@ -99,17 +101,20 @@ export function SiteHeader({ login, canEnter, contactUrl, here }: SiteProps & { 
 
 // 맨 아래의 어두운 띠: 들어갈 수 있으면 '분석하러 가기', 아니면 로그인(또는 문의)
 // fill = 놓인 칸의 남는 높이를 채우고 내용을 가운데에 둔다 (한 화면을 바닥글과 나눠 쓸 때)
-export function JoinBand({ login, canEnter, contactUrl, title = '내 가게로 해 보기', fill = false }: SiteProps & { title?: string; fill?: boolean }) {
+export function JoinBand({ login, canEnter, viewOnly, contactUrl, title = '내 가게로 해 보기', fill = false }: SiteProps & { title?: string; fill?: boolean }) {
   return (
     <section className={`bg-ink-900 text-white ${fill ? 'flex flex-1 flex-col justify-center' : ''}`}>
       <div className="mx-auto w-full max-w-content px-5 py-28 text-center md:px-10">
         <h2 className="whitespace-pre-line text-title">{title}</h2>
         {canEnter ? (
-          <div className="mt-10 flex justify-center">
-            <ArrowLink href={APP_PATH} onDark>
-              분석하러 가기
-            </ArrowLink>
-          </div>
+          <>
+            {viewOnly && <p className="mx-auto mt-4 max-w-xl text-lg text-white/75">지금은 예시 매장을 둘러볼 수 있는 시연용 화면이에요.</p>}
+            <div className="mt-10 flex justify-center">
+              <ArrowLink href={APP_PATH} onDark>
+                {enterLabel(viewOnly)}
+              </ArrowLink>
+            </div>
+          </>
         ) : login ? (
           <>
             <p className="mx-auto mt-4 mb-8 max-w-xl text-lg text-white/75">로그인하고 판매 기록 파일을 올리면 됩니다. 올린 자료는 본인만 볼 수 있어요.</p>

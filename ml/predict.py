@@ -5,7 +5,7 @@
   2) 전체 판매 기록(최종 테스트 기간 포함)으로 다시 학습
   3) 마지막 판매일 다음 날을 예측 (issue_time 시점 규칙은 features.py가 그대로 지킴)
   4) 근거(반사실 방식): 신호 하나를 '평소 값'으로 바꿔 다시 예측 → 차이가 3% 이상이면 문장으로
-  5) 준비량: 사장님이 고른 방식의 분위를 올림
+  5) 준비량: 균형 = 예상 판매량을 반올림(화면에 보이는 예상 개수 그대로), 폐기·품절 줄이기 = 그 분위를 올림
 
 고치기 쉬운 곳
   - 준비 방식과 분위: PREP_MODES
@@ -25,6 +25,7 @@ from ml.models import make_model
 from ml.paths import ARTIFACTS
 
 # 준비 방식 → 준비량으로 쓸 값. 균형 = 예상 판매량(평균). 중앙값(p50)을 쓰면 조금씩 팔리는 메뉴가 모두 0이 된다 (models.py)
+# 균형은 '예상 판매만큼'이다 → 화면에 보이는 예상 개수(반올림한 정수)와 메뉴마다 똑같아야 한다 (prep_qty)
 PREP_MODES = {"폐기 줄이기": "p40", "균형": "pred", "품절 줄이기": "p80"}
 REASON_MIN_PCT = 3.0        # 효과가 이보다 작으면 근거로 보여 주지 않는다
 RECENT_DAYS = 28            # 연속값 신호의 '평소 값' = 최근 28일 중앙값
@@ -38,13 +39,21 @@ EVENT_TEXT = {"exam_period": "시험기간이라", "vacation": "방학 기간이
 # ---------------------------------------------------------------- 준비량
 
 def prep_qty(q: pd.DataFrame, mode: str = DEFAULT_PREP_MODE) -> pd.Series:
-    """준비량 = 고른 방식의 값을 올림한 정수.  폐기 줄이기=p40, 균형=예상 판매량(pred), 품절 줄이기=p80.
-    폐기 줄이기 ≤ 균형 ≤ 품절 줄이기 순서는 지킨다 (조금씩 팔리는 메뉴는 평균이 p80보다 클 수도, p40이 평균보다 클 수도 있다)."""
+    """준비량(정수).  균형 = 예상 판매량을 반올림, 폐기 줄이기 = p40을 올림, 품절 줄이기 = p80을 올림.
+
+    균형은 '예상 판매만큼'이므로 화면에 보이는 예상 개수와 메뉴마다 같아야 한다. 화면은 예상 판매량(소수 첫째 자리까지 저장)을
+    반올림해 보여 주므로, 여기서도 같은 값을 같은 방법으로 반올림한다 (0.5는 올린다).
+    11/20 전에는 균형도 올림이었다 → 메뉴마다 조금씩 더해져, 메뉴 29개인 매장에서 '예상 171개인데 준비 183개'가 됐다.
+    폐기 줄이기 ≤ 균형 ≤ 품절 줄이기 순서는 지킨다 (조금씩 팔리는 메뉴는 평균이 p80보다 클 수도, p40이 평균보다 클 수도 있다).
+    ※ 예상이 0.5개에 못 미치는 메뉴(이틀에 한 개도 안 팔리는 메뉴)는 균형에서 0개가 된다. 넉넉히 두려면 '품절 줄이기'."""
     if mode not in PREP_MODES:
         raise ValueError(f"준비 방식은 {list(PREP_MODES)} 중 하나여야 합니다: {mode!r}")
-    level = {"폐기 줄이기": np.minimum(q["p40"], q["pred"]), "균형": q["pred"], "품절 줄이기": np.maximum(q["p80"], q["pred"])}[mode]
-    # round(…, 6): 40.0000001 같은 계산 찌꺼기가 41로 올림되지 않게
-    return np.ceil(level.round(6)).astype(int)
+    shown = q["pred"].map(lambda v: round(float(v), 1))                 # 화면·forecast.json에 적히는 예상 판매량과 같은 값
+    even = np.floor(shown + 0.5).astype(int)                            # 균형
+    up = lambda s: np.ceil(s.round(6)).astype(int)                      # noqa: E731  round(…, 6): 40.0000001이 41이 되지 않게
+    if mode == "균형":
+        return even
+    return np.minimum(up(q["p40"]), even) if mode == "폐기 줄이기" else np.maximum(up(q["p80"]), even)
 
 
 # ---------------------------------------------------------------- 근거 문장
@@ -88,8 +97,15 @@ def signal_sources(signals: pd.DataFrame, store_id: str, date, close_time: str) 
     return s.sort_values("published_at").groupby("signal")["source_url"].last().to_dict()
 
 
-def explain(model, rows: pd.DataFrame, usual: dict[str, float], sources: dict[str, str]) -> list[list[Reason]]:
+def explain(model, rows: pd.DataFrame, usual: dict[str, float], sources: dict[str, str],
+            seen: dict[str, tuple[float, float]] | None = None) -> list[list[Reason]]:
     """메뉴(행)마다 근거 목록.  반사실 방식: 신호 하나를 '평소 값'으로 바꿔 다시 예측한 예상 판매량(평균)과 실제 예측을 비교한다.
+
+    seen = {신호: (기록에서 본 가장 작은 값, 가장 큰 값)}. 내일의 값이 이 범위를 벗어나면 그 신호의 근거는 적지 않는다.
+    그런 날을 이 가게 기록에서 본 적이 없으므로 '그 때문에 몇 % 달라진다'고 말할 근거가 없다.
+    (기록이 짧은 매장에서 실제로 있었던 일: 기록에서 가장 추웠던 며칠이 마침 잘 팔린 날이었고 예측 날짜는 그보다 더 추웠다.
+     모델이 '아주 추운 날은 전부 더 팔린다'고 배워서 아이스 음료에도 "추워서 더 팔린다"는 근거가 붙었다. 자료를 보면 아이스는 추운 날 덜 팔렸다.)
+    예측 숫자는 그대로다: 본 적 없는 값은 본 값 가운데 가장 가까운 끝과 같게 다뤄진다 (나무 모델의 성질).
 
     원재료도 모델 변수인 파생 신호(예: vacation → vacation_diff)는 따로 근거를 내지 않고 원재료와 함께 바꾼다.
     원재료가 평소 값이었다면 파생값(오늘 − 최근 평균)도 그만큼 달라진다: diff + (평소 값 − 오늘 값)
@@ -107,6 +123,8 @@ def explain(model, rows: pd.DataFrame, usual: dict[str, float], sources: dict[st
         cf = model.predict_mean(cf_rows)                                      # '평소였다면'의 예측
         pct = (actual - cf) / np.where(cf > 0, cf, np.nan) * 100
         for i in range(len(rows)):
+            if seen is not None and sig in seen and not seen[sig][0] <= value[i] <= seen[sig][1]:
+                continue                                                      # 기록에서 본 적 없는 값
             if pd.notna(pct[i]) and pd.notna(value[i]) and abs(pct[i]) >= REASON_MIN_PCT:
                 reasons[i].append(Reason(signal=sig, effect_pct=round(float(pct[i]), 1),
                                          text=reason_text(sig, float(value[i]), float(pct[i])),
@@ -173,8 +191,9 @@ def predict_next_day(sales: pd.DataFrame, signals: pd.DataFrame | None, groups: 
         q = apply_calibration(q.assign(base=base_level(rows)), calibration)
         q["pred"] = q["pred"].clip(q["p10"], q["p90"])                # 보정으로 범위가 움직여도 예상 판매량은 범위 안에
 
+    seen = {c: (float(train[c].min()), float(train[c].max())) for c in model.signal_cols}      # 기록에서 본 값의 범위
     reasons = explain(model, rows, usual_values(train, model.signal_cols, kinds),
-                      signal_sources(signals, store_id, target, close_time) if names else {})
+                      signal_sources(signals, store_id, target, close_time) if names else {}, seen)
     prep = prep_qty(q, prep_mode)
     by_mode = {mode: prep_qty(q, mode) for mode in PREP_MODES}       # 화면에서 준비 기준을 바꿔 볼 때 쓰는 값
     out_rows = [

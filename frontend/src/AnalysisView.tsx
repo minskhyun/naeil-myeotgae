@@ -179,7 +179,15 @@ export function AnalysisView({ events, status, error, log, onClose, replay = fal
           </ol>
         </header>
 
-        <div className={`grid gap-5 lg:grid-cols-[1.65fr_1fr] lg:grid-rows-[minmax(0,1fr)] ${finished || failed ? 'lg:h-[min(58vh,34rem)]' : 'min-h-0 flex-1'}`}>
+        {/* 지도와 목록.
+            분석 중: 남는 높이를 채운다. 화면이 낮아도 22rem 아래로는 줄지 않는다 (lg:min-h).
+            끝난 뒤: 높이를 정해 두고(화면 높이의 58%, 최대 34rem) 아래에 결과 칸들이 이어진다. 넘치면 화면이 스크롤된다.
+            (전에는 이 칸이 0까지 줄 수 있어서, 전체 화면을 풀어 창이 낮아지면 아래의 결과 칸들이 지도 위로 겹쳤다) */}
+        <div
+          className={`grid gap-5 lg:grid-cols-[1.65fr_1fr] lg:grid-rows-[minmax(0,1fr)] ${
+            finished || failed ? 'lg:h-[min(58vh,34rem)]' : 'flex-1 lg:min-h-[22rem] lg:shrink-0'
+          }`}
+        >
           <div className="relative h-[26rem] min-w-0 overflow-hidden rounded-[32px] bg-white lg:h-full lg:min-h-60">
             {hasMap ? (
               <AnalysisMap events={seen} />
@@ -250,9 +258,9 @@ export function AnalysisView({ events, status, error, log, onClose, replay = fal
                   <p className={`mt-1 text-h1 tabular-nums ${gain > 0 ? 'text-point' : ''}`}>
                     {gain > 0 ? (
                       <>
-                        정확도
+                        오차
                         <br />
-                        <CountUp to={gain} />% 향상
+                        <CountUp to={gain} />% 감소
                       </>
                     ) : (
                       '비슷해요'

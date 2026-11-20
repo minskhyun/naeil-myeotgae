@@ -53,11 +53,11 @@ function Cards({ items, numbered = false }: { items: { title: string; text: stri
   )
 }
 
-export function Support({ login, contactUrl, canEnter }: SiteProps) {
+export function Support({ login, contactUrl, canEnter, viewOnly }: SiteProps) {
   useSnapScroll()
   return (
     <div>
-      <SiteHeader login={login} canEnter={canEnter} contactUrl={contactUrl} here="support" />
+      <SiteHeader login={login} canEnter={canEnter} viewOnly={viewOnly} contactUrl={contactUrl} here="support" />
 
       <section className="nm-screen mx-auto w-full max-w-content px-5 md:px-10">
         <h1 className="nm-enter text-hero">
@@ -119,7 +119,7 @@ export function Support({ login, contactUrl, canEnter }: SiteProps) {
       </main>
 
       <section className="nm-screen !justify-start !py-0">
-        <JoinBand login={login} canEnter={canEnter} contactUrl={contactUrl} fill />
+        <JoinBand login={login} canEnter={canEnter} viewOnly={viewOnly} contactUrl={contactUrl} fill />
         <SiteFooter contactUrl={contactUrl} />
       </section>
     </div>
