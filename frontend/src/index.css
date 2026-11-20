@@ -197,6 +197,8 @@ body {
   background: #14171C; color: #fff; font-size: 12px; font-weight: 500; }
 
 .nm-rise { animation: nm-rise 0.45s ease-out both; }
+/* 분석 과정 화면의 맨 위에 번지는 옅은 주황빛 */
+.nm-glow { background: radial-gradient(ellipse 60% 70% at 78% 0%, rgb(255 90 31 / 0.16) 0%, rgb(255 90 31 / 0.05) 45%, rgb(255 90 31 / 0) 75%); }
 .nm-blink { animation: nm-blink 1.2s ease-in-out infinite; }
 
 /* ------------------------------------------------------------------ 준비표의 그래프 (ForecastCharts.tsx · ForecastView.tsx)

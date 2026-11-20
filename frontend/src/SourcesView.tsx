@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useState, type ReactNode } from 'react'
 import { api, type SourcePlan } from './api'
-import { fmtDate, fmtTime, SCHOOL_LABELS, SIGNAL_LABELS } from './format'
+import { cleanTitle, fmtDate, fmtTime, SCHOOL_LABELS, SIGNAL_LABELS } from './format'
 
 const ARTICLES_SHOWN = 15 // 행사·뉴스는 처음에 이만큼만 보여 준다
 
@@ -156,7 +156,7 @@ export function SourcesView({ storeId, brief = false }: { storeId: string; brief
               <li key={a.source_url + a.title} className="grid grid-cols-[6.5rem_1fr] gap-3 py-2.5 text-sm">
                 <span className="text-ink-700 tabular-nums" title={fmtDate(a.first_date)}>{period(a.first_date, a.last_date)}</span>
                 <a href={a.source_url} target="_blank" rel="noreferrer" className="hover:underline hover:underline-offset-2">
-                  {a.title} <span className="whitespace-nowrap text-ink-500">{host(a.source_url)}</span>
+                  {cleanTitle(a.title)} <span className="whitespace-nowrap text-ink-500">{host(a.source_url)}</span>
                 </a>
               </li>
             ))}

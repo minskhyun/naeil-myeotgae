@@ -13,7 +13,7 @@ import { ABOUT_PATH, api, APP_PATH, PREP_MODES, type ProgressEvent } from './api
 import { LoginButtons } from './Auth'
 import { useExample } from './example'
 import { ForecastTable, Notice, PrepToggle } from './ForecastView'
-import { count, dayPrefix, fmtDate, pct1, shortReason } from './format'
+import { cleanTitle, count, dayPrefix, fmtDate, pct1, shortReason } from './format'
 import { CountWhenSeen, Lines, Reveal } from './Reveal'
 import { ArrowLink, JoinBand, SiteFooter, SiteHeader, type SiteProps } from './Site'
 import { periodName, verdict } from './verdict'
@@ -218,7 +218,7 @@ export function Landing({ login, contactUrl, canEnter }: SiteProps) {
                           .slice(0, 4)
                           .map((a) => (
                             <li key={a.url} className="flex items-center justify-between gap-4 py-3.5">
-                              <span className="min-w-0 truncate">{a.title.split(' < ')[0]}</span>
+                              <span className="min-w-0 truncate">{cleanTitle(a.title)}</span>
                               <a href={a.url} target="_blank" rel="noreferrer" className="shrink-0 text-sm text-ink-500 underline underline-offset-4 hover:text-ink-900">
                                 원문
                               </a>
@@ -330,14 +330,14 @@ export function Landing({ login, contactUrl, canEnter }: SiteProps) {
         {/* 숫자 몇 개 (검증은 여기서 길게 말하지 않는다 → 소개) */}
         {v && (
           <section className="space-y-14">
-            <Chapter label="Result" title={'지난주만큼 준비할 때보다\n오차가 줄어요'} />
+            <Chapter label="Result" title={'지난주만큼 준비할 때보다\n더 잘 맞혀요'} />
             <div className="grid gap-5 md:grid-cols-3">
-              <Stat label="하루에 남거나 모자라는 개수가 줄어요">
+              <Stat label="더 맞혀요 (남거나 모자라는 개수가 줄어든 비율)">
                 <span className="text-point">
-                  <CountWhenSeen to={v.gain} />%
+                  <CountWhenSeen to={Math.max(v.gain, 0)} />%
                 </span>
               </Stat>
-              <Stat lag={0.12} label="하루 오차 (개, 모든 메뉴 합)">
+              <Stat lag={0.12} label="하루에 남거나 모자라는 개수 (모든 메뉴 합)">
                 {count(v.baseShown)} → <CountWhenSeen to={v.mineShown} />
               </Stat>
               <Stat lag={0.24} label="실제 판매가 예상 범위 안에 든 비율">

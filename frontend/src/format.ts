@@ -134,3 +134,9 @@ export const dayPrefix = (iso: string) => {
   const word = dayWord(iso)
   return word === '이날' ? '' : `${word} `
 }
+
+// 수집한 글의 제목을 화면에 적기 좋게: 깨진 기호(&#x27; &quot; 등)를 원래 글자로 돌리고, 뒤에 붙은 메뉴 경로(" < 사회 < 기사본문 - …")를 뗀다
+export function cleanTitle(title: string) {
+  const plain = new DOMParser().parseFromString(title, 'text/html').documentElement.textContent ?? title
+  return plain.split(' < ')[0].trim()
+}

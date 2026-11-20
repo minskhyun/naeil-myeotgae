@@ -8,7 +8,7 @@
 // 로그인을 쓰는 서버에서는 내 매장만 보인다. 로그인을 안 쓰는 서버(혼자 쓰는 노트북)에서는 모든 매장이 보이고 매장 관리 탭이 없다.
 // 주소로도 고를 수 있다: ?tab=analysis · ?tab=stores · ?store=매장ID · ?open=add (매장 추가 창) · ?open=replay (분석 과정 다시 보기)
 import { useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { api, type LoginConfig } from './api'
 import { AnalysisView } from './AnalysisView'
 import { AccountBox } from './Auth'
@@ -62,6 +62,25 @@ export function Workspace({ login }: { login: LoginConfig | null }) {
 
   // 이 매장을 마지막으로 분석했을 때의 과정 (있으면 '분석 과정 다시 보기'를 보여 준다)
   const past = useQuery({ queryKey: ['progress', storeId], queryFn: () => api.progress(storeId!), enabled: !!storeId, retry: false }).data
+
+  // '판매 기록 올리고 분석하기': 창을 거치지 않고 파일 고르기를 바로 띄운다. 고르면 그 매장에 저장된 위치·닫는 시간 그대로 분석을 시작한다
+  // (위치나 닫는 시간을 바꾸려면 '매장 관리'에서)
+  const filePicker = useRef<HTMLInputElement>(null)
+  const [uploadTo, setUploadTo] = useState<string | null>(null) // 고른 파일을 올릴 매장
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const pickFile = (target: string) => {
+    setUploadError(null)
+    setUploadTo(target)
+    filePicker.current?.click()
+  }
+  const upload = async (file: File | undefined) => {
+    if (!file || !uploadTo) return
+    try {
+      started((await api.run(uploadTo, file, {})).job_id)
+    } catch (e) {
+      setUploadError((e as Error).message)
+    }
+  }
 
   // 분석이 시작되면: 올리기 창을 닫고 분석 화면을 띄운다
   const started = (id: string) => {
@@ -176,6 +195,17 @@ export function Workspace({ login }: { login: LoginConfig | null }) {
         )}
         <main className="mx-auto max-w-[1180px] px-5 py-8 md:px-10 md:py-12">
           {all.error && <p className="mb-8 rounded-2xl bg-white px-5 py-4 text-sm text-down">매장 목록을 불러오지 못했습니다. 백엔드가 켜져 있는지 확인해 주세요.</p>}
+          {uploadError && <p className="mb-8 rounded-2xl bg-white px-5 py-4 text-sm text-down">판매 기록을 올리지 못했어요: {uploadError}</p>}
+          <input
+            ref={filePicker}
+            type="file"
+            accept=".xlsx,.xls,.csv"
+            className="hidden"
+            onChange={(e) => {
+              upload(e.target.files?.[0])
+              e.target.value = '' // 같은 파일을 다시 골라도 반응하게
+            }}
+          />
 
           {showing === 'stores' && account && (
             <StoresView
@@ -183,7 +213,7 @@ export function Workspace({ login }: { login: LoginConfig | null }) {
                 setStoreId(id)
                 setTab('dashboard')
               }}
-              onUpload={(target) => setAdding({ target })}
+              onUpload={(target) => (target ? pickFile(target) : setAdding({ target }))}
             />
           )}
           {showing !== 'stores' && !storeId && loaded && (
@@ -201,7 +231,7 @@ export function Workspace({ login }: { login: LoginConfig | null }) {
               storeName={store?.name ?? storeId}
               prepMode={store?.prep_mode ?? '균형'}
               readOnly={store?.can_edit === false}
-              onUpload={store?.can_edit === false ? undefined : () => setAdding({ target: account ? storeId : null })}
+              onUpload={store?.can_edit === false || running ? undefined : () => pickFile(storeId)}
             />
           )}
           {showing === 'analysis' && storeId && (
