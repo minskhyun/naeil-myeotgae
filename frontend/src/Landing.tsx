@@ -51,13 +51,20 @@ function Screen({ id, className = '', children }: { id?: string; className?: str
 // 사장님의 고충 (첫머리 바로 아래). 팀이 한 사장님 인터뷰에서 (2026년 11월, 사용자가 준 정리본). 가게 이름은 적지 않는다.
 // 말하려는 것: 준비량은 대부분 경험과 감으로 정하는데, **그렇게 해도 내일을 맞히기는 어렵다.**
 // ★ 누구의 말인지 섞지 않는다.
-//   quote = 인터뷰 정리본의 문장 그대로 (따옴표로 적는다. 고쳐 쓰지 않는다. 길면 문장 단위로 덜어 낼 수는 있다)
-//   hard  = 그 방법에서 우리가 본 어려움 (사장님의 말이 아니다 → 주황 글씨로 따로 적고, 아래에 그렇게 밝힌다)
-//   who   = 어느 가게 사장님인지 (동네와 업종까지만)
+//   quotes = 인터뷰에서 들은 말 (따옴표로 적는다. 정리본의 문장 그대로이고, 고쳐 쓰지 않는다)
+//   hard   = 그 말에서 우리가 짚는 점 (사장님의 말이 아니다 → 주황 글씨로 따로 적고, 아래에 그렇게 밝힌다)
+//   who    = 어느 가게 사장님인지 (동네와 업종까지만)
 const PAINS = [
-  { who: '이대 앞 카페 사장님', quote: '20년 경력으로 감으로 맞춘다.', hard: '20년이 쌓여야 생기는 감이에요' },
-  { who: '연대 동문 베이커리 사장님', quote: '평일은 지난 통계를 참고하지만 주말은 예약 손님에 맞춰 그때그때 준비한다.', hard: '주말에는 기댈 숫자가 없어요' },
-  { who: '성수 카페 사장님', quote: '제철 과일을 쓰기 때문에 한 달 단위로 수요를 예측하고, 평일과 주말만 나눠서 본다.', hard: '하루하루 달라지는 것은 담기 어려워요' },
+  {
+    who: '이대 앞 카페 사장님',
+    quotes: ['20년 경력으로 감으로 맞춘다.', '예측이 어려워서 오히려 적게 준비해 품절되게 한다.'],
+    hard: '20년이 쌓여도 감으로 맞춘다',
+  },
+  {
+    who: '연대 동문 베이커리 사장님',
+    quotes: ['평일은 지난 통계를 참고하지만 주말은 예약 손님에 맞춰 그때그때 준비한다.'],
+    hard: '주말에는 기댈 숫자가 없다',
+  },
 ]
 const MONTH_DAYS = 30 // 한 달 금액으로 바꿀 때 곱하는 날 수 (매일 여는 가게로 본다)
 // 원가율: 원가 ÷ 판매가. ★ 가정한 값이다 (판매 기록에는 원가가 없다). 금액 예시에만 쓰고, 화면에 가정이라고 적는다.
@@ -226,12 +233,16 @@ export function Landing({ login, contactUrl, canEnter, viewOnly }: SiteProps) {
              칸마다 위는 인터뷰에서 들은 말(따옴표), 아래 주황 글씨는 우리가 본 어려움. 어두운 띠는 숫자로 본 어려움 (예시 매장) */}
       <Screen id="why">
         <Lines text={'경험과 감으로 정해도\n내일은 맞히기 어려워요'} className="text-title" />
-        <ul className="mt-10 grid gap-5 lg:grid-cols-3">
+        <ul className="mt-10 grid gap-5 lg:grid-cols-2">
           {PAINS.map((pain, i) => (
             <li key={pain.who}>
               <Reveal lag={0.15 + i * 0.12} className="flex h-full flex-col rounded-[32px] bg-white px-8 py-8">
                 <span className="text-label text-ink-500">{pain.who}</span>
-                <p className="mt-4 text-[22px] leading-[32px] font-semibold tracking-[-0.02em]">“{pain.quote}”</p>
+                {pain.quotes.map((quote) => (
+                  <p key={quote} className="mt-4 text-h2">
+                    “{quote}”
+                  </p>
+                ))}
                 <p className="mt-auto flex items-start gap-2 pt-6 text-lg font-semibold text-point-text">
                   <span aria-hidden>→</span>
                   {pain.hard}
@@ -290,7 +301,7 @@ export function Landing({ login, contactUrl, canEnter, viewOnly }: SiteProps) {
               <b className="font-semibold text-ink-900">예를 들면</b> 하루 {count(Math.round(expectedTotal(rows) / 50) * 50)}개쯤 파는 예시 매장에서는
             </p>
             <p className="whitespace-nowrap text-h1 tabular-nums">
-              한 달 약 {manwon(loss.money * MONTH_DAYS)}
+              한 달 약 {manwon(loss.money * MONTH_DAYS)} 줄여요
               <span className="ml-3 text-lg font-normal tracking-normal text-ink-500">하루 약 {manwon(loss.money)}</span>
             </p>
           </Reveal>
