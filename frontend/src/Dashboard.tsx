@@ -18,13 +18,12 @@ import { periodName, verdict } from './verdict'
 const MENUS_SHOWN = 8 // 준비표에 처음 보여 줄 메뉴 수 (나머지는 '더 보기')
 const MISS_HELP = '예측대로 준비했다면 남거나 모자랐을 개수 (모든 메뉴 합, 하루 평균)'
 
-// 탭의 머리: 구역 이름(작은 글씨) · 작은 설명 · 큰 제목 · (오른쪽의 버튼)
-function TabHead({ label, sub, title, action }: { label: string; sub?: string; title: string; action?: ReactNode }) {
+// 탭의 머리: 작은 설명 · 큰 제목 · (오른쪽의 버튼)
+function TabHead({ sub, title, action }: { sub?: string; title: string; action?: ReactNode }) {
   return (
     <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-5">
       <div>
-        <p className="text-label text-ink-500">{label}</p>
-        {sub && <p className="mt-3 text-label text-ink-500">{sub}</p>}
+        {sub && <p className="text-label text-ink-500">{sub}</p>}
         <h2 className="mt-1 text-h1">{title}</h2>
       </div>
       {action}
@@ -81,7 +80,6 @@ export function DashboardTab({ storeId, storeName, prepMode, readOnly, onUpload 
   return (
     <div className="space-y-6">
       <TabHead
-        label="Dashboard"
         // 예측 날짜가 오늘·어제로 보일 때 헷갈리지 않게: 어느 날까지의 판매 기록으로 만든 준비표인지 적는다
         sub={`${storeName}${history?.dates.length ? ` · 판매 기록 ${shortDate(history.dates[history.dates.length - 1])}까지` : ''}`}
         title={fmtDate(date)}
@@ -174,7 +172,6 @@ export function AnalysisTab({ storeId, storeName, onReplay, events }: {
   return (
     <div className="space-y-6">
       <TabHead
-        label="Analysis"
         sub={`${storeName}${v ? ` · ${periodName(v)} 동안 맞혀 본 결과` : ''}`}
         title="예측이 얼마나 맞나요"
         action={onReplay && <ArrowLink onClick={onReplay}>분석 과정 다시 보기</ArrowLink>}

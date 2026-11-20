@@ -121,8 +121,7 @@ export function Workspace({ login }: { login: LoginConfig | null }) {
         </header>
         <main className="mx-auto grid max-w-content gap-12 px-5 pt-10 pb-24 md:px-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16 lg:pt-20">
           <div className="lg:sticky lg:top-24 lg:self-start">
-            <p className="text-label text-ink-500">Start</p>
-            <h1 className="nm-enter mt-5 text-title">
+            <h1 className="nm-enter text-title">
               <span>첫 매장을</span>
               <span style={{ animationDelay: '220ms' }}>만들어 볼까요</span>
             </h1>

@@ -76,7 +76,7 @@ function Cards({ items, cols, numbered = false }: { items: { title: string; text
       {items.map((it, i) => (
         <li key={it.title}>
           <Reveal lag={i * 0.1} className="h-full rounded-3xl bg-white px-7 py-8">
-            {numbered && <span className="text-label text-ink-500">Step {String(i + 1).padStart(2, '0')}</span>}
+            {numbered && <span className="text-label text-ink-500">{i + 1}단계</span>}
             <h3 className={`text-h3 ${numbered ? 'mt-4' : ''}`}>{it.title}</h3>
             <p className="mt-3 leading-relaxed text-ink-700">{it.text}</p>
           </Reveal>
@@ -86,13 +86,12 @@ function Cards({ items, cols, numbered = false }: { items: { title: string; text
   )
 }
 
-// 예시 결과의 한 부분: 번호 · 제목 · 한 줄 설명 · 실제 화면
-function Part({ n, title, lead, children }: { n: number; title: string; lead: string; children: ReactNode }) {
+// 예시 결과의 한 부분: 제목 · 한 줄 설명 · 실제 화면
+function Part({ title, lead, children }: { title: string; lead: string; children: ReactNode }) {
   return (
     <section className="nm-screen mx-auto w-full max-w-content px-5 md:px-10">
       <Reveal>
-        <span className="text-label text-ink-500">Example {String(n).padStart(2, '0')}</span>
-        <h3 className="mt-3 text-h2">{title}</h3>
+        <h3 className="text-h2">{title}</h3>
         <p className="mt-2 text-lg text-ink-700">{lead}</p>
       </Reveal>
       <Reveal className="mt-6 rounded-[32px] bg-white p-5 sm:p-8">{children}</Reveal>
@@ -113,8 +112,7 @@ export function About({ login, contactUrl, canEnter }: SiteProps) {
       <SiteHeader login={login} canEnter={canEnter} contactUrl={contactUrl} here="about" />
 
       <section className="nm-screen mx-auto w-full max-w-content px-5 md:px-10">
-        <p className="text-label text-ink-500">About</p>
-        <h1 className="nm-enter mt-5 text-hero">
+        <h1 className="nm-enter text-hero">
           <span style={{ '--i': 0 } as CSSProperties}>판매 기록이</span>
           <span style={{ '--i': 1 } as CSSProperties}>준비표가 되기까지</span>
         </h1>
@@ -175,11 +173,11 @@ export function About({ login, contactUrl, canEnter }: SiteProps) {
         </Block>
         {store && (
             <>
-              <Part n={1} title="메뉴별로 몇 개 준비할지" lead="메뉴마다 준비할 개수와 평소와 달라진 이유를 보여 줘요. 메뉴를 누르면 그래프가 펼쳐집니다.">
+              <Part title="메뉴별로 몇 개 준비할지" lead="메뉴마다 준비할 개수와 평소와 달라진 이유를 보여 줘요. 메뉴를 누르면 그래프가 펼쳐집니다.">
                 <ForecastView storeId={store.store_id} prepMode={store.prep_mode} readOnly limit={MENUS_SHOWN} />
               </Part>
 
-              <Part n={2} title="어떤 주변 정보를 썼나" lead="모은 정보 중에서 예측이 실제로 더 정확해진 것만 써요.">
+              <Part title="어떤 주변 정보를 썼나" lead="모은 정보 중에서 예측이 실제로 더 정확해진 것만 써요.">
                 <div className="space-y-10">
                   <Decisions storeId={store.store_id} />
                   <details>
@@ -191,7 +189,7 @@ export function About({ login, contactUrl, canEnter }: SiteProps) {
                 </div>
               </Part>
 
-              <Part n={3} title="얼마나 맞나" lead="지난 날짜를 전날까지의 기록만 보고 맞혀 본 뒤, 실제 판매와 비교했어요.">
+              <Part title="얼마나 맞나" lead="지난 날짜를 전날까지의 기록만 보고 맞혀 본 뒤, 실제 판매와 비교했어요.">
                 <BacktestView storeId={store.store_id} hideDecisions />
               </Part>
             </>

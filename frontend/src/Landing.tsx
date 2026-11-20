@@ -4,7 +4,7 @@
 // 한 화면에 한 내용: 구역(Screen) 하나가 화면 하나를 채우고, 스크롤은 구역마다 멈춘다 (index.css의 nm-screen · nm-snap).
 // 어떻게 예측하는지, 어떻게 검증했는지는 여기서 길게 설명하지 않는다: 소개(About.tsx)에 있다. 여기서는 숫자 몇 개만.
 // 화면 조각은 그림이 아니라 예시 매장의 실제 결과로 그린다 (준비표·주의할 소식 등 분석 화면과 같은 부품).
-// 모양: 옅은 회색 바탕 위의 흰 칸, 왼쪽에 붙인 큰 제목, 작은 글씨의 구역 이름, 화살표가 달린 알약 버튼.
+// 모양: 옅은 회색 바탕 위의 흰 칸, 왼쪽에 붙인 큰 제목, 화살표가 달린 알약 버튼. (제목 위의 작은 영어 이름표는 쓰지 않는다)
 // 움직임: 구역이 화면에 들어오면 제목이 줄마다 흐릿했다가 또렷해지며 떠오르고(Lines), 칸들이 차례로 떠오르고(Reveal),
 //   첫머리의 지도는 천천히 나타나고, 숫자는 0에서 올라간다.
 import { useQuery } from '@tanstack/react-query'
@@ -49,15 +49,12 @@ function Screen({ id, className = '', children }: { id?: string; className?: str
   )
 }
 
-// 번호가 붙은 큰 구역의 머리: 왼쪽에 구역 이름(작은 고정폭 글씨) · 큰 제목 · 설명, 오른쪽에 세로선으로 나눈 짧은 항목들
-function Chapter({ label, title, lead, points }: { label: string; title: string; lead?: string; points?: { name: string; text: string }[] }) {
+// 큰 구역의 머리: 왼쪽에 큰 제목 · 설명, 오른쪽에 세로선으로 나눈 짧은 항목들
+function Chapter({ title, lead, points }: { title: string; lead?: string; points?: { name: string; text: string }[] }) {
   return (
     <div className="grid items-end gap-10 lg:grid-cols-[1.1fr_1fr] lg:gap-16">
       <div>
-        <Reveal as="p" className="text-label text-ink-500">
-          {label}
-        </Reveal>
-        <Lines text={title} className="mt-5 text-title" />
+        <Lines text={title} className="text-title" />
         {lead && (
           <Reveal as="p" lag={0.2} className="mt-6 max-w-xl text-xl leading-8 text-ink-700">
             {lead}
@@ -164,8 +161,7 @@ export function Landing({ login, contactUrl, canEnter }: SiteProps) {
         )}
         <div className="relative z-10 mx-auto w-full max-w-content px-5 md:px-10">
           <div className="lg:max-w-[620px]">
-            <p className="text-label text-ink-500">Tomorrow, how many?</p>
-            <h1 className="nm-enter mt-6 text-hero">
+            <h1 className="nm-enter text-hero">
               <span style={{ '--i': 0 } as CSSProperties}>내일 몇 개 만들지,</span>
               <span style={{ '--i': 1 } as CSSProperties}>감 대신 기록으로</span>
             </h1>
@@ -203,7 +199,6 @@ export function Landing({ login, contactUrl, canEnter }: SiteProps) {
       {/* 2. 01 모으기 */}
       <Screen id="features">
         <Chapter
-          label="01 Collect"
           title={'가게 주변 소식을\n한곳에 모아서 보여 주고'}
           lead="가게 위치만 알려 주시면 AI가 주변을 찾아서 읽어요."
           points={[
@@ -267,7 +262,6 @@ export function Landing({ login, contactUrl, canEnter }: SiteProps) {
       {/* 4. 02 예측하기: 큰 문장 한 화면, 그다음 작은 기능 넷이 한 화면씩 */}
       <Screen>
         <Chapter
-          label="02 Forecast"
           title={'얼마나 팔릴지, 몇 개 준비할지\n메뉴마다 알려 줘요'}
           lead="숫자 하나가 아니라, 얼마나 팔릴지의 범위와 준비할 개수를 함께 보여 드려요."
           points={[
@@ -336,7 +330,7 @@ export function Landing({ login, contactUrl, canEnter }: SiteProps) {
 
       {/* 5. 03 준비하기 */}
       <Screen>
-        <Chapter label="03 Prepare" title={'남길 일은 줄이고\n모자랄 일은 막아 드려요'} />
+        <Chapter title={'남길 일은 줄이고\n모자랄 일은 막아 드려요'} />
         <div className="mt-12 grid gap-5 md:grid-cols-2">
           <Reveal lag={0.2} className="rounded-[32px] bg-white px-8 py-12">
             <span className="tag bg-down-soft text-down">폐기</span>
@@ -354,7 +348,7 @@ export function Landing({ login, contactUrl, canEnter }: SiteProps) {
       {/* 6. 숫자 몇 개 (검증은 여기서 길게 말하지 않는다 → 소개) */}
       {v && (
         <Screen>
-          <Chapter label="Result" title={'지난주만큼 준비할 때보다\n정확도가 올라가요'} />
+          <Chapter title={'지난주만큼 준비할 때보다\n정확도가 올라가요'} />
           <div className="mt-12 grid gap-5 md:grid-cols-3">
             <Stat lag={0.2} label="정확도 향상 (남거나 모자라는 개수가 줄어든 비율)">
               <span className="text-point">
@@ -382,14 +376,13 @@ export function Landing({ login, contactUrl, canEnter }: SiteProps) {
         <Lines text="더 알아보기" className="text-title" />
         <div className="mt-12 grid gap-5 md:grid-cols-3">
           {[
-            { href: `${ABOUT_PATH}#how`, tag: 'How', title: '판매 기록이 준비표가 되기까지' },
-            { href: `${ABOUT_PATH}#example`, tag: 'Example', title: '예시 매장의 준비표와 검증 결과' },
-            { href: `${ABOUT_PATH}#faq`, tag: 'FAQ', title: '어떤 파일을 올리면 되나요' },
+            { href: `${ABOUT_PATH}#how`, title: '판매 기록이 준비표가 되기까지' },
+            { href: `${ABOUT_PATH}#example`, title: '예시 매장의 준비표와 검증 결과' },
+            { href: `${ABOUT_PATH}#faq`, title: '어떤 파일을 올리면 되나요' },
           ].map((c, i) => (
             <Reveal key={c.href} lag={0.15 + i * 0.12}>
               <a href={c.href} className="group block h-full rounded-[32px] bg-white px-8 py-10">
-                <span className="text-label text-ink-500">{c.tag}</span>
-                <p className="mt-5 text-h2">{c.title}</p>
+                <p className="text-h2">{c.title}</p>
                 <span className="mt-8 flex h-10 w-10 items-center justify-center rounded-full bg-ink-900 text-white transition-transform duration-200 group-hover:translate-x-1.5" aria-hidden>
                   →
                 </span>

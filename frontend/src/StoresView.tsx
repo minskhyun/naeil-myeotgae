@@ -148,8 +148,7 @@ export function StoresView({ onOpen, onUpload }: {
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-5">
         <div>
-          <p className="text-label text-ink-500">Stores</p>
-          <h2 className="mt-3 text-h1">매장 관리</h2>
+          <h2 className="text-h1">매장 관리</h2>
           <p className="mt-3 text-ink-700">여기 있는 매장과 그 자료(올린 판매 기록, 결과)는 로그인한 본인만 볼 수 있습니다.</p>
         </div>
         <ArrowLink onClick={() => onUpload(null)} dark>

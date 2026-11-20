@@ -532,6 +532,10 @@
   - 글꼴: ★ **지도 위의 글이 다른 글꼴이었다.** `.nm-map .leaflet-container`라는 선택자가 맞지 않아(nm-map이 곧 leaflet-container다) 지도의 이름표가 Leaflet 기본 글꼴로 그려지고 있었다. `.nm-map.leaflet-container`로 고쳤다. 오류 기록(`pre`)의 고정폭도 없애고, `code · kbd · samp · pre`가 본문 글꼴을 따르게 했다(다시 생기지 않게).
   - ★ 본문 글꼴이 아닌 것으로 남은 곳: 구글 로그인 버튼(구글이 그리는 버튼이라 바꿀 수 없다)과 지도 타일 속의 지명(그림이다).
 
+- 11/20 오후 **제목 위의 작은 영어 이름표를 모두 뺌** (사용자: "영어 위에 짜치게 넣은 거 다 빼")
+  - 뺀 것: 첫 화면의 "Tomorrow, how many?" · "01 Collect" · "02 Forecast" · "03 Prepare" · "Result" · 더 알아보기 칸의 "How / Example / FAQ", 소개의 "About" · "Example 01~03", 분석 화면의 "Dashboard" · "Analysis" · "Stores" · "Start".
+  - 소개의 네 단계 칸은 순서가 뜻이 있어 "Step 01" 대신 "1단계"로 적었다.
+
 ## F. 코드 지도 (공부 순서대로)
 
 읽는 순서: `contracts/schemas.py`(주고받는 형식) → `run.py`(전체 흐름) → `ml/`(아래 표 순서) → `agent/collect.py`(주변 정보) → `backend/app/main.py` → `frontend/src/`
