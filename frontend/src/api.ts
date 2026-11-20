@@ -153,8 +153,10 @@ export type Job = {
   error: string | null
 }
 
-// 화면의 주소는 둘이다: '/' 첫 화면(Landing), APP_PATH 분석 화면(Workspace). 서버 쪽 같은 값은 backend/app/main.py의 APP_PAGE
+// 화면의 주소는 셋이다: '/' 첫 화면(Landing), ABOUT_PATH 소개(About), APP_PATH 분석 화면(Workspace).
+// 서버 쪽 같은 값은 backend/app/main.py의 APP_PAGE · ABOUT_PAGE
 export const APP_PATH = '/app'
+export const ABOUT_PATH = '/about'
 export const PREP_MODES = ['폐기 줄이기', '균형', '품절 줄이기'] as const
 
 const JSON_BODY = { 'Content-Type': 'application/json' }

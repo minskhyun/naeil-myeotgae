@@ -1,77 +1,28 @@
-// 로그인 전 첫 화면 (공개 시연 사이트도 이 화면): 제품이 무엇을 해 주는지 한 쪽에 차례로.
-//   맨 위 메뉴 → 흰 첫머리(인사·로그인) → 세 단계 안내 → 예시 ① 내일 준비표 ② 어떤 주변 정보를 썼나 ③ 얼마나 맞나
-//   → 자주 묻는 질문 → 써 보기(로그인 또는 문의) → 맨 아래 안내(자료 보관, 만든 사람)
-// 예시 매장 = 서버가 demo로 표시한 매장 (가상 매장). 로그인하면 이 화면 대신 Workspace.tsx가 나온다.
+// 첫 화면 ('/'): 제품이 무엇을 해 주는지를 큰 문장과 실제 화면 조각으로 차례로 보여 준다.
+//   첫머리(한 문장 + 지도 장면) → 01 주변 소식을 모으고 → 02 메뉴마다 알려 주고(작은 기능 넷) → 03 남길 일·모자랄 일을 줄이고
+//   → 숫자로 본 결과 → 더 알아보기(소개로) → 내 가게로 해 보기
+// 어떻게 예측하는지, 어떻게 검증했는지는 여기서 길게 설명하지 않는다: 소개(About.tsx)에 있다. 여기서는 숫자 몇 개만.
+// 화면 조각은 그림이 아니라 예시 매장의 실제 결과로 그린다 (준비표·주의할 소식 등 분석 화면과 같은 부품).
+// 스크롤에 묶인 움직임: 칸마다 화면에 올라오는 만큼 떠오르고(Reveal), 첫머리의 지도는 올라오며 커진다.
 import { useQuery } from '@tanstack/react-query'
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { AnalysisMap } from './AnalysisMap'
-import { AnalysisView } from './AnalysisView'
-import { api, APP_PATH, type LoginConfig, type ProgressEvent } from './api'
-import { AccountBox, LoginButtons } from './Auth'
-import { BacktestView, Decisions } from './BacktestView'
-import { ForecastView } from './ForecastView'
+import { ABOUT_PATH, api, APP_PATH, PREP_MODES, type ProgressEvent } from './api'
+import { LoginButtons } from './Auth'
+import { ForecastTable, Notice, PrepToggle } from './ForecastView'
+import { count, dayPrefix, fmtDate, pct1, shortReason } from './format'
 import { Reveal } from './Reveal'
-import { clamp01, watchScroll } from './scrub'
-import { SourcesView } from './SourcesView'
+import { JoinBand, SiteFooter, SiteHeader, type SiteProps } from './Site'
+import { useExample } from './example'
+import { periodName, verdict } from './verdict'
 
-// 보여 줄 예시 매장. 없으면 목록의 첫 매장.
-// 판매 기록은 1년치 가상 데이터(data/sample/campus-a: 실제 신촌의 날씨·학사일정·행사로 만든 것)이고,
-// 주변 정보는 실제 주소(연세로)로 분석을 돌려 모은 실제 자료다 (기사·행사의 원문 링크가 실제 글로 간다).
-const FIRST_EXAMPLE = 'sinchon-a'
-const MENUS_SHOWN = 8 // 예시 준비표에 처음 보여 줄 메뉴 수
-const HOW = [
-  { title: '판매 기록 올리기', text: '포스에서 내려받은 파일과 가게 위치만 있으면 돼요.' },
-  { title: 'AI가 주변을 살펴요', text: '날씨·학교 일정·근처 행사를 모아, 도움이 되는 것만 골라요.' },
-  { title: '내일 준비표 완성', text: '메뉴마다 몇 개 준비할지와 그 이유를 알려 드려요.' },
-]
-const NAV = [
-  { href: '#example', text: '예시 보기' },
-  { href: '#accuracy', text: '얼마나 맞나' },
-  { href: '#faq', text: '자주 묻는 질문' },
-]
-// 자주 묻는 질문. 지금 실제로 되는 것만 적는다 (아직 없는 것은 없다고 적는다)
-const FAQ = [
-  {
-    q: '판매 기록은 얼마나 있어야 하나요?',
-    a: '최소 3주(21일)치가 필요해요. 5주가 넘으면 마지막 1주를 따로 떼어 한 번 더 확인하고, 기록이 길수록 날씨·행사 같은 주변 정보의 효과를 더 잘 가려냅니다.',
-  },
-  {
-    q: '어떤 파일을 올리면 되나요?',
-    a: '포스나 매출 프로그램에서 내려받은 엑셀(.xlsx)·CSV 파일이면 됩니다. 날짜, 메뉴 이름, 수량 열만 있으면 읽어요. 토스 포스·OKPOS의 열 이름과 "상품별 매출" 엑셀(달마다 시트가 나뉜 것 포함)을 알아봅니다.',
-  },
-  {
-    q: '결과는 어디서 보나요?',
-    a: '지금은 이 웹 화면에서 봅니다. 판매 기록을 올리면 1~2분 뒤에 내일 준비표가 나와요. 포스 자동 연동과 카카오톡으로 매일 받아 보기는 아직 없고, 다음 단계로 계획하고 있습니다.',
-  },
-  {
-    q: '주변 정보는 무조건 예측에 들어가나요?',
-    a: '아니요. 가게마다 지난 기록으로 확인해서, 넣었을 때 예측이 실제로 더 정확해진 정보만 씁니다. 도움이 안 되면 쓰지 않고, 왜 안 썼는지도 보여 드려요.',
-  },
-  {
-    q: '예측이 틀리면요?',
-    a: '예측은 숫자 하나가 아니라 범위로 보여 드리고, 가게마다 지난 기록에서 얼마나 맞았는지를 그대로 공개합니다. 폐기를 줄일지 품절을 줄일지(준비 기준)는 사장님이 고릅니다.',
-  },
-  {
-    q: '메뉴가 바뀌면요?',
-    a: '최근 14일 동안 팔리지 않은 메뉴는 준비표에서 자동으로 빠지고, 새 메뉴는 판매 기록이 쌓이면 들어옵니다.',
-  },
-  {
-    q: '카페·베이커리가 아니어도 되나요?',
-    a: '메뉴별 하루 판매 기록이 있으면 돌아가지만, 지금까지 확인한 곳은 카페와 베이커리입니다.',
-  },
-  {
-    q: '가격은 얼마인가요?',
-    a: '아직 정하지 않았습니다. 지금은 시연 단계입니다.',
-  },
-]
-
-// 첫머리의 배경: 예시 매장의 분석 기록으로 '지도에서 정보를 모으는 장면'을 되풀이해 보여 준다 (만질 수 없는 배경).
+// 첫머리의 지도: 예시 매장의 분석 기록으로 '지도에서 정보를 모으는 장면'을 되풀이해 보여 준다 (만질 수 없다).
 //   가게와 주변 시설·AI가 고른 곳을 차례로 찍은 뒤, 날씨·학교 일정·소식 같은 정보가 가장자리에서 가게로 계속 들어온다.
-const HERO_FIRST: ProgressEvent['kind'][] = ['store', 'places', 'plan', 'event']
-const HERO_LOOP: ProgressEvent['kind'][] = ['sales', 'weather', 'academic', 'special', 'trend_span', 'article']
-function HeroMap({ events }: { events: ProgressEvent[] }) {
-  const first = useMemo(() => HERO_FIRST.flatMap((k) => events.filter((e) => e.kind === k)), [events])
-  const loop = useMemo(() => events.filter((e) => HERO_LOOP.includes(e.kind)), [events])
+const MAP_FIRST: ProgressEvent['kind'][] = ['store', 'places', 'plan', 'event']
+const MAP_LOOP: ProgressEvent['kind'][] = ['sales', 'weather', 'academic', 'special', 'trend_span', 'article']
+function CollectMap({ events }: { events: ProgressEvent[] }) {
+  const first = useMemo(() => MAP_FIRST.flatMap((k) => events.filter((e) => e.kind === k)), [events])
+  const loop = useMemo(() => events.filter((e) => MAP_LOOP.includes(e.kind)), [events])
   const [n, setN] = useState(1) // 지금까지 지도에 넘긴 알림 수 (처음에 가게 하나)
   useEffect(() => {
     if (!loop.length && n >= first.length) return
@@ -82,283 +33,274 @@ function HeroMap({ events }: { events: ProgressEvent[] }) {
     () => [...first.slice(0, n), ...Array.from({ length: Math.max(0, n - first.length) }, (_, i) => loop[i % loop.length])],
     [first, loop, n],
   )
-  return <AnalysisMap events={shown} ambient />
+  return <AnalysisMap events={shown} ambient storeY={0.56} />
 }
 
-// 예시 한 부분: 가운데 제목 · 한 줄 설명 · 흰 카드에 담은 실제 화면. id = 맨 위 메뉴가 찾아오는 자리
-function Part({ n, id, title, lead, children }: { n: number; id?: string; title: string; lead: string; children: ReactNode }) {
+// 번호가 붙은 큰 구역의 머리: 번호 · 두 줄짜리 큰 문장 · 짧은 설명
+function Chapter({ no, title, lead }: { no: string; title: string; lead?: string }) {
   return (
-    <section id={id} className="scroll-mt-24">
-      <Reveal className="mx-auto max-w-4xl text-center">
-        <span className="tag bg-surface text-ink-700">예시 {n}</span>
-        <h2 className="mt-4 text-title">{title}</h2>
-        <p className="mt-4 text-xl leading-8 text-ink-700">{lead}</p>
+    <Reveal className="mx-auto max-w-4xl text-center">
+      <p className="text-h3 text-point-text">{no}</p>
+      <h2 className="mt-4 whitespace-pre-line text-title">{title}</h2>
+      {lead && <p className="mx-auto mt-6 max-w-2xl text-xl leading-8 text-ink-700">{lead}</p>}
+    </Reveal>
+  )
+}
+
+// 작은 기능 하나: 한쪽에는 짧은 글, 다른 쪽에는 회색 판 위의 실제 화면 조각. flip = 글과 화면의 자리를 바꾼다, wide = 화면 쪽을 더 넓게
+function Feature({ title, text, flip = false, wide = false, children }: { title: string; text: string; flip?: boolean; wide?: boolean; children: ReactNode }) {
+  const cols = wide ? 'md:grid-cols-[0.6fr_1.4fr]' : flip ? 'md:grid-cols-[1.2fr_0.8fr]' : 'md:grid-cols-[0.8fr_1.2fr]'
+  return (
+    <div className={`grid items-center gap-8 md:gap-16 ${cols}`}>
+      <Reveal className={flip ? 'md:order-2' : ''}>
+        <h3 className="whitespace-pre-line text-h1">{title}</h3>
+        <p className="mt-5 text-xl leading-8 text-ink-700">{text}</p>
       </Reveal>
-      <Reveal className="mt-10 rounded-3xl border border-line bg-white p-5 sm:p-8">{children}</Reveal>
-    </section>
+      <Reveal lag={0.15} className="min-w-0 rounded-[32px] bg-surface p-4 sm:p-8">
+        {children}
+      </Reveal>
+    </div>
   )
 }
 
-// login: 서버가 쓰는 로그인 방법(구글·카카오). 보기 전용 시연 사이트면 null (로그인 버튼 없음)
-// contactUrl: '사전 신청·문의' 버튼이 여는 주소 (서버 설정). 없으면 버튼을 보여 주지 않는다
-// canEnter: 분석 화면으로 들어갈 수 있는 사람인가 (로그인했거나, 로그인을 안 쓰는 서버). 그러면 '분석하러 가기' 버튼을 보여 준다
-export function Landing({ login, contactUrl = null, canEnter = false }: { login: LoginConfig | null; contactUrl?: string | null; canEnter?: boolean }) {
-  const stores = useQuery({ queryKey: ['stores'], queryFn: api.stores })
-  const examples = stores.data?.filter((s) => s.demo) ?? []
-  // 화면에는 가상 매장 하나만 보여 준다 (주소에 ?store=매장ID 를 붙이면 다른 예시 매장. 화면에서 그리로 가는 길은 두지 않는다)
-  const params = new URLSearchParams(window.location.search)
-  const picked = params.get('store')
-  const loginFailed = params.get('login_error') // 카카오 로그인이 실패·취소되면 서버가 ?login_error=kakao 로 돌려보낸다
-  const store =
-    examples.find((s) => s.store_id === picked) ?? examples.find((s) => s.store_id === FIRST_EXAMPLE) ?? examples[0]
-  const virtual = !!store?.name.includes('가상') // 판매 기록을 가상으로 만든 예시인가 (주변 정보는 실제 주소로 모은 것)
-  // 예시 매장을 분석했을 때의 과정 (녹화본). 있으면 '분석 과정 보기' 단추로 지도 장면을 재생한다. 주소로는 ?open=replay
-  const past = useQuery({
-    queryKey: ['progress', store?.store_id],
-    queryFn: () => api.progress(store!.store_id),
-    enabled: !!store,
-    retry: false,
-  }).data
-  const [replaying, setReplaying] = useState(params.get('open') === 'replay')
-  // 첫머리 배경 지도: 매장 위치가 있는 분석 기록이 있을 때만. 움직임을 줄이도록 설정한 사람에게는 보여 주지 않는다
-  const calm = useMemo(() => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false, [])
-  const heroMap = !calm && !replaying && past?.some((e) => e.kind === 'store' && e.lat)
-  // 첫머리 장면의 진행도(--s: 0~1)와 머리말의 바탕(맨 위에 있는가)을 스크롤에 맞춰 고친다
-  const scene = useRef<HTMLElement>(null)
-  const [atTop, setAtTop] = useState(true)
-  useEffect(
-    () =>
-      watchScroll(() => {
-        setAtTop(window.scrollY < 8)
-        const el = scene.current
-        if (!el) return
-        const box = el.getBoundingClientRect()
-        const s = clamp01(-box.top / Math.max(1, box.height - window.innerHeight))
-        el.style.setProperty('--s', s.toFixed(3))
-        el.dataset.stage = s < 0.2 ? 'intro' : 'steps' // 물러난 인사말의 버튼이 눌리지 않게
-      }),
-    [],
+// 큰 숫자 한 칸
+function Stat({ value, label }: { value: ReactNode; label: string }) {
+  return (
+    <div className="text-center">
+      <p className="whitespace-nowrap text-display text-ink-900 tabular-nums">{value}</p>
+      <p className="mt-3 text-lg text-ink-700">{label}</p>
+    </div>
   )
-  // 주요 버튼은 잉크 배경 + 흰 글자. 어두운 띠 위(onDark)에서는 흰 버튼
-  const contact = (onDark = false) =>
-    contactUrl && (
-      <a href={contactUrl} target="_blank" rel="noreferrer" className={onDark ? 'btn-xl bg-white text-ink-900 hover:bg-surface' : 'btn-md btn-primary'}>
-        사전 신청·문의
-      </a>
-    )
+}
+
+export function Landing({ login, contactUrl, canEnter }: SiteProps) {
+  const { stores, store, past } = useExample()
+  const id = store?.store_id
+  const forecast = useQuery({ queryKey: ['forecast', id], queryFn: () => api.forecast(id!), enabled: !!id }).data
+  const backtest = useQuery({ queryKey: ['backtest', id], queryFn: () => api.backtest(id!), enabled: !!id }).data
+  const [mode, setMode] = useState<string>(PREP_MODES[1]) // '준비 기준' 조각에서 눌러 본 기준 (처음에는 균형)
+  const loginFailed = new URLSearchParams(window.location.search).get('login_error') // 카카오 로그인이 실패·취소되면 서버가 붙여 보낸다
+  const calm = useMemo(() => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false, [])
+  const hasMap = !calm && !!past?.some((e) => e.kind === 'store' && e.lat)
+
+  const v = verdict(backtest)
+  const rows = forecast?.rows ?? []
+  const date = rows[0]?.date
+  // 평소와 가장 많이 달라진 메뉴 몇 개 (이유가 붙은 것)
+  const moved = rows
+    .filter((r) => r.reasons.length)
+    .sort((a, b) => Math.abs(b.reasons[0].effect_pct) - Math.abs(a.reasons[0].effect_pct))
+    .slice(0, 5)
+  const total = (m: string) => rows.reduce((sum, r) => sum + (r.prep_by_mode?.[m] ?? r.prep_qty ?? 0), 0)
+  // 01의 화면 조각에 적을 '모은 정보' 몇 가지 (예시 매장의 분석 기록에서)
+  const got = <K extends ProgressEvent['kind']>(kind: K) => (past ?? []).filter((e) => e.kind === kind) as Extract<ProgressEvent, { kind: K }>[]
+  const gathered = [
+    { label: '날씨', value: got('weather')[0] ? `${count(got('weather')[0].days)}일` : null },
+    { label: '주변 시설', value: got('places')[0] ? `${count(got('places')[0].count)}곳` : null },
+    { label: '근처 행사', value: got('event').length ? `${got('event').length}건` : null },
+    { label: '읽은 글', value: got('article').length ? `${got('article').length}건` : null },
+  ].filter((g) => g.value)
 
   return (
-    <div className="min-h-screen">
-      {replaying && past && <AnalysisView events={past} status="done" replay onClose={() => setReplaying(false)} />}
-      {/* 머리말: 맨 위에서는 바탕 없이 첫머리 장면 위에 떠 있고, 스크롤하면 흰 바탕과 선이 생긴다 */}
-      <header className={`sticky top-0 z-30 border-b transition-colors duration-300 ${atTop ? 'border-transparent bg-transparent' : 'border-line bg-white'}`}>
-        <div className="mx-auto flex min-h-16 max-w-content flex-wrap items-center justify-between gap-x-8 gap-y-2 px-5 py-2 md:px-10">
-          <a href="/" className="text-xl font-[800] tracking-[-0.05em]" aria-label="내일몇개 첫 화면">
-            내일몇개
-          </a>
-          <nav className="flex flex-wrap items-center gap-x-6 gap-y-1 text-base text-ink-700">
-            {NAV.map((n) => (
-              <a key={n.href} href={n.href} className="hover:text-ink-900">
-                {n.text}
-              </a>
-            ))}
-            {canEnter && (
-              <a href={APP_PATH} className="btn-md btn-primary">
-                분석하러 가기
-              </a>
-            )}
-            {login ? <AccountBox login={login} /> : !canEnter && contact()}
-          </nav>
-        </div>
-      </header>
+    <div className="min-h-screen bg-white">
+      <SiteHeader login={login} canEnter={canEnter} contactUrl={contactUrl} here="home" />
 
-      {/* 첫머리 장면 (스크롤 스크러빙): 화면에 붙어 있는 동안 스크롤한 만큼 진행한다.
-          인사말이 위로 물러나며 지도가 드러나고 → 세 단계 카드가 하나씩 올라온다. 진행도는 요소의 CSS 변수 --s (index.css의 nm-scene).
-          뒤의 지도는 넓은 화면에서만. 움직임 줄이기를 켠 사람에게는 붙이지 않고 차례로 늘어놓는다. */}
-      <section ref={scene} className="nm-scene relative -mt-16 bg-white" data-stage="intro">
-        {/* '#steps' 로 오면 세 단계가 다 나온 자리로 간다 */}
-        <span id="steps" className="pointer-events-none absolute top-[58%]" aria-hidden />
-        <div className="nm-scene-view sticky top-0 h-screen overflow-hidden">
-          {heroMap && (
-            <div className="nm-fade absolute inset-0 isolate hidden md:block" aria-hidden>
-              <HeroMap events={past!} />
-              <div className="nm-hero-veil absolute inset-0 z-[900]" />
-              <div className="nm-hero-top absolute inset-x-0 top-0 z-[900] h-40" />
-            </div>
+      {/* 첫머리: 한 문장과 버튼 → 지도 장면이 올라오며 커진다 */}
+      <section className="mx-auto max-w-content px-5 pt-20 text-center md:px-10 md:pt-28">
+        <p className="text-h3 text-ink-500">카페·베이커리 내일 판매 예측</p>
+        <h1 className="mt-5 whitespace-pre-line text-hero">{'내일 몇 개 만들지,\n감 대신 기록으로'}</h1>
+        <p className="mx-auto mt-7 max-w-2xl text-xl leading-8 text-ink-700">
+          판매 기록만 올리면 날씨와 가게 주변 소식까지 살펴, 내일 메뉴별로 몇 개 준비하면 좋을지 알려 드려요.
+        </p>
+        <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
+          {canEnter ? (
+            <a href={APP_PATH} className="btn-xl btn-primary">
+              분석하러 가기
+            </a>
+          ) : (
+            <a href="#features" className="btn-xl btn-primary">
+              어떤 서비스인가요
+            </a>
           )}
-
-          <div className="nm-scene-intro absolute inset-0 flex items-center justify-center px-5 pb-[14vh] pt-16 text-center md:px-10">
-            <div className="mx-auto max-w-4xl">
-              <p className="text-body-lg text-ink-700">카페·베이커리를 위한 내일 판매 예측</p>
-              <h2 className="mt-3 text-hero">내일 몇 개 만들까요?</h2>
-              <p className="mx-auto mt-6 max-w-2xl text-xl leading-8 text-ink-700">
-                판매 기록에 날씨·학교 일정·근처 행사를 더해, 내일 메뉴별로 몇 개 준비하면 좋을지 알려 드려요.
-              </p>
-              <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-                {canEnter ? (
-                  <a href={APP_PATH} className="btn-xl btn-primary">
-                    분석하러 가기
-                  </a>
-                ) : (
-                  <a href="#example" className="btn-xl btn-primary">
-                    예시 보기
-                  </a>
-                )}
-                {canEnter && (
-                  <a href="#example" className="btn-xl btn-secondary">
-                    예시 보기
-                  </a>
-                )}
-                {!!past?.length && (
-                  <button onClick={() => setReplaying(true)} className="btn-xl btn-secondary">
-                    AI가 분석하는 과정 보기
-                  </button>
-                )}
-              </div>
-              {loginFailed && (
-                <p className="mx-auto mt-6 w-fit rounded-lg bg-down-soft px-4 py-2 text-sm font-medium text-down">
-                  로그인을 마치지 못했어요. 다시 시도해 주세요.
-                </p>
-              )}
-              {login && !canEnter && (
-                <div className="mt-8 flex flex-col items-center gap-3">
-                  <LoginButtons login={login} />
-                  <span className="text-sm text-ink-500">로그인하면 내 가게 판매 기록으로 준비표를 만들 수 있어요.</span>
-                </div>
-              )}
-              <p className="nm-scroll-hint mt-10 text-sm text-ink-500" aria-hidden>
-                아래로 스크롤해 보세요
-              </p>
-            </div>
+          <a href={ABOUT_PATH} className="btn-xl btn-secondary">
+            어떻게 예측하나요
+          </a>
+        </div>
+        {loginFailed && (
+          <p className="mx-auto mt-6 w-fit rounded-lg bg-down-soft px-4 py-2 text-sm font-medium text-down">로그인을 마치지 못했어요. 다시 시도해 주세요.</p>
+        )}
+        {login && !canEnter && (
+          <div className="mt-8 flex flex-col items-center gap-3">
+            <LoginButtons login={login} />
+            <span className="text-sm text-ink-500">로그인하면 내 가게 판매 기록으로 준비표를 만들 수 있어요.</span>
           </div>
+        )}
+      </section>
+      {hasMap && (
+        <div className="mx-auto mt-16 max-w-[1400px] px-3 md:mt-20 md:px-6">
+          <Reveal effect="zoom" className="relative isolate h-[62vh] min-h-96 overflow-hidden bg-surface">
+            <CollectMap events={past!} />
+            <p className="absolute left-5 top-5 z-[900] rounded-md bg-white px-3 py-1.5 text-sm font-medium text-ink-700">
+              가게 주변의 정보를 모으는 모습 (예시 매장)
+            </p>
+          </Reveal>
+        </div>
+      )}
 
-          <div className="nm-scene-steps pointer-events-none absolute inset-0 flex items-center justify-center px-5 pb-[10vh] pt-16 md:px-10">
-            <div className="mx-auto w-full max-w-content">
-              <h2 className="text-center text-title">세 단계면 내일 준비표가 완성됩니다</h2>
-              <ol className="mt-8 grid gap-4 md:mt-12 md:grid-cols-3 md:gap-5">
-                {HOW.map((h, i) => (
-                  <li
-                    key={h.title}
-                    className="nm-scene-card rounded-2xl border border-line bg-white px-6 py-6 text-center md:py-12"
-                    style={{ '--start': 0.4 + i * 0.17 } as CSSProperties}
-                  >
-                    <span className="tag bg-surface text-ink-700">STEP {i + 1}</span>
-                    <h3 className="mt-3 text-2xl font-semibold tracking-tight md:mt-4">{h.title}</h3>
-                    <p className="mt-2 text-base leading-relaxed text-ink-700 md:mt-3">{h.text}</p>
+      {stores.error && <p className="mx-auto mt-16 max-w-content px-5 text-sm text-down">예시를 불러오지 못했습니다. 백엔드가 켜져 있는지 확인해 주세요.</p>}
+
+      <main id="features" className="mx-auto max-w-content scroll-mt-20 space-y-44 px-5 py-40 md:px-10">
+        {/* 01 */}
+        <section className="space-y-16">
+          <Chapter no="01" title={'가게 주변 소식을\n한곳에 모아서 보여 주고'} lead="날씨, 근처 학교의 시험과 방학, 주변 행사와 기사까지. 가게 위치만 알려 주시면 AI가 찾아서 읽어요." />
+          {!!gathered.length && (
+            <Reveal className="rounded-[32px] bg-surface p-6 sm:p-10">
+              <ul className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                {gathered.map((g) => (
+                  <li key={g.label} className="rounded-2xl bg-white px-6 py-7 text-center">
+                    <p className="text-h1 tabular-nums">{g.value}</p>
+                    <p className="mt-2 text-ink-700">{g.label}</p>
                   </li>
                 ))}
-              </ol>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <main className="mx-auto max-w-content space-y-32 px-5 py-24 md:px-10">
-        {stores.error && <p className="rounded-2xl bg-white px-5 py-4 text-sm text-down">예시를 불러오지 못했습니다. 백엔드가 켜져 있는지 확인해 주세요.</p>}
-        {stores.data && !store && <p className="text-center text-ink-700">보여 줄 예시 매장이 아직 없습니다.</p>}
-
-        {store && (
-          <>
-            <div className="space-y-10">
-              {virtual && (
-                <p className="mx-auto w-fit rounded-md bg-surface px-3 py-1.5 text-sm font-medium text-ink-700">
-                  예시 매장의 판매 기록은 가상이고, 날씨·학교 일정·행사·기사는 실제 신촌의 것입니다
-                </p>
+              </ul>
+              {!!got('article').length && (
+                <ul className="mt-4 divide-y divide-line rounded-2xl bg-white px-6">
+                  {got('article')
+                    .slice(0, 4)
+                    .map((a) => (
+                      <li key={a.url} className="flex items-center justify-between gap-4 py-4">
+                        <span className="min-w-0 truncate">{a.title.split(' < ')[0]}</span>
+                        <a href={a.url} target="_blank" rel="noreferrer" className="shrink-0 text-sm text-ink-500 underline underline-offset-4 hover:text-ink-900">
+                          원문
+                        </a>
+                      </li>
+                    ))}
+                </ul>
               )}
-              <Part n={1} id="example" title="내일 메뉴별로 몇 개 준비할지"
-                lead="메뉴마다 준비할 개수와 평소와 달라진 이유를 보여 줘요. 메뉴를 누르면 그래프가 펼쳐집니다.">
-                <ForecastView storeId={store.store_id} prepMode={store.prep_mode} readOnly limit={MENUS_SHOWN} />
-              </Part>
-            </div>
+              <p className="mt-5 text-center text-sm text-ink-500">예시 매장(신촌, 판매 기록은 가상)을 분석할 때 실제로 모은 것입니다.</p>
+            </Reveal>
+          )}
+        </section>
 
-            <Part n={2} title="어떤 주변 정보를 썼나"
-              lead="모은 정보 중에서 예측이 실제로 더 정확해진 것만 써요.">
-              <div className="space-y-10">
-                <Decisions storeId={store.store_id} />
-                <details>
-                  <summary className="cursor-pointer text-sm font-semibold underline-offset-4 hover:underline">
-                    AI가 고른 정보원 자세히 보기
-                  </summary>
-                  <div className="mt-8">
-                    <SourcesView storeId={store.store_id} brief />
+        {/* 02 */}
+        <section className="space-y-24">
+          <Chapter no="02" title={'얼마나 팔릴지, 몇 개 준비할지\n메뉴마다 알려 줘요'} />
+          {!!rows.length && id && (
+            <>
+              <Feature wide title={"한 장으로 끝나는\n'준비표'"} text="메뉴마다 준비할 개수와 예상 범위를 한 장에 담았어요. 최근 4주의 판매와 나란히 볼 수 있어요.">
+                <div className="rounded-2xl bg-white">
+                  <ForecastTable rows={rows} limit={4} compact storeId={id} />
+                </div>
+              </Feature>
+
+              {!!moved.length && (
+                <Feature flip title={"평소와 왜 다른지 알려 주는\n'평소 대비'"} text="추운 날에는 따뜻한 음료가 늘고 아이스는 줄어요. 숫자가 달라진 이유를 메뉴마다 적어 드려요.">
+                  <ul className="divide-y divide-line rounded-2xl bg-white px-6">
+                    {moved.map((r) => (
+                      <li key={r.menu} className="flex items-center justify-between gap-4 py-5">
+                        <span className="min-w-0 truncate text-lg font-medium">{r.menu}</span>
+                        <span className="flex shrink-0 items-center gap-3">
+                          {r.reasons.slice(0, 2).map((x) => (
+                            <span key={x.signal} className={`tag ${x.effect_pct < 0 ? 'bg-down-soft text-down' : 'bg-up-soft text-up'}`}>
+                              {shortReason(x)}
+                            </span>
+                          ))}
+                          <b className="w-14 text-right text-h3 tabular-nums">{count(r.pred)}개</b>
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </Feature>
+              )}
+
+              <Feature title={"남길지 모자랄지 고르는\n'준비 기준'"} text="폐기를 줄일지 품절을 줄일지는 사장님이 정해요. 고르는 대로 준비 개수가 바뀝니다. 눌러 보세요.">
+                <div className="rounded-2xl bg-white px-6 py-8">
+                  <PrepToggle storeId={id} prepMode={mode} readOnly onPick={setMode} />
+                  <p className="mt-8 text-center text-ink-700">{date ? `${dayPrefix(date)}준비할 개수` : '준비할 개수'}</p>
+                  <p className="mt-1 text-center text-display tabular-nums">
+                    {count(total(mode))}
+                    <span className="ml-1 text-[28px] font-normal tracking-normal text-ink-500">개</span>
+                  </p>
+                </div>
+              </Feature>
+
+              {!!forecast?.warnings.length && (
+                <Feature flip title={"놓치기 쉬운 일을 챙겨 주는\n'주의할 소식'"} text="숫자에 담지 못한 일은 AI가 글로 알려 드려요. 근거가 된 원문도 함께 붙여요.">
+                  <div className="space-y-3">
+                    {forecast.warnings.slice(0, 2).map((w, i) => (
+                      <Notice key={i} w={w} />
+                    ))}
                   </div>
-                </details>
-              </div>
-            </Part>
+                </Feature>
+              )}
+            </>
+          )}
+        </section>
 
-            <Part n={3} id="accuracy" title="얼마나 맞나"
-              lead="지난 날짜를 전날까지의 기록만 보고 맞혀 본 뒤, 실제 판매와 비교했어요.">
-              <BacktestView storeId={store.store_id} hideDecisions />
-            </Part>
-          </>
+        {/* 03 */}
+        <section className="space-y-16">
+          <Chapter no="03" title={'남길 일은 줄이고\n모자랄 일은 막아 드려요'} />
+          <div className="grid gap-5 md:grid-cols-2">
+            <Reveal className="rounded-[32px] bg-surface px-8 py-12">
+              <span className="tag bg-down-soft text-down">폐기</span>
+              <h3 className="mt-5 text-h1">덜 팔릴 날은 미리 줄이고</h3>
+              <p className="mt-4 text-xl leading-8 text-ink-700">비가 오거나 방학이 시작되면 평소만큼 팔리지 않아요. 그런 날을 먼저 알려 드려요.</p>
+            </Reveal>
+            <Reveal lag={0.2} className="rounded-[32px] bg-surface px-8 py-12">
+              <span className="tag bg-up-soft text-up">품절</span>
+              <h3 className="mt-5 text-h1">더 팔릴 날은 넉넉하게</h3>
+              <p className="mt-4 text-xl leading-8 text-ink-700">근처에 행사가 있거나 날이 추워 따뜻한 음료가 늘 때, 모자라지 않게 준비할 수 있어요.</p>
+            </Reveal>
+          </div>
+        </section>
+
+        {/* 숫자 몇 개 (검증은 여기서 길게 말하지 않는다 → 소개) */}
+        {v && (
+          <section className="space-y-16">
+            <Reveal className="mx-auto max-w-4xl text-center">
+              <h2 className="whitespace-pre-line text-title">{'지난주만큼 준비할 때보다\n덜 틀려요'}</h2>
+            </Reveal>
+            <Reveal className="grid gap-12 md:grid-cols-3">
+              <Stat value={<span className="text-point">{v.gain}%</span>} label="하루에 남거나 모자라는 개수가 줄어요" />
+              <Stat value={`${count(v.baseShown)} → ${count(v.mineShown)}`} label="하루 오차 (개, 모든 메뉴 합)" />
+              <Stat value={pct1(v.mine.coverage_80)} label="실제 판매가 예상 범위 안에 든 비율" />
+            </Reveal>
+            <Reveal className="text-center text-sm leading-relaxed text-ink-500">
+              <p>
+                예시 매장(판매 기록은 가상)의 {periodName(v)} 기준{date ? ` · ${fmtDate(date)} 예측까지` : ''}. 지난 날짜를 전날까지의 기록만 보고 맞혀 본 결과입니다.
+              </p>
+              <a href={`${ABOUT_PATH}#example`} className="mt-2 inline-block font-medium text-ink-900 underline underline-offset-4">
+                어떻게 쟀는지 보기
+              </a>
+            </Reveal>
+          </section>
         )}
 
-        <section id="faq" className="scroll-mt-24">
+        {/* 더 알아보기 */}
+        <section className="space-y-12">
           <Reveal>
-            <h2 className="text-center text-title">자주 묻는 질문</h2>
+            <h2 className="text-center text-h1">더 알아보기</h2>
           </Reveal>
-          <Reveal className="mx-auto mt-10 max-w-3xl divide-y divide-line rounded-2xl border border-line bg-white px-6 sm:px-8">
-            {FAQ.map((f) => (
-              <details key={f.q} className="group py-5">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-semibold">
-                  {f.q}
-                  <span className="text-ink-500 transition-transform group-open:rotate-180" aria-hidden>
-                    ▾
-                  </span>
-                </summary>
-                <p className="mt-3 text-sm leading-relaxed text-ink-700">{f.a}</p>
-              </details>
+          <div className="grid gap-5 md:grid-cols-3">
+            {[
+              { href: `${ABOUT_PATH}#how`, tag: '방법', title: '판매 기록이 준비표가 되기까지' },
+              { href: `${ABOUT_PATH}#example`, tag: '결과', title: '예시 매장의 준비표와 검증 결과' },
+              { href: `${ABOUT_PATH}#faq`, tag: '질문', title: '어떤 파일을 올리면 되나요' },
+            ].map((c, i) => (
+              <Reveal key={c.href} lag={i * 0.15}>
+                <a href={c.href} className="block h-full rounded-[32px] bg-surface px-8 py-10 transition-colors duration-150 hover:bg-line">
+                  <span className="tag bg-white text-ink-700">{c.tag}</span>
+                  <p className="mt-5 text-h2">{c.title}</p>
+                  <p className="mt-6 text-ink-500">소개에서 보기 →</p>
+                </a>
+              </Reveal>
             ))}
-          </Reveal>
+          </div>
         </section>
       </main>
 
-      <section className="bg-ink-900 text-white">
-        <div className="mx-auto max-w-content px-5 py-24 text-center md:px-10">
-          <h2 className="text-title">내 가게로 해 보기</h2>
-          {login ? (
-            <>
-              <p className="mx-auto mt-3 mb-7 max-w-xl text-white/75">
-                로그인하고 판매 기록 파일을 올리면 됩니다. 올린 자료는 본인만 볼 수 있어요.
-              </p>
-              <div className="flex justify-center">
-                <LoginButtons login={login} />
-              </div>
-            </>
-          ) : (
-            <>
-              <p className="mx-auto mt-3 max-w-xl text-white/75">
-                {contactUrl ? '내 가게 판매 기록으로 써 보고 싶다면 신청해 주세요.' : '지금은 예시 매장만 볼 수 있는 시연용 화면입니다.'}
-              </p>
-              {contactUrl && <div className="mt-7 flex justify-center">{contact(true)}</div>}
-            </>
-          )}
-        </div>
-      </section>
-
-      <footer className="border-t border-line bg-white">
-        <div className="mx-auto grid max-w-content gap-8 px-5 py-12 text-sm text-ink-700 md:grid-cols-[1fr_1.6fr] md:px-10">
-          <div>
-            <p className="text-base font-[800] tracking-[-0.05em] text-ink-900">내일몇개</p>
-            <p className="mt-2 leading-relaxed">
-              팀 PREDICTOR · 2026 연세 캠퍼스타운 AI 스타트업 해커톤 출품작
-            </p>
-            {contactUrl && (
-              <a href={contactUrl} target="_blank" rel="noreferrer" className="mt-3 inline-block font-medium text-ink-900 underline underline-offset-4">
-                사전 신청·문의
-              </a>
-            )}
-          </div>
-          <div>
-            <p className="font-semibold text-ink-900">올린 자료를 어떻게 다루나요</p>
-            <ul className="mt-2 list-disc space-y-1.5 pl-5 leading-relaxed">
-              <li>올린 판매 기록과 결과는 본인만 볼 수 있습니다.</li>
-              <li>매장을 지우면 판매 기록, 결과, 올린 파일이 서버에서 함께 지워집니다.</li>
-              <li>주변 정보를 읽는 데 외부 AI(Anthropic Claude)를 쓰며, 가게 이름·위치와 메뉴 이름, 예측 숫자가 전달됩니다.</li>
-            </ul>
-          </div>
-        </div>
-      </footer>
+      <JoinBand login={login} canEnter={canEnter} contactUrl={contactUrl} title={'내일 준비,\n이제 기록으로 하세요'} />
+      <SiteFooter contactUrl={contactUrl} />
     </div>
   )
 }

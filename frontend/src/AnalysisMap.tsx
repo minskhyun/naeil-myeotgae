@@ -31,7 +31,6 @@ const AMBIENT_SLOTS: Record<string, [number, number]> = {
   article: [0.85, 0.78],
 }
 const AMBIENT_ZOOM = 17 // 배경용은 더 가까이 본다 (주변 시설의 점이 화면 가득 퍼지게)
-const AMBIENT_STORE_Y = 0.86 // 배경용에서 가게가 놓이는 세로 위치 (가운데 글 아래)
 
 const escapeHtml = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)
 
@@ -53,7 +52,8 @@ function curve(from: Spot, to: Spot): Spot[] {
 
 // ambient = 첫 화면 머리의 배경으로 쓸 때: 만질 수 없고(끌기·확대 없음, 페이지 스크롤을 가로채지 않는다),
 //           가게로 날아가지 않고 처음부터 가게 둘레를 보여 주며, 다 그린 뒤에도 주변의 점에서 빛줄기가 계속 들어온다.
-export function AnalysisMap({ events, ambient = false }: { events: ProgressEvent[]; ambient?: boolean }) {
+// storeY   = 배경용에서 가게가 놓이는 세로 위치 (칸 높이에 대한 비율, 0 = 맨 위)
+export function AnalysisMap({ events, ambient = false, storeY = 0.5 }: { events: ProgressEvent[]; ambient?: boolean; storeY?: number }) {
   const box = useRef<HTMLDivElement>(null)
   const map = useRef<L.Map | null>(null)
   const store = useRef<{ at: Spot; pin: L.Marker } | null>(null)
@@ -130,8 +130,8 @@ export function AnalysisMap({ events, ambient = false }: { events: ProgressEvent
         const html = `<div class="nm-store"><u></u><u></u><i></i><span>${escapeHtml(e.name)}</span></div>`
         store.current = { at, pin: mark(at, html, 1000).addTo(m) }
         if (ambient) {
-          // 가게가 칸의 아래쪽(AMBIENT_STORE_Y)에 오도록, 그만큼 위쪽을 지도의 가운데로 잡는다
-          const center = m.project(at, AMBIENT_ZOOM).subtract([0, (AMBIENT_STORE_Y - 0.5) * m.getSize().y])
+          // 가게가 칸의 storeY 높이에 오도록, 그만큼 어긋난 곳을 지도의 가운데로 잡는다
+          const center = m.project(at, AMBIENT_ZOOM).subtract([0, (storeY - 0.5) * m.getSize().y])
           m.setView(m.unproject(center, AMBIENT_ZOOM), AMBIENT_ZOOM, { animate: false })
         } else m.flyTo(at, 15, { duration: 1.8 })
       } else if (e.kind === 'places') {
@@ -171,7 +171,7 @@ export function AnalysisMap({ events, ambient = false }: { events: ProgressEvent
       if (from) flow(from, KIND_COLOR.places)
     }, 1100)
     return () => window.clearInterval(timer)
-  }, [events, ambient])
+  }, [events, ambient, storeY])
 
   return <div ref={box} className={`nm-map h-full w-full ${ambient ? 'nm-map-ambient' : ''}`} />
 }

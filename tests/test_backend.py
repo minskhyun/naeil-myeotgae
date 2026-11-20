@@ -76,13 +76,14 @@ def test_demo_mode_is_read_only(client, monkeypatch):
 
 
 def test_app_page_serves_the_same_screen_file():
-    """화면의 주소는 둘이다: "/" 첫 화면, "/app" 분석 화면. 서버는 둘 다 같은 화면 파일을 준다 (어느 화면인지는 화면 코드가 정한다)."""
+    """화면의 주소는 셋이다: "/" 첫 화면, "/about" 소개, "/app" 분석 화면. 서버는 모두 같은 화면 파일을 준다 (어느 화면인지는 화면 코드가 정한다)."""
     if not main.WEB_DIST.exists():
         pytest.skip("화면을 빌드하지 않았다 (frontend/dist 없음)")
     client = TestClient(main.app)
     home, app_page = client.get("/"), client.get(main.APP_PAGE)
     assert app_page.status_code == 200 and "text/html" in app_page.headers["content-type"]
     assert app_page.text == home.text
+    assert client.get(main.ABOUT_PAGE).text == home.text
 
 def test_demo_data_follows_contracts():
     from contracts.schemas import BacktestResult, Forecast, SalesHistory, SourceReport

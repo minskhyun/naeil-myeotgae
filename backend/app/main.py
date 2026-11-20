@@ -178,6 +178,7 @@ class GoogleLogin(BaseModel):
 
 STATE_COOKIE = "nm_oauth_state"            # 카카오로 보낼 때 심어 두는 확인용 값 (10분)
 APP_PAGE = "/app"                            # 분석 화면의 주소 (첫 화면은 "/"). 화면 쪽 같은 값은 frontend/src/api.ts의 APP_PATH
+ABOUT_PAGE = "/about"                        # 소개 화면의 주소 (frontend/src/api.ts의 ABOUT_PATH)
 KAKAO_CALLBACK = "/api/auth/kakao/callback"  # 카카오 콘솔의 '리다이렉트 URI'에 등록하는 주소의 뒷부분
 ASKED = ".nickname"                        # state 끝에 붙이는 표시: 닉네임 동의를 따로 물어보고 돌아오는 길
 
@@ -453,9 +454,10 @@ def job(job_id: str, user: auth.User | None = Me):
 
 
 # 빌드된 화면 (맨 마지막에 둔다: /api/... 가 먼저 처리되고, 나머지 주소는 화면 파일)
-# 화면의 주소는 둘: "/" 첫 화면, APP_PAGE 분석 화면. 둘 다 같은 index.html을 주고, 어느 화면을 그릴지는 화면 코드(App.tsx)가 정한다.
+# 화면의 주소는 셋: "/" 첫 화면, ABOUT_PAGE 소개, APP_PAGE 분석 화면. 모두 같은 index.html을 주고, 어느 화면을 그릴지는 화면 코드(App.tsx)가 정한다.
 if WEB_DIST.exists():
     @app.get(APP_PAGE, include_in_schema=False)
+    @app.get(ABOUT_PAGE, include_in_schema=False)
     def app_page():
         return FileResponse(WEB_DIST / "index.html")
 
