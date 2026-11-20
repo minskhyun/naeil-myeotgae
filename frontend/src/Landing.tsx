@@ -1,12 +1,12 @@
 // 첫 화면 ('/'): 제품이 무엇을 해 주는지를 큰 문장과 실제 화면 조각으로 차례로 보여 준다.
-//   첫머리(한 문장 + 지도 장면) → 01 주변 소식을 모으고 → 02 메뉴마다 알려 주고(작은 기능 넷) → 03 남길 일·모자랄 일을 줄이고
+//   첫머리(왼쪽에 한 문장, 오른쪽 바탕에 지도 장면) → 01 주변 소식을 모으고 → 02 메뉴마다 알려 주고(작은 기능 넷) → 03 남길 일·모자랄 일을 줄이고
 //   → 숫자로 본 결과 → 더 알아보기(소개로) → 내 가게로 해 보기
 // 한 화면에 한 내용: 구역(Screen) 하나가 화면 하나를 채우고, 스크롤은 구역마다 멈춘다 (index.css의 nm-screen · nm-snap).
 // 어떻게 예측하는지, 어떻게 검증했는지는 여기서 길게 설명하지 않는다: 소개(About.tsx)에 있다. 여기서는 숫자 몇 개만.
 // 화면 조각은 그림이 아니라 예시 매장의 실제 결과로 그린다 (준비표·주의할 소식 등 분석 화면과 같은 부품).
-// 모양: 옅은 회색 바탕 위의 흰 칸, 왼쪽에 붙인 큰 제목, 작은 고정폭 글씨의 구역 이름, 화살표가 달린 알약 버튼.
+// 모양: 옅은 회색 바탕 위의 흰 칸, 왼쪽에 붙인 큰 제목, 작은 글씨의 구역 이름, 화살표가 달린 알약 버튼.
 // 움직임: 구역이 화면에 들어오면 제목이 줄마다 흐릿했다가 또렷해지며 떠오르고(Lines), 칸들이 차례로 떠오르고(Reveal),
-//   지도는 조금 작았다가 펴지고, 숫자는 0에서 올라간다.
+//   첫머리의 지도는 천천히 나타나고, 숫자는 0에서 올라간다.
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react'
 import { AnalysisMap } from './AnalysisMap'
@@ -37,7 +37,7 @@ function CollectMap({ events }: { events: ProgressEvent[] }) {
     () => [...first.slice(0, n), ...Array.from({ length: Math.max(0, n - first.length) }, (_, i) => loop[i % loop.length])],
     [first, loop, n],
   )
-  return <AnalysisMap events={shown} ambient storeY={0.56} />
+  return <AnalysisMap events={shown} ambient storeX={0.6} storeY={0.52} />
 }
 
 // 화면 하나를 채우는 구역 (스크롤이 여기서 멈춘다). id = 다른 곳에서 찾아오는 자리
@@ -149,58 +149,58 @@ export function Landing({ login, contactUrl, canEnter }: SiteProps) {
     <div>
       <SiteHeader login={login} canEnter={canEnter} contactUrl={contactUrl} here="home" />
 
-      {/* 1. 첫머리: 한 문장과 버튼 (화면을 열면 줄마다 떠오른다) */}
-      <Screen className="text-center">
-        <p className="text-label text-ink-500">Tomorrow, how many?</p>
-        <h1 className="nm-enter mt-6 text-hero">
-          <span style={{ '--i': 0 } as CSSProperties}>내일 몇 개 만들지,</span>
-          <span style={{ '--i': 1 } as CSSProperties}>감 대신 기록으로</span>
-        </h1>
-        <div className="nm-enter">
-          <p className="mx-auto mt-7 max-w-2xl text-xl leading-8 text-ink-700" style={{ '--i': 3 } as CSSProperties}>
-            판매 기록만 올리면 날씨와 가게 주변 소식까지 살펴, 내일 메뉴별로 몇 개 준비하면 좋을지 알려 드려요.
-          </p>
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-3" style={{ '--i': 4 } as CSSProperties}>
-            {canEnter ? (
-              <ArrowLink href={APP_PATH} dark>
-                분석하러 가기
-              </ArrowLink>
-            ) : (
-              <ArrowLink href="#features" dark>
-                어떤 서비스인가요
-              </ArrowLink>
-            )}
-            <ArrowLink href={ABOUT_PATH}>어떻게 예측하나요</ArrowLink>
-          </div>
-        </div>
-        {loginFailed && (
-          <p className="mx-auto mt-6 w-fit rounded-lg bg-down-soft px-4 py-2 text-sm font-medium text-down">로그인을 마치지 못했어요. 다시 시도해 주세요.</p>
-        )}
-        {login && !canEnter && (
-          <div className="mt-8 flex flex-col items-center gap-3">
-            <LoginButtons login={login} />
-            <span className="text-sm text-ink-500">로그인하면 내 가게 판매 기록으로 준비표를 만들 수 있어요.</span>
-          </div>
-        )}
-        {stores.error && <p className="mt-8 text-sm text-down">예시를 불러오지 못했습니다. 백엔드가 켜져 있는지 확인해 주세요.</p>}
-      </Screen>
-
-      {/* 2. 지도 장면: 화면 가득 */}
-      {hasMap && (
-        <section className="nm-screen px-3 md:px-6">
-          <Reveal effect="zoom" className="relative isolate mx-auto w-full max-w-[1400px] flex-1 overflow-hidden bg-white">
-            {/* 칸의 높이는 남는 자리로 정해지므로(flex-1), 지도는 그 칸에 꽉 채워 올린다 */}
-            <div className="absolute inset-0">
-              <CollectMap events={past!} />
-            </div>
-            <p className="absolute left-5 top-5 z-[900] rounded-full bg-white px-4 py-2 text-sm font-medium text-ink-700">
+      {/* 1. 첫머리: 왼쪽에 한 문장과 버튼 (화면을 열면 줄마다 떠오른다), 오른쪽 바탕에는 가게 주변의 정보를 모으는 지도 장면.
+             지도는 칸으로 나누지 않는다: 가장자리가 바탕색으로 풀려 글 옆에 스며들고, 넓은 화면에서는 머리말 밑까지 올라간다.
+             좁은 화면에서는 글 아래에 놓인다. */}
+      <section className="nm-screen relative">
+        {hasMap && (
+          <div className="nm-hero-map relative isolate order-last mt-12 h-[340px] lg:absolute lg:-top-16 lg:right-0 lg:bottom-0 lg:mt-0 lg:h-auto lg:w-[58%]">
+            <CollectMap events={past!} />
+            <div className="nm-hero-veil pointer-events-none absolute inset-0 z-[900]" />
+            <p className="absolute right-6 bottom-9 z-[900] rounded-full bg-white px-4 py-2 text-sm font-medium text-ink-700">
               가게 주변의 정보를 모으는 모습 (예시 매장)
             </p>
-          </Reveal>
-        </section>
-      )}
+          </div>
+        )}
+        <div className="relative z-10 mx-auto w-full max-w-content px-5 md:px-10">
+          <div className="lg:max-w-[620px]">
+            <p className="text-label text-ink-500">Tomorrow, how many?</p>
+            <h1 className="nm-enter mt-6 text-hero">
+              <span style={{ '--i': 0 } as CSSProperties}>내일 몇 개 만들지,</span>
+              <span style={{ '--i': 1 } as CSSProperties}>감 대신 기록으로</span>
+            </h1>
+            <div className="nm-enter">
+              <p className="mt-7 max-w-xl text-xl leading-8 text-ink-700" style={{ '--i': 3 } as CSSProperties}>
+                판매 기록만 올리면 날씨와 가게 주변 소식까지 살펴, 내일 메뉴별로 몇 개 준비하면 좋을지 알려 드려요.
+              </p>
+              <div className="mt-10 flex flex-wrap items-center gap-3" style={{ '--i': 4 } as CSSProperties}>
+                {canEnter ? (
+                  <ArrowLink href={APP_PATH} dark>
+                    분석하러 가기
+                  </ArrowLink>
+                ) : (
+                  <ArrowLink href="#features" dark>
+                    어떤 서비스인가요
+                  </ArrowLink>
+                )}
+                <ArrowLink href={ABOUT_PATH}>어떻게 예측하나요</ArrowLink>
+              </div>
+            </div>
+            {loginFailed && (
+              <p className="mt-6 w-fit rounded-lg bg-down-soft px-4 py-2 text-sm font-medium text-down">로그인을 마치지 못했어요. 다시 시도해 주세요.</p>
+            )}
+            {login && !canEnter && (
+              <div className="mt-8 flex flex-col items-start gap-3">
+                <LoginButtons login={login} />
+                <span className="text-sm text-ink-500">로그인하면 내 가게 판매 기록으로 준비표를 만들 수 있어요.</span>
+              </div>
+            )}
+            {stores.error && <p className="mt-8 text-sm text-down">예시를 불러오지 못했습니다. 백엔드가 켜져 있는지 확인해 주세요.</p>}
+          </div>
+        </div>
+      </section>
 
-      {/* 3. 01 모으기 */}
+      {/* 2. 01 모으기 */}
       <Screen id="features">
         <Chapter
           label="01 Collect"

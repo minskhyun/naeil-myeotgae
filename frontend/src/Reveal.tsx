@@ -1,7 +1,6 @@
 // 화면에 들어올 때 나타나는 칸. 첫 화면과 소개는 스크롤이 구역마다 멈추므로(index.css의 nm-snap),
 // 구역이 화면에 들어오는 순간 그 안의 것들이 한 번 차례로 나타난다. 모양과 움직임은 index.css.
 //   effect  'rise'  = 조금 아래에서 떠오르기 (기본)
-//           'zoom'  = 조금 작았다가 제 크기로 펴진다 (첫 화면의 큰 지도)
 //           'lines' = 안의 줄(자식 요소)이 하나씩, 흐릿했다가 또렷해지며 떠오른다 (큰 제목. 아래의 Lines)
 //   lag(0~1) = 같은 구역의 칸들이 차례로 나오게 늦추는 정도 (1 = 1.2초)
 //   as       = 어떤 요소로 그릴지 (제목이면 h2 등)
@@ -9,7 +8,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from 'react'
 import { CountUp } from './CountUp'
 
-const CLASS = { rise: 'nm-reveal', zoom: 'nm-zoom', lines: 'nm-lines' }
+const CLASS = { rise: 'nm-reveal', lines: 'nm-lines' }
 
 // 요소가 화면에 들어오면 한 번 알려 준다 (알 방법이 없는 브라우저에서는 바로)
 function onceSeen(el: Element, seen: () => void, threshold: number) {
@@ -33,7 +32,7 @@ export function Reveal({ children, className = '', lag = 0, effect = 'rise', as 
   children: ReactNode
   className?: string
   lag?: number
-  effect?: 'rise' | 'zoom' | 'lines'
+  effect?: 'rise' | 'lines'
   as?: 'div' | 'h1' | 'h2' | 'h3' | 'p' | 'li'
 }) {
   const box = useRef<HTMLElement>(null)

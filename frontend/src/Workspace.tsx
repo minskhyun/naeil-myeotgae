@@ -13,6 +13,7 @@ import { api, type LoginConfig } from './api'
 import { AnalysisView } from './AnalysisView'
 import { AccountBox } from './Auth'
 import { AnalysisTab, DashboardTab } from './Dashboard'
+import { Logo } from './Logo'
 import { Modal } from './Modal'
 import { Lines } from './Reveal'
 import { StoresView } from './StoresView'
@@ -105,8 +106,8 @@ export function Workspace({ login }: { login: LoginConfig | null }) {
     </>
   )
   const logo = (
-    <a href="/" className="text-xl font-[800] tracking-[-0.05em]" aria-label="내일몇개 첫 화면" title="첫 화면으로">
-      내일몇개
+    <a href="/" aria-label="내일몇개 첫 화면" title="첫 화면으로">
+      <Logo />
     </a>
   )
 

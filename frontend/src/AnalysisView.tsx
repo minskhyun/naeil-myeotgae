@@ -9,6 +9,7 @@ import { AnalysisMap } from './AnalysisMap'
 import type { Job, ProgressEvent } from './api'
 import { CountUp } from './CountUp'
 import { cleanTitle, count as cnt, fmtDate, GROUP_LABELS, KIND_COLOR, pct1 } from './format'
+import { Logo } from './Logo'
 
 const STEPS = [
   { id: 'ingest', label: '판매 기록' },
@@ -136,7 +137,7 @@ export function AnalysisView({ events, status, error, log, onClose, replay = fal
       <div className="nm-glow pointer-events-none absolute inset-x-0 top-0 h-[32rem]" aria-hidden />
       <div className="relative mx-auto flex min-h-full max-w-content flex-col px-5 py-5 md:px-10 lg:h-full">
         <div className="flex items-center justify-between">
-          <p className="text-xl font-[800] tracking-[-0.05em]">내일몇개</p>
+          <Logo />
           <button onClick={onClose} className="inline-flex h-11 items-center rounded-full bg-white px-5 text-sm font-semibold transition-colors duration-150 hover:bg-pill">
             {finished || failed || replay ? '닫기' : '화면 닫기 (분석은 계속돼요)'}
           </button>
@@ -215,7 +216,7 @@ export function AnalysisView({ events, status, error, log, onClose, replay = fal
         </div>
 
         {failed && log && log.length > 0 && (
-          <pre className="mt-5 overflow-x-auto rounded-[32px] bg-white p-6 font-mono text-xs leading-relaxed text-ink-700">{log.slice(-8).join('\n')}</pre>
+          <pre className="mt-5 overflow-x-auto rounded-[32px] bg-white p-6 text-xs leading-relaxed text-ink-700">{log.slice(-8).join('\n')}</pre>
         )}
 
         {finished && (

@@ -21,14 +21,15 @@ const EDGE: Record<string, Spot> = {
   article: [0.0068, 0.0085],
 }
 
-// 배경용(ambient) 지도에서 위치 없는 정보의 이름표가 뜨는 자리: 칸의 [가로, 세로] 비율. 가운데 글을 피해 가장자리에 둔다
+// 배경용(ambient) 지도에서 위치 없는 정보의 이름표가 뜨는 자리: 칸의 [가로, 세로] 비율.
+// 칸의 왼쪽 1/3은 바탕색으로 풀려 글 옆에 스며들므로(Landing의 첫머리), 그 오른쪽에서 가게를 둘러싸게 둔다
 const AMBIENT_SLOTS: Record<string, [number, number]> = {
-  weather: [0.1, 0.2],
-  academic: [0.88, 0.22],
-  special: [0.08, 0.55],
-  trend: [0.91, 0.52],
-  sales: [0.15, 0.8],
-  article: [0.85, 0.78],
+  weather: [0.44, 0.24],
+  academic: [0.86, 0.26],
+  special: [0.4, 0.56],
+  trend: [0.9, 0.54],
+  sales: [0.46, 0.8],
+  article: [0.84, 0.78],
 }
 const AMBIENT_ZOOM = 17 // 배경용은 더 가까이 본다 (주변 시설의 점이 화면 가득 퍼지게)
 
@@ -52,8 +53,8 @@ function curve(from: Spot, to: Spot): Spot[] {
 
 // ambient = 첫 화면 머리의 배경으로 쓸 때: 만질 수 없고(끌기·확대 없음, 페이지 스크롤을 가로채지 않는다),
 //           가게로 날아가지 않고 처음부터 가게 둘레를 보여 주며, 다 그린 뒤에도 주변의 점에서 빛줄기가 계속 들어온다.
-// storeY   = 배경용에서 가게가 놓이는 세로 위치 (칸 높이에 대한 비율, 0 = 맨 위)
-export function AnalysisMap({ events, ambient = false, storeY = 0.5 }: { events: ProgressEvent[]; ambient?: boolean; storeY?: number }) {
+// storeX · storeY = 배경용에서 가게가 놓이는 자리 (칸의 폭 · 높이에 대한 비율, 0 = 왼쪽 · 맨 위)
+export function AnalysisMap({ events, ambient = false, storeX = 0.5, storeY = 0.5 }: { events: ProgressEvent[]; ambient?: boolean; storeX?: number; storeY?: number }) {
   const box = useRef<HTMLDivElement>(null)
   const map = useRef<L.Map | null>(null)
   const store = useRef<{ at: Spot; pin: L.Marker } | null>(null)
@@ -130,8 +131,9 @@ export function AnalysisMap({ events, ambient = false, storeY = 0.5 }: { events:
         const html = `<div class="nm-store"><u></u><u></u><i></i><span>${escapeHtml(e.name)}</span></div>`
         store.current = { at, pin: mark(at, html, 1000).addTo(m) }
         if (ambient) {
-          // 가게가 칸의 storeY 높이에 오도록, 그만큼 어긋난 곳을 지도의 가운데로 잡는다
-          const center = m.project(at, AMBIENT_ZOOM).subtract([0, (storeY - 0.5) * m.getSize().y])
+          // 가게가 칸의 (storeX, storeY) 자리에 오도록, 그만큼 어긋난 곳을 지도의 가운데로 잡는다
+          const size = m.getSize()
+          const center = m.project(at, AMBIENT_ZOOM).subtract([(storeX - 0.5) * size.x, (storeY - 0.5) * size.y])
           m.setView(m.unproject(center, AMBIENT_ZOOM), AMBIENT_ZOOM, { animate: false })
         } else m.flyTo(at, 15, { duration: 1.8 })
       } else if (e.kind === 'places') {
@@ -171,7 +173,7 @@ export function AnalysisMap({ events, ambient = false, storeY = 0.5 }: { events:
       if (from) flow(from, KIND_COLOR.places)
     }, 1100)
     return () => window.clearInterval(timer)
-  }, [events, ambient, storeY])
+  }, [events, ambient, storeX, storeY])
 
   return <div ref={box} className={`nm-map h-full w-full ${ambient ? 'nm-map-ambient' : ''}`} />
 }

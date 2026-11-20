@@ -2,6 +2,7 @@
 import { useEffect, useRef, type ReactNode } from 'react'
 import { ABOUT_PATH, APP_PATH, type LoginConfig } from './api'
 import { AccountBox, LoginButtons } from './Auth'
+import { Logo } from './Logo'
 import { watchScroll } from './scrub'
 
 // 이 화면들에 공통으로 넘기는 것
@@ -54,8 +55,8 @@ export function SiteHeader({ login, canEnter, contactUrl, here }: SiteProps & { 
     <header ref={bar} className="sticky top-0 z-30 border-b border-transparent bg-transparent transition-colors duration-300 data-scrolled:border-line data-scrolled:bg-page">
       <div className="mx-auto flex min-h-16 max-w-content flex-wrap items-center justify-between gap-x-8 gap-y-2 px-5 py-2 md:px-10">
         <div className="flex items-center gap-x-8">
-          <a href="/" className="text-xl font-[800] tracking-[-0.05em]" aria-label="내일몇개 첫 화면">
-            내일몇개
+          <a href="/" aria-label="내일몇개 첫 화면">
+            <Logo />
           </a>
           <nav className="flex items-center gap-x-6 text-base text-ink-700">
             {tab('/', '홈', here === 'home')}
@@ -117,7 +118,9 @@ export function SiteFooter({ contactUrl }: { contactUrl: string | null }) {
     <footer className="border-t border-line bg-page">
       <div className="mx-auto grid max-w-content gap-8 px-5 py-12 text-sm text-ink-700 md:grid-cols-[1fr_1.6fr] md:px-10">
         <div>
-          <p className="text-base font-[800] tracking-[-0.05em] text-ink-900">내일몇개</p>
+          <p className="text-ink-900">
+            <Logo small />
+          </p>
           <p className="mt-2 leading-relaxed">팀 PREDICTOR · 2026 연세 캠퍼스타운 AI 스타트업 해커톤 출품작</p>
           {contactUrl && <ContactLink url={contactUrl} className="mt-3 inline-block font-medium text-ink-900 underline underline-offset-4" />}
         </div>
