@@ -13,6 +13,7 @@ import { api, type LoginConfig } from './api'
 import { AnalysisView } from './AnalysisView'
 import { AccountBox } from './Auth'
 import { AnalysisTab, DashboardTab } from './Dashboard'
+import { FIRST_EXAMPLE } from './example'
 import { Logo } from './Logo'
 import { Modal } from './Modal'
 import { Lines } from './Reveal'
@@ -33,7 +34,8 @@ const TABS: { id: Tab; text: string; label: string }[] = [
 const FIRST_STEPS = ['매장 이름과 위치를 적어요', '포스에서 내려받은 판매 기록 파일을 올려요', '분석을 누르면 몇 분 뒤 준비표가 나와요']
 
 // login: 서버가 쓰는 로그인 방법(= 계정 방식). 로그인을 안 쓰는 서버면 null
-export function Workspace({ login }: { login: LoginConfig | null }) {
+// viewOnly: 보기 전용 시연 사이트. 예시 매장의 대시보드와 분석을 보기만 한다 (올리기 · 매장 추가 · 판매 입력 · 준비 기준 저장이 없다)
+export function Workspace({ login, viewOnly = false }: { login: LoginConfig | null; viewOnly?: boolean }) {
   const account = !!login
   const all = useQuery({ queryKey: ['stores'], queryFn: api.stores })
   const stores = all.data?.filter((s) => !account || !s.demo) // 준비표가 있는 매장들. 계정 방식이면 예시 매장을 뺀다
@@ -55,7 +57,9 @@ export function Workspace({ login }: { login: LoginConfig | null }) {
 
   // 고른 매장이 목록에 없으면 첫 매장
   const listed = !stores || stores.some((s) => s.store_id === picked)
-  const storeId = (picked && listed ? picked : stores?.[0]?.store_id) ?? null
+  // 보기 전용이면 첫 화면과 같은 예시 매장부터 보여 준다
+  const firstStore = viewOnly && stores?.some((s) => s.store_id === FIRST_EXAMPLE) ? FIRST_EXAMPLE : stores?.[0]?.store_id
+  const storeId = (picked && listed ? picked : firstStore) ?? null
   const store = stores?.find((s) => s.store_id === storeId)
   // 아직 매장을 하나도 만들지 않았는가 (계정 방식: 내가 만든 매장이 없다, 아니면: 준비표가 하나도 없다)
   const loaded = !!stores && (!account || !!mine)
@@ -187,9 +191,13 @@ export function Workspace({ login }: { login: LoginConfig | null }) {
         </nav>
 
         <div className="ml-auto flex items-center gap-3 md:mt-auto md:ml-0 md:flex-col md:items-stretch md:gap-4">
-          <button onClick={() => setAdding({ target: null })} className="btn-md btn-primary">
-            {account ? '매장 추가' : '데이터 올리기'}
-          </button>
+          {viewOnly ? (
+            <p className="text-sm leading-relaxed text-ink-500 md:px-3">예시 매장을 둘러보는 화면이에요. 올리기와 수정은 할 수 없어요.</p>
+          ) : (
+            <button onClick={() => setAdding({ target: null })} className="btn-md btn-primary">
+              {account ? '매장 추가' : '데이터 올리기'}
+            </button>
+          )}
           {login && (
             <div className="md:px-3">
               <AccountBox login={login} />
@@ -244,8 +252,8 @@ export function Workspace({ login }: { login: LoginConfig | null }) {
               storeId={storeId}
               storeName={store?.name ?? storeId}
               prepMode={store?.prep_mode ?? '균형'}
-              readOnly={store?.can_edit === false}
-              onUpload={store?.can_edit === false || running ? undefined : () => pickFile(storeId)}
+              readOnly={viewOnly || store?.can_edit === false}
+              onUpload={viewOnly || store?.can_edit === false || running ? undefined : () => pickFile(storeId)}
               onEnter={() => setEntering(true)}
             />
           )}

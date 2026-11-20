@@ -16,10 +16,10 @@ function Part({ title, children }: { title: string; children: ReactNode }) {
   )
 }
 
-export function Terms({ login, contactUrl, canEnter }: SiteProps) {
+export function Terms({ login, contactUrl, canEnter, viewOnly }: SiteProps) {
   return (
     <div>
-      <SiteHeader login={login} canEnter={canEnter} contactUrl={contactUrl} here="none" />
+      <SiteHeader login={login} canEnter={canEnter} viewOnly={viewOnly} contactUrl={contactUrl} here="none" />
       <main className="mx-auto max-w-3xl px-5 pt-16 pb-28 md:px-10">
         <h1 className="text-title">이용약관</h1>
         <p className="mt-5 text-lg leading-8 text-ink-700">내일몇개(운영: 팀 PREDICTOR)를 쓰는 데 적용되는 약속입니다. 지금은 무료 시연 단계입니다.</p>

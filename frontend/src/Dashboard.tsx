@@ -4,6 +4,7 @@
 // 모양은 첫 화면(Landing.tsx)과 같다: 옅은 회색 바탕 위의 흰 칸, 작은 고정폭 글씨의 구역 이름, 큰 숫자.
 //   하루 오차 = 예측대로 준비했다면 남거나 모자랐을 개수 (모든 메뉴 합, 하루 평균). '지난주 그대로' = 지난주 같은 요일만큼 준비
 import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { api, type ProgressEvent } from './api'
 import { BacktestView } from './BacktestView'
@@ -69,13 +70,18 @@ export function DashboardTab({ storeId, storeName, prepMode, readOnly, onUpload,
 }) {
   const forecast = useQuery({ queryKey: ['forecast', storeId], queryFn: () => api.forecast(storeId) })
   const history = useQuery({ queryKey: ['history', storeId], queryFn: () => api.history(storeId), retry: false }).data
+  const [picked, setPicked] = useState<string | null>(null) // 보기 전용일 때 눌러 본 준비 기준
 
   if (forecast.isLoading) return <p className="text-ink-700">불러오는 중…</p>
   if (forecast.error || !forecast.data) return <p className="text-down">{(forecast.error as Error)?.message ?? '예측이 없습니다.'}</p>
   const fc = forecast.data
   const date = fc.rows[0].date
-  const totalPrep = fc.rows.reduce((sum, r) => sum + (r.prep_qty ?? 0), 0)
-  const totalPred = expectedTotal(fc.rows)
+  // 보기 전용(예시 매장): 준비 기준을 눌러 보면 서버를 부르지 않고 화면에서만 바꾼다 (기준마다의 준비 개수가 결과에 들어 있다)
+  const local = readOnly && fc.rows.some((r) => r.prep_by_mode)
+  const mode = (local && picked) || prepMode
+  const rows = local ? fc.rows.map((r) => ({ ...r, prep_qty: r.prep_by_mode?.[mode] ?? r.prep_qty })) : fc.rows
+  const totalPrep = rows.reduce((sum, r) => sum + (r.prep_qty ?? 0), 0)
+  const totalPred = expectedTotal(rows)
   // 예상 판매가 평소 같은 요일(지난 4주 평균)보다 몇 % 많은가
   const usual = history ? average(sameWeekday(history.dates, history.total, date)) : null
   const diff = usual ? Math.round((totalPred / usual - 1) * 100) : null
@@ -100,7 +106,7 @@ export function DashboardTab({ storeId, storeName, prepMode, readOnly, onUpload,
       />
 
       <Card>
-        <PrepToggle storeId={storeId} prepMode={prepMode} readOnly={readOnly} />
+        <PrepToggle storeId={storeId} prepMode={mode} readOnly={readOnly} onPick={local ? setPicked : undefined} />
       </Card>
 
       <div className="grid gap-5 md:grid-cols-3">
@@ -113,7 +119,7 @@ export function DashboardTab({ storeId, storeName, prepMode, readOnly, onUpload,
               <Unit big>개</Unit>
             </>
           }
-          note={`메뉴 ${fc.rows.length}개`}
+          note={`메뉴 ${rows.length}개`}
         />
         <Tile
           label="예상 판매"
@@ -143,7 +149,7 @@ export function DashboardTab({ storeId, storeName, prepMode, readOnly, onUpload,
 
       <div className="grid gap-5 xl:grid-cols-[1.7fr_1fr]">
         <Card title="메뉴별 준비표">
-          <ForecastTable rows={fc.rows} limit={MENUS_SHOWN} compact storeId={storeId} />
+          <ForecastTable rows={rows} limit={MENUS_SHOWN} compact storeId={storeId} />
         </Card>
         <Card title="주의할 소식">
           {fc.warnings.length ? (

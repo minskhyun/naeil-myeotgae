@@ -179,7 +179,9 @@ export function AnalysisView({ events, status, error, log, onClose, replay = fal
           </ol>
         </header>
 
-        <div className="grid min-h-0 flex-1 gap-5 lg:grid-cols-[1.65fr_1fr] lg:grid-rows-[minmax(0,1fr)]">
+        {/* 지도와 목록: 남는 높이를 채운다. 화면이 낮으면 이 칸은 22rem에서 더 줄지 않고(lg:min-h) 아래 칸들이 밀려나 화면이 스크롤된다.
+            (전에는 0까지 줄 수 있어서, 전체 화면을 풀어 창이 낮아지면 아래의 결과 칸들이 지도 위로 겹쳤다) */}
+        <div className="grid flex-1 gap-5 lg:min-h-[22rem] lg:shrink-0 lg:grid-cols-[1.65fr_1fr] lg:grid-rows-[minmax(0,1fr)]">
           <div className="relative h-[26rem] min-w-0 overflow-hidden rounded-[32px] bg-white lg:h-full lg:min-h-60">
             {hasMap ? (
               <AnalysisMap events={seen} />
