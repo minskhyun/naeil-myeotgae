@@ -9,7 +9,8 @@ import { api, type ProgressEvent } from './api'
 import { BacktestView } from './BacktestView'
 import { DayBars, WeekdayBars } from './ForecastCharts'
 import { ForecastTable, Notice, PrepToggle } from './ForecastView'
-import { average, count, dayPrefix, fmtDate, pct1, sameWeekday, shortDate, SITUATION_LABELS, weekdayName } from './format'
+import { average, count, dayPrefix, fmtDate, pct1, RANGE_TARGET_TEXT, rangeVerdict, sameWeekday, shortDate, SITUATION_LABELS, weekdayName } from './format'
+import { RangeMeter } from './RangeMeter'
 import { CountWhenSeen } from './Reveal'
 import { ArrowLink } from './Site'
 import { SignalsBoard } from './SignalsBoard'
@@ -42,12 +43,14 @@ function Card({ title, grow = false, children }: { title?: string; grow?: boolea
 }
 
 // 요약 숫자 한 칸: 이름 · 큰 숫자(단위는 작게 회색) · 짧은 덧말. big = 이 화면에서 가장 큰 숫자, point = 주황으로 강조
-function Tile({ label, value, note, help, big = false, point = false }: { label: string; value: ReactNode; note?: string; help?: string; big?: boolean; point?: boolean }) {
+// extra = 덧말 아래에 붙이는 것 (눈금 같은 작은 그림)
+function Tile({ label, value, note, help, extra, big = false, point = false }: { label: string; value: ReactNode; note?: string; help?: string; extra?: ReactNode; big?: boolean; point?: boolean }) {
   return (
     <div className="rounded-[32px] bg-white px-7 py-7" title={help}>
       <p className="text-label text-ink-500">{label}</p>
       <p className={`mt-2 whitespace-nowrap tabular-nums ${big ? 'text-display' : 'text-h1'} ${point ? 'text-point' : ''}`}>{value}</p>
       {note && <p className="mt-2 text-sm text-ink-700">{note}</p>}
+      {extra}
     </div>
   )
 }
@@ -204,7 +207,12 @@ export function AnalysisTab({ storeId, storeName, onReplay, events }: {
             }
             note="모든 메뉴의 남은 개수와 모자란 개수의 합"
           />
-          <Tile label="예상 범위 안에 든 비율" value={<CountWhenSeen to={v.mine.coverage_80} format={pct1} />} note="80%가 이상적" />
+          <Tile
+            label="예상 범위 안에 든 비율"
+            value={<CountWhenSeen to={v.mine.coverage_80} format={pct1} />}
+            note={`${RANGE_TARGET_TEXT}. 지금은 ${rangeVerdict(v.mine.coverage_80)}.`}
+            extra={<RangeMeter value={v.mine.coverage_80} />}
+          />
         </div>
       ) : (
         <Card>

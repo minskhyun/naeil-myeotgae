@@ -351,7 +351,7 @@ export function Landing({ login, contactUrl, canEnter }: SiteProps) {
             <Stat lag={0.3} label="하루에 남거나 모자라는 개수 (모든 메뉴 합)">
               {count(v.baseShown)} → <CountWhenSeen to={v.mineShown} />
             </Stat>
-            <Stat lag={0.4} label="실제 판매가 예상 범위 안에 든 비율">
+            <Stat lag={0.4} label="실제 판매가 예상 범위 안에 든 비율 (80%에 가까울수록 알맞은 폭)">
               <CountWhenSeen to={v.mine.coverage_80} format={pct1} />
             </Stat>
           </div>

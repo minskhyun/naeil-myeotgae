@@ -7,7 +7,7 @@ import pytest
 
 from contracts.schemas import BacktestResult
 from ml.calibration import CALIB_TAUS, apply_calibration, below_rates, check_calibration, fit_calibration
-from ml.evaluate import decide, model_label, pick_combo, run_backtest, write_backtest
+from ml.evaluate import FoldPlan, choose_signals, decide, model_label, pick_combo, run_backtest, write_backtest
 from ml.metrics import bootstrap_wape_change
 from ml.features import load_sales, load_signals
 
@@ -149,8 +149,10 @@ def sample():
 def test_run_backtest_full_sample(sample, tmp_path):
     sales, signals = sample
     bt = run_backtest(sales, signals, iterations=30)
-    assert [d.signal_group for d in bt.decisions] == ["weather", "events", "trend", "special"]
-    assert bt.decisions[2].folds_total == 0 == bt.decisions[3].folds_total   # 유행·기념일 신호는 가상 데이터에 없음
+    by_group = {d.signal_group: d for d in bt.decisions}
+    assert list(by_group) == ["temp", "rain", "exam", "vacation", "festival", "nearby", "trend", "special"]
+    assert by_group["trend"].folds_total == 0 == by_group["special"].folds_total   # 유행·기념일 신호는 가상 데이터에 없음
+    assert by_group["temp"].folds_total == 4                                       # 기온은 평가됐다
     assert [s.model for s in bt.cv_scores][:2] == ["M0", "M1"]
     assert len(bt.folds) == 4 and bt.test_period is not None
     assert [s.model for s in bt.test_scores] == ["M0", bt.chosen_model]
@@ -202,3 +204,90 @@ def test_pick_combo_keeps_a_group_that_passes_alone():
               ("events", "special"): sc(0.4157, [0.381, 0.456]),
               ("weather", "events", "special"): sc(0.4014, [0.372, 0.438])}   # WAPE 1등이지만 날씨 말고는 얹혀 가는 묶음
     assert pick_combo(scores) == ["weather"]
+
+
+# ---------------------------------------------------------------- 두 단계 채택: 분야 → 분야 안의 묶음
+
+class _FakeCV:
+    """정해 둔 점수를 돌려주는 교차검증 (묶음 조합 → 점수). 어떤 조합을 물어봤는지 적어 둔다."""
+
+    def __init__(self, table: dict):
+        self.table, self.asked = table, []
+
+    def key(self, groups) -> tuple:
+        return tuple(groups)
+
+    def run(self, groups):
+        self.asked.append(tuple(groups))
+        return None, self.table[tuple(groups)]
+
+
+def _family_case():
+    """기온(날씨 분야의 묶음 하나) + 시험기간·방학(학사일정·행사 분야의 묶음 둘)이 있는 매장."""
+    days = pd.date_range("2026-01-01", periods=8)
+    frame = pd.DataFrame({"date": days, "temp_diff": range(8), "exam_period": [0, 1] * 4, "vacation": [1, 0] * 4})
+    plan = FoldPlan(folds=[(days[0], days[-1])], test=None, short=False, note="")
+    sc = lambda wape, folds: {"wape": wape, "wape_by_fold": folds}      # noqa: E731
+    return frame, plan, sc
+
+
+def test_choose_signals_looks_inside_a_family():
+    """분야 전체로는 기준에 못 미쳐도, 그 안에서 혼자 기준을 넘는 묶음은 쓴다 (방학은 듣고 시험기간은 안 듣는 가게)."""
+    frame, plan, sc = _family_case()
+    flat = sc(0.300, [0.30] * 4)
+    cv = _FakeCV({
+        (): flat, ("temp",): flat,
+        ("exam", "vacation"): sc(0.295, [0.29, 0.29, 0.29, 0.31]),              # 분야 전체: 1.7% → 기준 미달
+        ("temp", "exam", "vacation"): sc(0.295, [0.29, 0.29, 0.29, 0.31]),
+        ("exam",): sc(0.302, [0.30, 0.30, 0.30, 0.31]),                         # 시험기간만: 도움 안 됨
+        ("vacation",): sc(0.270, [0.26, 0.26, 0.26, 0.31]),                     # 방학만: 10%, 3구간 → 통과
+    })
+    adopted, decisions, n = choose_signals(frame, plan, cv)
+    assert adopted == ["vacation"] and n == 6
+    by_group = {d["signal_group"]: d for d in decisions}
+    assert list(by_group) == ["temp", "rain", "exam", "vacation", "festival", "nearby", "trend", "special"]
+    assert by_group["vacation"]["adopted"] and "사용함" in by_group["vacation"]["reason"] and "방학" in by_group["vacation"]["reason"]
+    assert not by_group["exam"]["adopted"] and by_group["exam"]["folds_total"] == 4       # 방학 위에 얹어 봤지만 기준 미달
+    assert not by_group["temp"]["adopted"] and by_group["rain"]["folds_total"] == 0       # 비는 자료가 없다
+
+
+def test_choose_signals_keeps_a_family_that_only_works_together():
+    """묶음 하나씩으로는 기준을 못 넘지만 분야 전체로는 넘으면, 전체를 그대로 쓰고 이유에 '함께'라고 적는다."""
+    frame, plan, sc = _family_case()
+    flat = sc(0.300, [0.30] * 4)
+    both = sc(0.270, [0.26, 0.26, 0.26, 0.31])                                 # 분야 전체: 10% → 통과
+    cv = _FakeCV({
+        (): flat, ("temp",): flat, ("exam", "vacation"): both, ("temp", "exam", "vacation"): both,
+        ("exam",): sc(0.293, [0.29, 0.29, 0.29, 0.31]),                         # 2.3% → 기준 미달
+        ("vacation",): sc(0.292, [0.29, 0.29, 0.29, 0.31]),                     # 2.7% → 기준 미달
+    })
+    adopted, decisions, _ = choose_signals(frame, plan, cv)
+    assert adopted == ["exam", "vacation"]
+    for d in decisions:
+        if d["signal_group"] in ("exam", "vacation"):
+            assert d["adopted"] and "함께 사용함" in d["reason"] and "학사일정·행사" in d["reason"]
+
+
+def test_choose_signals_drops_the_part_that_adds_nothing():
+    """분야 전체가 통과했어도, 그 안에서 얹혀 가는 묶음은 덜어 낸다 (시험기간을 빼도 차이가 기준보다 작다)."""
+    frame, plan, sc = _family_case()
+    flat = sc(0.300, [0.30] * 4)
+    cv = _FakeCV({
+        (): flat, ("temp",): flat,
+        ("exam", "vacation"): sc(0.268, [0.26, 0.26, 0.26, 0.31]), ("temp", "exam", "vacation"): sc(0.268, [0.26, 0.26, 0.26, 0.31]),
+        ("exam",): sc(0.299, [0.30, 0.30, 0.30, 0.30]),
+        ("vacation",): sc(0.270, [0.26, 0.26, 0.26, 0.31]),                     # 방학만으로 거의 다 얻는다
+    })
+    adopted, _, _ = choose_signals(frame, plan, cv)
+    assert adopted == ["vacation"]
+
+
+def test_family_names_still_work_as_groups():
+    """예전 결과 파일에는 분야 이름(weather, events)이 적혀 있다 → 그 분야의 묶음 전부로 읽는다."""
+    from ml.features import SIGNAL_GROUPS, SIGNAL_ORDER, expand, signals_in
+    assert expand(["weather"]) == ["temp", "rain"] and expand(["events", "temp"]) == ["temp", "exam", "vacation", "festival", "nearby"]
+    assert expand(list(SIGNAL_GROUPS)) == list(SIGNAL_GROUPS)
+    frame = pd.DataFrame(columns=SIGNAL_ORDER)
+    assert signals_in(["events", "weather"], frame) == SIGNAL_ORDER[:10]       # 묶음을 어떤 순서로 주든 열 순서는 같다
+    with pytest.raises(KeyError):
+        expand(["없는묶음"])

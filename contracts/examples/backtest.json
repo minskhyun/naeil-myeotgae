@@ -1,6 +1,6 @@
 {
   "store_id": "sinchon-a",
-  "generated_at": "2026-11-20T08:58:24",
+  "generated_at": "2026-11-20T13:48:06",
   "folds": [
     [
       "2026-06-14",
@@ -107,37 +107,98 @@
       "days": 111,
       "amount": null,
       "days_won": 100
+    },
+    {
+      "model": "M3(채택 신호만)",
+      "wape": 0.226757479057008,
+      "mae": 5.001557789417165,
+      "bias": 0.02681856950548295,
+      "pinball_p10": 0.9922382671480146,
+      "pinball_p90": 1.1912454873646208,
+      "coverage_80": 0.8357400722021661,
+      "n": 1108,
+      "wape_by_fold": [
+        0.2506158973963913,
+        0.22371992173390315,
+        0.23902485826348013,
+        0.2009914048178085
+      ],
+      "over": 3098.5725254093577,
+      "under": 2443.1535052648605,
+      "days": 111,
+      "amount": null,
+      "days_won": 93
     }
   ],
   "decisions": [
     {
-      "signal_group": "weather",
+      "signal_group": "temp",
       "signals": [
-        "temp_diff",
+        "temp_diff"
+      ],
+      "adopted": true,
+      "wape_change_pct": -5.13,
+      "folds_improved": 4,
+      "folds_total": 4,
+      "reason": "기온 신호는 혼자서는 기준에 못 미치지만, 날씨 정보를 함께 넣으면 검증 4개 구간 중 4개에서 오차가 줄어 함께 사용함 (전체 오차 5.1% 감소)"
+    },
+    {
+      "signal_group": "rain",
+      "signals": [
         "rain_mm"
       ],
       "adopted": true,
       "wape_change_pct": -5.13,
       "folds_improved": 4,
       "folds_total": 4,
-      "reason": "날씨 신호를 넣으니 검증 4개 구간 중 4개에서 오차가 줄어 사용함 (전체 오차 5.1% 감소)"
+      "reason": "비 신호는 혼자서는 기준에 못 미치지만, 날씨 정보를 함께 넣으면 검증 4개 구간 중 4개에서 오차가 줄어 함께 사용함 (전체 오차 5.1% 감소)"
     },
     {
-      "signal_group": "events",
+      "signal_group": "exam",
       "signals": [
         "exam_period",
+        "exam_period_diff"
+      ],
+      "adopted": false,
+      "wape_change_pct": -3.24,
+      "folds_improved": 2,
+      "folds_total": 4,
+      "reason": "시험기간 신호는 전체 오차를 3.2% 줄였지만 4개 구간 중 2개에서만 개선돼 우연일 수 있어 쓰지 않음"
+    },
+    {
+      "signal_group": "vacation",
+      "signals": [
         "vacation",
-        "festival",
-        "nearby_event",
-        "exam_period_diff",
-        "vacation_diff",
-        "festival_diff"
+        "vacation_diff"
       ],
       "adopted": true,
-      "wape_change_pct": -17.75,
+      "wape_change_pct": -14.19,
       "folds_improved": 3,
       "folds_total": 4,
-      "reason": "학사일정·행사 신호를 넣으니 검증 4개 구간 중 3개에서 오차가 줄어 사용함 (전체 오차 17.8% 감소)"
+      "reason": "방학 신호를 넣으니 검증 4개 구간 중 3개에서 오차가 줄어 사용함 (전체 오차 14.2% 감소)"
+    },
+    {
+      "signal_group": "festival",
+      "signals": [
+        "festival",
+        "festival_diff"
+      ],
+      "adopted": false,
+      "wape_change_pct": 0.37,
+      "folds_improved": 2,
+      "folds_total": 4,
+      "reason": "학교 축제 신호는 이 매장 판매 예측을 개선하지 못해 쓰지 않음 (4개 구간 중 2개만 개선)"
+    },
+    {
+      "signal_group": "nearby",
+      "signals": [
+        "nearby_event"
+      ],
+      "adopted": false,
+      "wape_change_pct": -0.15,
+      "folds_improved": 2,
+      "folds_total": 4,
+      "reason": "근처 행사 신호는 전체 오차를 0.1% 줄였지만 4개 구간 중 2개에서만 개선돼 우연일 수 있어 쓰지 않음"
     },
     {
       "signal_group": "trend",
@@ -180,24 +241,24 @@
     },
     {
       "model": "M3",
-      "wape": 0.19271707059953672,
-      "mae": 5.1569400059700845,
-      "bias": 0.034584448200085695,
-      "pinball_p10": 1.2686131386861315,
-      "pinball_p90": 1.1463503649635036,
-      "coverage_80": 0.8065693430656934,
+      "wape": 0.200093611006969,
+      "mae": 5.3543297660696965,
+      "bias": 0.04505636409680349,
+      "pinball_p10": 1.274087591240876,
+      "pinball_p90": 1.1981751824817517,
+      "coverage_80": 0.8029197080291971,
       "n": 274,
       "wape_by_fold": [
-        0.19271707059953672
+        0.200093611006969
       ],
-      "over": 833.2873679194158,
-      "under": 579.7141937163875,
+      "over": 898.7198087304299,
+      "under": 568.3665471726667,
       "days": 28,
       "amount": null,
-      "days_won": 25
+      "days_won": 26
     }
   ],
-  "data_note": "판매 기록 362일. 신호 조합 4가지를 모두 비교해 '날씨, 학사일정·행사' 선택. 검증 구간에서 M3의 오차가 M0 대비 -35.7% (95% 구간 -44.3~-28.7%, 우연이라 보기 어려움). 품절로 실제 수요를 알 수 없는 8개 행은 채점에서 뺌. 범위 보정이 검사한 3개 구간 중 0개만 개선해 쓰지 않음",
+  "data_note": "판매 기록 362일. 신호 조합 13가지를 비교해 '기온, 비, 방학' 선택. 검증 구간에서 M3의 오차가 M0 대비 -32.9% (95% 구간 -40.8~-26.0%, 우연이라 보기 어려움). 품절로 실제 수요를 알 수 없는 8개 행은 채점에서 뺌. 범위 보정이 검사한 3개 구간 중 0개만 개선해 쓰지 않음",
   "calibration": {
     "method": "conformal-ratio",
     "adopted": false,

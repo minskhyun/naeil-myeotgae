@@ -41,14 +41,19 @@ CALENDAR_FEATURES = ["dow", "is_weekend", "is_holiday"]
 CATEGORICAL_FEATURES = ["store_id", "menu", "menu_temp"]
 BASE_FEATURES = CATEGORICAL_FEATURES + CALENDAR_FEATURES + HISTORY_FEATURES   # M1이 쓰는 변수 전부
 
-# 외부 신호 묶음. 채택 여부는 묶음 단위로 정한다 (evaluate.py). 새 신호는 알맞은 묶음에 이름만 추가한다.
+# 외부 신호 묶음. 채택 여부는 이 묶음 단위로 정한다 (evaluate.py). 새 신호는 알맞은 묶음에 이름만 추가하고 SIGNAL_ORDER에도 넣는다.
+# 11/20: 묶음을 잘게 나눴다 (전에는 날씨 · 학사일정·행사 · 유행 · 기념일 넷). 같은 학사일정이라도 방학은 듣고
+#        시험기간은 안 듣는 가게가 있어서, 넣을지 말지를 따로 정할 수 있어야 한다.
 SIGNAL_GROUPS = {
-    "weather": ["temp_diff", "rain_mm"],       # temp_diff = 기온 − 최근 28일 평균 (파생 신호, 아래 DERIVED_SIGNALS)
+    "temp": ["temp_diff"],                     # temp_diff = 기온 − 최근 28일 평균 (파생 신호, 아래 DERIVED_SIGNALS)
+    "rain": ["rain_mm"],
     # *_diff = 학사일정 − 최근 28일 평균 (파생). 방학이 시작되면 '최근 평균'이 한동안 학기 수준이라 늦게 따라간다.
     # 그 늦음을 모델이 알 수 있게 '기간이 바뀐 지 얼마나 됐는지'를 준다 (11/15: 검증 WAPE 0.279→0.219, bias +5%→+1%)
+    "exam": ["exam_period", "exam_period_diff"],
+    "vacation": ["vacation", "vacation_diff"],
+    "festival": ["festival", "festival_diff"],
     # event_impact = 근처 행사를 규모 × 가게·메뉴와의 연관도 × 가까움으로 따진 값 (메뉴별, agent/relevance.py). nearby_event는 건수만
-    "events":  ["exam_period", "vacation", "festival", "nearby_event", "event_impact",
-                "exam_period_diff", "vacation_diff", "festival_diff"],
+    "nearby": ["nearby_event", "event_impact"],
     # 메뉴별 신호: 그 메뉴 이름의 검색량이 '최근 7일 ÷ 그 전 28일' (1 = 평소와 같음). agent/naver.py가 만든다
     "trend":   ["trend_level"],
     # special_day = 기념일 당일(발렌타인·빼빼로데이·크리스마스 등을 하나로 묶은 표시)
@@ -57,8 +62,35 @@ SIGNAL_GROUPS = {
     # special_impact = 기념일마다·메뉴마다의 연관도(LLM이 1~5로) × 다가온 정도 (메뉴별, agent/relevance.py)
     "special": ["special_day", "special_lead", "special_impact"],
 }
+# 분야 = 묶음을 다시 묶은 것. 채택은 두 단계다: 먼저 분야 단위로 고르고, 그다음 분야 안에서 묶음 단위로 고른다 (evaluate.choose_signals).
+# 분야 이름은 묶음 이름 대신 써도 된다 (그 분야의 묶음 전부라는 뜻: expand). 예전 결과 파일(backtest.json)에는 분야 이름이 적혀 있다.
+SIGNAL_FAMILIES = {
+    "weather": ["temp", "rain"],
+    "events": ["exam", "vacation", "festival", "nearby"],
+    "trend": ["trend"],
+    "special": ["special"],
+}
+# 모델에 넣는 신호 열의 순서. 묶음을 어떻게 나누든 이 순서로 넣는다 (열 순서가 바뀌면 나무 모양이 달라져 숫자가 조금 흔들린다)
+SIGNAL_ORDER = ["temp_diff", "rain_mm", "exam_period", "vacation", "festival", "nearby_event", "event_impact",
+                "exam_period_diff", "vacation_diff", "festival_diff", "trend_level", "special_day", "special_lead", "special_impact"]
 SPECIAL_LEAD_DAYS = 7    # 기념일 며칠 전부터 '앞둔 날'로 볼지
 ALL_SIGNALS = {name for names in SIGNAL_GROUPS.values() for name in names}
+assert ALL_SIGNALS == set(SIGNAL_ORDER), "SIGNAL_GROUPS와 SIGNAL_ORDER의 신호 이름이 다르다"
+
+
+def expand(groups) -> list[str]:
+    """묶음·분야 이름들 → 묶음 이름들 (SIGNAL_GROUPS에 적힌 순서, 겹치면 한 번만)."""
+    wanted = {g for name in groups for g in SIGNAL_FAMILIES.get(name, [name])}
+    unknown = wanted - set(SIGNAL_GROUPS)
+    if unknown:
+        raise KeyError(f"모르는 신호 묶음: {sorted(unknown)}")
+    return [g for g in SIGNAL_GROUPS if g in wanted]
+
+
+def _names(groups) -> list[str]:
+    """묶음·분야 이름들 → 그 안의 신호 이름들 (SIGNAL_ORDER 순서)."""
+    wanted = {n for g in expand(groups) for n in SIGNAL_GROUPS[g]}
+    return [n for n in SIGNAL_ORDER if n in wanted]
 # 화면 비교표에 보여 주는 기본 모델 정의 (실제로 쓸 조합은 evaluate.py가 매장마다 고른다)
 FEATURE_SETS = {"M1": [], "M2": ["weather"], "M3": ["weather", "events", "trend", "special"]}
 
@@ -205,7 +237,7 @@ def _diff_from_recent(signal: str, days: int = 28):
 
 
 # 파생 신호 = 받은 신호로 계산해 만드는 신호.  이름 → (원재료 신호, 계산 함수)
-# 새 파생 신호는 여기에 한 줄 추가하고 SIGNAL_GROUPS에 이름을 넣는다.
+# 새 파생 신호는 여기에 한 줄 추가하고 SIGNAL_GROUPS · SIGNAL_ORDER에 이름을 넣는다.
 DERIVED_SIGNALS = {
     "temp_diff": ("temp_mean", _diff_from_recent("temp_mean")),
     "exam_period_diff": ("exam_period", _diff_from_recent("exam_period")),
@@ -217,13 +249,12 @@ DERIVED_SIGNALS = {
 def available_signals(groups, signals: pd.DataFrame) -> list[str]:
     """신호 묶음들 → 이 signals 자료로 만들 수 있는 신호 이름 (받은 신호 + 원재료가 있는 파생 신호)."""
     have = set(signals["signal"])
-    return [n for g in groups for n in SIGNAL_GROUPS[g]
-            if n in have or (n in DERIVED_SIGNALS and DERIVED_SIGNALS[n][0] in have)]
+    return [n for n in _names(groups) if n in have or (n in DERIVED_SIGNALS and DERIVED_SIGNALS[n][0] in have)]
 
 
 def signals_in(groups, frame: pd.DataFrame) -> list[str]:
     """신호 묶음들 → frame에 실제로 열이 있는 신호 이름 (자료가 없는 신호는 빠진다)."""
-    return [n for g in groups for n in SIGNAL_GROUPS[g] if n in frame.columns]
+    return [n for n in _names(groups) if n in frame.columns]
 
 
 def feature_columns(model_name: str, frame: pd.DataFrame, groups=None) -> list[str]:
