@@ -214,14 +214,36 @@ body {
   .nm-bar, .nm-band, .nm-line, .nm-fade, .nm-dotin, .nm-rise { animation: none; }
 }
 
-/* ------------------------------------------------------------------ 스크롤하면 나타나기 (Reveal.tsx)
-   화면에 들어오기 전에는 살짝 아래에서 투명하게 기다리다가, 들어오면 올라오며 나타난다 (한 번만).
-   안에 든 그래프의 움직임(nm-bar 등)도 그때까지 멈춰 두었다가 함께 시작한다. */
-.nm-reveal { opacity: 0; transform: translateY(32px); transition: opacity 0.75s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.75s cubic-bezier(0.2, 0.8, 0.2, 1); }
-.nm-reveal.nm-in { opacity: 1; transform: none; }
+/* ------------------------------------------------------------------ 스크롤 스크러빙 (scrub.ts · Reveal.tsx · Landing.tsx)
+   움직임을 시간이 아니라 스크롤 위치에 묶는다: 내리면 진행하고 올리면 되감긴다. 진행도는 요소의 CSS 변수로 받는다.
+
+   1) 떠오르는 칸 (Reveal): --p = 0(화면 아래 끝에 막 닿음) ~ 1(다 올라옴).
+      안에 든 그래프의 움직임(nm-bar 등)은 칸이 절반쯤 보일 때(nm-in)까지 멈춰 둔다. */
+.nm-reveal { opacity: var(--p, 0); transform: translateY(calc((1 - var(--p, 0)) * 56px)) scale(calc(0.97 + var(--p, 0) * 0.03)); will-change: opacity, transform; }
 .nm-reveal:not(.nm-in) :is(.nm-bar, .nm-band, .nm-line, .nm-fade, .nm-dotin) { animation-play-state: paused; }
+
+/* 2) 첫머리 장면 (Landing): 화면 높이의 2.9배만큼 스크롤하는 동안 화면에 붙어 있다. --s = 0(시작) ~ 1(끝).
+        0 ~ 0.25   인사말이 위로 물러나며 흐려지고, 지도를 덮은 흰빛이 걷힌다
+        0.3 ~      '세 단계' 제목이 나타나고, 카드가 --start 부터 하나씩 올라온다 */
+.nm-scene { height: 290vh; --s: 0; }
+.nm-scene-intro { opacity: clamp(0, calc(1 - var(--s) * 4.4), 1); transform: translateY(calc(var(--s) * -22vh)) scale(calc(1 - var(--s) * 0.35)); will-change: opacity, transform; }
+.nm-scene[data-stage="steps"] .nm-scene-intro { pointer-events: none; visibility: hidden; }
+.nm-scene .nm-hero-veil { opacity: clamp(0.3, calc(1 - var(--s) * 2.6), 1); }
+.nm-scene-steps { opacity: clamp(0, calc((var(--s) - 0.26) * 9), 1); }
+.nm-scene-steps > div > h2 { transform: translateY(calc((1 - clamp(0, calc((var(--s) - 0.26) * 7), 1)) * 40px));
+  text-shadow: 0 0 28px #fff, 0 0 12px #fff, 0 0 4px #fff; }
+.nm-scene-card { --q: clamp(0, calc((var(--s) - var(--start, 0.4)) / 0.14), 1); opacity: var(--q);
+  transform: translateY(calc((1 - var(--q)) * 70px)) scale(calc(0.94 + var(--q) * 0.06)); will-change: opacity, transform; }
+.nm-scroll-hint { opacity: clamp(0, calc(1 - var(--s) * 14), 1); }
+
+/* 움직임 줄이기를 켠 사람: 묶지 않는다. 장면은 화면에 붙이지 않고 인사말 → 세 단계를 차례로 늘어놓는다 */
 @media (prefers-reduced-motion: reduce) {
-  .nm-reveal { opacity: 1; transform: none; transition: none; }
+  .nm-reveal { opacity: 1; transform: none; }
+  .nm-scene { height: auto; }
+  .nm-scene-view { position: static; height: auto; overflow: visible; }
+  .nm-scene-intro, .nm-scene-steps { position: static; opacity: 1; transform: none; visibility: visible; pointer-events: auto; padding-top: 7rem; padding-bottom: 3rem; }
+  .nm-scene-steps > div > h2, .nm-scene-card { opacity: 1; transform: none; }
+  .nm-scroll-hint { display: none; }
 }
 
 /* ------------------------------------------------------------------ 첫 화면 머리의 배경 지도 (AnalysisMap의 ambient)
@@ -230,6 +252,8 @@ body {
 .nm-map-ambient .leaflet-container { background: #fff; cursor: default; }
 .nm-map-ambient .leaflet-control-attribution { font-size: 10px; background: rgb(255 255 255 / 0.7); }
 /* 글이 놓이는 가운데만 흰빛이 번지듯 덮는다 (테두리가 없는 흰 안개). 판으로 나누지 않고 글이 지도에 녹아들게 */
+/* 머리말 아래: 흰색에서 지도로 서서히 넘어간다 (머리말과 장면이 끊겨 보이지 않게) */
+.nm-hero-top { pointer-events: none; background: linear-gradient(to bottom, rgb(255 255 255 / 0.96) 0%, rgb(255 255 255 / 0.8) 42%, rgb(255 255 255 / 0) 100%); }
 .nm-hero-veil { pointer-events: none;
   background: radial-gradient(ellipse 58% 52% at 50% 38%, rgb(255 255 255 / 0.97) 0%, rgb(255 255 255 / 0.92) 42%, rgb(255 255 255 / 0.55) 72%, rgb(255 255 255 / 0) 100%); }
 

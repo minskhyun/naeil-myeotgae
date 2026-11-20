@@ -3,14 +3,15 @@
 //   → 자주 묻는 질문 → 써 보기(로그인 또는 문의) → 맨 아래 안내(자료 보관, 만든 사람)
 // 예시 매장 = 서버가 demo로 표시한 매장 (가상 매장). 로그인하면 이 화면 대신 Workspace.tsx가 나온다.
 import { useQuery } from '@tanstack/react-query'
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { AnalysisMap } from './AnalysisMap'
 import { AnalysisView } from './AnalysisView'
-import { api, type LoginConfig, type ProgressEvent } from './api'
+import { api, APP_PATH, type LoginConfig, type ProgressEvent } from './api'
 import { AccountBox, LoginButtons } from './Auth'
 import { BacktestView, Decisions } from './BacktestView'
 import { ForecastView } from './ForecastView'
 import { Reveal } from './Reveal'
+import { clamp01, watchScroll } from './scrub'
 import { SourcesView } from './SourcesView'
 
 // 보여 줄 예시 매장. 없으면 목록의 첫 매장.
@@ -100,7 +101,8 @@ function Part({ n, id, title, lead, children }: { n: number; id?: string; title:
 
 // login: 서버가 쓰는 로그인 방법(구글·카카오). 보기 전용 시연 사이트면 null (로그인 버튼 없음)
 // contactUrl: '사전 신청·문의' 버튼이 여는 주소 (서버 설정). 없으면 버튼을 보여 주지 않는다
-export function Landing({ login, contactUrl = null }: { login: LoginConfig | null; contactUrl?: string | null }) {
+// canEnter: 분석 화면으로 들어갈 수 있는 사람인가 (로그인했거나, 로그인을 안 쓰는 서버). 그러면 '분석하러 가기' 버튼을 보여 준다
+export function Landing({ login, contactUrl = null, canEnter = false }: { login: LoginConfig | null; contactUrl?: string | null; canEnter?: boolean }) {
   const stores = useQuery({ queryKey: ['stores'], queryFn: api.stores })
   const examples = stores.data?.filter((s) => s.demo) ?? []
   // 화면에는 가상 매장 하나만 보여 준다 (주소에 ?store=매장ID 를 붙이면 다른 예시 매장. 화면에서 그리로 가는 길은 두지 않는다)
@@ -121,6 +123,22 @@ export function Landing({ login, contactUrl = null }: { login: LoginConfig | nul
   // 첫머리 배경 지도: 매장 위치가 있는 분석 기록이 있을 때만. 움직임을 줄이도록 설정한 사람에게는 보여 주지 않는다
   const calm = useMemo(() => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false, [])
   const heroMap = !calm && !replaying && past?.some((e) => e.kind === 'store' && e.lat)
+  // 첫머리 장면의 진행도(--s: 0~1)와 머리말의 바탕(맨 위에 있는가)을 스크롤에 맞춰 고친다
+  const scene = useRef<HTMLElement>(null)
+  const [atTop, setAtTop] = useState(true)
+  useEffect(
+    () =>
+      watchScroll(() => {
+        setAtTop(window.scrollY < 8)
+        const el = scene.current
+        if (!el) return
+        const box = el.getBoundingClientRect()
+        const s = clamp01(-box.top / Math.max(1, box.height - window.innerHeight))
+        el.style.setProperty('--s', s.toFixed(3))
+        el.dataset.stage = s < 0.2 ? 'intro' : 'steps' // 물러난 인사말의 버튼이 눌리지 않게
+      }),
+    [],
+  )
   // 주요 버튼은 잉크 배경 + 흰 글자. 어두운 띠 위(onDark)에서는 흰 버튼
   const contact = (onDark = false) =>
     contactUrl && (
@@ -132,78 +150,110 @@ export function Landing({ login, contactUrl = null }: { login: LoginConfig | nul
   return (
     <div className="min-h-screen">
       {replaying && past && <AnalysisView events={past} status="done" replay onClose={() => setReplaying(false)} />}
-      <header className="sticky top-0 z-30 border-b border-line bg-white">
+      {/* 머리말: 맨 위에서는 바탕 없이 첫머리 장면 위에 떠 있고, 스크롤하면 흰 바탕과 선이 생긴다 */}
+      <header className={`sticky top-0 z-30 border-b transition-colors duration-300 ${atTop ? 'border-transparent bg-transparent' : 'border-line bg-white'}`}>
         <div className="mx-auto flex min-h-16 max-w-content flex-wrap items-center justify-between gap-x-8 gap-y-2 px-5 py-2 md:px-10">
-          <h1 className="text-xl font-[800] tracking-[-0.05em]">내일몇개</h1>
+          <a href="/" className="text-xl font-[800] tracking-[-0.05em]" aria-label="내일몇개 첫 화면">
+            내일몇개
+          </a>
           <nav className="flex flex-wrap items-center gap-x-6 gap-y-1 text-base text-ink-700">
             {NAV.map((n) => (
               <a key={n.href} href={n.href} className="hover:text-ink-900">
                 {n.text}
               </a>
             ))}
-            {login ? <AccountBox login={login} /> : contact()}
+            {canEnter && (
+              <a href={APP_PATH} className="btn-md btn-primary">
+                분석하러 가기
+              </a>
+            )}
+            {login ? <AccountBox login={login} /> : !canEnter && contact()}
           </nav>
         </div>
       </header>
 
-      {/* 첫머리: 뒤에는 지도에서 정보를 모으는 장면(넓은 화면만), 앞에는 흰 판 위의 인사말. 가게 표시는 판 아래쪽에 보인다 */}
-      <section className="relative overflow-hidden border-b border-line bg-white">
-        {heroMap && (
-          <div className="nm-fade absolute inset-0 isolate hidden md:block" aria-hidden>
-            <HeroMap events={past!} />
-            <div className="nm-hero-veil absolute inset-0 z-[900]" />
-          </div>
-        )}
-        <div className={`pointer-events-none relative mx-auto max-w-content px-5 pt-16 text-center md:px-10 md:pt-24 ${heroMap ? 'pb-16 md:pb-60' : 'pb-16 md:pb-24'}`}>
-          <div className="pointer-events-auto mx-auto max-w-4xl px-5 py-10 md:px-12 md:py-14">
-          <p className="text-body-lg text-ink-700">카페·베이커리를 위한 내일 판매 예측</p>
-          <h2 className="mt-3 text-hero">내일 몇 개 만들까요?</h2>
-          <p className="mx-auto mt-6 max-w-2xl text-xl leading-8 text-ink-700">
-            판매 기록에 날씨·학교 일정·근처 행사를 더해, 내일 메뉴별로 몇 개 준비하면 좋을지 알려 드려요.
-          </p>
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-            <a href="#example" className="btn-xl btn-primary">
-              예시 보기
-            </a>
-            {!!past?.length && (
-              <button onClick={() => setReplaying(true)} className="btn-xl btn-secondary">
-                AI가 분석하는 과정 보기
-              </button>
-            )}
-          </div>
-          {loginFailed && (
-            <p className="mx-auto mt-6 w-fit rounded-lg bg-down-soft px-4 py-2 text-sm font-medium text-down">
-              로그인을 마치지 못했어요. 다시 시도해 주세요.
-            </p>
-          )}
-          {login && (
-            <div className="mt-8 flex flex-col items-center gap-3">
-              <LoginButtons login={login} />
-              <span className="text-sm text-ink-500">로그인하면 내 가게 판매 기록으로 준비표를 만들 수 있어요.</span>
+      {/* 첫머리 장면 (스크롤 스크러빙): 화면에 붙어 있는 동안 스크롤한 만큼 진행한다.
+          인사말이 위로 물러나며 지도가 드러나고 → 세 단계 카드가 하나씩 올라온다. 진행도는 요소의 CSS 변수 --s (index.css의 nm-scene).
+          뒤의 지도는 넓은 화면에서만. 움직임 줄이기를 켠 사람에게는 붙이지 않고 차례로 늘어놓는다. */}
+      <section ref={scene} className="nm-scene relative -mt-16 bg-white" data-stage="intro">
+        {/* '#steps' 로 오면 세 단계가 다 나온 자리로 간다 */}
+        <span id="steps" className="pointer-events-none absolute top-[58%]" aria-hidden />
+        <div className="nm-scene-view sticky top-0 h-screen overflow-hidden">
+          {heroMap && (
+            <div className="nm-fade absolute inset-0 isolate hidden md:block" aria-hidden>
+              <HeroMap events={past!} />
+              <div className="nm-hero-veil absolute inset-0 z-[900]" />
+              <div className="nm-hero-top absolute inset-x-0 top-0 z-[900] h-40" />
             </div>
           )}
+
+          <div className="nm-scene-intro absolute inset-0 flex items-center justify-center px-5 pb-[14vh] pt-16 text-center md:px-10">
+            <div className="mx-auto max-w-4xl">
+              <p className="text-body-lg text-ink-700">카페·베이커리를 위한 내일 판매 예측</p>
+              <h2 className="mt-3 text-hero">내일 몇 개 만들까요?</h2>
+              <p className="mx-auto mt-6 max-w-2xl text-xl leading-8 text-ink-700">
+                판매 기록에 날씨·학교 일정·근처 행사를 더해, 내일 메뉴별로 몇 개 준비하면 좋을지 알려 드려요.
+              </p>
+              <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
+                {canEnter ? (
+                  <a href={APP_PATH} className="btn-xl btn-primary">
+                    분석하러 가기
+                  </a>
+                ) : (
+                  <a href="#example" className="btn-xl btn-primary">
+                    예시 보기
+                  </a>
+                )}
+                {canEnter && (
+                  <a href="#example" className="btn-xl btn-secondary">
+                    예시 보기
+                  </a>
+                )}
+                {!!past?.length && (
+                  <button onClick={() => setReplaying(true)} className="btn-xl btn-secondary">
+                    AI가 분석하는 과정 보기
+                  </button>
+                )}
+              </div>
+              {loginFailed && (
+                <p className="mx-auto mt-6 w-fit rounded-lg bg-down-soft px-4 py-2 text-sm font-medium text-down">
+                  로그인을 마치지 못했어요. 다시 시도해 주세요.
+                </p>
+              )}
+              {login && !canEnter && (
+                <div className="mt-8 flex flex-col items-center gap-3">
+                  <LoginButtons login={login} />
+                  <span className="text-sm text-ink-500">로그인하면 내 가게 판매 기록으로 준비표를 만들 수 있어요.</span>
+                </div>
+              )}
+              <p className="nm-scroll-hint mt-10 text-sm text-ink-500" aria-hidden>
+                아래로 스크롤해 보세요
+              </p>
+            </div>
+          </div>
+
+          <div className="nm-scene-steps pointer-events-none absolute inset-0 flex items-center justify-center px-5 pb-[10vh] pt-16 md:px-10">
+            <div className="mx-auto w-full max-w-content">
+              <h2 className="text-center text-title">세 단계면 내일 준비표가 완성됩니다</h2>
+              <ol className="mt-8 grid gap-4 md:mt-12 md:grid-cols-3 md:gap-5">
+                {HOW.map((h, i) => (
+                  <li
+                    key={h.title}
+                    className="nm-scene-card rounded-2xl border border-line bg-white px-6 py-6 text-center md:py-12"
+                    style={{ '--start': 0.4 + i * 0.17 } as CSSProperties}
+                  >
+                    <span className="tag bg-surface text-ink-700">STEP {i + 1}</span>
+                    <h3 className="mt-3 text-2xl font-semibold tracking-tight md:mt-4">{h.title}</h3>
+                    <p className="mt-2 text-base leading-relaxed text-ink-700 md:mt-3">{h.text}</p>
+                  </li>
+                ))}
+              </ol>
+            </div>
           </div>
         </div>
       </section>
 
       <main className="mx-auto max-w-content space-y-32 px-5 py-24 md:px-10">
-        <section>
-          <Reveal className="text-center">
-            <h2 className="text-title">세 단계면 내일 준비표가 완성됩니다</h2>
-          </Reveal>
-          <ol className="mt-12 grid gap-5 md:grid-cols-3">
-            {HOW.map((h, i) => (
-              <li key={h.title}>
-                <Reveal delay={i * 140} className="h-full rounded-2xl bg-surface px-6 py-12 text-center">
-                  <span className="tag bg-white text-ink-700">STEP {i + 1}</span>
-                  <h3 className="mt-4 text-2xl font-semibold tracking-tight">{h.title}</h3>
-                  <p className="mt-3 text-base leading-relaxed text-ink-700">{h.text}</p>
-                </Reveal>
-              </li>
-            ))}
-          </ol>
-        </section>
-
         {stores.error && <p className="rounded-2xl bg-white px-5 py-4 text-sm text-down">예시를 불러오지 못했습니다. 백엔드가 켜져 있는지 확인해 주세요.</p>}
         {stores.data && !store && <p className="text-center text-ink-700">보여 줄 예시 매장이 아직 없습니다.</p>}
 

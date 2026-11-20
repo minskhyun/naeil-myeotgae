@@ -4,7 +4,7 @@
 // 서버 쪽 규칙은 backend/app/auth.py.
 import { useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
-import { api, type LoginConfig } from './api'
+import { api, APP_PATH, type LoginConfig } from './api'
 import { useMe } from './useMe'
 
 // 구글이 주는 로그인 스크립트(window.google)에서 우리가 쓰는 부분만
@@ -56,6 +56,7 @@ export function GoogleButton({ clientId }: { clientId: string }) {
               await api.loginGoogle(credential)
               setError(null)
               await qc.invalidateQueries() // 내 정보·매장 목록을 모두 새로 받는다
+              window.location.assign(APP_PATH) // 로그인했으면 바로 분석 화면으로 (첫 화면에서도 '분석하러 가기'로 갈 수 있다)
             } catch (e) {
               setError((e as Error).message)
             }

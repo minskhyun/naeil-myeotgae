@@ -247,7 +247,7 @@ def _kakao_login(code: str) -> tuple[TestClient, str]:
 def test_kakao_login_flow(kakao):
     assert TestClient(main.app).get("/api/config").json()["kakao_login"] is True
     minji, landed = _kakao_login("code-min")
-    assert landed == "/" and kakao["redirect_uri"] == "http://testserver/api/auth/kakao/callback"
+    assert landed == "/app" and kakao["redirect_uri"] == "http://testserver/api/auth/kakao/callback"
     assert minji.get("/api/auth/me").json() == dict(provider="kakao", email=None, name="민지", picture=None, is_admin=False)
     assert not minji.cookies.get(main.STATE_COOKIE)                                    # 확인용 값은 한 번 쓰고 지운다
     made = minji.post("/api/my/stores", json={"name": "민지네"})                        # 이메일이 없어도 매장을 만들 수 있다
@@ -367,13 +367,13 @@ def test_kakao_asks_for_nickname_once_when_not_yet_agreed(kakao, monkeypatch):
     assert client.get("/api/auth/me").json()["name"] == "카카오 사용자"                          # 그사이 로그인은 이미 됨
 
     declined = TestClient(main.app, follow_redirects=False, cookies=dict(client.cookies))        # 거절하고 돌아온 경우
-    assert declined.get(f"/api/auth/kakao/callback?error=access_denied&state={state}").headers["location"] == "/"
+    assert declined.get(f"/api/auth/kakao/callback?error=access_denied&state={state}").headers["location"] == "/app"
     assert declined.get("/api/auth/me").json()["name"] == "카카오 사용자"
 
     back = client.get(f"/api/auth/kakao/callback?code=agreed&state={state}")                     # 동의하고 돌아온 경우
-    assert back.headers["location"] == "/" and client.get("/api/auth/me").json()["name"] == "민지"
+    assert back.headers["location"] == "/app" and client.get("/api/auth/me").json()["name"] == "민지"
 
     still = dict(replies["first"])                                                               # 또 못 받아도 다시 묻지는 않는다 (무한 반복 방지)
     monkeypatch.setattr(auth, "kakao_profile", lambda code, redirect_uri: still)
     client.cookies.set(main.STATE_COOKIE, state)
-    assert client.get(f"/api/auth/kakao/callback?code=x&state={state}").headers["location"] == "/"
+    assert client.get(f"/api/auth/kakao/callback?code=x&state={state}").headers["location"] == "/app"

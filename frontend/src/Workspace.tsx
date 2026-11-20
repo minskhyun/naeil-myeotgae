@@ -58,7 +58,9 @@ export function Workspace({ login }: { login: LoginConfig | null }) {
     <div className="min-h-screen">
       <header className="border-b border-line bg-white">
         <div className="mx-auto flex min-h-16 max-w-content flex-wrap items-center justify-between gap-x-8 gap-y-3 px-5 py-2 md:px-10">
-          <h1 className="text-xl font-bold tracking-tight">내일몇개</h1>
+          <a href="/" className="text-xl font-[800] tracking-[-0.05em]" aria-label="내일몇개 첫 화면" title="첫 화면으로">
+            내일몇개
+          </a>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             {!!stores?.length && (
               <label className="flex items-center gap-2 text-sm text-ink-700">

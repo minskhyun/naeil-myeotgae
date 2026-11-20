@@ -52,7 +52,7 @@ from pathlib import Path
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, Response, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -177,6 +177,7 @@ class GoogleLogin(BaseModel):
 
 
 STATE_COOKIE = "nm_oauth_state"            # 카카오로 보낼 때 심어 두는 확인용 값 (10분)
+APP_PAGE = "/app"                            # 분석 화면의 주소 (첫 화면은 "/"). 화면 쪽 같은 값은 frontend/src/api.ts의 APP_PATH
 KAKAO_CALLBACK = "/api/auth/kakao/callback"  # 카카오 콘솔의 '리다이렉트 URI'에 등록하는 주소의 뒷부분
 ASKED = ".nickname"                        # state 끝에 붙이는 표시: 닉네임 동의를 따로 물어보고 돌아오는 길
 
@@ -225,7 +226,7 @@ def auth_kakao_callback(request: Request, code: str | None = None, state: str | 
     mine = bool(state and saved and secrets.compare_digest(state, saved))       # 우리가 보낸 요청이 맞는가
     asked = mine and state.endswith(ASKED)                                      # 닉네임을 물어보고 돌아오는 길인가
     # 닉네임 동의를 거절하고 돌아왔어도 로그인은 이미 돼 있으니 첫 화면으로 보낸다
-    back = RedirectResponse("/" if asked and auth.current_user(request) else "/?login_error=kakao")
+    back = RedirectResponse(APP_PAGE if asked and auth.current_user(request) else "/?login_error=kakao")
     if auth.KAKAO_KEY and code and mine:
         try:
             profile = auth.kakao_profile(code, callback)
@@ -236,7 +237,7 @@ def auth_kakao_callback(request: Request, code: str | None = None, state: str | 
                 back.set_cookie(STATE_COOKIE, again, max_age=600, httponly=True, samesite="lax", secure=callback.startswith("https"))
                 _set_session(back, request, token)
                 return back
-            back = RedirectResponse("/")
+            back = RedirectResponse(APP_PAGE)                # 로그인했으면 분석 화면으로
             _set_session(back, request, token)
         except Exception as e:                       # 코드 만료, 시크릿 틀림, 카카오 서버 오류 등 → 서버 기록에 이유를 남긴다
             print(f"[카카오 로그인 실패] {type(e).__name__}: {e}", flush=True)
@@ -452,5 +453,10 @@ def job(job_id: str, user: auth.User | None = Me):
 
 
 # 빌드된 화면 (맨 마지막에 둔다: /api/... 가 먼저 처리되고, 나머지 주소는 화면 파일)
+# 화면의 주소는 둘: "/" 첫 화면, APP_PAGE 분석 화면. 둘 다 같은 index.html을 주고, 어느 화면을 그릴지는 화면 코드(App.tsx)가 정한다.
 if WEB_DIST.exists():
+    @app.get(APP_PAGE, include_in_schema=False)
+    def app_page():
+        return FileResponse(WEB_DIST / "index.html")
+
     app.mount("/", StaticFiles(directory=WEB_DIST, html=True), name="web")
