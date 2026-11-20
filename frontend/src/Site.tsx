@@ -1,7 +1,7 @@
 // 첫 화면(Landing) · 소개(About) · 고객지원(Support) · 개인정보처리방침(Privacy)이 함께 쓰는 틀: 맨 위 머리말, 맨 아래의 '내 가게로 해 보기' 띠, 바닥글.
 import { useEffect, useRef, type ReactNode } from 'react'
 import { ABOUT_PATH, APP_PATH, PRIVACY_PATH, SUPPORT_PATH, TERMS_PATH, type LoginConfig } from './api'
-import { AccountBox, LoginButtons } from './Auth'
+import { AccountBox, LoginButton } from './Auth'
 import { Logo } from './Logo'
 import { watchScroll } from './scrub'
 
@@ -114,7 +114,7 @@ export function JoinBand({ login, canEnter, contactUrl, title = '내 가게로 �
           <>
             <p className="mx-auto mt-4 mb-8 max-w-xl text-lg text-white/75">로그인하고 판매 기록 파일을 올리면 됩니다. 올린 자료는 본인만 볼 수 있어요.</p>
             <div className="flex justify-center">
-              <LoginButtons login={login} />
+              <LoginButton login={login} label="로그인하고 시작하기" className="btn-xl bg-white text-ink-900 hover:bg-surface" />
             </div>
           </>
         ) : (

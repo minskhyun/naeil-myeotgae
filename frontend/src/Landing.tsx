@@ -11,7 +11,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react'
 import { AnalysisMap } from './AnalysisMap'
 import { ABOUT_PATH, api, APP_PATH, PREP_MODES, SUPPORT_PATH, type ProgressEvent } from './api'
-import { LoginButtons } from './Auth'
+import { LoginButton } from './Auth'
 import { useExample } from './example'
 import { ForecastTable, Notice, PrepToggle } from './ForecastView'
 import { cleanTitle, count, dayPrefix, fmtDate, pct1, shortReason } from './format'
@@ -187,7 +187,7 @@ export function Landing({ login, contactUrl, canEnter }: SiteProps) {
             )}
             {login && !canEnter && (
               <div className="mt-8 flex flex-col items-start gap-3">
-                <LoginButtons login={login} />
+                <LoginButton login={login} label="로그인하고 시작하기" />
                 <span className="text-sm text-ink-500">로그인하면 내 가게 판매 기록으로 준비표를 만들 수 있어요.</span>
               </div>
             )}

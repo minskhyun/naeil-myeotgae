@@ -1,10 +1,12 @@
-// 로그인: 버튼 묶음(LoginButtons = 구글 + 카카오)과 머리말의 내 계정 칸(AccountBox).
+// 로그인: 버튼 하나(LoginButton)와 머리말의 내 계정 칸(AccountBox).
+// 화면에는 '로그인' 버튼 하나만 보인다. 누르면 창이 떠서 어느 계정(구글 · 카카오)으로 로그인할지 고른다.
 // 구글:  버튼을 누르면 구글이 ID 토큰을 준다 → 서버(/api/auth/google)가 확인하고 로그인 쿠키를 준다.
 // 카카오: 버튼은 그냥 링크다 → 서버(/api/auth/kakao/start)가 카카오 로그인 화면으로 보내고, 끝나면 첫 화면으로 돌아온다.
 // 서버 쪽 규칙은 backend/app/auth.py.
 import { useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
-import { api, APP_PATH, type LoginConfig } from './api'
+import { api, APP_PATH, PRIVACY_PATH, TERMS_PATH, type LoginConfig } from './api'
+import { Modal } from './Modal'
 import { useMe } from './useMe'
 
 // 구글이 주는 로그인 스크립트(window.google)에서 우리가 쓰는 부분만
@@ -20,6 +22,7 @@ declare global {
 }
 
 const SCRIPT = 'https://accounts.google.com/gsi/client'
+const BUTTON_WIDTH = 280 // 로그인 창 안의 두 버튼(구글 · 카카오)을 같은 폭으로
 let loading: Promise<void> | null = null
 
 // 구글 로그인 스크립트를 한 번만 불러온다
@@ -62,7 +65,7 @@ export function GoogleButton({ clientId }: { clientId: string }) {
             }
           },
         })
-        window.google.accounts.id.renderButton(box.current, { theme: 'outline', size: 'medium', text: 'signin_with', locale: 'ko' })
+        window.google.accounts.id.renderButton(box.current, { theme: 'outline', size: 'large', text: 'signin_with', width: BUTTON_WIDTH, locale: 'ko' })
       })
       .catch((e: Error) => alive && setError(e.message))
     return () => {
@@ -83,7 +86,8 @@ export function KakaoButton() {
   return (
     <a
       href="/api/auth/kakao/start"
-      className="inline-flex h-8 items-center gap-2 rounded bg-[#FEE500] px-3 text-sm font-medium text-black/85 hover:brightness-95"
+      style={{ width: BUTTON_WIDTH }}
+      className="inline-flex h-10 items-center justify-center gap-2 rounded bg-[#FEE500] px-3 text-sm font-medium text-black/85 hover:brightness-95"
     >
       <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
         <path
@@ -96,22 +100,49 @@ export function KakaoButton() {
   )
 }
 
-// 이 서버가 쓰는 로그인 버튼들을 나란히
-export function LoginButtons({ login }: { login: LoginConfig }) {
+// '로그인' 버튼 하나. 누르면 창이 떠서 어느 계정으로 로그인할지 고른다 (이 서버가 쓰는 방법만 보여 준다).
+//   label · className = 놓이는 자리에 맞춘 버튼의 글과 모양 (머리말은 작은 버튼, 맨 아래 띠는 큰 흰 버튼)
+export function LoginButton({ login, label = '로그인', className = 'btn-md btn-primary' }: { login: LoginConfig; label?: string; className?: string }) {
+  const [open, setOpen] = useState(false)
+  const link = 'font-medium text-ink-700 underline underline-offset-4 hover:text-ink-900'
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      {login.google && <GoogleButton clientId={login.google} />}
-      {login.kakao && <KakaoButton />}
-    </div>
+    <>
+      <button onClick={() => setOpen(true)} className={className}>
+        {label}
+      </button>
+      {open && (
+        <Modal label="로그인" onClose={() => setOpen(false)} narrow>
+          <div className="text-left text-ink-900">
+            <h2 className="text-h2">로그인</h2>
+            <p className="mt-2 text-ink-700">어느 계정으로 시작할까요? 비밀번호는 받지 않아요.</p>
+            <div className="mt-8 flex flex-col items-center gap-3">
+              {login.google && <GoogleButton clientId={login.google} />}
+              {login.kakao && <KakaoButton />}
+            </div>
+            <p className="mt-8 text-sm leading-relaxed text-ink-500">
+              처음이면 로그인한 뒤{' '}
+              <a href={TERMS_PATH} target="_blank" rel="noreferrer" className={link}>
+                이용약관
+              </a>
+              과{' '}
+              <a href={PRIVACY_PATH} target="_blank" rel="noreferrer" className={link}>
+                개인정보 수집·이용
+              </a>{' '}
+              동의를 묻습니다.
+            </p>
+          </div>
+        </Modal>
+      )}
+    </>
   )
 }
 
-// 머리말 오른쪽: 로그인 전에는 로그인 버튼, 로그인 뒤에는 이름과 로그아웃
+// 머리말 오른쪽: 로그인 전에는 '로그인' 버튼, 로그인 뒤에는 이름과 로그아웃
 export function AccountBox({ login }: { login: LoginConfig }) {
   const qc = useQueryClient()
   const me = useMe(true)
   if (me.isLoading) return null
-  if (!me.data) return <LoginButtons login={login} />
+  if (!me.data) return <LoginButton login={login} />
 
   const logout = async () => {
     await api.logout()
