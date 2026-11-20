@@ -1,299 +1,236 @@
-// '분석 중' 화면: 실행 중에 서버가 알려 주는 것(ProgressEvent)을 하나씩 보여 준다.
-//   지도(AnalysisMap) — 찾은 정보가 가게로 들어오는 모습
-//   단계 표시 · 지금 하는 일 · 들어온 정보 목록
-//   끝나면: 무엇을 모았고, 무엇을 썼고, 얼마나 맞고, 내일 무엇을 준비하면 되는지 정리
-// 알림은 몇 건씩 한꺼번에 도착하므로, 여기서 하나씩 시간 간격을 두고 풀어 놓는다(shown) → 실시간으로 들어오는 것처럼 보인다.
-// 다시 보기(replay)도 같은 화면이다: 저장된 알림 전부를 같은 속도로 풀어 놓는다.
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
-import { AnalysisMap } from './AnalysisMap'
-import type { Job, ProgressEvent } from './api'
-import { CountUp } from './CountUp'
-import { cleanTitle, count as cnt, fmtDate, GROUP_LABELS, KIND_COLOR, pct1 } from './format'
-import { Logo } from './Logo'
+// 소개 ('/about'): 어떻게 예측하고, 결과가 어떻게 나오고, 얼마나 맞는지를 한 곳에 정리한다.
+//   네 단계 → 예측 방법 → 주변 정보를 고르는 기준 → AI가 하는 일 → 예시 매장의 실제 결과(준비표 · 쓴 정보 · 검증). 자주 묻는 질문은 고객지원(Support.tsx)에 있다
+// 첫 화면(Landing.tsx)은 무엇을 해 주는지만 보여 주고, 방법과 검증은 여기에 모은다.
+// 적는 내용은 코드가 실제로 하는 일과 같아야 한다 (숫자 기준은 ml/evaluate.py, ml/models.py, ml/features.py).
+import { useState, type CSSProperties, type ReactNode } from 'react'
+import { Picture } from './AboutArt'
+import { AnalysisView } from './AnalysisView'
+import { BacktestView, Decisions } from './BacktestView'
+import { ForecastView } from './ForecastView'
+import { Lines, Reveal } from './Reveal'
+import { useSnapScroll } from './scrub'
+import { JoinBand, SiteFooter, SiteHeader, type SiteProps } from './Site'
+import { useExample } from './example'
+import { SourcesView } from './SourcesView'
 
+const MENUS_SHOWN = 8 // 예시 준비표에 처음 보여 줄 메뉴 수
+
+// 판매 기록이 준비표가 되기까지 (run.py의 네 단계)
 const STEPS = [
-  { id: 'ingest', label: '판매 기록' },
-  { id: 'collect', label: '주변 정보' },
-  { id: 'evaluate', label: '검증' },
-  { id: 'predict', label: '내일 예측' },
-] as const
+  { art: 'tidy', title: '판매 기록 정리', text: '포스 파일을 날짜·메뉴·수량 표로 정리해요. AI 없이 규칙으로만 처리해요.' },
+  { art: 'gather', title: '주변 정보 모으기', text: '주소를 기준으로 날씨, 근처 학교 일정, 행사, 메뉴 검색량을 모아요.' },
+  { art: 'rehearse', title: '지난 날짜로 시험하기', text: '지난 날짜를 전날까지의 기록으로 맞혀 보며, 도움이 되는 정보만 골라요.' },
+  { art: 'tomorrow', title: '다음 날 예측하기', text: '메뉴마다 예상 판매량, 범위, 준비할 개수를 드려요.' },
+]
 
-// 알림 하나를 보여 준 뒤 다음 것까지 기다리는 시간(ms). 지도에서 벌어지는 일이 끝날 만큼.
-// 알림이 한꺼번에 몰려와도 이 간격대로 하나씩 풀어 놓는다 → 서버가 잠깐 조용해도 화면은 계속 움직인다
-const PAUSE: Record<string, number> = {
-  step: 120, status: 260, store: 2000, sales: 500, places: 1500, plan: 1500, weather: 700, academic: 700,
-  event: 700, article: 450, special: 400, trend_span: 700, trend: 450, rating: 600, trial: 500, decision: 650, scores: 500, forecast: 500,
-}
+// 예측 방법의 핵심 세 가지 (ml/models.py, ml/predict.py)
+const METHOD = [
+  { art: 'ratio', title: '평소보다 몇 배 팔릴지를 배워요', text: '최근 28일 평균 대비 비율을 배워서, 많이 팔리는 메뉴와 적게 팔리는 메뉴를 함께 다뤄요.' },
+  { art: 'range', title: '숫자 하나가 아니라 범위로 답해요', text: '"내일 20개쯤, 적으면 16개 많으면 25개"처럼 알려 드려요.' },
+  { art: 'prep', title: '준비 개수는 사장님이 골라요', text: '폐기를 줄일지, 품절을 줄일지 고르시면 그에 맞는 개수를 드려요.' },
+]
 
-// 들어온 정보 목록의 한 줄: 종류(색 이름표) + 내용. 한 줄에 들어갈 만큼 짧게 쓴다
-function line(e: ProgressEvent): { tag: string; color: string; text: string } | null {
-  switch (e.kind) {
-    // 판매를 끝낸 메뉴가 있으면 '지금 파는 메뉴' 수를 적는다 (준비표의 메뉴 수와 같아야 한다)
-    case 'sales':
-      return {
-        tag: '판매 기록',
-        color: KIND_COLOR.sales,
-        text: `${e.days}일 · ${e.active !== undefined && e.active < e.menus ? `지금 파는 메뉴 ${e.active}개` : `메뉴 ${e.menus}개`}`,
-      }
-    case 'places': return { tag: '주변 시설', color: KIND_COLOR.places, text: `${e.count}곳` }
-    case 'plan': return {
-      tag: 'AI의 선택', color: KIND_COLOR.plan,
-      text: `이 매장에 맞는 정보원을 골랐어요${e.radius_m ? ` · 행사 반경 ${e.radius_m}m` : ''}`,
-    }
-    case 'weather': return { tag: '날씨', color: KIND_COLOR.weather, text: `${e.days}일치` }
-    case 'academic': return {
-      tag: '학교 일정', color: KIND_COLOR.academic,
-      text: [e.exams && `시험 ${e.exams}번`, e.vacations && `방학 ${e.vacations}번`, e.festivals && `축제 ${e.festivals}번`].filter(Boolean).join(' · ') || `${e.days}일`,
-    }
-    case 'event': return { tag: e.source === '뉴스·블로그' ? '소식 속 행사' : '근처 행사', color: e.source === '뉴스·블로그' ? KIND_COLOR.news : KIND_COLOR.event, text: `${e.title}${e.place ? ` · ${e.place}` : ''}` }
-    case 'article': return { tag: '읽은 글', color: KIND_COLOR.article, text: cleanTitle(e.title) }
-    case 'special': return {
-      tag: '기념일', color: KIND_COLOR.special,
-      text: `${e.name}${e.relevance ? ` · 연관도 ${e.relevance}/5` : ''}`,
-    }
-    case 'trend_span': return { tag: '검색량', color: KIND_COLOR.trend, text: `메뉴 ${e.menus}개 · ${e.days}일치` }
-    case 'trend': return { tag: '검색량', color: KIND_COLOR.trend, text: `${e.menu} ${e.pct > 0 ? '+' : ''}${e.pct}%` }
-    case 'rating': return {
-      tag: 'AI의 평가', color: KIND_COLOR.plan,
-      text: `${e.title} · 규모 ${e.scale}/5 · 연관도 ${e.relevance}/5`,
-    }
-    case 'trial': return {
-      tag: '검증', color: KIND_COLOR.plan,
-      text: `${e.groups.length ? `판매 기록 + ${e.groups.map((g) => GROUP_LABELS[g] ?? g).join('·')}` : '판매 기록만'} → ${e.miss !== undefined ? `하루 오차 ${cnt(e.miss)}개` : `오차율 ${pct1(e.wape)}`}`,
-    }
-    default: return null
-  }
-}
+// 주변 정보를 쓸지 정하는 규칙 (ml/evaluate.py의 beats · pick_combo, ml/features.py의 시점 규칙)
+const RULES = [
+  { art: 'gain', title: '오차가 3% 이상 줄어야 해요', text: '아무 관계 없는 숫자를 넣어도 오차는 1~2% 흔들려요. 그보다 커야 믿어요.' },
+  { art: 'folds', title: '절반이 넘는 기간에서 나아져야 해요', text: '한 기간에서만 좋았던 정보는 쓰지 않아요.' },
+  { art: 'alone', title: '다른 정보에 얹혀 가면 안 돼요', text: '하나씩 빼 보고, 빼면 나빠지는 정보만 남겨요.' },
+  { art: 'cutoff', title: '그때 몰랐던 정보는 쓰지 않아요', text: '전날 영업이 끝날 때까지 공개된 정보로만 예측해요. 지난 날짜 시험도 마찬가지예요.' },
+]
 
-function Card({ title, children }: { title: string; children: ReactNode }) {
+// 살펴보는 정보: 분야 넷, 그 안의 묶음 여덟 (ml/features.py의 SIGNAL_FAMILIES · SIGNAL_GROUPS). 쓸지 말지는 묶음마다 따로 정한다
+const FAMILIES = [
+  { name: '날씨', parts: ['기온', '비'] },
+  { name: '학사일정·행사', parts: ['시험기간', '방학', '학교 축제', '근처 행사'] },
+  { name: '유행', parts: ['메뉴 검색량'] },
+  { name: '기념일', parts: ['기념일'] },
+]
+// 고르는 순서 (ml/evaluate.py의 choose_signals)
+const PICKING = [
+  { title: '먼저 분야끼리 견줘요', text: '조건을 채우는 조합 중 오차가 가장 작은 것을 골라요.' },
+  { title: '그다음 분야 안을 하나씩 봐요', text: '방학은 영향이 크고 시험기간은 없는 가게면 방학만 써요.' },
+]
+
+// AI(LLM)가 하는 일 (agent/, ml/alerts.py)
+const AI_JOBS = [
+  { art: 'choose', title: '어디를 볼지 고르기', text: '주변 시설을 보고 살펴볼 학교와 행사 범위를 정해요.' },
+  { art: 'read', title: '글에서 행사 찾기', text: '뉴스·블로그에서 행사 날짜와 장소를 뽑아요.' },
+  { art: 'rate', title: '우리 가게와의 관련 따지기', text: '행사·기념일이 우리 메뉴와 얼마나 관련 있는지 1~5로 매겨요. 이 점수도 검증을 통과해야 써요.' },
+  { art: 'notice', title: '주의할 소식 쓰기', text: '예측에 못 담은 일을 알려요. 인용이 원문에 없으면 버려요.' },
+]
+
+// 큰 구역 하나: 제목 · 설명 · 내용. id = 다른 화면에서 찾아오는 자리
+function Block({ id, title, lead, children }: { id?: string; title: string; lead?: string; children: ReactNode }) {
   return (
-    <section className="nm-rise rounded-[32px] bg-white p-6">
-      <h3 className="text-label text-ink-500">{title}</h3>
-      <div className="mt-4">{children}</div>
+    <section id={id} className="nm-screen mx-auto w-full max-w-content px-5 md:px-10">
+      <div className="max-w-3xl">
+        <Lines text={title} className="text-title" />
+        {lead && (
+          <Reveal as="p" className="mt-5 text-xl leading-8 text-ink-700">
+            {lead}
+          </Reveal>
+        )}
+      </div>
+      <div className="mt-10">{children}</div>
     </section>
   )
 }
 
-export function AnalysisView({ events, status, error, log, onClose, replay = false, onDone, doneLabel }: {
-  events: ProgressEvent[] // 지금까지 서버가 알려 준 것 전부
-  status: Job['status']
-  error?: string | null
-  log?: string[]
-  onClose: () => void
-  onDone?: () => void // 끝났을 때 맨 아래의 큰 버튼을 누르면 (없으면 그냥 닫는다)
-  doneLabel?: string // 그 버튼의 이름 (예: '분석 페이지로 가기')
-  replay?: boolean // 지난 분석을 다시 보는 중
-}) {
-  const [shown, setShown] = useState(0) // 화면에 풀어 놓은 알림 수
-  const [seconds, setSeconds] = useState(0) // 시작한 지 몇 초 (기다리는 동안에도 화면이 살아 있게)
-  useEffect(() => {
-    if (status !== 'running') return
-    const timer = window.setInterval(() => setSeconds((n) => n + 1), 1000)
-    return () => window.clearInterval(timer)
-  }, [status])
-  const seen = useMemo(() => events.slice(0, shown), [events, shown])
+// 그림 · 큰 제목 · 한두 줄 설명이 든 칸들을 격자로 (작은 글씨는 쓰지 않는다. 글은 팀에서 줄인 것). 그림(AboutArt.tsx)은 칸의 위에 두고, side면 왼쪽에 둔다 (칸이 낮아야 하는 화면)
+function Cards({ items, cols, numbered = false, side = false }: { items: { art: string; title: string; text: string }[]; cols: string; numbered?: boolean; side?: boolean }) {
+  return (
+    <ol className={`grid gap-4 ${cols}`}>
+      {items.map((it, i) => (
+        <li key={it.title}>
+          <Reveal lag={i * 0.1} className={`h-full rounded-3xl bg-white ${side ? 'flex items-center gap-6 px-6 py-6' : 'px-7 py-7'}`}>
+            <div className={`shrink-0 rounded-2xl bg-page ${side ? 'h-24 w-36 p-2' : 'h-36 w-full p-3'}`}>
+              <Picture name={it.art} />
+            </div>
+            <div className={side ? 'min-w-0' : 'mt-6'}>
+              {numbered && <span className="text-label text-ink-500">{i + 1}단계</span>}
+              <h3 className={`${side ? 'text-h3' : 'text-[22px] leading-[30px] font-bold tracking-[-0.02em]'} ${numbered ? 'mt-2' : ''}`}>{it.title}</h3>
+              <p className={`leading-relaxed text-ink-700 ${side ? 'mt-1.5' : 'mt-3'}`}>{it.text}</p>
+            </div>
+          </Reveal>
+        </li>
+      ))}
+    </ol>
+  )
+}
 
-  useEffect(() => {
-    if (shown >= events.length) return
-    const backlog = events.length - shown
-    const wait = (PAUSE[events[shown].kind] ?? 300) * (backlog > 90 ? 0.3 : backlog > 45 ? 0.6 : 1) // 아주 많이 밀렸을 때만 빨리 감는다
-    const timer = window.setTimeout(() => setShown((n) => n + 1), wait)
-    return () => window.clearTimeout(timer)
-  }, [events, shown])
+// 예시 결과의 한 부분: 제목 · 한 줄 설명 · 실제 화면
+function Part({ title, lead, children }: { title: string; lead: string; children: ReactNode }) {
+  return (
+    <section className="nm-screen mx-auto w-full max-w-content px-5 md:px-10">
+      <Reveal>
+        <h3 className="text-h2">{title}</h3>
+        <p className="mt-2 text-lg text-ink-700">{lead}</p>
+      </Reveal>
+      <Reveal className="mt-6 rounded-[32px] bg-white p-5 sm:p-8">{children}</Reveal>
+    </section>
+  )
+}
 
-  // 지금까지 본 알림에서 화면에 쓸 것을 뽑는다
-  const find = <K extends ProgressEvent['kind']>(kind: K) =>
-    [...seen].reverse().find((e) => e.kind === kind) as Extract<ProgressEvent, { kind: K }> | undefined
-  const all = <K extends ProgressEvent['kind']>(kind: K) => seen.filter((e) => e.kind === kind) as Extract<ProgressEvent, { kind: K }>[]
-  const store = find('store')
-  const hasMap = !!store?.lat
-  const steps = all('step')
-  const stepState = (id: string) =>
-    steps.some((s) => s.step === id && s.status === 'done') ? 'done' : steps.some((s) => s.step === id) ? 'now' : 'todo'
-  const feed = seen.map(line).filter((x) => x !== null).reverse()
-  const caughtUp = shown >= events.length
-  const finished = status === 'done' && caughtUp
-  const failed = status === 'error' && caughtUp
-  const scores = find('scores')
-  const forecast = find('forecast')
-  const decisions = all('decision')
-  const count = {
-    places: find('places')?.count ?? 0,
-    weather: find('weather')?.days ?? 0,
-    events: all('event').length,
-    articles: all('article').length,
-    trends: all('trend').length,
-  }
-  // 화면에 적는 개수(반올림한 값)끼리 계산해 '78개 → 50개, 36% 적음'이 서로 맞게 한다. 개수가 없는 예전 기록은 비율로
-  const gain = !scores
-    ? 0
-    : scores.miss !== undefined && scores.base_miss
-      ? Math.round((1 - Math.round(scores.miss) / Math.round(scores.base_miss)) * 100)
-      : Math.round((1 - scores.wape / scores.base_wape) * 100)
+export function About({ login, contactUrl, canEnter }: SiteProps) {
+  useSnapScroll()
+  const { stores, store, past } = useExample()
+  // 예시 매장을 분석했을 때의 과정(녹화본)을 지도 장면으로 다시 본다. 주소로는 ?open=replay
+  const [replaying, setReplaying] = useState(new URLSearchParams(window.location.search).get('open') === 'replay')
+  const virtual = !!store?.name.includes('가상') // 판매 기록을 가상으로 만든 예시인가 (주변 정보는 실제 주소로 모은 것)
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-page text-ink-900">
-      {/* 맨 위에 번지는 옅은 주황빛 (밝은 바탕이 밋밋하지 않게) */}
-      <div className="nm-glow pointer-events-none absolute inset-x-0 top-0 h-[32rem]" aria-hidden />
-      <div className={`relative mx-auto flex min-h-full max-w-content flex-col px-5 py-5 md:px-10 ${finished || failed ? '' : 'lg:h-full'}`}>
-        <div className="flex items-center justify-between">
-          <Logo />
-          <button onClick={onClose} className="inline-flex h-11 items-center rounded-full bg-white px-5 text-sm font-semibold transition-colors duration-150 hover:bg-pill">
-            {finished || failed || replay ? '닫기' : '화면 닫기 (분석은 계속돼요)'}
-          </button>
-        </div>
+    <div>
+      {replaying && past && <AnalysisView events={past} status="done" replay onClose={() => setReplaying(false)} />}
+      <SiteHeader login={login} canEnter={canEnter} contactUrl={contactUrl} here="about" />
 
-        <header className="mt-5 mb-6">
-          <p className="flex items-center gap-2.5 text-label text-ink-500">
-            {!finished && !failed && <span className="nm-blink h-2.5 w-2.5 rounded-full bg-point" />}
-            {failed ? '분석 중단' : finished ? '분석 완료' : '분석 중'}
-          </p>
-          <h2 className="mt-3 text-h1">
-            {failed ? '분석을 마치지 못했어요' : finished ? '분석이 끝났어요' : `${store?.name ?? '우리 가게'} 주변을 살펴보고 있어요`}
-          </h2>
-          <p className="mt-2 min-h-7 text-lg text-ink-700">
-            {failed
-              ? error
-              : finished
-                ? '무엇을 모았고, 그중 무엇이 실제로 도움이 됐는지 아래에 정리했어요.'
-                : (<>
-                    {find('status')?.text ?? '시작하는 중'}<span className="nm-blink">…</span>
-                    {status === 'running' && seconds >= 5 && (
-                      <span className="ml-3 text-sm text-ink-500">{seconds >= 60 ? `${Math.floor(seconds / 60)}분 ` : ''}{seconds % 60}초째 · 보통 2~3분 걸려요</span>
-                    )}
-                  </>)}
-          </p>
-          <ol className="mt-5 flex flex-wrap gap-2">
-            {STEPS.map((s, i) => {
-              const state = stepState(s.id)
-              return (
-                <li key={s.id} className={`flex h-11 items-center gap-2.5 rounded-full px-5 font-medium ${
-                  state === 'done' ? 'bg-ink-900 text-white' : state === 'now' ? 'bg-white text-ink-900' : 'bg-pill text-ink-500'}`}>
-                  <span className="text-xs tabular-nums opacity-70">{String(i + 1).padStart(2, '0')}</span>
-                  {s.label}
-                  {state === 'done' && <span aria-hidden="true">✓</span>}
-                  {state === 'now' && <span className="nm-blink h-2 w-2 rounded-full bg-point" />}
-                </li>
-              )
-            })}
+      <section className="nm-screen mx-auto w-full max-w-content px-5 md:px-10">
+        <h1 className="nm-enter text-hero">
+          <span style={{ '--i': 0 } as CSSProperties}>판매 기록이</span>
+          <span style={{ '--i': 1 } as CSSProperties}>준비표가 되기까지</span>
+        </h1>
+        <p className="mt-6 max-w-2xl text-xl leading-8 text-ink-700">
+          어떻게 예측하고 얼마나 맞는지, 숨김없이 보여 드려요.
+        </p>
+      </section>
+
+      <main>
+        <Block id="how" title="네 단계로 준비표를 만들어요" lead="필요한 건 판매 기록 파일과 가게 주소뿐이에요.">
+          <Cards items={STEPS} cols="md:grid-cols-2 lg:grid-cols-4" numbered />
+        </Block>
+
+        <Block title="이렇게 예측해요">
+          <Cards items={METHOD} cols="md:grid-cols-3" />
+        </Block>
+
+        <Block title={'주변 정보는\n도움이 될 때만 써요'} lead="가게마다 지난 기록으로 확인해, 네 조건을 모두 채운 정보만 써요.">
+          <Cards items={RULES} cols="md:grid-cols-2" side />
+        </Block>
+
+        <Block title="이런 정보를 살펴봐요" lead="여덟 가지 정보를 하나하나 따로 쓸지 정해요.">
+          <ul className="grid gap-4 md:grid-cols-2 lg:grid-cols-[1fr_1.6fr_1fr_1fr]">
+            {FAMILIES.map((f, i) => (
+              <li key={f.name}>
+                <Reveal lag={i * 0.1} className="h-full rounded-3xl bg-white px-6 py-6">
+                  <h3 className="text-h3">{f.name}</h3>
+                  <ul className="mt-5 flex flex-wrap gap-2">
+                    {f.parts.map((part) => (
+                      <li key={part} className="rounded-full bg-page px-4 py-2 font-medium">
+                        {part}
+                      </li>
+                    ))}
+                  </ul>
+                </Reveal>
+              </li>
+            ))}
+          </ul>
+          <ol className="mt-4 grid gap-4 md:grid-cols-2">
+            {PICKING.map((it, i) => (
+              <li key={it.title}>
+                <Reveal lag={0.3 + i * 0.1} className="flex h-full items-start gap-5 rounded-3xl bg-white px-6 py-6">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-ink-900 font-semibold text-white">{i + 1}</span>
+                  <div>
+                    <h3 className="text-h3">{it.title}</h3>
+                    <p className="mt-1.5 leading-relaxed text-ink-700">{it.text}</p>
+                  </div>
+                </Reveal>
+              </li>
+            ))}
           </ol>
-        </header>
+        </Block>
 
-        <div className={`grid gap-5 lg:grid-cols-[1.65fr_1fr] lg:grid-rows-[minmax(0,1fr)] ${finished || failed ? 'lg:h-[min(58vh,34rem)]' : 'min-h-0 flex-1'}`}>
-          <div className="relative h-[26rem] min-w-0 overflow-hidden rounded-[32px] bg-white lg:h-full lg:min-h-60">
-            {hasMap ? (
-              <AnalysisMap events={seen} />
-            ) : (
-              <div className="flex h-full flex-col items-center justify-center gap-3 bg-surface px-8 text-center text-ink-900">
-                <span className="nm-blink h-5 w-5 rounded-full bg-ink-900" />
-                <p className="font-semibold">{store ? '매장 위치를 적지 않아 판매 기록만으로 분석해요' : '매장 위치를 찾고 있어요'}</p>
-                {store && <p className="text-sm text-ink-700">위치를 적으면 날씨·근처 행사·소식을 지도에서 모으는 모습을 볼 수 있어요.</p>}
-              </div>
-            )}
-            {hasMap && (
-              <ul className="pointer-events-none absolute bottom-5 left-5 z-[500] flex flex-wrap gap-1.5 text-xs font-semibold text-ink-900">
-                {count.places > 0 && <li className="tag border border-line bg-white text-ink-900">주변 시설 {count.places}</li>}
-                {count.weather > 0 && <li className="tag border border-line bg-white text-ink-900">날씨 {count.weather}일</li>}
-                {count.events > 0 && <li className="tag border border-line bg-white text-ink-900">행사 {count.events}</li>}
-                {count.articles > 0 && <li className="tag border border-line bg-white text-ink-900">읽은 글 {count.articles}</li>}
-                {count.trends > 0 && <li className="tag border border-line bg-white text-ink-900">검색량 {count.trends}</li>}
-              </ul>
-            )}
-          </div>
+        <Block title="AI는 이런 일을 해요" lead="AI는 판매 숫자를 만들지 않아요. 글을 읽고 정리하는 일만 해요.">
+          <Cards items={AI_JOBS} cols="md:grid-cols-2" side />
+        </Block>
 
-          <section className="flex h-[26rem] min-w-0 flex-col rounded-[32px] bg-white p-6 lg:h-full lg:min-h-60">
-            <h3 className="text-label text-ink-500">우리 가게로 들어온 정보 {feed.length > 0 && `· ${feed.length}건`}</h3>
-            <ul className="mt-3 flex-1 space-y-2 overflow-y-auto pr-1">
-              {feed.length === 0 && <li className="text-sm text-ink-700">곧 여기에 하나씩 나타나요.</li>}
-              {feed.map((f, i) => (
-                <li key={feed.length - i} className="nm-rise flex items-start gap-2 rounded-2xl bg-page px-3 py-2.5 text-sm">
-                  <span className="tag mt-0.5 shrink-0 gap-1.5 bg-white text-ink-900"><i className="h-2 w-2 rounded-full" style={{ background: f.color }} />{f.tag}</span>
-                  <span className="min-w-0 [overflow-wrap:anywhere]">{f.text}</span>
-                </li>
-              ))}
-            </ul>
-          </section>
-        </div>
-
-        {failed && log && log.length > 0 && (
-          <pre className="mt-5 overflow-x-auto rounded-[32px] bg-white p-6 text-xs leading-relaxed text-ink-700">{log.slice(-8).join('\n')}</pre>
-        )}
-
-        {finished && (
-          <div className="mt-5 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
-            <Card title="모은 정보">
-              <ul className="space-y-1.5 text-sm">
-                {count.places > 0 && <li>주변 시설 <b>{count.places}곳</b></li>}
-                {count.weather > 0 && <li>날씨 <b>{count.weather}일</b></li>}
-                {count.events > 0 && <li>근처 행사 <b>{count.events}건</b></li>}
-                {count.articles > 0 && <li>읽은 소식 <b>{count.articles}건</b></li>}
-                {count.trends > 0 && <li>메뉴 검색량 <b>{count.trends}개</b></li>}
-                {!hasMap && <li className="text-ink-700">판매 기록만 사용</li>}
-              </ul>
-            </Card>
-            <Card title="예측에 쓴 정보">
-              <ul className="space-y-1.5 text-sm">
-                {decisions.map((d) => (
-                  <li key={d.group} className="flex items-center justify-between gap-2" title={d.reason}>
-                    <span>{GROUP_LABELS[d.group] ?? d.group}</span>
-                    <span className={`tag ${d.adopted ? 'bg-ink-900 text-white' : 'bg-surface text-ink-500'}`}>
-                      {d.adopted ? '씀' : '안 씀'}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </Card>
-            <Card title="얼마나 맞나">
-              {scores ? (
-                <>
-                  <p className="text-sm text-ink-700">지난주 그대로 준비할 때보다</p>
-                  <p className={`mt-1 text-h1 tabular-nums ${gain > 0 ? 'text-point' : ''}`}>
-                    {gain > 0 ? (
-                      <>
-                        정확도
-                        <br />
-                        <CountUp to={gain} />% 향상
-                      </>
-                    ) : (
-                      '비슷해요'
-                    )}
+        <Block id="example" title="예시 매장의 실제 결과" lead="위 과정을 예시 매장에 그대로 돌린 결과예요.">
+          {stores.error && <p className="text-sm text-down">예시를 불러오지 못했습니다. 백엔드가 켜져 있는지 확인해 주세요.</p>}
+          {stores.data && !store && <p className="text-ink-700">보여 줄 예시 매장이 아직 없습니다.</p>}
+          {store && (
+            <>
+              <div className="flex flex-wrap items-center gap-3">
+                {virtual && (
+                  <p className="rounded-md bg-white px-3 py-1.5 text-sm font-medium text-ink-700">
+                    판매 기록은 가상, 날씨·학교 일정·행사·기사는 실제 신촌 자료예요
                   </p>
-                  {scores.miss !== undefined && scores.base_miss !== undefined && (
-                    <p className="mt-3 text-sm text-ink-700">
-                      하루 오차 {cnt(scores.base_miss)}개 → <b className="text-ink-900">{cnt(scores.miss)}개</b>
-                    </p>
-                  )}
-                </>
-              ) : (
-                <p className="text-sm text-ink-700">검증 결과가 아직 없어요.</p>
-              )}
-            </Card>
-            <Card title={forecast ? `${fmtDate(forecast.date)} 준비` : '내일 준비'}>
-              <ul className="space-y-1.5 text-sm">
-                {forecast?.top.slice(0, 4).map((r) => (
-                  <li key={r.menu} className="flex items-baseline justify-between gap-2">
-                    <span className="truncate">{r.menu}</span>
-                    <b className="text-base text-ink-900 tabular-nums">{r.prep ?? r.pred}개</b>
-                  </li>
-                ))}
-              </ul>
-              {forecast && forecast.menus > 4 && <p className="mt-2 text-xs text-ink-700">외 {forecast.menus - 4}개 메뉴</p>}
-              {!!forecast?.warnings.length && <p className="mt-2 text-xs font-semibold text-ink-700">주의할 소식 {forecast.warnings.length}건</p>}
-            </Card>
-          </div>
-        )}
+                )}
+                {!!past?.length && (
+                  <button onClick={() => setReplaying(true)} className="btn-md btn-secondary">
+                    AI가 분석하는 과정 보기
+                  </button>
+                )}
+              </div>
+            </>
+          )}
+        </Block>
+        {store && (
+            <>
+              <Part title="메뉴별로 몇 개 준비할지" lead="메뉴를 누르면 달라진 이유와 그래프가 펼쳐져요.">
+                <ForecastView storeId={store.store_id} prepMode={store.prep_mode} readOnly limit={MENUS_SHOWN} />
+              </Part>
 
-        {(finished || failed) && (
-          <div className="mt-5 flex justify-center pb-1">
-            <button onClick={failed || !onDone ? onClose : onDone} className="btn-pill group bg-ink-900 text-white hover:bg-ink-hover">
-              {failed ? '닫기' : onDone && doneLabel ? doneLabel : replay ? '닫기' : '준비표 보기'}
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-ink-900 transition-transform duration-200 group-hover:translate-x-1" aria-hidden>
-                →
-              </span>
-            </button>
-          </div>
-        )}
-      </div>
+              <Part title="어떤 주변 정보를 썼나" lead="예측이 실제로 더 정확해진 정보만 써요.">
+                <div className="space-y-10">
+                  <Decisions storeId={store.store_id} />
+                  <details>
+                    <summary className="cursor-pointer text-sm font-semibold underline-offset-4 hover:underline">AI가 고른 정보원 자세히 보기</summary>
+                    <div className="mt-8">
+                      <SourcesView storeId={store.store_id} brief />
+                    </div>
+                  </details>
+                </div>
+              </Part>
+
+              <Part title="얼마나 맞나" lead="지난 날짜를 전날까지의 기록으로 맞혀 실제와 비교했어요.">
+                <BacktestView storeId={store.store_id} hideDecisions />
+              </Part>
+            </>
+          )}
+      </main>
+
+      <section className="nm-screen !justify-start !py-0">
+        <JoinBand login={login} canEnter={canEnter} contactUrl={contactUrl} fill />
+        <SiteFooter contactUrl={contactUrl} />
+      </section>
     </div>
   )
 }
