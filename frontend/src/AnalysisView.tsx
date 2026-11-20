@@ -135,7 +135,7 @@ export function AnalysisView({ events, status, error, log, onClose, replay = fal
     <div className="fixed inset-0 z-50 overflow-y-auto bg-page text-ink-900">
       {/* 맨 위에 번지는 옅은 주황빛 (밝은 바탕이 밋밋하지 않게) */}
       <div className="nm-glow pointer-events-none absolute inset-x-0 top-0 h-[32rem]" aria-hidden />
-      <div className="relative mx-auto flex min-h-full max-w-content flex-col px-5 py-5 md:px-10 lg:h-full">
+      <div className={`relative mx-auto flex min-h-full max-w-content flex-col px-5 py-5 md:px-10 ${finished || failed ? '' : 'lg:h-full'}`}>
         <div className="flex items-center justify-between">
           <Logo />
           <button onClick={onClose} className="inline-flex h-11 items-center rounded-full bg-white px-5 text-sm font-semibold transition-colors duration-150 hover:bg-pill">
@@ -179,7 +179,7 @@ export function AnalysisView({ events, status, error, log, onClose, replay = fal
           </ol>
         </header>
 
-        <div className="grid min-h-0 flex-1 gap-5 lg:grid-cols-[1.65fr_1fr] lg:grid-rows-[minmax(0,1fr)]">
+        <div className={`grid gap-5 lg:grid-cols-[1.65fr_1fr] lg:grid-rows-[minmax(0,1fr)] ${finished || failed ? 'lg:h-[min(58vh,34rem)]' : 'min-h-0 flex-1'}`}>
           <div className="relative h-[26rem] min-w-0 overflow-hidden rounded-[32px] bg-white lg:h-full lg:min-h-60">
             {hasMap ? (
               <AnalysisMap events={seen} />
