@@ -1,6 +1,6 @@
 {
   "store_id": "sinchon-a",
-  "generated_at": "2026-11-20T08:58:27",
+  "generated_at": "2026-11-20T13:48:09",
   "rows": [
     {
       "date": "2026-11-01",
@@ -18,8 +18,8 @@
       "reasons": [
         {
           "signal": "rain_mm",
-          "effect_pct": -18.9,
-          "text": "비 예보(9.7mm)로 평소보다 약 19% 적게 예상",
+          "effect_pct": -17.9,
+          "text": "비 예보(9.7mm)로 평소보다 약 18% 적게 예상",
           "source_url": "https://www.weather.go.kr"
         }
       ]
@@ -28,7 +28,7 @@
       "date": "2026-11-01",
       "menu": "소금빵",
       "pred": 30.6,
-      "p10": 22.0,
+      "p10": 21.0,
       "p90": 40.0,
       "prep_qty": 31,
       "prep_by_mode": {
@@ -40,8 +40,8 @@
       "reasons": [
         {
           "signal": "rain_mm",
-          "effect_pct": -19.4,
-          "text": "비 예보(9.7mm)로 평소보다 약 19% 적게 예상",
+          "effect_pct": -17.9,
+          "text": "비 예보(9.7mm)로 평소보다 약 18% 적게 예상",
           "source_url": "https://www.weather.go.kr"
         }
       ]
@@ -49,141 +49,7 @@
     {
       "date": "2026-11-01",
       "menu": "식빵",
-      "pred": 9.6,
-      "p10": 5.0,
-      "p90": 14.0,
-      "prep_qty": 10,
-      "prep_by_mode": {
-        "폐기 줄이기": 9,
-        "균형": 10,
-        "품절 줄이기": 12
-      },
-      "model": "M3",
-      "reasons": [
-        {
-          "signal": "rain_mm",
-          "effect_pct": -16.0,
-          "text": "비 예보(9.7mm)로 평소보다 약 16% 적게 예상",
-          "source_url": "https://www.weather.go.kr"
-        }
-      ]
-    },
-    {
-      "date": "2026-11-01",
-      "menu": "아메리카노(HOT)",
-      "pred": 19.6,
-      "p10": 13.0,
-      "p90": 27.0,
-      "prep_qty": 20,
-      "prep_by_mode": {
-        "폐기 줄이기": 18,
-        "균형": 20,
-        "품절 줄이기": 24
-      },
-      "model": "M3",
-      "reasons": [
-        {
-          "signal": "rain_mm",
-          "effect_pct": -19.3,
-          "text": "비 예보(9.7mm)로 평소보다 약 19% 적게 예상",
-          "source_url": "https://www.weather.go.kr"
-        },
-        {
-          "signal": "temp_diff",
-          "effect_pct": 3.6,
-          "text": "기온이 최근 평균보다 12도 낮아 평소보다 약 4% 많이 예상",
-          "source_url": null
-        }
-      ]
-    },
-    {
-      "date": "2026-11-01",
-      "menu": "아이스 아메리카노",
-      "pred": 26.7,
-      "p10": 19.0,
-      "p90": 35.0,
-      "prep_qty": 27,
-      "prep_by_mode": {
-        "폐기 줄이기": 25,
-        "균형": 27,
-        "품절 줄이기": 32
-      },
-      "model": "M3",
-      "reasons": [
-        {
-          "signal": "rain_mm",
-          "effect_pct": -21.2,
-          "text": "비 예보(9.7mm)로 평소보다 약 21% 적게 예상",
-          "source_url": "https://www.weather.go.kr"
-        },
-        {
-          "signal": "temp_diff",
-          "effect_pct": -12.1,
-          "text": "기온이 최근 평균보다 12도 낮아 평소보다 약 12% 적게 예상",
-          "source_url": null
-        }
-      ]
-    },
-    {
-      "date": "2026-11-01",
-      "menu": "아이스 카페라떼",
-      "pred": 10.0,
-      "p10": 6.0,
-      "p90": 15.0,
-      "prep_qty": 10,
-      "prep_by_mode": {
-        "폐기 줄이기": 9,
-        "균형": 10,
-        "품절 줄이기": 13
-      },
-      "model": "M3",
-      "reasons": [
-        {
-          "signal": "rain_mm",
-          "effect_pct": -20.2,
-          "text": "비 예보(9.7mm)로 평소보다 약 20% 적게 예상",
-          "source_url": "https://www.weather.go.kr"
-        },
-        {
-          "signal": "temp_diff",
-          "effect_pct": -11.2,
-          "text": "기온이 최근 평균보다 12도 낮아 평소보다 약 11% 적게 예상",
-          "source_url": null
-        }
-      ]
-    },
-    {
-      "date": "2026-11-01",
-      "menu": "에그타르트",
-      "pred": 12.5,
-      "p10": 8.0,
-      "p90": 18.0,
-      "prep_qty": 13,
-      "prep_by_mode": {
-        "폐기 줄이기": 11,
-        "균형": 13,
-        "품절 줄이기": 16
-      },
-      "model": "M3",
-      "reasons": [
-        {
-          "signal": "rain_mm",
-          "effect_pct": -19.3,
-          "text": "비 예보(9.7mm)로 평소보다 약 19% 적게 예상",
-          "source_url": "https://www.weather.go.kr"
-        },
-        {
-          "signal": "temp_diff",
-          "effect_pct": -3.9,
-          "text": "기온이 최근 평균보다 12도 낮아 평소보다 약 4% 적게 예상",
-          "source_url": null
-        }
-      ]
-    },
-    {
-      "date": "2026-11-01",
-      "menu": "카페라떼(HOT)",
-      "pred": 10.0,
+      "pred": 10.4,
       "p10": 6.0,
       "p90": 15.0,
       "prep_qty": 11,
@@ -196,14 +62,142 @@
       "reasons": [
         {
           "signal": "rain_mm",
-          "effect_pct": -18.6,
+          "effect_pct": -13.9,
+          "text": "비 예보(9.7mm)로 평소보다 약 14% 적게 예상",
+          "source_url": "https://www.weather.go.kr"
+        }
+      ]
+    },
+    {
+      "date": "2026-11-01",
+      "menu": "아메리카노(HOT)",
+      "pred": 21.2,
+      "p10": 14.0,
+      "p90": 29.0,
+      "prep_qty": 22,
+      "prep_by_mode": {
+        "폐기 줄이기": 19,
+        "균형": 22,
+        "품절 줄이기": 26
+      },
+      "model": "M3",
+      "reasons": [
+        {
+          "signal": "rain_mm",
+          "effect_pct": -17.2,
+          "text": "비 예보(9.7mm)로 평소보다 약 17% 적게 예상",
+          "source_url": "https://www.weather.go.kr"
+        },
+        {
+          "signal": "temp_diff",
+          "effect_pct": 8.8,
+          "text": "기온이 최근 평균보다 12도 낮아 평소보다 약 9% 많이 예상",
+          "source_url": null
+        }
+      ]
+    },
+    {
+      "date": "2026-11-01",
+      "menu": "아이스 아메리카노",
+      "pred": 26.8,
+      "p10": 18.0,
+      "p90": 36.0,
+      "prep_qty": 27,
+      "prep_by_mode": {
+        "폐기 줄이기": 25,
+        "균형": 27,
+        "품절 줄이기": 32
+      },
+      "model": "M3",
+      "reasons": [
+        {
+          "signal": "rain_mm",
+          "effect_pct": -19.6,
+          "text": "비 예보(9.7mm)로 평소보다 약 20% 적게 예상",
+          "source_url": "https://www.weather.go.kr"
+        },
+        {
+          "signal": "temp_diff",
+          "effect_pct": -13.3,
+          "text": "기온이 최근 평균보다 12도 낮아 평소보다 약 13% 적게 예상",
+          "source_url": null
+        }
+      ]
+    },
+    {
+      "date": "2026-11-01",
+      "menu": "아이스 카페라떼",
+      "pred": 10.3,
+      "p10": 6.0,
+      "p90": 15.0,
+      "prep_qty": 11,
+      "prep_by_mode": {
+        "폐기 줄이기": 9,
+        "균형": 11,
+        "품절 줄이기": 13
+      },
+      "model": "M3",
+      "reasons": [
+        {
+          "signal": "rain_mm",
+          "effect_pct": -18.7,
           "text": "비 예보(9.7mm)로 평소보다 약 19% 적게 예상",
           "source_url": "https://www.weather.go.kr"
         },
         {
           "signal": "temp_diff",
-          "effect_pct": 7.4,
-          "text": "기온이 최근 평균보다 12도 낮아 평소보다 약 7% 많이 예상",
+          "effect_pct": -12.1,
+          "text": "기온이 최근 평균보다 12도 낮아 평소보다 약 12% 적게 예상",
+          "source_url": null
+        }
+      ]
+    },
+    {
+      "date": "2026-11-01",
+      "menu": "에그타르트",
+      "pred": 13.0,
+      "p10": 8.0,
+      "p90": 19.0,
+      "prep_qty": 14,
+      "prep_by_mode": {
+        "폐기 줄이기": 12,
+        "균형": 14,
+        "품절 줄이기": 16
+      },
+      "model": "M3",
+      "reasons": [
+        {
+          "signal": "rain_mm",
+          "effect_pct": -17.5,
+          "text": "비 예보(9.7mm)로 평소보다 약 17% 적게 예상",
+          "source_url": "https://www.weather.go.kr"
+        }
+      ]
+    },
+    {
+      "date": "2026-11-01",
+      "menu": "카페라떼(HOT)",
+      "pred": 10.7,
+      "p10": 6.0,
+      "p90": 16.0,
+      "prep_qty": 11,
+      "prep_by_mode": {
+        "폐기 줄이기": 10,
+        "균형": 11,
+        "품절 줄이기": 14
+      },
+      "model": "M3",
+      "reasons": [
+        {
+          "signal": "rain_mm",
+          "effect_pct": -17.3,
+          "text": "비 예보(9.7mm)로 평소보다 약 17% 적게 예상",
+          "source_url": "https://www.weather.go.kr"
+        },
+        {
+          "signal": "temp_diff",
+          "effect_pct": 10.3,
+          "text": "기온이 최근 평균보다 12도 낮아 평소보다 약 10% 많이 예상",
           "source_url": null
         }
       ]
@@ -211,8 +205,8 @@
     {
       "date": "2026-11-01",
       "menu": "크루아상",
-      "pred": 16.4,
-      "p10": 11.0,
+      "pred": 16.2,
+      "p10": 10.0,
       "p90": 23.0,
       "prep_qty": 17,
       "prep_by_mode": {
@@ -224,8 +218,8 @@
       "reasons": [
         {
           "signal": "rain_mm",
-          "effect_pct": -19.1,
-          "text": "비 예보(9.7mm)로 평소보다 약 19% 적게 예상",
+          "effect_pct": -18.2,
+          "text": "비 예보(9.7mm)로 평소보다 약 18% 적게 예상",
           "source_url": "https://www.weather.go.kr"
         }
       ]
@@ -233,8 +227,8 @@
     {
       "date": "2026-11-01",
       "menu": "휘낭시에",
-      "pred": 12.5,
-      "p10": 8.0,
+      "pred": 12.4,
+      "p10": 7.0,
       "p90": 18.0,
       "prep_qty": 13,
       "prep_by_mode": {
@@ -246,7 +240,7 @@
       "reasons": [
         {
           "signal": "rain_mm",
-          "effect_pct": -18.9,
+          "effect_pct": -18.7,
           "text": "비 예보(9.7mm)로 평소보다 약 19% 적게 예상",
           "source_url": "https://www.weather.go.kr"
         }
@@ -256,13 +250,8 @@
   "signals_used": [
     "temp_diff",
     "rain_mm",
-    "exam_period",
     "vacation",
-    "festival",
-    "nearby_event",
-    "exam_period_diff",
-    "vacation_diff",
-    "festival_diff"
+    "vacation_diff"
   ],
   "warnings": [
     {
@@ -283,7 +272,7 @@
           "quote": "지난해 같은 행사에 약 3만 명이 찾았다고 설명했다."
         }
       ],
-      "message": "11월 1일 정오부터 오후 8시까지 신촌 연세로에서 '차 없는 거리' 가을 축제가 열려 손님이 평소보다 많을 수 있으니, 비 소식도 함께 고려해 준비량을 살펴보세요."
+      "message": "11월 1일 정오부터 오후 8시까지 신촌 연세로에서 많은 사람이 찾는 가을 축제가 열려 손님이 평소보다 늘 수 있으니, 비 예보도 함께 고려해 준비량을 살펴보세요."
     }
   ]
 }

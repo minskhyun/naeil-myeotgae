@@ -1326,7 +1326,8 @@
  {
   "kind": "trial",
   "groups": [
-   "weather"
+   "temp",
+   "rain"
   ],
   "wape": 0.2156,
   "miss": 83.9
@@ -1334,7 +1335,10 @@
  {
   "kind": "trial",
   "groups": [
-   "events"
+   "exam",
+   "vacation",
+   "festival",
+   "nearby"
   ],
   "wape": 0.2241,
   "miss": 87.2
@@ -1350,8 +1354,12 @@
  {
   "kind": "trial",
   "groups": [
-   "weather",
-   "events"
+   "temp",
+   "rain",
+   "exam",
+   "vacation",
+   "festival",
+   "nearby"
   ],
   "wape": 0.2109,
   "miss": 82.1
@@ -1359,7 +1367,8 @@
  {
   "kind": "trial",
   "groups": [
-   "weather",
+   "temp",
+   "rain",
    "trend"
   ],
   "wape": 0.2142,
@@ -1368,7 +1377,10 @@
  {
   "kind": "trial",
   "groups": [
-   "events",
+   "exam",
+   "vacation",
+   "festival",
+   "nearby",
    "trend"
   ],
   "wape": 0.2239,
@@ -1377,12 +1389,68 @@
  {
   "kind": "trial",
   "groups": [
-   "weather",
-   "events",
+   "temp",
+   "rain",
+   "exam",
+   "vacation",
+   "festival",
+   "nearby",
    "trend"
   ],
   "wape": 0.2102,
   "miss": 81.8
+ },
+ {
+  "kind": "trial",
+  "groups": [
+   "temp"
+  ],
+  "wape": 0.2195,
+  "miss": 85.4
+ },
+ {
+  "kind": "trial",
+  "groups": [
+   "rain"
+  ],
+  "wape": 0.2233,
+  "miss": 86.9
+ },
+ {
+  "kind": "trial",
+  "groups": [
+   "temp",
+   "exam"
+  ],
+  "wape": 0.2192,
+  "miss": 85.3
+ },
+ {
+  "kind": "trial",
+  "groups": [
+   "temp",
+   "vacation"
+  ],
+  "wape": 0.2145,
+  "miss": 83.5
+ },
+ {
+  "kind": "trial",
+  "groups": [
+   "temp",
+   "festival"
+  ],
+  "wape": 0.2209,
+  "miss": 86.0
+ },
+ {
+  "kind": "trial",
+  "groups": [
+   "temp",
+   "nearby"
+  ],
+  "wape": 0.2217,
+  "miss": 86.3
  },
  {
   "kind": "trial",
@@ -1397,15 +1465,39 @@
  },
  {
   "kind": "decision",
-  "group": "weather",
+  "group": "temp",
   "adopted": true,
-  "reason": "날씨 신호를 넣으니 검증 4개 구간 중 3개에서 오차가 줄어 사용함 (전체 오차 5.5% 감소)"
+  "reason": "기온 신호를 넣으니 검증 4개 구간 중 3개에서 오차가 줄어 사용함 (전체 오차 3.8% 감소)"
  },
  {
   "kind": "decision",
-  "group": "events",
+  "group": "rain",
   "adopted": false,
-  "reason": "학사일정·행사 신호는 전체 오차를 2.2% 줄였지만 4개 구간 중 2개에서만 개선돼 우연일 수 있어 쓰지 않음"
+  "reason": "비 신호는 전체 오차를 1.8% 줄였지만 4개 구간 중 2개에서만 개선돼 우연일 수 있어 쓰지 않음"
+ },
+ {
+  "kind": "decision",
+  "group": "exam",
+  "adopted": false,
+  "reason": "시험기간 신호는 전체 오차를 0.1% 줄였지만 4개 구간 중 2개에서만 개선돼 우연일 수 있어 쓰지 않음"
+ },
+ {
+  "kind": "decision",
+  "group": "vacation",
+  "adopted": false,
+  "reason": "방학 신호는 전체 오차를 2.3% 줄였지만 4개 구간 중 1개에서만 개선돼 우연일 수 있어 쓰지 않음"
+ },
+ {
+  "kind": "decision",
+  "group": "festival",
+  "adopted": false,
+  "reason": "학교 축제 신호는 이 매장 판매 예측을 개선하지 못해 쓰지 않음 (4개 구간 중 1개만 개선)"
+ },
+ {
+  "kind": "decision",
+  "group": "nearby",
+  "adopted": false,
+  "reason": "근처 행사 신호는 이 매장 판매 예측을 개선하지 못해 쓰지 않음 (4개 구간 중 0개만 개선)"
  },
  {
   "kind": "decision",
@@ -1422,13 +1514,13 @@
  {
   "kind": "scores",
   "model": "M2",
-  "wape": 0.2065,
+  "wape": 0.2077,
   "base_wape": 0.3194,
-  "coverage": 0.8244,
+  "coverage": 0.8274,
   "test_days": 28,
-  "miss": 89.89,
+  "miss": 90.45,
   "base_miss": 139.04,
-  "saved_amount": 242381,
+  "saved_amount": 238464,
   "days_won": 23,
   "final": true
  },
@@ -1436,7 +1528,7 @@
   "kind": "step",
   "step": "evaluate",
   "status": "done",
-  "note": "선택 모델 M2, 채택 신호 weather"
+  "note": "선택 모델 M2, 채택 신호 temp"
  },
  {
   "kind": "step",
@@ -1456,13 +1548,13 @@
   "date": "2026-11-20",
   "menus": 12,
   "warnings": [
-   "11월 20일 매장 근처에서 무용 공연과 전시가 열려 관람객 방문으로 음료 손님이 조금 늘 수 있으니 참고해 주세요."
+   "11월 20일에 매장 근처 서강대 메리홀에서 무용 공연이 있어 공연 전후로 손님이 조금 늘 수 있으니 참고해 주세요."
   ],
   "top": [
    {
     "menu": "아메리카노(ICE)",
-    "prep": 94,
-    "pred": 94
+    "prep": 93,
+    "pred": 92
    },
    {
     "menu": "소금빵",
@@ -1471,8 +1563,8 @@
    },
    {
     "menu": "아메리카노(HOT)",
-    "prep": 72,
-    "pred": 71
+    "prep": 69,
+    "pred": 68
    },
    {
     "menu": "카페라떼(HOT)",
@@ -1482,7 +1574,7 @@
    {
     "menu": "크루아상",
     "prep": 34,
-    "pred": 34
+    "pred": 33
    }
   ]
  },

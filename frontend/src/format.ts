@@ -17,11 +17,19 @@ export const SIGNAL_LABELS: Record<string, string> = {
   trend_level: '검색량 유행',
 }
 
+// 신호 묶음의 이름 (ml/features.py의 SIGNAL_GROUPS). 채택 여부를 이 단위로 정한다
+// weather · events = 분야 이름: 묶음을 잘게 나누기 전(11/20 전)에 분석한 매장의 결과에 적혀 있다
 export const GROUP_LABELS: Record<string, string> = {
-  weather: '날씨',
-  events: '학사일정·행사',
+  temp: '기온',
+  rain: '비',
+  exam: '시험기간',
+  vacation: '방학',
+  festival: '학교 축제',
+  nearby: '근처 행사',
   trend: '유행',
   special: '기념일',
+  weather: '날씨',
+  events: '학사일정·행사',
 }
 
 // AI 안내의 상황 종류(contracts.Warning.situation_type)를 화면에 적는 말.
@@ -94,7 +102,16 @@ export const savedPerDay = (mine: { amount?: number | null; days?: number }, bas
 
 // 예상 범위는 실제 판매의 80%가 들어오도록 만든다. 화면에는 실제로 든 비율을 그대로 적고 목표(80%)를 옆에 둔다
 // (목표에 견준 점수로 바꿔 적으면 숫자가 실제보다 좋아 보인다)
-export const RANGE_TARGET_TEXT = '80%가 이상적' // '목표 80%'라고 적으면 못 채운 점수처럼 읽힌다. 80%보다 높아도(범위가 넓다) 좋은 것이 아니다
+// '목표 80%'라고 적으면 못 채운 점수처럼 읽히고, '80%가 이상적'만 적으면 무슨 뜻인지 알 수 없다 → 왜 80%인지를 적는다 (그림은 RangeMeter.tsx)
+export const RANGE_TARGET_TEXT = '10번 중 8번 들도록 잡은 폭이라, 80%에 가까울수록 알맞아요'
+export const RANGE_TARGET = 80 // 예상 범위에 들도록 잡은 비율(%)
+export const RANGE_NEAR = 5 // 목표에서 이만큼(%p) 안이면 '알맞다'고 적는다
+// 실제로 든 비율(0~1) → 범위의 폭이 어떤지 한마디
+export function rangeVerdict(value: number) {
+  const pct = value * 100
+  if (Math.abs(pct - RANGE_TARGET) <= RANGE_NEAR) return '알맞게 잡혔어요'
+  return pct < RANGE_TARGET ? '조금 좁게 잡혔어요' : '조금 넓게 잡혔어요'
+}
 
 // '분석 중' 화면에서 정보 종류마다 쓰는 색 (지도의 표시와 목록의 이름표가 같은 색)
 export const KIND_COLOR: Record<string, string> = {

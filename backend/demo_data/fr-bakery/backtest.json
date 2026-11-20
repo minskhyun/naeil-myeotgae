@@ -1,6 +1,6 @@
 {
   "store_id": "fr-bakery",
-  "generated_at": "2026-11-20T08:58:12",
+  "generated_at": "2026-11-20T13:41:32",
   "folds": [
     [
       "2022-05-14",
@@ -69,22 +69,58 @@
   ],
   "decisions": [
     {
-      "signal_group": "weather",
+      "signal_group": "temp",
       "signals": [],
       "adopted": false,
       "wape_change_pct": 0.0,
       "folds_improved": 0,
       "folds_total": 0,
-      "reason": "날씨 신호 자료가 아직 없어 평가하지 못함"
+      "reason": "기온 신호 자료가 아직 없어 평가하지 못함"
     },
     {
-      "signal_group": "events",
+      "signal_group": "rain",
       "signals": [],
       "adopted": false,
       "wape_change_pct": 0.0,
       "folds_improved": 0,
       "folds_total": 0,
-      "reason": "학사일정·행사 신호 자료가 아직 없어 평가하지 못함"
+      "reason": "비 신호 자료가 아직 없어 평가하지 못함"
+    },
+    {
+      "signal_group": "exam",
+      "signals": [],
+      "adopted": false,
+      "wape_change_pct": 0.0,
+      "folds_improved": 0,
+      "folds_total": 0,
+      "reason": "시험기간 신호 자료가 아직 없어 평가하지 못함"
+    },
+    {
+      "signal_group": "vacation",
+      "signals": [],
+      "adopted": false,
+      "wape_change_pct": 0.0,
+      "folds_improved": 0,
+      "folds_total": 0,
+      "reason": "방학 신호 자료가 아직 없어 평가하지 못함"
+    },
+    {
+      "signal_group": "festival",
+      "signals": [],
+      "adopted": false,
+      "wape_change_pct": 0.0,
+      "folds_improved": 0,
+      "folds_total": 0,
+      "reason": "학교 축제 신호 자료가 아직 없어 평가하지 못함"
+    },
+    {
+      "signal_group": "nearby",
+      "signals": [],
+      "adopted": false,
+      "wape_change_pct": 0.0,
+      "folds_improved": 0,
+      "folds_total": 0,
+      "reason": "근처 행사 신호 자료가 아직 없어 평가하지 못함"
     },
     {
       "signal_group": "trend",

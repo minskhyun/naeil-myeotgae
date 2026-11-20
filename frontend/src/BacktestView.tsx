@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 import { api, type ModelScore, type SignalDecision } from './api'
 import { count, fmtDate, GROUP_LABELS, missPerDay, MODEL_LABELS, pct1, RANGE_TARGET_TEXT } from './format'
+import { RangeMeter } from './RangeMeter'
 import { periodName, verdict } from './verdict'
 
 const base = (m: string) => m.slice(0, 2) // "M3(채택 신호만)" → "M3"
@@ -53,12 +54,13 @@ export function Decisions({ storeId, noDataText }: { storeId: string; noDataText
 }
 
 // 숫자 한 칸: 이름 · 큰 값 · (짧은 덧말)
-function Stat({ label, value, note }: { label: string; value: ReactNode; note?: string }) {
+function Stat({ label, value, note, extra }: { label: string; value: ReactNode; note?: string; extra?: ReactNode }) {
   return (
     <div className="rounded-2xl bg-surface px-5 py-4">
       <p className="text-sm text-ink-700">{label}</p>
       <p className="mt-1 text-h2 tabular-nums">{value}</p>
       {note && <p className="mt-0.5 text-sm text-ink-700">{note}</p>}
+      {extra}
     </div>
   )
 }
@@ -101,7 +103,7 @@ export function BacktestView({ storeId, hideDecisions = false }: { storeId: stri
       {v && (
         <div className="grid gap-3 sm:grid-cols-3">
           <Stat label="하루 오차" value={`${count(v.mineShown)}개`} note={`지난주 그대로 준비하면 ${count(v.baseShown)}개`} />
-          <Stat label="예상 범위 안에 든 비율" value={pct1(v.mine.coverage_80)} note={RANGE_TARGET_TEXT} />
+          <Stat label="예상 범위 안에 든 비율" value={pct1(v.mine.coverage_80)} note={RANGE_TARGET_TEXT} extra={<RangeMeter value={v.mine.coverage_80} />} />
           <Stat label="쓰는 정보" value={<span className="text-xl">{used.length ? `판매 기록 + ${used.join('·')}` : '판매 기록'}</span>} />
         </div>
       )}
@@ -127,7 +129,9 @@ export function BacktestView({ storeId, hideDecisions = false }: { storeId: stri
           <li>하루 오차 = 예측대로 준비했다면 남았을 개수 + 모자랐을 개수 (모든 메뉴 합, 하루 평균)</li>
           <li>지난주 그대로 준비 = 지난주 같은 요일에 팔린 만큼 준비하는 방법</li>
           <li>
-            예상 범위는 실제 판매 10번 중 8번이 그 안에 들도록 만듭니다. 80%보다 낮으면 범위가 좁다는 뜻, 높으면 넓다는 뜻입니다.
+            예상 범위(예: 18~27개)는 실제 판매 10번 중 8번이 그 안에 들도록 잡은 폭입니다. '예상 범위 안에 든 비율'은 지난 날짜에서 실제로 몇 %가
+            들었는지이고, 80%에 가까울수록 폭을 알맞게 잡은 것입니다. 훨씬 낮으면 범위가 좁아 자주 벗어난다는 뜻, 훨씬 높으면 범위가 넓어 쓸모가 줄어든다는
+            뜻입니다. 높을수록 좋은 점수가 아닙니다.
           </li>
           {data.test_period && (
             <li>

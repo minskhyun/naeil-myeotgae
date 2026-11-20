@@ -26,8 +26,8 @@ import pandas as pd
 from contracts.schemas import BacktestResult
 from ml import progress
 from ml.calibration import apply_calibration, below_rates, check_calibration, fit_calibration
-from ml.features import (DEFAULT_CLOSE_TIME, FEATURE_SETS, SIGNAL_GROUPS, available_signals, base_level, build_frame,
-                         signals_in)
+from ml.features import (DEFAULT_CLOSE_TIME, FEATURE_SETS, SIGNAL_FAMILIES, SIGNAL_GROUPS, available_signals, base_level,
+                         build_frame, expand, signals_in)
 from ml.metrics import bootstrap_wape_change, coverage, days_won, score, scored
 from ml.models import SHORT_DATA_DAYS, make_model
 from ml.paths import ARTIFACTS
@@ -127,7 +127,9 @@ class CrossValidator:
 
 # ---------------------------------------------------------------- 2. 신호 채택
 
-GROUP_LABELS = {"weather": "날씨", "events": "학사일정·행사", "trend": "유행", "special": "기념일"}
+GROUP_LABELS = {"temp": "기온", "rain": "비", "exam": "시험기간", "vacation": "방학", "festival": "학교 축제", "nearby": "근처 행사",
+                "trend": "유행", "special": "기념일",
+                "weather": "날씨", "events": "학사일정·행사"}       # 분야 이름 (예전 결과 파일, 설명 문장)
 MIN_GAIN_PCT = 3.0   # 전체 오차가 이만큼(%) 이상 줄어야 '나아졌다'고 본다.
 # 11/17 리허설: 관계없는 신호(검증 기간 내내 0인 기념일)를 넣기만 해도 나무 모양이 바뀌어 오차가 2%쯤 흔들렸다.
 
@@ -141,10 +143,10 @@ def miss_per_day(s) -> float:
 def model_label(groups) -> str:
     """채택된 신호 묶음 → 모델 이름.  없음=M1, 날씨만=M2, 학사일정·행사·유행 중 하나라도=M3.
     (날씨는 빠지고 행사만 채택돼도 M3라고 부른다. 실제로 쓴 신호는 signals_used·decisions에 있다.)"""
-    groups = set(groups)
+    groups = set(expand(groups))
     if not groups:
         return "M1"
-    return "M2" if groups <= {"weather"} else "M3"
+    return "M2" if groups <= set(SIGNAL_FAMILIES["weather"]) else "M3"
 
 
 def beats(after: dict, before: dict) -> tuple[bool, int, float]:
@@ -172,11 +174,13 @@ def pick_combo(scores: dict[tuple, dict]) -> list[str]:
 
 
 def decide(group: str, signals: list[str], before: dict | None, after: dict | None,
-           adopted: bool | None = None, note: str | None = None) -> dict:
+           adopted: bool | None = None, note: str | None = None, together: str | None = None) -> dict:
     """신호 묶음 하나를 넣기 전(before)·후(after)의 교차검증 점수 → 화면에 보여 줄 결정 한 줄 (SignalDecision 형식의 dict).
 
     adopted를 주지 않으면 beats()의 조건으로 정한다. choose_signals는 채택 여부를 정해서 넘기고,
     이 함수는 그 묶음을 넣었을 때와 뺐을 때의 차이로 이유 문장만 만든다.
+    together = 분야 이름. 묶음 하나로는 기준을 못 넘지만 같은 분야의 묶음을 모두 넣으면 넘어서 함께 쓰는 경우다
+               (before·after는 그 분야 전체를 뺐을 때·넣었을 때의 점수).
     """
     label = GROUP_LABELS.get(group, group)
     if after is None:                                  # 자료가 없거나(note 없음) 평가할 수 없음(note)
@@ -187,7 +191,10 @@ def decide(group: str, signals: list[str], before: dict | None, after: dict | No
     passed, improved, change = beats(after, before)
     adopted = passed if adopted is None else adopted
 
-    if adopted:
+    if adopted and together:
+        reason = (f"{label} 신호는 혼자서는 기준에 못 미치지만, {GROUP_LABELS.get(together, together)} 정보를 함께 넣으면 "
+                  f"검증 {total}개 구간 중 {improved}개에서 오차가 줄어 함께 사용함 (전체 오차 {-change:.1f}% 감소)")
+    elif adopted:
         reason = f"{label} 신호를 넣으니 검증 {total}개 구간 중 {improved}개에서 오차가 줄어 사용함 (전체 오차 {-change:.1f}% 감소)"
     elif change >= 0:
         reason = f"{label} 신호는 이 매장 판매 예측을 개선하지 못해 쓰지 않음 ({total}개 구간 중 {improved}개만 개선)"
@@ -202,7 +209,15 @@ def decide(group: str, signals: list[str], before: dict | None, after: dict | No
 
 
 def choose_signals(frame: pd.DataFrame, plan: FoldPlan, cv: CrossValidator) -> tuple[list[str], list[dict], int]:
-    """자료가 있는 신호 묶음의 모든 조합(묶음 n개면 2^n가지)을 같은 검증 구간에서 비교한다.
+    """어떤 신호 묶음을 쓸지 같은 검증 구간에서 두 단계로 고른다. 기준은 어디서나 같다 (beats: 전체 오차 3% 이상 감소 + 과반 구간 개선).
+
+      1) 분야 단위 (날씨 · 학사일정·행사 · 유행 · 기념일): 자료가 있는 분야의 모든 조합을 비교해 고른다 (pick_combo)
+      2) 분야 안의 묶음 단위 (날씨 = 기온·비, 학사일정·행사 = 시험기간·방학·학교 축제·근처 행사):
+         다른 분야는 정해진 대로 두고, 그 분야의 묶음을 하나씩 넣어 본다. 넣을 때마다 기준을 넘는 것만 (가장 좋은 것부터) 더한다.
+         → 방학은 듣지만 시험기간은 안 듣는 가게면 방학만 쓴다. 1)에서 떨어진 분야라도 혼자 기준을 넘는 묶음은 쓴다.
+         하나도 혼자서는 못 넘는데 1)에서 분야 전체로는 넘었다면, 전체를 그대로 쓴다 (함께일 때만 나오는 효과).
+
+    묶음마다 조합을 다 해 보지 않는 이유: 묶음이 8개면 256가지라 오래 걸리고, 많이 해 볼수록 우연히 좋은 조합을 고를 위험이 커진다.
     돌려주는 값: (채택한 묶음들, 묶음별 결정, 비교한 조합 수)"""
     in_folds = pd.Series(False, index=frame.index)
     for start, end in plan.folds:
@@ -211,25 +226,65 @@ def choose_signals(frame: pd.DataFrame, plan: FoldPlan, cv: CrossValidator) -> t
     # 검증 구간 안에서 값이 한 번도 바뀌지 않는 묶음은 효과를 잴 수 없다 → 평가하지 않는다 (예: 기념일이 없던 기간)
     flat = {g for g in has_data
             if all(frame.loc[in_folds, c].nunique(dropna=True) <= 1 for c in signals_in([g], frame))}
-    present = [g for g in has_data if g not in flat]
+    present = {fam: [g for g in parts if g in has_data and g not in flat] for fam, parts in SIGNAL_FAMILIES.items()}
+    families = [fam for fam in SIGNAL_FAMILIES if present[fam]]
 
-    combos = [c for r in range(len(present) + 1) for c in combinations(present, r)]
-    scores = {c: cv.run(c)[1] for c in combos}
-    adopted = pick_combo(scores)
+    tried: set[tuple] = set()
 
-    decisions = []                                     # 묶음마다 이유: 고른 조합에서 그 묶음을 넣었을 때 vs 뺐을 때
+    def run(groups) -> dict:
+        """묶음들 → 교차검증 점수 (같은 조합은 한 번만 돌린다. 묶음은 늘 정해진 순서로 넣는다)."""
+        groups = tuple(expand(groups))
+        tried.add(cv.key(groups))
+        return cv.run(groups)[1]
+
+    # 1) 분야 단위
+    combos = [c for r in range(len(families) + 1) for c in combinations(families, r)]
+    scores = {c: run([g for fam in c for g in present[fam]]) for c in combos}
+    picked = pick_combo(scores)
+    chosen = {fam: list(present[fam]) if fam in picked else [] for fam in families}
+
+    # 2) 분야 안의 묶음 단위 (묶음이 둘 이상인 분야만)
+    basis: dict[str, tuple] = {}                       # 묶음 → (그 묶음을 넣기 전 점수, 넣은 뒤 점수): 이유 문장의 재료
+    whole: set[str] = set()                            # 혼자서는 못 넘지만 분야 전체로 넘어 함께 쓰는 분야
+    for fam in families:
+        parts = present[fam]
+        without = tuple(f for f in picked if f != fam)
+        if len(parts) < 2:
+            basis[parts[0]] = (scores[without], scores[tuple(f for f in families if f in picked or f == fam)])
+            continue
+        rest = [g for f in families if f != fam for g in chosen[f]]
+        sel: list[str] = []
+        while True:
+            base = run(rest + sel)
+            trials = {g: run(rest + sel + [g]) for g in parts if g not in sel}
+            for g, after in trials.items():
+                basis[g] = (base, after)               # 떨어진 묶음은 마지막으로 넣어 본 때의 비교가 남는다
+            passed = [g for g, after in trials.items() if beats(after, base)[0]]
+            if not passed:
+                break
+            sel.append(min(passed, key=lambda g: trials[g]["wape"]))
+        if sel:
+            chosen[fam] = sel
+        elif fam in picked:                            # 함께일 때만 나오는 효과 → 분야 전체를 그대로 쓴다
+            whole.add(fam)
+            for g in parts:
+                basis[g] = (run(rest), run(rest + parts))
+
+    adopted = expand([g for fam in families for g in chosen[fam]])
+    family_of = {g: fam for fam, parts in SIGNAL_FAMILIES.items() for g in parts}
+    decisions = []                                     # 묶음마다 이유: 그 묶음을 넣었을 때 vs 뺐을 때
     for group in SIGNAL_GROUPS:
         if group in flat:
             decisions.append(decide(group, signals_in([group], frame), None, None,
                                     note="자료는 있지만 검증 기간에 값이 한 번도 바뀌지 않아 효과를 평가할 수 없음"))
-        elif group not in present:
+        elif group not in has_data:
             decisions.append(decide(group, [], None, None))
         else:
-            without = tuple(g for g in adopted if g != group)
-            with_ = tuple(g for g in present if g in adopted or g == group)
-            decisions.append(decide(group, signals_in([group], frame), scores[without], scores[with_],
-                                    adopted=group in adopted))
-    return adopted, decisions, len(combos)
+            before, after = basis[group]
+            fam = family_of[group]
+            decisions.append(decide(group, signals_in([group], frame), before, after, adopted=group in adopted,
+                                    together=fam if fam in whole else None))
+    return adopted, decisions, len(tried)
 
 
 # ---------------------------------------------------------------- 3. 화면용 비교표
@@ -280,7 +335,7 @@ def data_note(plan: FoldPlan, n_combos: int, adopted: list[str], cv_m0: pd.DataF
     notes = [plan.note]
     if n_combos > 1:
         picked = ", ".join(GROUP_LABELS.get(g, g) for g in adopted) or "신호 없음"
-        notes.append(f"신호 조합 {n_combos}가지를 모두 비교해 '{picked}' 선택")
+        notes.append(f"신호 조합 {n_combos}가지를 비교해 '{picked}' 선택")
     b = bootstrap_wape_change(cv_m0, chosen_cv)
     if cv_m0["date"].nunique() < 4 * 7:                   # 7일 묶음이 4개도 안 되면 구간을 믿기 어렵다
         notes.append(f"검증 구간에서 {chosen}의 오차가 M0 대비 {b['change_pct']:+.1f}% (기간이 짧아 우연 여부는 판단하지 않음)")

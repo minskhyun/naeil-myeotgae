@@ -78,7 +78,7 @@ def test_address_collects_weather_automatically(tmp_path, monkeypatch):
     assert set(sig["signal"]) == {"temp_mean", "rain_mm", "trend_level"} and (sig["store_id"] == "test-a").all()
     assert set(sig.loc[sig["signal"] == "trend_level", "menu"]) == {"소금빵"} and sig.loc[sig["signal"] == "rain_mm", "menu"].isna().all()
     bt = BacktestResult.model_validate_json((out / "backtest.json").read_text(encoding="utf-8"))
-    for group in ("weather", "trend"):                                                    # 날씨와 유행이 평가에 들어감
+    for group in ("temp", "trend"):                                                       # 기온과 유행이 평가에 들어감
         assert any(d.signal_group == group and d.folds_total > 0 for d in bt.decisions), group
     report = json.loads((out / "sources_report.json").read_text(encoding="utf-8"))        # 화면 '주변 정보'용 요약
     by_signal = {s["signal"]: s for s in report["signals"]}
