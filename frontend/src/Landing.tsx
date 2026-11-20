@@ -301,7 +301,7 @@ export function Landing({ login, contactUrl, canEnter, viewOnly }: SiteProps) {
               <b className="font-semibold text-ink-900">예를 들면</b> 하루 {count(Math.round(expectedTotal(rows) / 50) * 50)}개쯤 파는 예시 매장에서는
             </p>
             <p className="whitespace-nowrap text-h1 tabular-nums">
-              한 달 약 {manwon(loss.money * MONTH_DAYS)} 줄여요
+              한 달 약 {manwon(loss.money * MONTH_DAYS)} 아껴요
               <span className="ml-3 text-lg font-normal tracking-normal text-ink-500">하루 약 {manwon(loss.money)}</span>
             </p>
           </Reveal>
