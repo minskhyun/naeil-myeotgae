@@ -17,7 +17,7 @@ export type Verdict = {
   mineShown: number
   baseShown: number
   saved: number // baseShown − mineShown
-  gain: number // 지난주 방식보다 몇 % 덜 틀렸나 (반올림한 값으로)
+  gain: number // 지난주 방식보다 오차가 몇 % 줄었나 (반올림한 값으로)
   overShown: number | null // 남는 쪽 (하루). 모자란 쪽 = mineShown − overShown
   money: number | null // 판매가로 환산한 하루 차이 (판매가를 아는 매장만)
 }

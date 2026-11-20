@@ -330,7 +330,7 @@ export function Landing({ login, contactUrl, canEnter }: SiteProps) {
         {/* 숫자 몇 개 (검증은 여기서 길게 말하지 않는다 → 소개) */}
         {v && (
           <section className="space-y-14">
-            <Chapter label="Result" title={'지난주만큼 준비할 때보다\n덜 틀려요'} />
+            <Chapter label="Result" title={'지난주만큼 준비할 때보다\n오차가 줄어요'} />
             <div className="grid gap-5 md:grid-cols-3">
               <Stat label="하루에 남거나 모자라는 개수가 줄어요">
                 <span className="text-point">
