@@ -94,12 +94,22 @@ export function Landing({ login, contactUrl, canEnter }: SiteProps) {
   const total = (m: string) => rows.reduce((sum, r) => sum + (r.prep_by_mode?.[m] ?? r.prep_qty ?? 0), 0)
   // 01의 화면 조각에 적을 '모은 정보' 몇 가지 (예시 매장의 분석 기록에서)
   const got = <K extends ProgressEvent['kind']>(kind: K) => (past ?? []).filter((e) => e.kind === kind) as Extract<ProgressEvent, { kind: K }>[]
+  const school = got('academic')[0]
+  const terms = school ? (school.exams ?? 0) + (school.vacations ?? 0) + (school.festivals ?? 0) : 0
   const gathered = [
     { label: '날씨', value: got('weather')[0] ? `${count(got('weather')[0].days)}일` : null },
     { label: '주변 시설', value: got('places')[0] ? `${count(got('places')[0].count)}곳` : null },
+    { label: '시험·방학·축제', value: terms ? `${terms}번` : school ? `${count(school.days)}일` : null },
     { label: '근처 행사', value: got('event').length ? `${got('event').length}건` : null },
     { label: '읽은 글', value: got('article').length ? `${got('article').length}건` : null },
+    { label: '검색량을 본 메뉴', value: got('trend_span')[0] ? `${got('trend_span')[0].menus}개` : null },
+    { label: '기념일', value: got('special').length ? `${got('special').length}개` : null },
   ].filter((g) => g.value)
+  // AI가 '우리 가게와 얼마나 관련 있나'를 따진 행사 몇 개 (관련이 큰 것부터)
+  const rated = [...got('rating')]
+    .sort((x, y) => y.relevance * y.scale - x.relevance * x.scale)
+    .filter((r, i, all) => all.findIndex((x) => x.title === r.title) === i) // 같은 행사가 두 번 모였으면 한 번만
+    .slice(0, 4)
 
   return (
     <div className="min-h-screen bg-white">
@@ -155,27 +165,50 @@ export function Landing({ login, contactUrl, canEnter }: SiteProps) {
           <Chapter no="01" title={'가게 주변 소식을\n한곳에 모아서 보여 주고'} lead="날씨, 근처 학교의 시험과 방학, 주변 행사와 기사까지. 가게 위치만 알려 주시면 AI가 찾아서 읽어요." />
           {!!gathered.length && (
             <Reveal className="rounded-[32px] bg-surface p-6 sm:p-10">
-              <ul className="grid grid-cols-2 gap-4 md:grid-cols-4">
+              {/* 칸은 있는 만큼만 그리고, 줄마다 폭을 나눠 가득 채운다 (모은 정보가 적은 매장에서도 비어 보이지 않게) */}
+              <ul className="flex flex-wrap gap-4">
                 {gathered.map((g) => (
-                  <li key={g.label} className="rounded-2xl bg-white px-6 py-7 text-center">
+                  <li key={g.label} className="flex-1 basis-36 rounded-2xl bg-white px-4 py-7 text-center md:basis-56">
                     <p className="text-h1 tabular-nums">{g.value}</p>
                     <p className="mt-2 text-ink-700">{g.label}</p>
                   </li>
                 ))}
               </ul>
-              {!!got('article').length && (
-                <ul className="mt-4 divide-y divide-line rounded-2xl bg-white px-6">
-                  {got('article')
-                    .slice(0, 4)
-                    .map((a) => (
-                      <li key={a.url} className="flex items-center justify-between gap-4 py-4">
-                        <span className="min-w-0 truncate">{a.title.split(' < ')[0]}</span>
-                        <a href={a.url} target="_blank" rel="noreferrer" className="shrink-0 text-sm text-ink-500 underline underline-offset-4 hover:text-ink-900">
-                          원문
-                        </a>
-                      </li>
-                    ))}
-                </ul>
+              {(!!got('article').length || !!rated.length) && (
+                <div className="mt-4 grid gap-4 md:grid-cols-2">
+                  {!!got('article').length && (
+                    <div className="min-w-0 rounded-2xl bg-white px-6 py-5">
+                      <p className="text-label text-ink-500">읽은 글</p>
+                      <ul className="mt-1 divide-y divide-line">
+                        {got('article')
+                          .slice(0, 4)
+                          .map((a) => (
+                            <li key={a.url} className="flex items-center justify-between gap-4 py-3.5">
+                              <span className="min-w-0 truncate">{a.title.split(' < ')[0]}</span>
+                              <a href={a.url} target="_blank" rel="noreferrer" className="shrink-0 text-sm text-ink-500 underline underline-offset-4 hover:text-ink-900">
+                                원문
+                              </a>
+                            </li>
+                          ))}
+                      </ul>
+                    </div>
+                  )}
+                  {!!rated.length && (
+                    <div className="min-w-0 rounded-2xl bg-white px-6 py-5">
+                      <p className="text-label text-ink-500">AI가 따져 본 근처 행사</p>
+                      <ul className="mt-1 divide-y divide-line">
+                        {rated.map((r) => (
+                          <li key={r.title} className="flex items-center justify-between gap-4 py-3.5" title={r.reason}>
+                            <span className="min-w-0 truncate">{r.title}</span>
+                            <span className="shrink-0 text-sm text-ink-500 tabular-nums">
+                              연관도 {r.relevance}/5 · {count(r.distance_m)}m
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
               )}
               <p className="mt-5 text-center text-sm text-ink-500">예시 매장(신촌, 판매 기록은 가상)을 분석할 때 실제로 모은 것입니다.</p>
             </Reveal>
