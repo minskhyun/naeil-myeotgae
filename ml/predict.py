@@ -88,8 +88,15 @@ def signal_sources(signals: pd.DataFrame, store_id: str, date, close_time: str) 
     return s.sort_values("published_at").groupby("signal")["source_url"].last().to_dict()
 
 
-def explain(model, rows: pd.DataFrame, usual: dict[str, float], sources: dict[str, str]) -> list[list[Reason]]:
+def explain(model, rows: pd.DataFrame, usual: dict[str, float], sources: dict[str, str],
+            seen: dict[str, tuple[float, float]] | None = None) -> list[list[Reason]]:
     """메뉴(행)마다 근거 목록.  반사실 방식: 신호 하나를 '평소 값'으로 바꿔 다시 예측한 예상 판매량(평균)과 실제 예측을 비교한다.
+
+    seen = {신호: (기록에서 본 가장 작은 값, 가장 큰 값)}. 내일의 값이 이 범위를 벗어나면 그 신호의 근거는 적지 않는다.
+    그런 날을 이 가게 기록에서 본 적이 없으므로 '그 때문에 몇 % 달라진다'고 말할 근거가 없다.
+    (기록이 짧은 매장에서 실제로 있었던 일: 기록에서 가장 추웠던 며칠이 마침 잘 팔린 날이었고 예측 날짜는 그보다 더 추웠다.
+     모델이 '아주 추운 날은 전부 더 팔린다'고 배워서 아이스 음료에도 "추워서 더 팔린다"는 근거가 붙었다. 자료를 보면 아이스는 추운 날 덜 팔렸다.)
+    예측 숫자는 그대로다: 본 적 없는 값은 본 값 가운데 가장 가까운 끝과 같게 다뤄진다 (나무 모델의 성질).
 
     원재료도 모델 변수인 파생 신호(예: vacation → vacation_diff)는 따로 근거를 내지 않고 원재료와 함께 바꾼다.
     원재료가 평소 값이었다면 파생값(오늘 − 최근 평균)도 그만큼 달라진다: diff + (평소 값 − 오늘 값)
@@ -107,6 +114,8 @@ def explain(model, rows: pd.DataFrame, usual: dict[str, float], sources: dict[st
         cf = model.predict_mean(cf_rows)                                      # '평소였다면'의 예측
         pct = (actual - cf) / np.where(cf > 0, cf, np.nan) * 100
         for i in range(len(rows)):
+            if seen is not None and sig in seen and not seen[sig][0] <= value[i] <= seen[sig][1]:
+                continue                                                      # 기록에서 본 적 없는 값
             if pd.notna(pct[i]) and pd.notna(value[i]) and abs(pct[i]) >= REASON_MIN_PCT:
                 reasons[i].append(Reason(signal=sig, effect_pct=round(float(pct[i]), 1),
                                          text=reason_text(sig, float(value[i]), float(pct[i])),
@@ -173,8 +182,9 @@ def predict_next_day(sales: pd.DataFrame, signals: pd.DataFrame | None, groups: 
         q = apply_calibration(q.assign(base=base_level(rows)), calibration)
         q["pred"] = q["pred"].clip(q["p10"], q["p90"])                # 보정으로 범위가 움직여도 예상 판매량은 범위 안에
 
+    seen = {c: (float(train[c].min()), float(train[c].max())) for c in model.signal_cols}      # 기록에서 본 값의 범위
     reasons = explain(model, rows, usual_values(train, model.signal_cols, kinds),
-                      signal_sources(signals, store_id, target, close_time) if names else {})
+                      signal_sources(signals, store_id, target, close_time) if names else {}, seen)
     prep = prep_qty(q, prep_mode)
     by_mode = {mode: prep_qty(q, mode) for mode in PREP_MODES}       # 화면에서 준비 기준을 바꿔 볼 때 쓰는 값
     out_rows = [

@@ -341,9 +341,9 @@ export function Landing({ login, contactUrl, canEnter }: SiteProps) {
       {/* 6. 숫자 몇 개 (검증은 여기서 길게 말하지 않는다 → 소개) */}
       {v && (
         <Screen>
-          <Chapter title={'지난주 그대로 준비할 때보다\n정확도가 올라가요'} />
+          <Chapter title={'지난주 그대로 준비할 때보다\n오차가 줄어요'} />
           <div className="mt-12 grid gap-5 md:grid-cols-3">
-            <Stat lag={0.2} label="정확도 향상 (남거나 모자라는 개수가 줄어든 비율)">
+            <Stat lag={0.2} label="오차 감소 (남거나 모자라는 개수가 줄어든 비율)">
               <span className="text-point">
                 <CountWhenSeen to={Math.max(v.gain, 0)} />%
               </span>

@@ -250,9 +250,9 @@ export function AnalysisView({ events, status, error, log, onClose, replay = fal
                   <p className={`mt-1 text-h1 tabular-nums ${gain > 0 ? 'text-point' : ''}`}>
                     {gain > 0 ? (
                       <>
-                        정확도
+                        오차
                         <br />
-                        <CountUp to={gain} />% 향상
+                        <CountUp to={gain} />% 감소
                       </>
                     ) : (
                       '비슷해요'

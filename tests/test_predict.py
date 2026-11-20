@@ -140,3 +140,21 @@ def test_recent_history_for_charts():
     assert len(h.dates) == 28 and str(h.dates[0]) == "2026-10-04" and str(h.dates[-1]) == "2026-10-31"
     assert h.total[0] == 13 and h.total[6] is None                                # 합계는 모든 메뉴, 10/10은 휴무
     assert list(h.menus) == ["소금빵"] and h.menus["소금빵"][0] == 10 and h.menus["소금빵"][6] is None
+
+
+def test_no_reason_for_a_value_never_seen_in_the_records():
+    """내일의 신호 값이 이 가게 기록에서 본 범위를 벗어나면 그 신호의 근거는 적지 않는다 (본 적 없는 날이라 말할 근거가 없다)."""
+    from ml.predict import explain
+
+    class _Model:
+        signal_cols = ["temp_diff"]
+
+        def predict_mean(self, rows):                       # 기온 차이 1도마다 2%씩 달라지는 가짜 모델
+            return (10 * (1 - 0.02 * rows["temp_diff"])).to_numpy()
+
+    rows = pd.DataFrame({"menu": ["가", "나"], "temp_diff": [-9.0, -9.0]})
+    usual = {"temp_diff": 0.0}
+    shown = explain(_Model(), rows, usual, {}, seen={"temp_diff": (-12.0, 5.0)})
+    assert [r[0].signal for r in shown] == ["temp_diff", "temp_diff"] and shown[0][0].effect_pct == 18.0
+    hidden = explain(_Model(), rows, usual, {}, seen={"temp_diff": (-6.0, 3.0)})      # 기록에서 가장 추웠던 날이 −6도
+    assert hidden == [[], []]

@@ -189,13 +189,13 @@ export function AnalysisTab({ storeId, storeName, onReplay, events }: {
           <Tile
             big
             point={v.saved > 0}
-            label="지난주 그대로 준비할 때 대비 정확도 향상"
+            label="지난주 그대로 준비할 때보다 줄어든 오차"
             value={
               <>
                 <CountWhenSeen to={Math.max(v.gain, 0)} />%
               </>
             }
-            note="남거나 모자라는 개수가 줄어든 비율"
+            note="오차 = 남거나 모자라는 개수"
           />
           <Tile
             label="하루 오차"
