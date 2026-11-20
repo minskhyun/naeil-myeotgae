@@ -135,7 +135,7 @@ export function AnalysisView({ events, status, error, log, onClose, replay = fal
     <div className="fixed inset-0 z-50 overflow-y-auto bg-page text-ink-900">
       {/* 맨 위에 번지는 옅은 주황빛 (밝은 바탕이 밋밋하지 않게) */}
       <div className="nm-glow pointer-events-none absolute inset-x-0 top-0 h-[32rem]" aria-hidden />
-      <div className="relative mx-auto flex min-h-full max-w-content flex-col px-5 py-5 md:px-10 lg:h-full">
+      <div className={`relative mx-auto flex min-h-full max-w-content flex-col px-5 py-5 md:px-10 ${finished || failed ? '' : 'lg:h-full'}`}>
         <div className="flex items-center justify-between">
           <Logo />
           <button onClick={onClose} className="inline-flex h-11 items-center rounded-full bg-white px-5 text-sm font-semibold transition-colors duration-150 hover:bg-pill">
@@ -179,9 +179,15 @@ export function AnalysisView({ events, status, error, log, onClose, replay = fal
           </ol>
         </header>
 
-        {/* 지도와 목록: 남는 높이를 채운다. 화면이 낮으면 이 칸은 22rem에서 더 줄지 않고(lg:min-h) 아래 칸들이 밀려나 화면이 스크롤된다.
-            (전에는 0까지 줄 수 있어서, 전체 화면을 풀어 창이 낮아지면 아래의 결과 칸들이 지도 위로 겹쳤다) */}
-        <div className="grid flex-1 gap-5 lg:min-h-[22rem] lg:shrink-0 lg:grid-cols-[1.65fr_1fr] lg:grid-rows-[minmax(0,1fr)]">
+        {/* 지도와 목록.
+            분석 중: 남는 높이를 채운다. 화면이 낮아도 22rem 아래로는 줄지 않는다 (lg:min-h).
+            끝난 뒤: 높이를 정해 두고(화면 높이의 58%, 최대 34rem) 아래에 결과 칸들이 이어진다. 넘치면 화면이 스크롤된다.
+            (전에는 이 칸이 0까지 줄 수 있어서, 전체 화면을 풀어 창이 낮아지면 아래의 결과 칸들이 지도 위로 겹쳤다) */}
+        <div
+          className={`grid gap-5 lg:grid-cols-[1.65fr_1fr] lg:grid-rows-[minmax(0,1fr)] ${
+            finished || failed ? 'lg:h-[min(58vh,34rem)]' : 'flex-1 lg:min-h-[22rem] lg:shrink-0'
+          }`}
+        >
           <div className="relative h-[26rem] min-w-0 overflow-hidden rounded-[32px] bg-white lg:h-full lg:min-h-60">
             {hasMap ? (
               <AnalysisMap events={seen} />
