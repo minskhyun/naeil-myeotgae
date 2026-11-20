@@ -66,7 +66,7 @@ function line(e: ProgressEvent): { tag: string; color: string; text: string } | 
 
 function Card({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="nm-rise rounded-[32px] bg-white p-7">
+    <section className="nm-rise rounded-[32px] bg-white p-6">
       <h3 className="font-mono text-sm text-ink-500">{title}</h3>
       <div className="mt-4">{children}</div>
     </section>
@@ -134,7 +134,7 @@ export function AnalysisView({ events, status, error, log, onClose, replay = fal
     <div className="fixed inset-0 z-50 overflow-y-auto bg-page text-ink-900">
       {/* 맨 위에 번지는 옅은 주황빛 (밝은 바탕이 밋밋하지 않게) */}
       <div className="nm-glow pointer-events-none absolute inset-x-0 top-0 h-[32rem]" aria-hidden />
-      <div className="relative mx-auto max-w-content px-5 py-6 md:px-10">
+      <div className="relative mx-auto flex min-h-full max-w-content flex-col px-5 py-5 md:px-10 lg:h-full">
         <div className="flex items-center justify-between">
           <p className="text-xl font-[800] tracking-[-0.05em]">내일몇개</p>
           <button onClick={onClose} className="inline-flex h-11 items-center rounded-full bg-white px-5 text-sm font-semibold transition-colors duration-150 hover:bg-pill">
@@ -142,15 +142,15 @@ export function AnalysisView({ events, status, error, log, onClose, replay = fal
           </button>
         </div>
 
-        <header className="mt-10 mb-8">
+        <header className="mt-5 mb-6">
           <p className="flex items-center gap-2.5 font-mono text-ink-500">
             {!finished && !failed && <span className="nm-blink h-2.5 w-2.5 rounded-full bg-point" />}
             {failed ? 'Stopped' : finished ? 'Done' : 'Analyzing'}
           </p>
-          <h2 className="mt-4 text-title">
+          <h2 className="mt-3 text-h1">
             {failed ? '분석을 마치지 못했어요' : finished ? '분석이 끝났어요' : `${store?.name ?? '우리 가게'} 주변을 살펴보고 있어요`}
           </h2>
-          <p className="mt-4 min-h-7 text-xl text-ink-700">
+          <p className="mt-2 min-h-7 text-lg text-ink-700">
             {failed
               ? error
               : finished
@@ -162,11 +162,11 @@ export function AnalysisView({ events, status, error, log, onClose, replay = fal
                     )}
                   </>)}
           </p>
-          <ol className="mt-7 flex flex-wrap gap-2">
+          <ol className="mt-5 flex flex-wrap gap-2">
             {STEPS.map((s, i) => {
               const state = stepState(s.id)
               return (
-                <li key={s.id} className={`flex h-11 items-center gap-2.5 rounded-full px-5 font-medium transition-colors duration-300 ${
+                <li key={s.id} className={`flex h-11 items-center gap-2.5 rounded-full px-5 font-medium ${
                   state === 'done' ? 'bg-ink-900 text-white' : state === 'now' ? 'bg-white text-ink-900' : 'bg-pill text-ink-500'}`}>
                   <span className="font-mono text-xs opacity-70">{String(i + 1).padStart(2, '0')}</span>
                   {s.label}
@@ -178,8 +178,8 @@ export function AnalysisView({ events, status, error, log, onClose, replay = fal
           </ol>
         </header>
 
-        <div className="grid gap-5 lg:grid-cols-[1.65fr_1fr]">
-          <div className="relative h-[26rem] min-w-0 overflow-hidden rounded-[32px] bg-white sm:h-[34rem]">
+        <div className="grid min-h-0 flex-1 gap-5 lg:grid-cols-[1.65fr_1fr] lg:grid-rows-[minmax(0,1fr)]">
+          <div className="relative h-[26rem] min-w-0 overflow-hidden rounded-[32px] bg-white lg:h-full lg:min-h-60">
             {hasMap ? (
               <AnalysisMap events={seen} />
             ) : (
@@ -200,7 +200,7 @@ export function AnalysisView({ events, status, error, log, onClose, replay = fal
             )}
           </div>
 
-          <section className="flex h-[26rem] min-w-0 flex-col rounded-[32px] bg-white p-6 sm:h-[34rem]">
+          <section className="flex h-[26rem] min-w-0 flex-col rounded-[32px] bg-white p-6 lg:h-full lg:min-h-60">
             <h3 className="font-mono text-sm text-ink-500">우리 가게로 들어온 정보 {feed.length > 0 && `· ${feed.length}건`}</h3>
             <ul className="mt-3 flex-1 space-y-2 overflow-y-auto pr-1">
               {feed.length === 0 && <li className="text-sm text-ink-700">곧 여기에 하나씩 나타나요.</li>}
@@ -283,7 +283,7 @@ export function AnalysisView({ events, status, error, log, onClose, replay = fal
         )}
 
         {(finished || failed) && (
-          <div className="mt-10 flex justify-center pb-10">
+          <div className="mt-5 flex justify-center pb-1">
             <button onClick={failed || !onDone ? onClose : onDone} className="btn-pill group bg-ink-900 text-white hover:bg-ink-hover">
               {failed ? '닫기' : onDone && doneLabel ? doneLabel : replay ? '닫기' : '준비표 보기'}
               <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-ink-900 transition-transform duration-200 group-hover:translate-x-1" aria-hidden>
