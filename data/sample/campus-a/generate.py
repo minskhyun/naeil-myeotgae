@@ -28,7 +28,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 DRV = os.path.join(HERE, "drivers")
 SEED = 20261119
 START = dt.date(2025, 11, 1)
-END = dt.date(2026, 11, 17)
+END = dt.date(2026, 11, 19)
+BASE_END = dt.date(2026, 11, 17)   # 처음 만들 때의 마지막 날. 기간을 늘려도 이날까지의 숫자는 바뀌지 않는다 (draw_hidden 참고)
 
 
 def D(s):
@@ -645,24 +646,38 @@ def draw_hidden(ctxs, schools):
     ss = np.random.SeedSequence(SEED)
     r_noise, r_ops, r_shock = [np.random.default_rng(s) for s in ss.spawn(3)]
     n = len(ctxs)
-    z = r_noise.normal(0, SD_DAY, n)
-    e = r_noise.normal(0, SD_AR, n)
+
+    def draw(k):
+        """난수 k일치를 정해진 순서로 뽑는다 (떠돌이는 아직 더하지 않은 걸음으로)."""
+        z = r_noise.normal(0, SD_DAY, k)
+        e = r_noise.normal(0, SD_AR, k)
+        rw_step = r_noise.normal(0, SD_RW, k)
+        seg = np.stack([r_shock.normal(0, SD_SEG[s], k) for s in SEGS], axis=1)
+        fam = np.stack([r_shock.normal(0, SD_FAM[f], k) for f in FAMILIES], axis=1)
+        item = r_shock.normal(0, SD_ITEM, (k, len(ITEMS)))
+        pop_step = r_shock.normal(0, SD_POP_RW, (k, len(ITEMS)))
+        u_rain = r_ops.uniform(0.35, 1.25, k)
+        u_rain_big = r_ops.uniform(0.70, 1.25, k)
+        u_conc, m_conc = r_ops.uniform(0, 1, k), r_ops.uniform(0.05, 0.18, k)
+        u_staff, m_staff = r_ops.uniform(0, 1, k), r_ops.uniform(0.80, 0.90, k)
+        u_bulk = r_ops.uniform(0, 1, k)
+        q_bulk = r_ops.integers(15, 41, k)
+        u_bulk2 = r_ops.uniform(0, 1, k)
+        q_bulk2 = r_ops.integers(10, 25, k)
+        return [z, e, rw_step, seg, fam, item, pop_step, u_rain, u_rain_big, u_conc, m_conc, u_staff, m_staff,
+                u_bulk, q_bulk, u_bulk2, q_bulk2]
+
+    # 기간을 늘려도 지난 날짜의 숫자가 바뀌지 않게: 처음 만들 때의 날 수(BASE_END까지)만큼 먼저 뽑고,
+    # 늘어난 날의 난수는 그 뒤에 이어서 뽑아 붙인다. (한꺼번에 n개씩 뽑으면 n이 바뀔 때 뒤의 난수가 모두 밀린다)
+    n0 = sum(1 for c in ctxs if c["date"] <= BASE_END)
+    parts = [draw(n0)] + ([draw(n - n0)] if n > n0 else [])
+    (z, e, rw_step, seg, fam, item, pop_step, u_rain, u_rain_big, u_conc, m_conc, u_staff, m_staff,
+     u_bulk, q_bulk, u_bulk2, q_bulk2) = [np.concatenate(xs, axis=0) for xs in zip(*parts)]
     ar = np.zeros(n)
     for i in range(n):
         ar[i] = (RHO_AR * ar[i - 1] if i else 0.0) + e[i]
-    rw = np.cumsum(r_noise.normal(0, SD_RW, n))
-    seg = np.stack([r_shock.normal(0, SD_SEG[s], n) for s in SEGS], axis=1)
-    fam = np.stack([r_shock.normal(0, SD_FAM[f], n) for f in FAMILIES], axis=1)
-    item = r_shock.normal(0, SD_ITEM, (n, len(ITEMS)))
-    pop_rw = np.cumsum(r_shock.normal(0, SD_POP_RW, (n, len(ITEMS))), axis=0)   # 품목 인기의 느린 떠돌이
-    u_rain = r_ops.uniform(0.35, 1.25, n)
-    u_rain_big = r_ops.uniform(0.70, 1.25, n)
-    u_conc, m_conc = r_ops.uniform(0, 1, n), r_ops.uniform(0.05, 0.18, n)
-    u_staff, m_staff = r_ops.uniform(0, 1, n), r_ops.uniform(0.80, 0.90, n)
-    u_bulk = r_ops.uniform(0, 1, n)
-    q_bulk = r_ops.integers(15, 41, n)
-    u_bulk2 = r_ops.uniform(0, 1, n)
-    q_bulk2 = r_ops.integers(10, 25, n)
+    rw = np.cumsum(rw_step)
+    pop_rw = np.cumsum(pop_step, axis=0)   # 품목 인기의 느린 떠돌이
     hid = []
     for i, c in enumerate(ctxs):
         d, dow = c["date"], c["dow"]

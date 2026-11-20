@@ -121,9 +121,6 @@ export function SourcesView({ storeId, brief = false }: { storeId: string; brief
         )}
       </Section>
 
-      {brief && !!data.notes.length && (
-        <p className="rounded-2xl bg-surface px-4 py-3 text-sm text-ink-700">{data.notes[0]} 위의 정보원 선택은 실제 신촌 주소로 AI를 돌린 결과입니다.</p>
-      )}
       <Section title="모은 정보" sub="정보마다 며칠치를 어디서 가져왔는지입니다.">
         {signals.length ? (
           <ul className="divide-y divide-line border-y border-line">

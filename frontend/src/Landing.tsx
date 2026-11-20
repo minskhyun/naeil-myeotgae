@@ -13,7 +13,10 @@ import { ForecastView } from './ForecastView'
 import { Reveal } from './Reveal'
 import { SourcesView } from './SourcesView'
 
-const FIRST_EXAMPLE = 'sinchon-a' // 보여 줄 예시 매장 (주변 정보와 주의 안내가 다 있는 가상 매장). 없으면 목록의 첫 매장
+// 보여 줄 예시 매장. 없으면 목록의 첫 매장.
+// 판매 기록은 1년치 가상 데이터(data/sample/campus-a: 실제 신촌의 날씨·학사일정·행사로 만든 것)이고,
+// 주변 정보는 실제 주소(연세로)로 분석을 돌려 모은 실제 자료다 (기사·행사의 원문 링크가 실제 글로 간다).
+const FIRST_EXAMPLE = 'sinchon-a'
 const MENUS_SHOWN = 8 // 예시 준비표에 처음 보여 줄 메뉴 수
 const HOW = [
   { title: '판매 기록 올리기', text: '포스에서 내려받은 파일과 가게 위치만 있으면 돼요.' },
@@ -106,7 +109,7 @@ export function Landing({ login, contactUrl = null }: { login: LoginConfig | nul
   const loginFailed = params.get('login_error') // 카카오 로그인이 실패·취소되면 서버가 ?login_error=kakao 로 돌려보낸다
   const store =
     examples.find((s) => s.store_id === picked) ?? examples.find((s) => s.store_id === FIRST_EXAMPLE) ?? examples[0]
-  const virtual = !!store?.name.includes('가상') // 판매 기록도 주변 정보도 가상으로 만든 예시인가
+  const virtual = !!store?.name.includes('가상') // 판매 기록을 가상으로 만든 예시인가 (주변 정보는 실제 주소로 모은 것)
   // 예시 매장을 분석했을 때의 과정 (녹화본). 있으면 '분석 과정 보기' 단추로 지도 장면을 재생한다. 주소로는 ?open=replay
   const past = useQuery({
     queryKey: ['progress', store?.store_id],
@@ -209,7 +212,7 @@ export function Landing({ login, contactUrl = null }: { login: LoginConfig | nul
             <div className="space-y-10">
               {virtual && (
                 <p className="mx-auto w-fit rounded-md bg-surface px-3 py-1.5 text-sm font-medium text-ink-700">
-                  아래는 가상으로 만든 예시 매장입니다
+                  예시 매장의 판매 기록은 가상이고, 날씨·학교 일정·행사·기사는 실제 신촌의 것입니다
                 </p>
               )}
               <Part n={1} id="example" title="내일 메뉴별로 몇 개 준비할지"
@@ -221,8 +224,7 @@ export function Landing({ login, contactUrl = null }: { login: LoginConfig | nul
             <Part n={2} title="어떤 주변 정보를 썼나"
               lead="모은 정보 중에서 예측이 실제로 더 정확해진 것만 써요.">
               <div className="space-y-10">
-                <Decisions storeId={store.store_id}
-                  noDataText={virtual ? '이 예시에서는 모으지 않음' : undefined} />
+                <Decisions storeId={store.store_id} />
                 <details>
                   <summary className="cursor-pointer text-sm font-semibold underline-offset-4 hover:underline">
                     AI가 고른 정보원 자세히 보기
