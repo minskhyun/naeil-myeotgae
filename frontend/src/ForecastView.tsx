@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { api, PREP_MODES, type ForecastRow, type SalesHistory, type Warning } from './api'
 import { CountUp } from './CountUp'
 import { BarsLegend, DayBars, Spark } from './ForecastCharts'
-import { average, count, dayPrefix, dayWord, fmtDate, rangeText, sameWeekday, shortReason, SIGNAL_LABELS, SITUATION_LABELS, signedPct, weekdayName } from './format'
+import { average, count, dayPrefix, dayWord, expectedTotal, fmtDate, rangeText, sameWeekday, shortReason, SIGNAL_LABELS, signedPct, SITUATION_LABELS, weekdayName } from './format'
 import { useJob } from './useJob'
 
 // 예상 범위 그림: 가는 선 위에 범위(굵은 선, 왼쪽에서 자라남)와 예상값(눈금). narrow = 좁은 칸용
@@ -49,7 +49,7 @@ export function Notice({ w }: { w: Warning }) {
 }
 
 // 준비 기준마다의 한 줄 풀이 (폐기 줄이기 = 분포의 40% 지점, 균형 = 예상 판매량, 품절 줄이기 = 80% 지점)
-const PREP_HINTS: Record<string, string> = { '폐기 줄이기': '남지 않게 조금 적게', 균형: '예상 판매만큼 (메뉴마다 올림)', '품절 줄이기': '모자라지 않게 넉넉히' }
+const PREP_HINTS: Record<string, string> = { '폐기 줄이기': '남지 않게 조금 적게', 균형: '예상 판매만큼', '품절 줄이기': '모자라지 않게 넉넉히' }
 
 // 준비 기준(폐기 줄이기 · 균형 · 품절 줄이기) 고르기. 바꾸면 서버가 예측 단계만 다시 돌린다
 //   onPick  주면 서버를 부르지 않고 화면에서만 바꾼다 (보기 전용 예시: 세 기준의 개수를 눌러서 비교)
@@ -169,7 +169,7 @@ export function ForecastTable({ rows, limit, compact = false, storeId }: {
   const shown = cut && !showAll ? sorted.slice(0, cut) : sorted
   const max = Math.max(...shown.map((r) => r.p90)) * 1.05
   const totalPrep = rows.reduce((sum, r) => sum + (r.prep_qty ?? 0), 0)
-  const totalPred = Math.round(rows.reduce((sum, r) => sum + r.pred, 0))
+  const totalPred = expectedTotal(rows)
   const why = rows.some((r) => r.reasons.length > 0) // '평소 대비'에 적을 것이 하나라도 있나 (주변 정보를 안 쓰는 매장은 열을 숨긴다)
   const cols = compact
     ? why

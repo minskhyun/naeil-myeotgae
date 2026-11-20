@@ -9,7 +9,7 @@ import { api, type ProgressEvent } from './api'
 import { BacktestView } from './BacktestView'
 import { DayBars, WeekdayBars } from './ForecastCharts'
 import { ForecastTable, Notice, PrepToggle } from './ForecastView'
-import { average, count, dayPrefix, fmtDate, pct1, RANGE_TARGET_TEXT, rangeVerdict, sameWeekday, shortDate, SITUATION_LABELS, weekdayName } from './format'
+import { average, count, dayPrefix, expectedTotal, fmtDate, pct1, RANGE_TARGET_TEXT, rangeVerdict, sameWeekday, shortDate, SITUATION_LABELS, weekdayName } from './format'
 import { RangeMeter } from './RangeMeter'
 import { CountWhenSeen } from './Reveal'
 import { ArrowLink } from './Site'
@@ -75,7 +75,7 @@ export function DashboardTab({ storeId, storeName, prepMode, readOnly, onUpload,
   const fc = forecast.data
   const date = fc.rows[0].date
   const totalPrep = fc.rows.reduce((sum, r) => sum + (r.prep_qty ?? 0), 0)
-  const totalPred = Math.round(fc.rows.reduce((sum, r) => sum + r.pred, 0))
+  const totalPred = expectedTotal(fc.rows)
   // 예상 판매가 평소 같은 요일(지난 4주 평균)보다 몇 % 많은가
   const usual = history ? average(sameWeekday(history.dates, history.total, date)) : null
   const diff = usual ? Math.round((totalPred / usual - 1) * 100) : null
@@ -223,7 +223,7 @@ export function AnalysisTab({ storeId, storeName, onReplay, events }: {
       {history && date && (
         <div className="grid gap-5 xl:grid-cols-[1.7fr_1fr]">
           <Card title="최근 4주 판매와 예측">
-            <DayBars dates={history.dates} values={history.total} next={{ date, value: sum((r) => r.pred), lo: sum((r) => r.p10), hi: sum((r) => r.p90) }} height={220} />
+            <DayBars dates={history.dates} values={history.total} next={{ date, value: expectedTotal(rows), lo: sum((r) => r.p10), hi: sum((r) => r.p90) }} height={220} />
           </Card>
           <div className="flex min-w-0 flex-col">
             <Card title="요일별 판매" grow>

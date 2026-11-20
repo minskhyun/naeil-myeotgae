@@ -1,5 +1,5 @@
 // 첫 화면 ('/'): 제품이 무엇을 해 주는지를 큰 문장과 실제 화면 조각으로 차례로 보여 준다.
-//   첫머리(왼쪽에 한 문장, 오른쪽 바탕에 지도 장면) → 01 주변 소식을 모으고 → 02 메뉴마다 알려 주고(작은 기능 넷) → 03 남길 일·모자랄 일을 줄이고
+//   첫머리(왼쪽에 한 문장, 오른쪽 바탕에 지도 장면) → 사장님의 고충 → 돈으로 얼마나 덜 잃나 → 01 주변 소식을 모으고 → 02 메뉴마다 알려 주고(작은 기능 넷) → 03 남길 일·모자랄 일을 줄이고
 //   → 숫자로 본 결과 → 더 알아보기(소개로) → 내 가게로 해 보기
 // 한 화면에 한 내용: 구역(Screen) 하나가 화면 하나를 채우고, 스크롤은 구역마다 멈춘다 (index.css의 nm-screen · nm-snap).
 // 어떻게 예측하는지, 어떻게 검증했는지는 여기서 길게 설명하지 않는다: 소개(About.tsx)에 있다. 여기서는 숫자 몇 개만.
@@ -47,6 +47,17 @@ function Screen({ id, className = '', children }: { id?: string; className?: str
     </section>
   )
 }
+
+// 사장님의 고충 (첫머리 바로 아래). 팀이 한 사장님 인터뷰의 기록에서 옮겼다 (PROJECT_CONTEXT.md 7장 '인터뷰 기록'). 가게 이름은 적지 않는다.
+// ★ 받아 적은 말 그대로가 아니라 기록을 옮긴 것이다 → 따옴표를 붙이지 않고 '들은 이야기'로 적는다. 인터뷰가 늘면 이 목록만 고친다.
+//   heard = 사장님께 들은 것, 아니면 그 이야기에서 팀이 정리한 것
+const PAINS = [
+  { heard: true, big: '재료비가 비싸서\n일부러 모자라게 만들어요', small: '그래서 품절이 잦아요.' },
+  { heard: true, big: '날씨, 시험, 축제, 방학\n전부 매출에 타격이 커요', small: '내일이 어떤 날인지에 따라 달라져요.' },
+  { heard: false, big: '남으면 버리고\n모자라면 못 팔아요', small: '어느 쪽이든 손해예요.' },
+]
+const MONTH_DAYS = 30 // 한 달 금액으로 바꿀 때 곱하는 날 수 (매일 여는 가게로 본다)
+const manwon = (v: number) => `${Math.round(v / 10000).toLocaleString('ko-KR')}만 원`
 
 // 큰 구역의 머리: 왼쪽에 큰 제목 · 설명, 오른쪽에 세로선으로 나눈 짧은 항목들
 function Chapter({ title, lead, points }: { title: string; lead?: string; points?: { name: string; text: string }[] }) {
@@ -174,7 +185,7 @@ export function Landing({ login, contactUrl, canEnter }: SiteProps) {
                     분석하러 가기
                   </ArrowLink>
                 ) : (
-                  <ArrowLink href="#features" dark>
+                  <ArrowLink href="#why" dark>
                     어떤 서비스인가요
                   </ArrowLink>
                 )}
@@ -189,7 +200,59 @@ export function Landing({ login, contactUrl, canEnter }: SiteProps) {
         </div>
       </section>
 
-      {/* 2. 01 모으기 */}
+      {/* 2. 사장님의 고충: 인터뷰에서 들은 이야기를 큰 글씨로 */}
+      <Screen id="why">
+        <Lines text={'얼마나 만들지,\n매일 감으로 정하고 계신가요'} className="text-title" />
+        <ul className="mt-12 grid gap-5 lg:grid-cols-3">
+          {PAINS.map((pain, i) => (
+            <li key={pain.big}>
+              <Reveal lag={0.15 + i * 0.12} className={`flex h-full flex-col rounded-[32px] px-8 py-10 ${pain.heard ? 'bg-white' : 'bg-ink-900 text-white'}`}>
+                <span className={`text-label ${pain.heard ? 'text-point-text' : 'text-white/70'}`}>{pain.heard ? '사장님께 들은 이야기' : '그래서'}</span>
+                <p className="mt-5 whitespace-pre-line text-h2">{pain.big}</p>
+                <p className={`mt-auto pt-8 text-lg ${pain.heard ? 'text-ink-700' : 'text-white/75'}`}>{pain.small}</p>
+              </Reveal>
+            </li>
+          ))}
+        </ul>
+        <Reveal as="p" lag={0.5} className="mt-6 text-sm text-ink-500">
+          신촌의 베이커리 사장님 인터뷰에서 (2026년 11월). 가게 이름은 밝히지 않아요.
+        </Reveal>
+      </Screen>
+
+      {/* 3. 돈으로 얼마나 덜 잃나: 예시 매장의 마지막 기간을 '지난주 그대로'와 견줘, 줄어든 개수에 판매가를 곱한 값 (판매가를 아는 매장만) */}
+      {v && v.money != null && v.money > 0 && v.mine.over != null && v.base.over != null && v.mine.under != null && v.base.under != null && (
+        <Screen>
+          <Lines text={'지난주 그대로 준비할 때보다\n한 달에 이만큼 덜 잃어요'} className="text-title" />
+          <div className="mt-12 grid gap-5 lg:grid-cols-[1.35fr_1fr_1fr]">
+            <Reveal lag={0.15} className="rounded-[32px] bg-ink-900 px-8 py-10 text-white">
+              <p className="text-lg text-white/75">한 달에 약</p>
+              <p className="mt-3 whitespace-nowrap text-hero text-point tabular-nums">
+                <CountWhenSeen to={v.money * MONTH_DAYS} format={manwon} />
+              </p>
+              <p className="mt-5 text-lg text-white/75">하루 약 {manwon(v.money)}</p>
+            </Reveal>
+            <Reveal lag={0.27} className="rounded-[32px] bg-white px-8 py-10">
+              <p className="text-lg text-ink-700">남아서 버리는 것</p>
+              <p className="mt-3 whitespace-nowrap text-display tabular-nums">
+                {count(v.base.over / v.days)} → <CountWhenSeen to={v.mine.over / v.days} />
+              </p>
+              <p className="mt-5 text-lg text-ink-700">하루 개수</p>
+            </Reveal>
+            <Reveal lag={0.39} className="rounded-[32px] bg-white px-8 py-10">
+              <p className="text-lg text-ink-700">모자라서 못 판 것</p>
+              <p className="mt-3 whitespace-nowrap text-display tabular-nums">
+                {count(v.base.under / v.days)} → <CountWhenSeen to={v.mine.under / v.days} />
+              </p>
+              <p className="mt-5 text-lg text-ink-700">하루 개수</p>
+            </Reveal>
+          </div>
+          <Reveal as="p" lag={0.5} className="mt-6 max-w-3xl text-sm leading-relaxed text-ink-500">
+            예시 매장(판매 기록은 가상)의 {periodName(v)}을 맞혀 본 결과예요. 금액은 줄어든 개수에 메뉴의 판매가를 곱한 값이고, 실제 이익과는 달라요.
+          </Reveal>
+        </Screen>
+      )}
+
+      {/* 4. 01 모으기 */}
       <Screen id="features">
         <Chapter
           title={'가게 주변 소식을\n한곳에 모아서 보여 주고'}
