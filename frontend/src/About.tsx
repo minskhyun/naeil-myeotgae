@@ -2,11 +2,11 @@
 //   네 단계 → 예측 방법 → 주변 정보를 고르는 기준 → AI가 하는 일 → 예시 매장의 실제 결과(준비표 · 쓴 정보 · 검증) → 자주 묻는 질문
 // 첫 화면(Landing.tsx)은 무엇을 해 주는지만 보여 주고, 방법과 검증은 여기에 모은다.
 // 적는 내용은 코드가 실제로 하는 일과 같아야 한다 (숫자 기준은 ml/evaluate.py, ml/models.py, ml/features.py).
-import { useState, type ReactNode } from 'react'
+import { useState, type CSSProperties, type ReactNode } from 'react'
 import { AnalysisView } from './AnalysisView'
 import { BacktestView, Decisions } from './BacktestView'
 import { ForecastView } from './ForecastView'
-import { Reveal } from './Reveal'
+import { Lines, Reveal } from './Reveal'
 import { JoinBand, SiteFooter, SiteHeader, type SiteProps } from './Site'
 import { FAQ, useExample } from './example'
 import { SourcesView } from './SourcesView'
@@ -55,10 +55,14 @@ const AI_JOBS = [
 function Block({ id, title, lead, children }: { id?: string; title: string; lead?: string; children: ReactNode }) {
   return (
     <section id={id} className="scroll-mt-24">
-      <Reveal className="max-w-3xl">
-        <h2 className="whitespace-pre-line text-h1">{title}</h2>
-        {lead && <p className="mt-4 text-xl leading-8 text-ink-700">{lead}</p>}
-      </Reveal>
+      <div className="max-w-3xl">
+        <Lines text={title} className="text-title" />
+        {lead && (
+          <Reveal as="p" className="mt-5 text-xl leading-8 text-ink-700">
+            {lead}
+          </Reveal>
+        )}
+      </div>
       <div className="mt-10">{children}</div>
     </section>
   )
@@ -70,8 +74,8 @@ function Cards({ items, cols, numbered = false }: { items: { title: string; text
     <ol className={`grid gap-4 ${cols}`}>
       {items.map((it, i) => (
         <li key={it.title}>
-          <Reveal lag={i * 0.1} className="h-full rounded-2xl bg-surface px-6 py-7">
-            {numbered && <span className="tag bg-white text-ink-700">{i + 1}단계</span>}
+          <Reveal lag={i * 0.1} className="h-full rounded-3xl bg-white px-7 py-8">
+            {numbered && <span className="font-mono text-sm text-ink-500">Step {String(i + 1).padStart(2, '0')}</span>}
             <h3 className={`text-h3 ${numbered ? 'mt-4' : ''}`}>{it.title}</h3>
             <p className="mt-3 leading-relaxed text-ink-700">{it.text}</p>
           </Reveal>
@@ -86,11 +90,11 @@ function Part({ n, title, lead, children }: { n: number; title: string; lead: st
   return (
     <div>
       <Reveal>
-        <span className="tag bg-surface text-ink-700">예시 {n}</span>
+        <span className="font-mono text-sm text-ink-500">Example {String(n).padStart(2, '0')}</span>
         <h3 className="mt-3 text-h2">{title}</h3>
         <p className="mt-2 text-lg text-ink-700">{lead}</p>
       </Reveal>
-      <Reveal className="mt-6 rounded-3xl border border-line bg-white p-5 sm:p-8">{children}</Reveal>
+      <Reveal className="mt-6 rounded-[32px] bg-white p-5 sm:p-8">{children}</Reveal>
     </div>
   )
 }
@@ -102,13 +106,16 @@ export function About({ login, contactUrl, canEnter }: SiteProps) {
   const virtual = !!store?.name.includes('가상') // 판매 기록을 가상으로 만든 예시인가 (주변 정보는 실제 주소로 모은 것)
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen">
       {replaying && past && <AnalysisView events={past} status="done" replay onClose={() => setReplaying(false)} />}
       <SiteHeader login={login} canEnter={canEnter} contactUrl={contactUrl} here="about" />
 
       <section className="mx-auto max-w-content px-5 pt-20 md:px-10 md:pt-28">
-        <p className="text-h3 text-ink-500">소개</p>
-        <h1 className="mt-5 whitespace-pre-line text-title">{'판매 기록이\n준비표가 되기까지'}</h1>
+        <p className="font-mono text-ink-500">About</p>
+        <h1 className="nm-enter mt-5 text-hero">
+          <span style={{ '--i': 0 } as CSSProperties}>판매 기록이</span>
+          <span style={{ '--i': 1 } as CSSProperties}>준비표가 되기까지</span>
+        </h1>
         <p className="mt-6 max-w-2xl text-xl leading-8 text-ink-700">
           내일몇개가 어떻게 예측하는지, 주변 정보를 어떤 기준으로 쓰는지, 얼마나 맞는지를 숨김없이 적었어요.
         </p>
@@ -125,7 +132,7 @@ export function About({ login, contactUrl, canEnter }: SiteProps) {
 
         <Block title={'주변 정보는\n도움이 될 때만 써요'} lead="날씨가 중요한 가게도 있고 아닌 가게도 있어요. 그래서 가게마다 지난 기록으로 확인해, 아래 조건을 모두 채운 정보만 예측에 넣습니다.">
           <Cards items={RULES} cols="md:grid-cols-2" />
-          <Reveal className="mt-4 rounded-2xl border border-line px-6 py-2">
+          <Reveal className="mt-4 rounded-3xl bg-white px-7 py-2">
             <ul className="divide-y divide-line">
               {SIGNALS.map((s) => (
                 <li key={s.name} className="flex flex-wrap items-baseline gap-x-6 gap-y-1 py-4">
@@ -148,7 +155,7 @@ export function About({ login, contactUrl, canEnter }: SiteProps) {
             <div className="space-y-20">
               <div className="flex flex-wrap items-center gap-3">
                 {virtual && (
-                  <p className="rounded-md bg-surface px-3 py-1.5 text-sm font-medium text-ink-700">
+                  <p className="rounded-md bg-white px-3 py-1.5 text-sm font-medium text-ink-700">
                     예시 매장의 판매 기록은 가상이고, 날씨·학교 일정·행사·기사는 실제 신촌의 것입니다
                   </p>
                 )}
@@ -183,7 +190,7 @@ export function About({ login, contactUrl, canEnter }: SiteProps) {
         </Block>
 
         <Block id="faq" title="자주 묻는 질문">
-          <Reveal className="divide-y divide-line rounded-2xl border border-line bg-white px-6 sm:px-8">
+          <Reveal className="divide-y divide-line rounded-3xl bg-white px-6 sm:px-8">
             {FAQ.map((f) => (
               <details key={f.q} className="group py-5">
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-semibold">

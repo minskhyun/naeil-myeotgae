@@ -1,5 +1,5 @@
 // 첫 화면(Landing.tsx)과 소개(About.tsx)가 함께 쓰는 틀: 맨 위 머리말, 맨 아래의 '내 가게로 해 보기' 띠, 바닥글.
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, type ReactNode } from 'react'
 import { ABOUT_PATH, APP_PATH, type LoginConfig } from './api'
 import { AccountBox, LoginButtons } from './Auth'
 import { watchScroll } from './scrub'
@@ -9,6 +9,22 @@ import { watchScroll } from './scrub'
 //   canEnter    분석 화면에 들어갈 수 있는 사람인가 (로그인했거나, 로그인을 안 쓰는 서버) → '분석하러 가기' 버튼
 //   contactUrl  '사전 신청·문의' 버튼이 여는 주소 (서버 설정). 없으면 버튼을 보여 주지 않는다
 export type SiteProps = { login: LoginConfig | null; canEnter: boolean; contactUrl: string | null }
+
+// 화살표가 달린 알약 버튼. dark = 잉크색 바탕(가장 중요한 버튼), onDark = 어두운 띠 위에 놓는 흰 버튼, 둘 다 아니면 회색 바탕
+export function ArrowLink({ href, children, dark = false, onDark = false }: { href: string; children: ReactNode; dark?: boolean; onDark?: boolean }) {
+  const tone = dark ? 'bg-ink-900 text-white hover:bg-ink-hover' : onDark ? 'bg-white text-ink-900 hover:bg-pill' : 'bg-pill text-ink-900 hover:bg-line'
+  return (
+    <a href={href} className={`btn-pill group ${tone}`}>
+      {children}
+      <span
+        className={`flex h-9 w-9 items-center justify-center rounded-full transition-transform duration-200 group-hover:translate-x-1 ${dark ? 'bg-white text-ink-900' : 'bg-ink-900 text-white'}`}
+        aria-hidden
+      >
+        →
+      </span>
+    </a>
+  )
+}
 
 function ContactLink({ url, className }: { url: string; className: string }) {
   return (
@@ -28,7 +44,7 @@ export function SiteHeader({ login, canEnter, contactUrl, here }: SiteProps & { 
     </a>
   )
   return (
-    <header ref={bar} className="sticky top-0 z-30 border-b border-transparent bg-transparent transition-colors duration-300 data-scrolled:border-line data-scrolled:bg-white">
+    <header ref={bar} className="sticky top-0 z-30 border-b border-transparent bg-transparent transition-colors duration-300 data-scrolled:border-line data-scrolled:bg-page">
       <div className="mx-auto flex min-h-16 max-w-content flex-wrap items-center justify-between gap-x-8 gap-y-2 px-5 py-2 md:px-10">
         <div className="flex items-center gap-x-8">
           <a href="/" className="text-xl font-[800] tracking-[-0.05em]" aria-label="내일몇개 첫 화면">
@@ -60,9 +76,9 @@ export function JoinBand({ login, canEnter, contactUrl, title = '내 가게로 �
         <h2 className="whitespace-pre-line text-title">{title}</h2>
         {canEnter ? (
           <div className="mt-10 flex justify-center">
-            <a href={APP_PATH} className="btn-xl bg-white text-ink-900 hover:bg-surface">
+            <ArrowLink href={APP_PATH} onDark>
               분석하러 가기
-            </a>
+            </ArrowLink>
           </div>
         ) : login ? (
           <>
@@ -90,7 +106,7 @@ export function JoinBand({ login, canEnter, contactUrl, title = '내 가게로 �
 
 export function SiteFooter({ contactUrl }: { contactUrl: string | null }) {
   return (
-    <footer className="border-t border-line bg-white">
+    <footer className="border-t border-line bg-page">
       <div className="mx-auto grid max-w-content gap-8 px-5 py-12 text-sm text-ink-700 md:grid-cols-[1fr_1.6fr] md:px-10">
         <div>
           <p className="text-base font-[800] tracking-[-0.05em] text-ink-900">내일몇개</p>
