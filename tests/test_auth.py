@@ -17,7 +17,7 @@ PEOPLE = {   # 가짜 구글 토큰 → 구글이 알려 줄 계정 정보
     "bob-token": dict(sub="g-2", email="bob@example.com", name="밥", picture=None, email_verified=True),
     "boss-token": dict(sub="g-3", email="Boss@Example.com", name="관리자", picture=None, email_verified=True),
 }
-POS = {"pos": ("pos.csv", b"date,menu,qty\n", "text/csv")}
+POS = {"pos": ("pos.csv", "날짜,상품명,수량,회원전화\n2026-10-01,소금빵,3,010-1234-5678\n".encode(), "text/csv")}
 
 
 def _make_store(root: Path, store_id: str):
@@ -54,12 +54,14 @@ def site(tmp_path, monkeypatch):
 def _login(who: str) -> TestClient:
     client = TestClient(main.app)                       # 사람마다 브라우저(쿠키 통)가 따로
     assert client.post("/api/auth/google", json={"credential": f"{who}-token"}).status_code == 200
+    assert client.post("/api/auth/agree").json()["agreed"] is True       # 약관 동의까지 마친 사람 (동의 전의 규칙은 아래 테스트)
     return client
 
 
 def test_logged_out_sees_only_demo_and_cannot_change(site):
     guest = TestClient(main.app)
-    assert guest.get("/api/config").json() == {"demo_mode": False, "google_client_id": "test-client-id", "kakao_login": False}
+    assert guest.get("/api/config").json() == {"demo_mode": False, "google_client_id": "test-client-id", "kakao_login": False,
+                                               "contact_url": None}
     assert guest.get("/api/auth/me").json() is None
     assert guest.get("/api/stores").json() == [dict(store_id="sinchon-a", name="sinchon-a", prep_mode="균형", can_edit=False, demo=True)]
     assert guest.get("/api/stores/sinchon-a/forecast").status_code == 200
@@ -92,7 +94,7 @@ def test_unverified_email_is_rejected(monkeypatch):
 def test_first_uploader_owns_the_store(site):
     alice, bob = _login("alice"), _login("bob")
     assert alice.get("/api/auth/me").json() == dict(provider="google", email="alice@example.com", name="앨리스", picture=None,
-                                                    is_admin=False)
+                                                    is_admin=False, agreed=True)
     assert alice.post("/api/stores/alice-cafe/run", files=POS).status_code == 202      # 새 ID → 앨리스의 매장
     _make_store(site, "alice-cafe")                                                    # (실행이 끝나 결과가 생겼다고 치고)
 
@@ -172,6 +174,10 @@ def test_my_stores_create_rename_upload_delete(site):
 
     assert alice.patch(f"/api/my/stores/{sid}", json={"name": "앨리스 베이커리"}).json()["name"] == "앨리스 베이커리"
     assert alice.patch(f"/api/my/stores/{sid}", json={"name": ""}).status_code == 422
+    # 주소와 닫는 시간도 고칠 수 있다 (준 칸만 바뀐다). 주소가 바뀌면 다음 분석에서 위치를 다시 찾도록 좌표를 지운다
+    edited = alice.patch(f"/api/my/stores/{sid}", json={"address": "서울 서대문구 연세로 12", "close_time": "22:30"}).json()
+    assert (edited["name"], edited["address"], edited["close_time"]) == ("앨리스 베이커리", "서울 서대문구 연세로 12", "22:30")
+    assert alice.patch(f"/api/my/stores/{sid}", json={"close_time": "25:00"}).status_code == 400
 
     assert bob.get("/api/my/stores").json() == []                                      # 남의 매장은 안 보이고
     assert bob.patch(f"/api/my/stores/{sid}", json={"name": "밥의 것"}).status_code == 404
@@ -246,8 +252,9 @@ def _kakao_login(code: str) -> tuple[TestClient, str]:
 def test_kakao_login_flow(kakao):
     assert TestClient(main.app).get("/api/config").json()["kakao_login"] is True
     minji, landed = _kakao_login("code-min")
-    assert landed == "/" and kakao["redirect_uri"] == "http://testserver/api/auth/kakao/callback"
-    assert minji.get("/api/auth/me").json() == dict(provider="kakao", email=None, name="민지", picture=None, is_admin=False)
+    assert landed == "/app" and kakao["redirect_uri"] == "http://testserver/api/auth/kakao/callback"
+    assert minji.get("/api/auth/me").json() == dict(provider="kakao", email=None, name="민지", picture=None, is_admin=False, agreed=False)
+    assert minji.post("/api/auth/agree").json()["agreed"] is True                      # 처음 한 번 약관에 동의한다
     assert not minji.cookies.get(main.STATE_COOKIE)                                    # 확인용 값은 한 번 쓰고 지운다
     made = minji.post("/api/my/stores", json={"name": "민지네"})                        # 이메일이 없어도 매장을 만들 수 있다
     assert made.status_code == 201 and [s["name"] for s in minji.get("/api/my/stores").json()] == ["민지네"]
@@ -259,6 +266,7 @@ def test_kakao_and_google_are_separate_accounts(kakao):
     sid = google_alice.post("/api/my/stores", json={"name": "구글 앨리스의 가게"}).json()["store_id"]
     assert kakao_alice.get("/api/auth/me").json()["email"] == "alice@example.com"
     assert kakao_alice.get("/api/my/stores").json() == []
+    kakao_alice.post("/api/auth/agree")
     assert kakao_alice.delete(f"/api/my/stores/{sid}").status_code == 404
     con = sqlite3.connect(auth.DB_PATH)
     assert sorted(con.execute("SELECT provider, subject FROM users").fetchall()) == [("google", "g-1"), ("kakao", "k-2")]
@@ -366,13 +374,55 @@ def test_kakao_asks_for_nickname_once_when_not_yet_agreed(kakao, monkeypatch):
     assert client.get("/api/auth/me").json()["name"] == "카카오 사용자"                          # 그사이 로그인은 이미 됨
 
     declined = TestClient(main.app, follow_redirects=False, cookies=dict(client.cookies))        # 거절하고 돌아온 경우
-    assert declined.get(f"/api/auth/kakao/callback?error=access_denied&state={state}").headers["location"] == "/"
+    assert declined.get(f"/api/auth/kakao/callback?error=access_denied&state={state}").headers["location"] == "/app"
     assert declined.get("/api/auth/me").json()["name"] == "카카오 사용자"
 
     back = client.get(f"/api/auth/kakao/callback?code=agreed&state={state}")                     # 동의하고 돌아온 경우
-    assert back.headers["location"] == "/" and client.get("/api/auth/me").json()["name"] == "민지"
+    assert back.headers["location"] == "/app" and client.get("/api/auth/me").json()["name"] == "민지"
 
     still = dict(replies["first"])                                                               # 또 못 받아도 다시 묻지는 않는다 (무한 반복 방지)
     monkeypatch.setattr(auth, "kakao_profile", lambda code, redirect_uri: still)
     client.cookies.set(main.STATE_COOKIE, state)
-    assert client.get(f"/api/auth/kakao/callback?code=x&state={state}").headers["location"] == "/"
+    assert client.get(f"/api/auth/kakao/callback?code=x&state={state}").headers["location"] == "/app"
+
+
+def test_agreement_is_needed_before_making_stores(site):
+    """처음 로그인한 사람은 이용약관 · 개인정보 수집·이용에 동의해야 매장을 만들거나 파일을 올릴 수 있다."""
+    client = TestClient(main.app)
+    me = client.post("/api/auth/google", json={"credential": "alice-token"}).json()
+    assert me["agreed"] is False
+    assert client.post("/api/my/stores", json={"name": "우리 빵집"}).status_code == 403
+    assert client.post("/api/stores/my-cafe/run", files=POS).status_code == 403
+    assert client.post("/api/auth/agree").json()["agreed"] is True
+    assert client.get("/api/auth/me").json()["agreed"] is True
+    assert client.post("/api/my/stores", json={"name": "우리 빵집"}).status_code == 201
+    assert TestClient(main.app).post("/api/auth/agree").status_code == 401          # 로그인하지 않은 사람
+
+
+def test_upload_keeps_only_needed_columns(site):
+    """올린 파일은 날짜·메뉴·수량 같은 필요한 열만 남겨 보관한다 (손님 전화번호 같은 열은 서버에 남기지 않는다)."""
+    alice = _login("alice")
+    assert alice.post("/api/stores/my-cafe/run", files=POS).status_code == 202
+    folder = site / "uploads" / "my-cafe"
+    assert [p.name for p in folder.iterdir()] == ["pos.csv"]                        # 원본은 남지 않는다
+    kept = (folder / "pos.csv").read_text(encoding="utf-8-sig")
+    assert kept.split() == ["날짜,상품명,수량", "2026-10-01,소금빵,3"] and "010" not in kept
+    bad = {"pos": ("pos.csv", "이름,나이\n철수,3\n".encode(), "text/csv")}            # 날짜·메뉴·수량 열이 없다
+    assert alice.post("/api/stores/my-cafe/run", files=bad).status_code == 400
+    assert (folder / "pos.csv").exists()                                            # 전에 올린 것은 그대로
+
+
+def test_leaving_deletes_account_and_stores(site):
+    """탈퇴하면 계정과 내 모든 매장의 자료(결과, 올린 파일)가 지워진다. 남의 것은 그대로."""
+    alice, bob = _login("alice"), _login("bob")
+    mine = alice.post("/api/my/stores", json={"name": "우리 빵집"}).json()["store_id"]
+    assert alice.post(f"/api/stores/{mine}/run", files=POS).status_code == 202
+    theirs = bob.post("/api/my/stores", json={"name": "밥네"}).json()["store_id"]
+    assert alice.delete("/api/auth/me").json() == {"ok": True}
+    assert not (site / mine).exists() and not (site / "uploads" / mine).exists()
+    assert alice.get("/api/auth/me").json() is None
+    assert (site / theirs).exists() and [s["store_id"] for s in bob.get("/api/my/stores").json()] == [theirs]
+    with sqlite3.connect(site / "app.db") as con:
+        assert con.execute("SELECT COUNT(*) FROM users WHERE email = 'alice@example.com'").fetchone()[0] == 0
+    again = TestClient(main.app).post("/api/auth/google", json={"credential": "alice-token"}).json()
+    assert again["agreed"] is False                                                 # 다시 가입하면 처음부터

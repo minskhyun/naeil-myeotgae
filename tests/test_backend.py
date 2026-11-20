@@ -66,7 +66,8 @@ def test_run_job_finishes(client, tmp_path):
 def test_demo_mode_is_read_only(client, monkeypatch):
     """시연 모드: 보기는 되고, 업로드·실행·설정 변경은 403. 저장소의 시연 결과 폴더가 계약 형식을 지킨다."""
     monkeypatch.setattr(main, "DEMO_MODE", True)
-    assert client.get("/api/config").json() == {"demo_mode": True, "google_client_id": None, "kakao_login": False}
+    assert client.get("/api/config").json() == {"demo_mode": True, "google_client_id": None, "kakao_login": False,
+                                                "contact_url": None}
     assert client.get("/api/stores/sinchon-a/forecast").status_code == 200
     assert client.post("/api/stores/sinchon-a/demo").status_code == 403
     assert client.post("/api/stores/sinchon-a/settings", data={"prep_mode": "균형"}).status_code == 403
@@ -74,8 +75,19 @@ def test_demo_mode_is_read_only(client, monkeypatch):
     assert r.status_code == 403
 
 
+def test_app_page_serves_the_same_screen_file():
+    """화면의 주소는 셋이다: "/" 첫 화면, "/about" 소개, "/app" 분석 화면. 서버는 모두 같은 화면 파일을 준다 (어느 화면인지는 화면 코드가 정한다)."""
+    if not main.WEB_DIST.exists():
+        pytest.skip("화면을 빌드하지 않았다 (frontend/dist 없음)")
+    client = TestClient(main.app)
+    home, app_page = client.get("/"), client.get(main.APP_PAGE)
+    assert app_page.status_code == 200 and "text/html" in app_page.headers["content-type"]
+    assert app_page.text == home.text
+    assert client.get(main.ABOUT_PAGE).text == home.text
+    assert client.get(main.SUPPORT_PAGE).text == home.text and client.get(main.PRIVACY_PAGE).text == home.text
+
 def test_demo_data_follows_contracts():
-    from contracts.schemas import BacktestResult, Forecast, SourceReport
+    from contracts.schemas import BacktestResult, Forecast, SalesHistory, SourceReport
     folder = Path(main.__file__).resolve().parents[1] / "demo_data"
     stores = sorted(d.name for d in folder.iterdir() if d.is_dir())
     assert stores == ["fr-bakery", "sinchon-a"]
@@ -83,6 +95,36 @@ def test_demo_data_follows_contracts():
         Forecast.model_validate_json((folder / s / "forecast.json").read_text(encoding="utf-8"))
         SourceReport.model_validate_json((folder / s / "sources_report.json").read_text(encoding="utf-8"))
         BacktestResult.model_validate_json((folder / s / "backtest.json").read_text(encoding="utf-8"))
+        SalesHistory.model_validate_json((folder / s / "history.json").read_text(encoding="utf-8"))    # 준비표 그래프의 재료
     import json                                                                 # 첫 화면의 '분석 과정 보기'가 재생하는 녹화본
     kinds = [e["kind"] for e in json.loads((folder / "sinchon-a" / "progress.json").read_text(encoding="utf-8"))]
     assert {"store", "places", "plan", "trial", "decision", "scores", "forecast"} <= set(kinds)
+
+
+def test_history_endpoint_serves_chart_data():
+    """준비표 그래프의 재료: 시연 매장은 history.json 그대로 (최근 4주, 예측한 메뉴들)."""
+    r = TestClient(main.app).get("/api/stores/sinchon-a/history")
+    assert r.status_code == 200
+    body = r.json()
+    assert len(body["dates"]) == 28 == len(body["total"]) and "소금빵" in body["menus"]
+
+
+def test_add_sales_by_hand(client, tmp_path, monkeypatch):
+    """하루치 판매를 직접 적으면 올린 파일 옆 added.csv에 쌓고(같은 날은 바꾼다), 그 파일을 넣어 다시 실행한다."""
+    started = []
+    monkeypatch.setattr(main, "_start", lambda store_id, args: started.append(args) or {"job_id": "j", "status": "running"})
+    day = {"date": "2026-10-03", "items": [{"menu": "소금빵", "qty": 8}, {"menu": "라떼", "qty": 0}]}
+    assert client.post("/api/stores/sinchon-a/sales", json=day).status_code == 400          # 올린 파일이 없다
+
+    folder = tmp_path / "uploads" / "sinchon-a"
+    folder.mkdir(parents=True)
+    (folder / "pos.csv").write_text("날짜,상품명,수량\n2026-10-02,소금빵,12\n", encoding="utf-8")
+    (tmp_path / "sinchon-a" / "ingest_log.json").write_text('{"pos_last": "2026-10-02"}', encoding="utf-8")
+    assert client.post("/api/stores/sinchon-a/sales", json={**day, "date": "2026-10-02"}).status_code == 400   # 파일에 이미 있는 날
+    assert client.post("/api/stores/sinchon-a/sales", json={**day, "date": "2999-01-01"}).status_code == 400   # 오지 않은 날
+    assert client.post("/api/stores/sinchon-a/sales", json={**day, "items": [{"menu": "라떼", "qty": 0}]}).status_code == 400
+
+    assert client.post("/api/stores/sinchon-a/sales", json=day).status_code == 202
+    assert client.post("/api/stores/sinchon-a/sales", json={**day, "items": [{"menu": "소금빵", "qty": 9}]}).status_code == 202
+    assert (folder / "added.csv").read_text(encoding="utf-8").split() == ["date,menu,qty", "2026-10-03,소금빵,9"]
+    assert started[-1] == ["--pos", str(folder / "pos.csv"), "--added", str(folder / "added.csv")]

@@ -159,6 +159,7 @@ catboost_info/
 /data/raw/
 /data/artifacts/
 /data/*.csv
+/data/*.xlsx
 llm_cache/
 data/private/
 

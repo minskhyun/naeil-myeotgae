@@ -24,10 +24,29 @@ export const GROUP_LABELS: Record<string, string> = {
   special: '기념일',
 }
 
-export const SCHOOL_LABELS: Record<string, string> = { yonsei: '연세대', sogang: '서강대', ewha: '이화여대' }
+// AI 안내의 상황 종류(contracts.Warning.situation_type)를 화면에 적는 말.
+// 계약의 '대형행사'는 작은 북 콘서트에도 붙어 과하게 읽힌다 → 화면에서는 '근처 행사'
+export const SITUATION_LABELS: Record<string, string> = {
+  대형행사: '근처 행사',
+  유행급변: '유행 변화',
+  기상특보: '날씨 특보',
+  휴무가능성: '휴무 가능성',
+  데이터이상: '기록 확인 필요',
+}
+
+// "2026-11-18" → "11월 18일"
+export const shortDate = (iso: string) => {
+  const d = new Date(`${iso}T00:00:00`)
+  return `${d.getMonth() + 1}월 ${d.getDate()}일`
+}
+
+export const SCHOOL_LABELS: Record<string, string> = {
+  yonsei: '연세대', sogang: '서강대', ewha: '이화여대',
+  sunykorea: '한국뉴욕주립대', utah: '유타대 아시아캠퍼스', gmu: '한국조지메이슨대', ghent: '겐트대 글로벌캠퍼스',
+}
 
 export const MODEL_LABELS: Record<string, string> = {
-  M0: '지난주 같은 요일만큼',
+  M0: '지난주 같은 요일 그대로',
   M1: '판매 기록',
   M2: '판매 기록 + 날씨',
   M3: '판매 기록 + 모든 주변 정보',
@@ -64,27 +83,60 @@ export const pct1 = (v: number) => `${(v * 100).toFixed(1)}%`
 // Σ|실제−예측| = mae × n 이라 예전 결과 파일에서도 계산된다. days가 없는 예전 파일은 fallbackDays(구간의 날짜 수)로 나눈다
 export const missPerDay = (s: { mae: number; n: number; days?: number }, fallbackDays = 1) => (s.mae * s.n) / (s.days || fallbackDays || 1)
 export const count = (v: number) => Math.round(v).toLocaleString('ko-KR')
+// 예상 범위 표기: 아래 끝은 내림, 위 끝은 올림 (바깥쪽으로 반올림). 범위를 좁혀 적지 않기 위해서다.
+// 가까운 수로 반올림하면 4.6개(1.9~5.1)가 "5개, 범위 2–5"로 보여 예상값이 범위 끝에 붙은 것처럼 읽힌다.
+export const rangeText = (lo: number, hi: number) => `${Math.floor(lo + 1e-6).toLocaleString('ko-KR')}–${Math.ceil(hi - 1e-6).toLocaleString('ko-KR')}`
 // 금액: 1만 원 이상은 '12.3만 원', 그 아래는 천 원 단위
 export const won = (v: number) => (Math.abs(v) >= 10000 ? `${(v / 10000).toFixed(1)}만 원` : `${count(Math.round(v / 100) * 100)}원`)
 // 지난주 방식보다 하루에 덜 틀린 금액 (판매가를 아는 매장만)
 export const savedPerDay = (mine: { amount?: number | null; days?: number }, base: { amount?: number | null }) =>
   mine.amount != null && base.amount != null && mine.days ? (base.amount - mine.amount) / mine.days : null
 
-// 범위 정확도: 예상 범위는 실제 판매의 80%가 들어오도록 만든다 → 80%를 정확히 맞추면 100%(만점).
-// 모자라면(범위가 좁다) 그만큼 깎고, 넘쳐도(범위가 쓸데없이 넓다) 같은 만큼 깎는다. 예: 75% → 93.8%, 90% → 87.5%
-export const RANGE_TARGET = 0.8
-export const rangeScore = (coverage: number) => Math.max(0, 1 - Math.abs(coverage - RANGE_TARGET) / RANGE_TARGET)
+// 예상 범위는 실제 판매의 80%가 들어오도록 만든다. 화면에는 실제로 든 비율을 그대로 적고 목표(80%)를 옆에 둔다
+// (목표에 견준 점수로 바꿔 적으면 숫자가 실제보다 좋아 보인다)
+export const RANGE_TARGET_TEXT = '80%가 이상적' // '목표 80%'라고 적으면 못 채운 점수처럼 읽힌다. 80%보다 높아도(범위가 넓다) 좋은 것이 아니다
 
 // '분석 중' 화면에서 정보 종류마다 쓰는 색 (지도의 표시와 목록의 이름표가 같은 색)
 export const KIND_COLOR: Record<string, string> = {
-  places: '#8a9bbd',
-  plan: '#2b66f6',
-  event: '#ff7a45',
-  news: '#f43f8e',
-  weather: '#0ea5e9',
-  academic: '#8b5cf6',
-  special: '#f59e0b',
-  trend: '#10b981',
-  sales: '#15171c',
-  article: '#f43f8e',
+  places: '#FF5A1F', // point (작은 점은 CSS에서 옅게 칠한다)
+  plan: '#C2410C', // point-text
+  event: '#FF5A1F', // point
+  news: '#C2410C',
+  weather: '#C2410C',
+  academic: '#C2410C',
+  special: '#C2410C',
+  trend: '#C2410C',
+  sales: '#14171C', // ink-900 (지도에는 나오지 않고 목록에만 쓴다)
+  article: '#C2410C',
+}
+
+// ---- 요일 (준비표의 그래프와 문장이 쓴다)
+export const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
+export const asDate = (iso: string) => new Date(`${iso}T00:00:00`)
+export const weekdayName = (iso: string) => WEEKDAYS[asDate(iso).getDay()]
+// 내일(nextDate)과 같은 요일의 지난 판매 (오래된 것부터, 휴무일은 뺀다)
+export function sameWeekday(dates: string[], values: (number | null)[], nextDate: string): number[] {
+  const weekday = asDate(nextDate).getDay()
+  return values.filter((v, i): v is number => v !== null && asDate(dates[i]).getDay() === weekday)
+}
+export const average = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null)
+
+// 예측 날짜를 부르는 말. 예측 날짜 = 판매 기록 마지막 날의 다음 날이라, 화면을 보는 날의 '내일'이 아닐 수 있다
+// (어제까지의 기록을 오늘 올리면 예측 날짜는 오늘이다). 오늘이면 '오늘', 내일이면 '내일', 그 밖은 '이날'
+export function dayWord(iso: string): '오늘' | '내일' | '이날' {
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
+  const gap = Math.round((asDate(iso).getTime() - today) / 86400000)
+  return gap === 0 ? '오늘' : gap === 1 ? '내일' : '이날'
+}
+// 문장 앞에 붙이는 꼴: '오늘 ' · '내일 ' · '' (오늘도 내일도 아니면 아무 말도 붙이지 않는다 → "준비할 개수", "예상")
+export const dayPrefix = (iso: string) => {
+  const word = dayWord(iso)
+  return word === '이날' ? '' : `${word} `
+}
+
+// 수집한 글의 제목을 화면에 적기 좋게: 깨진 기호(&#x27; &quot; 등)를 원래 글자로 돌리고, 뒤에 붙은 메뉴 경로(" < 사회 < 기사본문 - …")를 뗀다
+export function cleanTitle(title: string) {
+  const plain = new DOMParser().parseFromString(title, 'text/html').documentElement.textContent ?? title
+  return plain.split(' < ')[0].trim()
 }

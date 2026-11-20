@@ -1,167 +1,442 @@
 {
  "store_id": "sinchon-a",
- "generated_at": "2026-11-17T14:44:55",
+ "generated_at": "2026-11-20T09:53:28",
  "plan": {
   "store_id": "sinchon-a",
-  "created_at": "2026-11-17T14:43:39+09:00",
+  "created_at": "2026-11-20T09:52:49+09:00",
   "method": "llm",
   "model": "claude-opus-5-5",
-  "nearby_fetched_at": "2026-11-17T14:43:18+09:00",
+  "nearby_fetched_at": "2026-11-20T09:52:49+09:00",
   "weather": {
    "use": true,
    "reason": "모든 매장 기본"
   },
   "academic": [
    {
-    "school": "ewha",
-    "evidence": "이화여자대학교 대학교회",
-    "distance_m": 138,
-    "reason": "이화여대 캠퍼스 시설과 I-House 기숙사들이 140~240m 거리에 모여 있어 학생과 교직원이 주요 고객일 가능성이 높으므로 개강, 방학, 시험기간에 따라 판매량이 크게 달라질 것이다."
+    "school": "yonsei",
+    "evidence": "연세대학교 정문",
+    "distance_m": 429,
+    "reason": "연세대 정문과 캠퍼스타운 시설이 도보 5~7분 거리라 연세대 학생이 주요 고객층일 가능성이 높고, 개강·시험·방학에 따라 유동 인구가 크게 달라진다."
    },
    {
-    "school": "yonsei",
-    "evidence": "연세대학교 의과대학신관",
-    "distance_m": 228,
-    "reason": "연세대 의과대학, 보건대학원, 의학도서관 등이 230~280m 안에 있어 의대생과 대학원생이 걸어서 올 수 있는 거리이므로 연세대 학사일정도 수요에 영향을 줄 것이다."
+    "school": "sogang",
+    "evidence": "서강대학교 정문",
+    "distance_m": 558,
+    "reason": "서강대 경영대학과 마태오관이 약 470~560m 거리로 걸어올 수 있어 서강대 학생도 고객에 포함될 것으로 보인다."
    }
   ],
   "events": {
    "radius_m": 1000,
    "evidence": [
-    "아지토 라이브 홀",
-    "신촌문화발전소 공연장",
+    "일러스타스테이지",
+    "신촌피아노거리",
+    "연세로",
+    "극장PLOT",
     "예스24 원더로크홀",
+    "신촌문화발전소 공연장",
     "CGV 신촌아트레온",
-    "이화여자대학교 대강당",
-    "연세대학교 100주년기념관 콘서트홀",
-    "이화52번가",
-    "신촌이대거리",
-    "연세대학교 백양로"
+    "신촌극장",
+    "서강대학교 메리홀 대극장",
+    "홍대땡땡거리"
    ],
-   "reason": "반경 500m 안에도 공연장, 갤러리, 극장, 관광 거리가 밀집해 있고 신촌 일대 전체가 공연·축제 상권이므로 1000m로 넓게 잡는다."
+   "reason": "반경 500m 안에 공연장·소극장·라이브하우스와 연세로 같은 거리 축제 장소가 몰려 있고 홍대 상권까지 이어지므로 반경을 1km로 넓게 잡는다."
   },
   "candidates": [
    {
-    "source": "세브란스병원 외래 진료 및 면회객 방문 추이",
-    "evidence": "세브란스병원 응급진료센터",
-    "distance_m": 259,
-    "reason": "병원 방문객과 보호자, 의료진이 가까운 카페를 이용할 가능성이 높아 병원 이용량이 평일 수요에 영향을 줄 수 있다."
+    "source": "연세로 차없는거리·보행자 전용 운영 및 거리축제 일정",
+    "evidence": "연세로",
+    "distance_m": 109,
+    "reason": "매장 바로 앞 연세로가 보행자 전용으로 바뀌거나 축제가 열리면 유동 인구와 카페 수요가 크게 달라진다."
    },
    {
-    "source": "신촌역 경의중앙선 시간대별 승하차 인원",
-    "evidence": "신촌역 경의중앙선",
-    "distance_m": 19,
-    "reason": "매장이 역에서 19m 거리라 역 이용객 유동량이 테이크아웃 수요와 직접 연결된다."
+    "source": "예스24 원더로크홀 공연 일정",
+    "evidence": "예스24 원더로크홀",
+    "distance_m": 274,
+    "reason": "수백 명 규모의 공연 전후에 관객이 근처 카페로 몰려 대기 수요가 생긴다."
    },
    {
-    "source": "이화여대 부속초등학교 학사일정",
-    "evidence": "이화여자대학교 사범대학부속 초등학교",
-    "distance_m": 182,
-    "reason": "등하교 시간과 학교 행사 때 학부모가 카페에서 대기하는 수요가 생길 수 있다."
+    "source": "CGV 신촌아트레온 상영·개봉 일정",
+    "evidence": "CGV 신촌아트레온",
+    "distance_m": 269,
+    "reason": "대형 개봉작이나 주말 상영 전후에 관객 유입이 늘어 카페 판매량에 영향을 준다."
    },
    {
-    "source": "공연장 공연 일정(라이브홀)",
-    "evidence": "아지토 라이브 홀",
-    "distance_m": 210,
-    "reason": "인근 라이브홀 공연 전후로 관객이 몰리면 저녁과 주말 매출이 늘 수 있다."
+    "source": "신촌역 2호선 시간대별 승하차 인원",
+    "evidence": "신촌역 2호선",
+    "distance_m": 160,
+    "reason": "160m 거리의 역 이용객 변화는 출퇴근·주말 유동 인구를 직접 보여 주는 지표다."
    },
    {
-    "source": "세브란스병원 신촌장례식장 빈소 현황",
-    "evidence": "세브란스병원 신촌장례식장",
-    "distance_m": 225,
-    "reason": "조문객 방문이 많은 날에는 인근 카페의 음료와 빵 수요가 늘어날 수 있다."
+    "source": "세브란스병원 외래 진료·방문객 현황",
+    "evidence": "세브란스병원 연세암병원",
+    "distance_m": 506,
+    "reason": "대형 병원의 환자·보호자·의료진 수요가 평일 낮 시간대 판매에 영향을 줄 수 있다."
    }
   ],
   "validation_notes": []
  },
- "n_nearby": 213,
+ "n_nearby": 227,
  "signals": [
   {
+   "signal": "event_impact",
+   "n_days": 67,
+   "first_date": "2025-10-02",
+   "last_date": "2026-11-26",
+   "n_menus": 15,
+   "source_url": "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=160069&menuNo=200009",
+   "note": null
+  },
+  {
    "signal": "exam_period",
-   "n_days": 34,
-   "first_date": "2025-12-08",
-   "last_date": "2026-10-23",
+   "n_days": 33,
+   "first_date": "2025-10-20",
+   "last_date": "2026-10-26",
    "n_menus": 0,
-   "source_url": "https://www.yonsei.ac.kr/sc/support/calendar.jsp",
+   "source_url": "https://www.sogang.ac.kr/ko/academic-support/calendar",
    "note": null
   },
   {
    "signal": "festival",
-   "n_days": 3,
-   "first_date": "2026-05-22",
-   "last_date": "2026-09-26",
+   "n_days": 7,
+   "first_date": "2026-05-14",
+   "last_date": "2026-09-18",
    "n_menus": 0,
-   "source_url": "https://www.yonsei.ac.kr/sc/support/calendar.jsp",
+   "source_url": "https://www.sogang.ac.kr/ko/academic-support/calendar",
    "note": null
   },
   {
    "signal": "nearby_event",
-   "n_days": 25,
-   "first_date": "2025-11-01",
-   "last_date": "2026-10-25",
+   "n_days": 67,
+   "first_date": "2025-10-02",
+   "last_date": "2026-11-26",
    "n_menus": 0,
-   "source_url": "https://example.com/sinchon-events",
+   "source_url": "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=160069&menuNo=200009",
    "note": null
   },
   {
    "signal": "rain_mm",
-   "n_days": 366,
-   "first_date": "2025-11-01",
-   "last_date": "2026-11-01",
+   "n_days": 422,
+   "first_date": "2025-09-27",
+   "last_date": "2026-11-22",
    "n_menus": 0,
-   "source_url": "https://www.weather.go.kr",
+   "source_url": "https://data.kma.go.kr",
+   "note": "지난 날짜는 그때의 예보를 구할 수 없어 실제 관측값을 예보 대신 썼습니다"
+  },
+  {
+   "signal": "special_day",
+   "n_days": 6,
+   "first_date": "2025-11-11",
+   "last_date": "2026-11-11",
+   "n_menus": 0,
+   "source_url": "https://ko.wikipedia.org/wiki/기념일",
+   "note": null
+  },
+  {
+   "signal": "special_impact",
+   "n_days": 41,
+   "first_date": "2025-11-04",
+   "last_date": "2026-11-11",
+   "n_menus": 15,
+   "source_url": "https://ko.wikipedia.org/wiki/기념일",
+   "note": null
+  },
+  {
+   "signal": "special_lead",
+   "n_days": 35,
+   "first_date": "2025-11-04",
+   "last_date": "2026-11-10",
+   "n_menus": 0,
+   "source_url": "https://ko.wikipedia.org/wiki/기념일",
    "note": null
   },
   {
    "signal": "temp_mean",
-   "n_days": 366,
-   "first_date": "2025-11-01",
-   "last_date": "2026-11-01",
+   "n_days": 422,
+   "first_date": "2025-09-27",
+   "last_date": "2026-11-22",
    "n_menus": 0,
-   "source_url": "https://www.weather.go.kr",
+   "source_url": "https://data.kma.go.kr",
+   "note": "지난 날짜는 그때의 예보를 구할 수 없어 실제 관측값을 예보 대신 썼습니다"
+  },
+  {
+   "signal": "trend_level",
+   "n_days": 420,
+   "first_date": "2025-09-27",
+   "last_date": "2026-11-20",
+   "n_menus": 15,
+   "source_url": "https://datalab.naver.com/keyword/trendSearch.naver",
    "note": null
   },
   {
    "signal": "vacation",
-   "n_days": 145,
-   "first_date": "2025-12-20",
+   "n_days": 141,
+   "first_date": "2025-12-22",
    "last_date": "2026-08-31",
    "n_menus": 0,
-   "source_url": "https://www.yonsei.ac.kr/sc/support/calendar.jsp",
+   "source_url": "https://www.sogang.ac.kr/ko/academic-support/calendar",
    "note": null
   }
  ],
  "articles": [
   {
-   "title": "[가상 기사] 11월 14일 신촌 맥주 축제",
-   "source_url": "/sample-news/beer-1114.html",
+   "title": "기획공연 [소년의 외침은 파도로 번져]",
+   "source_url": "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=160074&menuNo=200008",
+   "first_date": "2026-11-24",
+   "last_date": "2026-11-25",
+   "published_at": "2026-11-02T23:59:00"
+  },
+  {
+   "title": "epic; 서사시",
+   "source_url": "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=160181&menuNo=200009",
+   "first_date": "2026-11-20",
+   "last_date": "2026-11-26",
+   "published_at": "2026-11-12T23:59:00"
+  },
+  {
+   "title": "검색량 변화: 플레인스콘",
+   "source_url": "https://datalab.naver.com/keyword/trendSearch.naver",
+   "first_date": "2026-11-20",
+   "last_date": "2026-11-20",
+   "published_at": "2026-11-19T09:00:00"
+  },
+  {
+   "title": "2026 안애순컴퍼니 신작 [이콘 eikon 아이콘]",
+   "source_url": "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=160171&menuNo=200008",
+   "first_date": "2026-11-19",
+   "last_date": "2026-11-20",
+   "published_at": "2026-11-10T23:59:00"
+  },
+  {
+   "title": "[새로 엶] 퓨리피아 현대백화점 신촌점 뷰티페스타 팝업스토어",
+   "source_url": "https://www.businesskorea.co.kr/news/articleView.html?idxno=281714",
+   "first_date": "2026-11-16",
+   "last_date": "2026-11-16",
+   "published_at": "2026-11-19T15:52:00"
+  },
+  {
+   "title": "[새로 엶] 라비드 팝업스토어 라비드현대뷰티페스타",
+   "source_url": "https://blog.naver.com/earna7/224484289467",
+   "first_date": "2026-11-16",
+   "last_date": "2026-11-16",
+   "published_at": "2026-11-20T09:52:46"
+  },
+  {
+   "title": "제4회 K-Cat 페스티벌",
+   "source_url": "https://blog.naver.com/popo_travel/224476240439",
    "first_date": "2026-11-14",
    "last_date": "2026-11-14",
-   "published_at": "2026-10-20T10:00:00"
+   "published_at": "2026-11-13T23:59:00"
   },
   {
-   "title": "[가상 기사] 11월 1일 연세로 '차 없는 거리' 가을 축제 개최",
-   "source_url": "/sample-news/sinchon-festival-1101.html",
-   "first_date": "2026-11-01",
-   "last_date": "2026-11-01",
-   "published_at": "2026-10-28T09:00:00"
+   "title": "붙잡을 수 없는 환영을 지나, 보이지 않는 진실을 향해 나아간다",
+   "source_url": "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=160036&menuNo=200009",
+   "first_date": "2026-11-13",
+   "last_date": "2026-11-18",
+   "published_at": "2026-10-29T23:59:00"
   },
   {
-   "title": "[가상 기사] 주말 전국에 비 소식, 기온도 뚝",
-   "source_url": "/sample-news/weather-1101.html",
-   "first_date": "2026-11-01",
-   "last_date": "2026-11-01",
-   "published_at": "2026-10-31T11:00:00"
+   "title": "[새로 엶] ETF 베이커리 현대백화점 신촌점 오픈 행사",
+   "source_url": "https://blog.naver.com/tuesdaycherry/224483063927",
+   "first_date": "2026-11-13",
+   "last_date": "2026-11-13",
+   "published_at": "2026-11-19T23:59:00"
   },
   {
-   "title": "[가상 기사] 신촌역 앞 도로 긴급 공사로 내일 오전 통행 제한",
-   "source_url": "/sample-news/sinchon-roadwork.html",
-   "first_date": "2026-11-01",
-   "last_date": "2026-11-01",
-   "published_at": "2026-10-31T22:30:00"
+   "title": "[서울디자인창업센터] 서울디자인런 2026 - 팔지 않고 사게 만든다",
+   "source_url": "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=160005&menuNo=200011",
+   "first_date": "2026-11-12",
+   "last_date": "2026-11-12",
+   "published_at": "2026-10-27T23:59:00"
+  },
+  {
+   "title": "홍현기 개인전 [환기(換氣): 바람이 지나간 자리]",
+   "source_url": "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=159830&menuNo=200009",
+   "first_date": "2026-11-05",
+   "last_date": "2026-11-08",
+   "published_at": "2026-10-13T23:59:00"
+  },
+  {
+   "title": "[2026공연봄날 공식선정작] U's again 2!",
+   "source_url": "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=160090&menuNo=200008",
+   "first_date": "2026-11-04",
+   "last_date": "2026-11-06",
+   "published_at": "2026-11-02T23:59:00"
+  },
+  {
+   "title": "이예란 개인전 [HAPPEN!: 사건 뒤의 흰 그림자들]",
+   "source_url": "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=160069&menuNo=200009",
+   "first_date": "2026-10-28",
+   "last_date": "2026-11-09",
+   "published_at": "2026-11-02T23:59:00"
+  },
+  {
+   "title": "전시 [IMPRINTS OF TIME]",
+   "source_url": "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=159829&menuNo=200009",
+   "first_date": "2026-10-28",
+   "last_date": "2026-10-31",
+   "published_at": "2026-10-13T23:59:00"
+  },
+  {
+   "title": "이솝 만돌린 앙상블 정기연주회",
+   "source_url": "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=159669&menuNo=200008",
+   "first_date": "2026-10-24",
+   "last_date": "2026-10-24",
+   "published_at": "2026-09-28T23:59:00"
+  },
+  {
+   "title": "[서울디자인창업센터] 서울디자인런 2026 - 유명한 사람을 쓰면 뭐가 달라질까?",
+   "source_url": "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=159795&menuNo=200011",
+   "first_date": "2026-10-22",
+   "last_date": "2026-10-22",
+   "published_at": "2026-10-08T23:59:00"
+  },
+  {
+   "title": "포개진 지도 - 미시적이지만 거시적인 풍경",
+   "source_url": "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=159791&menuNo=200009",
+   "first_date": "2026-10-17",
+   "last_date": "2026-10-23",
+   "published_at": "2026-10-08T23:59:00"
+  },
+  {
+   "title": "석사학위 청구전 [Our Own Shelter] 한지연 · 박세빈",
+   "source_url": "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=159790&menuNo=200009",
+   "first_date": "2026-10-12",
+   "last_date": "2026-10-15",
+   "published_at": "2026-10-08T23:59:00"
+  },
+  {
+   "title": "[서울디자인창업센터] 서울디자인런 2026 - 실패하지 않는 브랜딩 A to Z (~10/7)",
+   "source_url": "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=159577&menuNo=200011",
+   "first_date": "2026-10-08",
+   "last_date": "2026-10-08",
+   "published_at": "2026-09-22T23:59:00"
+  },
+  {
+   "title": "전시 [Summer Breeze]",
+   "source_url": "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=159566&menuNo=200009",
+   "first_date": "2026-10-03",
+   "last_date": "2026-10-05",
+   "published_at": "2026-09-21T23:59:00"
+  },
+  {
+   "title": "전시 [이름이 되어가는 풍경]",
+   "source_url": "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=159565&menuNo=200009",
+   "first_date": "2026-10-03",
+   "last_date": "2026-10-05",
+   "published_at": "2026-09-21T23:59:00"
+  },
+  {
+   "title": "[서울디자인창업센터] 서울디자인런 2026 - 투자를 준비해야 할 때는?",
+   "source_url": "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=159444&menuNo=200011",
+   "first_date": "2026-09-22",
+   "last_date": "2026-09-22",
+   "published_at": "2026-09-11T23:59:00"
+  },
+  {
+   "title": "2026년 야간 공연 관람권_[푸른 점의 진주(Invisible Women)]",
+   "source_url": "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=159363&menuNo=200008",
+   "first_date": "2026-09-18",
+   "last_date": "2026-09-18",
+   "published_at": "2026-09-04T23:59:00"
+  },
+  {
+   "title": "2026 사랑-인도문화축제 개막식",
+   "source_url": "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=159400&menuNo=200010",
+   "first_date": "2026-09-15",
+   "last_date": "2026-09-15",
+   "published_at": "2026-09-07T23:59:00"
+  },
+  {
+   "title": "2026 신촌글로벌대학문화축제",
+   "source_url": "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=159193&menuNo=200010",
+   "first_date": "2026-09-11",
+   "last_date": "2026-09-13",
+   "published_at": "2026-08-25T23:59:00"
+  },
+  {
+   "title": "축제 기간 연세로 교통통제",
+   "source_url": "https://blog.naver.com/heatero/224404651594",
+   "first_date": "2026-09-11",
+   "last_date": "2026-09-14",
+   "published_at": "2026-09-08T23:59:00"
+  },
+  {
+   "title": "2026 신촌글로벌대학문화축제",
+   "source_url": "https://blog.naver.com/life_withhome/224398506381",
+   "first_date": "2026-09-11",
+   "last_date": "2026-09-13",
+   "published_at": "2026-09-02T23:59:00"
+  },
+  {
+   "title": "[서울디자인창업센터] 서울디자인런 2026 - 창업은 언제 혼자를 벗어나야 할까?",
+   "source_url": "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=159301&menuNo=200011",
+   "first_date": "2026-09-10",
+   "last_date": "2026-09-10",
+   "published_at": "2026-08-31T23:59:00"
+  },
+  {
+   "title": "(Who, What, When, Where & Why) I am",
+   "source_url": "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=159290&menuNo=200009",
+   "first_date": "2026-09-03",
+   "last_date": "2026-09-06",
+   "published_at": "2026-08-28T23:59:00"
+  },
+  {
+   "title": "2026년 야간 공연 관람권_[입국심사]",
+   "source_url": "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=158415&menuNo=200008",
+   "first_date": "2026-07-24",
+   "last_date": "2026-07-24",
+   "published_at": "2026-06-26T23:59:00"
+  },
+  {
+   "title": "[PLATFORM P 교육 프로그램] 변화하는 독자층을 위한 출판 전략 - 큰글자책 이지페이지의 모색",
+   "source_url": "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=157436&menuNo=200011",
+   "first_date": "2026-04-29",
+   "last_date": "2026-04-29",
+   "published_at": "2026-04-14T23:59:00"
+  },
+  {
+   "title": "2026년 신촌 벚꽃 버스킹 [신촌, 벚꽃에 물들다]",
+   "source_url": "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=157207&menuNo=200010",
+   "first_date": "2026-04-04",
+   "last_date": "2026-04-05",
+   "published_at": "2026-03-27T23:59:00"
+  },
+  {
+   "title": "[서대문구] 2026 신촌카운트다운콘서트",
+   "source_url": "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=156188&menuNo=200010",
+   "first_date": "2025-12-31",
+   "last_date": "2026-01-01",
+   "published_at": "2025-12-04T23:59:00"
+  },
+  {
+   "title": "연극 [획의 간극]",
+   "source_url": "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=155321&menuNo=200008",
+   "first_date": "2025-10-25",
+   "last_date": "2025-10-26",
+   "published_at": "2025-09-24T23:59:00"
+  },
+  {
+   "title": "콜렉티브 뒹굴 [꿈의 방주:Demo]",
+   "source_url": "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=155158&menuNo=200008",
+   "first_date": "2025-10-02",
+   "last_date": "2025-10-04",
+   "published_at": "2025-09-10T23:59:00"
   }
  ],
  "notes": [
-  "가상 매장입니다. 판매 기록·날씨·학사일정·근처 행사와 기사는 모두 가상으로 만든 것입니다."
+  "날씨 422일",
+  "학사일정 181일",
+  "서울 문화행사 근처 66일",
+  "기념일 평가 5개 (새로 물은 것 5개)",
+  "네이버 검색 글 57개 중 행사 글 57개, 20개 읽음 (신촌)",
+  "장소를 찾지 못해 건너뜀: 신촌점 유플렉스관 5층 (https://www.thebigdata.co.kr/view.php?ud=2026111213385568549511086197_23)",
+  "장소를 찾지 못해 건너뜀:  (https://www.vegannews.co.kr/news/article.html?no=406955)",
+  "장소를 찾지 못해 건너뜀:  (https://www.korea.kr/news/policyNewsView.do?newsId=148975915&call_from=naver_news)",
+  "장소를 찾지 못해 건너뜀: 신촌 연세로·스타광장·창천문화공원 일대 (https://blog.naver.com/heatero/224404651594)",
+  "행사 글 20개에서 행사 5일",
+  "메뉴 검색량 15개 → 유행 신호 15개 메뉴, 크게 바뀐 메뉴: 플레인스콘 +55%",
+  "행사 평가 31건 (새로 물은 것 31건)",
+  "행사 원문 96개"
  ]
 }

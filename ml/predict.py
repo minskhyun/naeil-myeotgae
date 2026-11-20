@@ -17,7 +17,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from contracts.schemas import DEFAULT_PREP_MODE, BacktestResult, Forecast, ForecastRow, Reason
+from contracts.schemas import DEFAULT_PREP_MODE, BacktestResult, Forecast, ForecastRow, Reason, SalesHistory
 from ml.calibration import apply_calibration
 from ml.features import (DEFAULT_CLOSE_TIME, DERIVED_SIGNALS, SPECIAL_LEAD_DAYS, ZERO_FILL_KINDS, available_signals,
                          base_level, build_frame, issue_time)
@@ -88,9 +88,8 @@ def signal_sources(signals: pd.DataFrame, store_id: str, date, close_time: str) 
     return s.sort_values("published_at").groupby("signal")["source_url"].last().to_dict()
 
 
-def explain(model, rows: pd.DataFrame, p50: pd.Series, usual: dict[str, float],
-            sources: dict[str, str]) -> list[list[Reason]]:
-    """메뉴(행)마다 근거 목록.  반사실 방식: 신호 하나를 '평소 값'으로 바꿔 다시 예측한 p50과 실제 예측을 비교한다.
+def explain(model, rows: pd.DataFrame, usual: dict[str, float], sources: dict[str, str]) -> list[list[Reason]]:
+    """메뉴(행)마다 근거 목록.  반사실 방식: 신호 하나를 '평소 값'으로 바꿔 다시 예측한 예상 판매량(평균)과 실제 예측을 비교한다.
 
     원재료도 모델 변수인 파생 신호(예: vacation → vacation_diff)는 따로 근거를 내지 않고 원재료와 함께 바꾼다.
     원재료가 평소 값이었다면 파생값(오늘 − 최근 평균)도 그만큼 달라진다: diff + (평소 값 − 오늘 값)
@@ -99,19 +98,37 @@ def explain(model, rows: pd.DataFrame, p50: pd.Series, usual: dict[str, float],
               for s in model.signal_cols}
     folded = {d for ds in linked.values() for d in ds}
     reasons = [[] for _ in range(len(rows))]
+    actual = model.predict_mean(rows)
     for sig in model.signal_cols:
         value = rows[sig]
         if sig in folded or value.isna().all() or (value == usual[sig]).all():   # 자료가 없거나 이미 평소 값
             continue
         cf_rows = rows.assign(**{sig: usual[sig]}, **{d: rows[d] + (usual[sig] - value) for d in linked[sig]})
-        cf = model.predict(cf_rows)["p50"]                                      # '평소였다면'의 예측
-        pct = (p50 - cf) / cf.where(cf > 0) * 100
+        cf = model.predict_mean(cf_rows)                                      # '평소였다면'의 예측
+        pct = (actual - cf) / np.where(cf > 0, cf, np.nan) * 100
         for i in range(len(rows)):
             if pd.notna(pct[i]) and pd.notna(value[i]) and abs(pct[i]) >= REASON_MIN_PCT:
                 reasons[i].append(Reason(signal=sig, effect_pct=round(float(pct[i]), 1),
                                          text=reason_text(sig, float(value[i]), float(pct[i])),
                                          source_url=sources.get(sig)))
     return [sorted(r, key=lambda x: -abs(x.effect_pct)) for r in reasons]       # 효과가 큰 것부터
+
+
+# ---------------------------------------------------------------- 최근 판매 (화면 그래프용)
+
+HISTORY_DAYS = 28            # 준비표 그래프에 보여 줄 날 수 (4주 = 같은 요일이 네 번)
+
+
+def recent_history(sales: pd.DataFrame, menus: list[str], days: int = HISTORY_DAYS) -> SalesHistory:
+    """마지막 판매일까지 최근 days일의 실제 판매: 하루 전체 합계 + menus의 메뉴별 판매량.
+    예측에는 쓰지 않는다. 화면이 '최근 4주와 내일 예상'을 나란히 그릴 때 쓴다. 기록이 없는 날(휴무)은 None."""
+    sales = sales.assign(date=pd.to_datetime(sales["date"]))
+    dates = pd.date_range(end=sales["date"].max(), periods=days)
+    total = sales.groupby("date")["qty"].sum().reindex(dates)
+    wide = sales[sales["menu"].isin(menus)].pivot_table(index="date", columns="menu", values="qty", aggfunc="sum").reindex(dates)
+    clean = lambda s: [None if pd.isna(v) else float(v) for v in s]      # noqa: E731
+    return SalesHistory(dates=[d.date() for d in dates], total=clean(total),
+                        menus={m: clean(wide[m]) for m in menus if m in wide})
 
 
 # ---------------------------------------------------------------- 내일 예측
@@ -156,13 +173,15 @@ def predict_next_day(sales: pd.DataFrame, signals: pd.DataFrame | None, groups: 
         q = apply_calibration(q.assign(base=base_level(rows)), calibration)
         q["pred"] = q["pred"].clip(q["p10"], q["p90"])                # 보정으로 범위가 움직여도 예상 판매량은 범위 안에
 
-    reasons = explain(model, rows, q["p50"], usual_values(train, model.signal_cols, kinds),
+    reasons = explain(model, rows, usual_values(train, model.signal_cols, kinds),
                       signal_sources(signals, store_id, target, close_time) if names else {})
     prep = prep_qty(q, prep_mode)
+    by_mode = {mode: prep_qty(q, mode) for mode in PREP_MODES}       # 화면에서 준비 기준을 바꿔 볼 때 쓰는 값
     out_rows = [
         ForecastRow(date=target.date(), menu=rows.at[i, "menu"],
                     pred=round(float(q.at[i, "pred"]), 1), p10=round(float(q.at[i, "p10"]), 1),
-                    p90=round(float(q.at[i, "p90"]), 1), prep_qty=int(prep[i]), model=model_name, reasons=reasons[i])
+                    p90=round(float(q.at[i, "p90"]), 1), prep_qty=int(prep[i]),
+                    prep_by_mode={mode: int(v[i]) for mode, v in by_mode.items()}, model=model_name, reasons=reasons[i])
         for i in range(len(rows))
     ]
     return Forecast(store_id=store_id, generated_at=dt.datetime.now().replace(microsecond=0),

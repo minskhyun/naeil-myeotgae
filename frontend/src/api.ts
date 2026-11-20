@@ -9,7 +9,8 @@ export type ForecastRow = {
   pred: number // 예상 판매량 (평균 기대값)
   p10: number // 예상 범위 아래 끝
   p90: number // 예상 범위 위 끝
-  prep_qty: number | null // 준비 권장량
+  prep_qty: number | null // 준비 권장량 (매장이 고른 준비 기준의 값)
+  prep_by_mode?: Record<string, number> | null // 준비 기준마다의 권장량 → 다시 계산하지 않고 바로 바꿔 보여 준다
   model: string
   reasons: Reason[]
 }
@@ -34,6 +35,9 @@ export type Forecast = {
   warnings: Warning[]
 }
 
+// 최근 4주의 실제 판매 (준비표 그래프의 재료). 날짜는 오래된 날부터, 휴무일은 null
+export type SalesHistory = { dates: string[]; total: (number | null)[]; menus: Record<string, (number | null)[]> }
+
 export type ModelScore = {
   model: string
   wape: number
@@ -46,6 +50,7 @@ export type ModelScore = {
   under?: number // 모자랐을 개수 합
   days?: number // 채점한 날짜 수
   amount?: number | null // 남거나 모자란 개수를 판매가로 환산한 금액 합(원). 판매가를 모르면 없음
+  days_won?: number | null // days 중 '지난주 같은 요일' 방식보다 덜 틀린 날 수
 }
 
 export type SignalDecision = {
@@ -98,7 +103,8 @@ export type StoreInfo = { store_id: string; name: string; prep_mode: string; can
 
 // 로그인한 사람 (GET /api/auth/me). 서버 규칙은 backend/app/auth.py
 // provider: 어느 로그인인지. 카카오는 이메일 제공에 동의하지 않으면 email이 없다
-export type User = { provider: 'google' | 'kakao'; email: string | null; name: string; picture: string | null; is_admin: boolean }
+// agreed = 이용약관 · 개인정보 수집·이용에 동의했는가 (처음 로그인하면 Consent.tsx가 한 번 묻는다)
+export type User = { provider: 'google' | 'kakao'; email: string | null; name: string; picture: string | null; is_admin: boolean; agreed: boolean }
 
 // 이 서버가 쓰는 로그인 방법 (GET /api/config에서 만든다). 하나도 없으면 로그인을 안 쓰는 서버
 export type LoginConfig = { google: string | null; kakao: boolean } // google = 구글 클라이언트 ID
@@ -109,6 +115,7 @@ export type MyStore = {
   name: string
   address: string | null
   close_time: string
+  category: string // 업종 (주변 정보를 고르는 AI에게 알려 준다)
   created_at: string | null
   updated_at: string | null // 마지막으로 준비표를 만든 때
   ready: boolean // 준비표가 있는지
@@ -121,7 +128,7 @@ export type ProgressEvent =
   | { kind: 'step'; step: 'ingest' | 'collect' | 'evaluate' | 'predict'; status: 'start' | 'done'; note?: string }
   | { kind: 'status'; text: string } // 지금 하는 일 한 줄
   | { kind: 'store'; name: string; address?: string; lat?: number; lon?: number }
-  | { kind: 'sales'; days: number; menus: number; first: string; last: string }
+  | { kind: 'sales'; days: number; menus: number; active?: number; first: string; last: string } // active = 지금 파는 메뉴 수 (예전 기록에는 없다)
   | { kind: 'places'; count: number; places: { name: string; group: string; lat: number; lon: number; distance_m: number }[] }
   | { kind: 'plan'; method?: string; model?: string; radius_m?: number; reason?: string; picks: { what: string; name: string; lat: number; lon: number; reason?: string }[] }
   | { kind: 'weather'; days: number; first?: string; last?: string } // first~last = 가져온 기간 (판매 기록 기간 전체)
@@ -135,7 +142,7 @@ export type ProgressEvent =
   | { kind: 'trial'; groups: string[]; wape: number; miss?: number } // miss = 하루에 남거나 모자란 개수.
   // 검증 중: 이 정보 묶음을 넣어 시험했더니 오차가 이만큼
   | { kind: 'decision'; group: string; adopted: boolean; reason: string }
-  | { kind: 'scores'; model: string; wape: number; base_wape: number; coverage: number; test_days?: number; miss?: number; base_miss?: number; saved_amount?: number }
+  | { kind: 'scores'; model: string; wape: number; base_wape: number; coverage: number; test_days?: number; miss?: number; base_miss?: number; saved_amount?: number; days_won?: number; final?: boolean }
   | { kind: 'forecast'; date: string; menus: number; top: { menu: string; prep: number | null; pred: number }[]; warnings: string[] }
 
 // 실행 작업 (예측 돌리기). 화면은 useJob.ts로 상태를 물어본다
@@ -148,6 +155,13 @@ export type Job = {
   error: string | null
 }
 
+// 화면의 주소: '/' 첫 화면(Landing), ABOUT_PATH 소개(About), SUPPORT_PATH 고객지원, PRIVACY_PATH 개인정보처리방침, TERMS_PATH 이용약관, APP_PATH 분석 화면(Workspace).
+// 서버 쪽 같은 값은 backend/app/main.py의 APP_PAGE · ABOUT_PAGE
+export const APP_PATH = '/app'
+export const ABOUT_PATH = '/about'
+export const SUPPORT_PATH = '/support' // 고객지원 (Support.tsx)
+export const PRIVACY_PATH = '/privacy' // 개인정보처리방침 (Privacy.tsx)
+export const TERMS_PATH = '/terms' // 이용약관 (Terms.tsx)
 export const PREP_MODES = ['폐기 줄이기', '균형', '품절 줄이기'] as const
 
 const JSON_BODY = { 'Content-Type': 'application/json' }
@@ -164,20 +178,23 @@ async function call<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const api = {
   // google_client_id가 있으면 구글 로그인 버튼을, kakao_login이면 카카오 로그인 버튼을 보여 준다
-  config: () => call<{ demo_mode: boolean; google_client_id: string | null; kakao_login: boolean }>('/config'),
+  config: () => call<{ demo_mode: boolean; google_client_id: string | null; kakao_login: boolean; contact_url?: string | null }>('/config'),
   me: () => call<User | null>('/auth/me'),
   loginGoogle: (credential: string) =>
     call<User>('/auth/google', { method: 'POST', headers: JSON_BODY, body: JSON.stringify({ credential }) }),
   logout: () => call<{ ok: boolean }>('/auth/logout', { method: 'POST' }),
+  agree: () => call<User>('/auth/agree', { method: 'POST' }), // 이용약관 · 개인정보 수집·이용 동의
+  deleteMe: () => call<{ ok: boolean }>('/auth/me', { method: 'DELETE' }), // 탈퇴: 계정과 모든 매장의 자료를 지운다
   // 내 매장 관리 (로그인한 사람만). 매장 ID는 서버가 지어 준다
   myStores: () => call<MyStore[]>('/my/stores'),
   createStore: (name: string, closeTime: string) =>
     call<MyStore>('/my/stores', { method: 'POST', headers: JSON_BODY, body: JSON.stringify({ name, close_time: closeTime }) }),
-  renameStore: (id: string, name: string) =>
-    call<MyStore>(`/my/stores/${id}`, { method: 'PATCH', headers: JSON_BODY, body: JSON.stringify({ name }) }),
+  updateStore: (id: string, fields: { name?: string; address?: string; close_time?: string; category?: string }) =>
+    call<MyStore>(`/my/stores/${id}`, { method: 'PATCH', headers: JSON_BODY, body: JSON.stringify(fields) }),
   deleteStore: (id: string) => call<{ ok: boolean }>(`/my/stores/${id}`, { method: 'DELETE' }),
   stores: () => call<StoreInfo[]>('/stores'),
   forecast: (id: string) => call<Forecast>(`/stores/${id}/forecast`),
+  history: (id: string) => call<SalesHistory>(`/stores/${id}/history`), // 준비표 그래프의 재료
   backtest: (id: string) => call<Backtest>(`/stores/${id}/backtest`),
   sources: (id: string) => call<SourceReport>(`/stores/${id}/sources`),
   progress: (id: string) => call<ProgressEvent[]>(`/stores/${id}/progress`), // 마지막 분석 때 알린 것 (다시 보기)
@@ -196,4 +213,7 @@ export const api = {
     if (opts.address) form.append('address', opts.address)
     return call<Job>(`/stores/${id}/run`, { method: 'POST', body: form })
   },
+  // 하루치 판매를 직접 적어 덧붙인다 → 그 기록까지 넣어 다시 분석한다 (올린 파일의 마지막 날짜 뒤의 날만)
+  addSales: (id: string, date: string, items: { menu: string; qty: number }[]) =>
+    call<Job>(`/stores/${id}/sales`, { method: 'POST', headers: JSON_BODY, body: JSON.stringify({ date, items }) }),
 }

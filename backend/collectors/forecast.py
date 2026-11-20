@@ -130,7 +130,32 @@ def academic_counts(events_path: Path, schools):
     return daily_counts(json.loads(events_path.read_text(encoding="utf-8")), schools)
 
 
-def update_csv(path: Path, forecast: dict, issued_at: str, holidays: dict, counts: dict):
+RECENT_DAYS = 3   # 오늘 · 어제 · 그제 (기상청은 지난 발표분을 며칠만 보관한다)
+
+
+def with_today(forecast: dict, issued: dict, fetch, now: dt.datetime):
+    """오늘(과 관측 자료가 아직 없는 어제·그제) 날씨를 채운다 (11/20).
+
+    최신 발표에는 오늘의 지난 시간이 없어 daily_summary가 오늘을 버리고, 관측 자료(ASOS)는 어제까지만,
+    그것도 다음 날 오전에야 온다. 그래서 어제까지의 판매 기록을 오늘 올리면(예측 날짜 = 오늘) 그날 날씨가 비어 있었다.
+    → D일의 날씨는 D-1일 17시 발표분에서 가져온다 (D일 24시간이 모두 들어 있다).
+    발표 시각을 D-1일 17시로 적어 두어야 '예측 시점(전날 영업 종료)에 알던 정보'로 인정된다 (ml/features.issue_time).
+    관측값이 있는 날은 update_csv가 덮어쓰지 않는다.  fetch(base) = 그 발표 시각의 예보 항목들.
+    """
+    for back in range(RECENT_DAYS):
+        day = now.date() - dt.timedelta(days=back)
+        eve = (now - dt.timedelta(days=back + 1)).replace(hour=17, minute=0, second=0, microsecond=0)
+        try:
+            early = daily_summary(fetch(eve))
+        except Exception as err:   # 그날 날씨만 없이 계속 (내일 이후 예보는 그대로 쓴다)
+            print(f"  [warn] {eve:%m-%d %H시} 발표 예보를 받지 못해 {day} 날씨는 비워 둠: {type(err).__name__}")
+            continue
+        if day.isoformat() in early:
+            forecast[day.isoformat()], issued[day.isoformat()] = early[day.isoformat()], eve.isoformat()
+
+
+def update_csv(path: Path, forecast: dict, issued: dict, holidays: dict, counts: dict):
+    """issued = {날짜: 그 날짜의 예보가 발표된 시각}"""
     with path.open(newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         fields = list(reader.fieldnames)
@@ -161,7 +186,7 @@ def update_csv(path: Path, forecast: dict, issued_at: str, holidays: dict, count
             continue
         row.update(w)
         row["weather_kind"] = "forecast"
-        row["weather_issued_at"] = issued_at
+        row["weather_issued_at"] = issued[key]
         written.append(key)
 
     with path.open("w", newline="", encoding="utf-8") as f:
@@ -193,10 +218,13 @@ def main():
     lat = args.lat if args.lat is not None else store["lat"]
     lon = args.lon if args.lon is not None else store["lon"]
     nx, ny = to_grid(lat, lon)
-    base = latest_base(dt.datetime.now(KST))
+    now = dt.datetime.now(KST)
+    base = latest_base(now)
     print(f"격자 {nx},{ny} / 발표 {base:%Y-%m-%d %H:%M}", flush=True)
 
     forecast = daily_summary(fetch_forecast(key, nx, ny, base))
+    issued = {d: base.isoformat() for d in forecast}
+    with_today(forecast, issued, lambda b: fetch_forecast(key, nx, ny, b), now)
     if not forecast:
         raise SystemExit("24시간이 모두 있는 예보 날짜가 없습니다.")
     days = sorted(forecast)
@@ -206,7 +234,7 @@ def main():
     except Exception as err:   # 특일 정보 API 활용신청 전 등: 공휴일 없이 예보만 넣는다
         print(f"  [warn] 공휴일 조회 실패, 공휴일 없이 계속: {type(err).__name__}")
         holidays = {}
-    written = update_csv(path, forecast, base.isoformat(), holidays, academic_counts(Path(args.events), plan_schools(store["store_id"])))
+    written = update_csv(path, forecast, issued, holidays, academic_counts(Path(args.events), plan_schools(store["store_id"])))
     for d in written:
         w = forecast[d]
         print(f"[ok] {d} 평균 {w['temp_mean']}도 (최저 {w['temp_min']}, 최고 {w['temp_max']}), 강수 {w['rain_mm']}mm")

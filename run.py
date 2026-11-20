@@ -42,7 +42,7 @@ from ml.evaluate import run_backtest, write_backtest
 from ml.features import load_sales, load_signals, to_kst
 from ml.ingest import ingest_store
 from ml.paths import ARTIFACTS, RAW, SAMPLE
-from ml.predict import predict_from_backtest, write_forecast
+from ml.predict import predict_from_backtest, recent_history, write_forecast
 
 STEPS = ["ingest", "evaluate", "predict"]
 PROGRESS_FILE = "progress.json"        # 실행 중에 알린 것 전부 (ml/progress.py) → 웹의 '분석 과정 다시 보기'
@@ -102,8 +102,14 @@ def _ingest_demo(args, out: Path) -> str:
 
 
 def _tell_sales(sales: pd.DataFrame) -> None:
-    """화면에 알리기: 판매 기록이 며칠치, 메뉴 몇 개인지."""
-    progress.emit("sales", days=int(sales["date"].nunique()), menus=int(sales["menu"].nunique()),
+    """화면에 알리기: 판매 기록이 며칠치, 메뉴 몇 개인지.
+
+    active = 지금 파는 메뉴 수 (최근 14일 안에 팔린 메뉴. features.build_frame이 예측 대상을 고르는 규칙과 같다).
+    기록에는 있지만 판매를 끝낸 메뉴가 있으면 menus보다 작다 → 화면은 준비표의 메뉴 수와 맞도록 이 값을 보여 준다.
+    """
+    last_sold = sales.groupby("menu")["date"].max()
+    active = int((last_sold >= sales["date"].max() - pd.Timedelta(days=13)).sum())
+    progress.emit("sales", days=int(sales["date"].nunique()), menus=int(sales["menu"].nunique()), active=active,
                   first=sales["date"].min().date(), last=sales["date"].max().date())
 
 
@@ -125,7 +131,7 @@ def _tell_demo_surroundings(store_id: str, out: Path) -> None:
 def _ingest_pos(args, out: Path) -> str:
     """실데이터: POS 파일 정리 → 매장 설정 → 주변 정보 (사장님은 POS와 주소만 준다)."""
     progress.status("판매 기록을 읽는 중")
-    notes = [ingest_store(Path(args.pos), args.store, out, pos_type=args.pos_type)]
+    notes = [ingest_store(Path(args.pos), args.store, out, pos_type=args.pos_type, added=args.added)]
     _tell_sales(load_sales(out / "sales_clean.csv"))
     if args.address:
         progress.status("매장 위치를 찾는 중")
@@ -153,7 +159,8 @@ def _store_setup(args, out: Path) -> tuple[StoreConfig, str]:
     store = StoreConfig.read(path) if path.exists() else \
         StoreConfig(store_id=args.store, **({"close_time": args.close_time} if args.close_time else {}))
     note = ""
-    if args.address and args.address != store.address:
+    # 주소가 바뀌었거나, 주소는 있는데 좌표가 없으면(화면의 '매장 관리'에서 주소를 고친 뒤) 위치를 다시 찾는다
+    if args.address and (args.address != store.address or store.lat is None):
         try:
             lat, lon, found = geocode.geocode(args.address)
             store.address, store.lat, store.lon = args.address, round(lat, 5), round(lon, 5)
@@ -238,15 +245,17 @@ def step_evaluate(args, out: Path) -> str:
     write_backtest(bt, out.parent)
     for d in bt.decisions:                                    # 화면: 정보 묶음마다 쓸지 말지
         progress.emit("decision", group=d.signal_group, adopted=d.adopted, reason=d.reason)
-    test = {s.model[:2]: s for s in bt.test_scores}           # "M3(채택 신호만)" → "M3"
-    mine, base = test.get(bt.chosen_model[:2]), test.get("M0")
+    final = bool(bt.test_scores)                              # 최종 시험이 있으면 그 결과, 기록이 짧아 없으면 검증 기간 결과
+    rows = bt.test_scores if final else bt.cv_scores
+    picked = next((s for s in rows if "채택" in s.model), None) or next((s for s in rows if s.model[:2] == bt.chosen_model[:2]), None)
+    mine, base = picked, next((s for s in rows if s.model == "M0"), None)
     if mine and base:
-        days = (pd.Timestamp(bt.test_period[1]) - pd.Timestamp(bt.test_period[0])).days + 1 if bt.test_period else None
-        per_day = lambda s: round((s.over + s.under) / max(s.days, 1), 1)                 # noqa: E731  하루에 남거나 모자란 개수
+        days = mine.days or None
+        per_day = lambda s: round((s.over + s.under) / max(s.days, 1), 2)                 # noqa: E731  하루에 남거나 모자란 개수
         saved = round((base.amount - mine.amount) / max(mine.days, 1)) if mine.amount is not None and base.amount is not None else None
         progress.emit("scores", model=bt.chosen_model, wape=round(mine.wape, 4), base_wape=round(base.wape, 4),
                       coverage=round(mine.coverage_80, 4), test_days=days, miss=per_day(mine), base_miss=per_day(base),
-                      saved_amount=saved)
+                      saved_amount=saved, days_won=mine.days_won, final=final)
     adopted = [d.signal_group for d in bt.decisions if d.adopted] or ["없음"]
     return f"선택 모델 {bt.chosen_model}, 채택 신호 {', '.join(adopted)}"
 
@@ -273,6 +282,8 @@ def step_predict(args, out: Path) -> str:
         except Exception as e:                                # 안내는 부가 기능: 실패해도 예측은 저장
             note += f", 경고 생성 실패({type(e).__name__}) → 경고 없이 저장"
     write_forecast(fc, out.parent)
+    history = recent_history(sales, [r.menu for r in fc.rows])           # 준비표 그래프의 재료 (최근 4주 실제 판매)
+    (out / "history.json").write_text(history.model_dump_json(indent=1), encoding="utf-8")
     top = sorted(fc.rows, key=lambda r: r.pred, reverse=True)[:5]
     progress.emit("forecast", date=fc.rows[0].date, menus=len(fc.rows), warnings=[w.message for w in fc.warnings],
                   top=[dict(menu=r.menu, prep=r.prep_qty, pred=round(r.pred)) for r in top])
@@ -291,6 +302,7 @@ def parse_args(argv=None):
     p.add_argument("--demo-days", type=int, help="가상 데이터를 앞 N일로 잘라 실행 (짧은 데이터 모드 시연)")
     p.add_argument("--pos", help="POS 파일 경로 (실데이터)")
     p.add_argument("--pos-type", default="auto", choices=["auto", "toss", "okpos", "items"])
+    p.add_argument("--added", help="화면에서 직접 적은 판매분 (date, menu, qty CSV). POS 파일의 마지막 날짜 뒤의 것만 덧붙인다")
     p.add_argument("--address", help="매장 주소 → 위치를 찾아 날씨·행사·뉴스를 자동 수집 (store.json에 저장)")
     p.add_argument("--close-time", help="영업 종료 시각 HH:MM (store.json이 없을 때만 씀, 기본 21:00)")
     p.add_argument("--signals", help="[개발용] 외부 신호 파일 (SignalRow 형식 .json/.csv). 주면 자동 수집을 하지 않음")

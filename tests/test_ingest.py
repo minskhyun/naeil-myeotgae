@@ -149,7 +149,8 @@ def test_unit_prices_from_amount_columns(tmp_path):
     from ml.ingest import ingest_store
     p = tmp_path / "items.csv"
     p.write_text("일자,품목명,수량,공급가액,부가세\n20261001,소금빵,10,30000,3000\n20261002,소금빵,10,30000,3000\n"
-                 "20261001,아메리카노,4,16000,1600\n20261002,서비스 쿠키,2,0,0\n", encoding="utf-8")
+                 "20261001,아메리카노,4,16000,1600\n20261002,서비스 쿠키,2,0,0\n"
+                 "20261003,아메리카노,6,,\n", encoding="utf-8")                   # 금액을 못 읽은 줄은 판매가 계산에서 뺀다
     ingest_store(p, "s", tmp_path / "out")
     assert json.loads((tmp_path / "out" / "menu_prices.json").read_text(encoding="utf-8")) == {"소금빵": 3300, "아메리카노": 4400}
 
@@ -157,3 +158,43 @@ def test_unit_prices_from_amount_columns(tmp_path):
     q.write_text("날짜,상품명,수량\n2026-10-01,소금빵,10\n", encoding="utf-8")
     ingest_store(q, "s", tmp_path / "out2")
     assert not (tmp_path / "out2" / "menu_prices.json").exists()
+
+
+def test_added_sales_follow_the_pos_file(tmp_path):
+    """화면에서 직접 적은 판매(added.csv)는 POS 파일의 마지막 날짜 뒤의 것만 덧붙는다 (파일이 다루는 날은 파일이 기준)."""
+    import json
+    from ml.ingest import ingest_store
+    pos = tmp_path / "pos.csv"
+    pos.write_text("날짜,상품명,수량\n2026-10-01,소금빵,10\n2026-10-02,소금빵,12\n2026-10-02,라떼,3\n", encoding="utf-8")
+    added = tmp_path / "added.csv"
+    added.write_text("date,menu,qty\n2026-10-02,소금빵,99\n2026-10-03,소금빵,8\n2026-10-03,라떼,0\n", encoding="utf-8")
+    note = ingest_store(pos, "s", tmp_path / "out", added=added)
+    sales = pd.read_csv(tmp_path / "out" / "sales_clean.csv")
+    bread = sales[sales["menu"] == "소금빵"].set_index("date")["qty"].to_dict()
+    assert bread == {"2026-10-01": 10, "2026-10-02": 12, "2026-10-03": 8}   # 10/2는 파일 값 그대로, 10/3이 붙었다
+    log = json.loads((tmp_path / "out" / "ingest_log.json").read_text(encoding="utf-8"))
+    assert log["pos_last"] == "2026-10-02" and log["added_days"] == ["2026-10-03"]
+    assert "직접 적은 판매 1일" in note
+
+
+@pytest.mark.parametrize("name", ["toss_receipts.xlsx", "okpos_daily.xlsx", "okpos_daily_cp949.csv"])
+def test_keeping_needed_columns_does_not_change_the_result(tmp_path, name):
+    """올린 파일에서 필요한 열만 남긴 CSV를 읽어도, 원본을 읽었을 때와 결과가 같다 (서버는 이 CSV만 보관한다)."""
+    from ml.ingest import keep_needed_columns
+    keep_needed_columns(FIX / name, tmp_path / "pos.csv")
+    a, la = read_pos(FIX / name)
+    b, lb = read_pos(tmp_path / "pos.csv")
+    pd.testing.assert_frame_equal(a, b)
+    assert la["pos_type"] == lb["pos_type"] and la.get("prices") == lb.get("prices")
+    assert la["dropped_total_or_blank"] == lb["dropped_total_or_blank"] and la["dropped_cancel"] == lb["dropped_cancel"]
+
+
+def test_keeping_needed_columns_drops_customer_columns(tmp_path):
+    from ml.ingest import keep_needed_columns
+    src = tmp_path / "raw.csv"
+    src.write_text("매출 내역,,,,,,\n결제일시,상품명,수량,결제금액,고객명,전화번호,카드번호\n"
+                   "2026-10-01 09:10:00,소금빵,2,6600,김손님,010-1234-5678,1234-56**-****-7890\n", encoding="utf-8")
+    log = keep_needed_columns(src, tmp_path / "pos.csv")
+    text = (tmp_path / "pos.csv").read_text(encoding="utf-8-sig")
+    assert log["kept"] == ["결제일시", "상품명", "수량", "결제금액"] and log["dropped"] == ["고객명", "전화번호", "카드번호"]
+    assert "김손님" not in text and "010" not in text and "7890" not in text and "매출 내역" not in text

@@ -50,10 +50,45 @@ PROMPT = """아래는 한국 대학 학사일정 페이지의 텍스트다. 이 
 """
 
 
+PROMPT_EN = """아래는 한국에 있는 외국 대학 캠퍼스의 학사일정 문서(영어)다. 이 문서는 {hint} 일정이다.
+다음 다섯 종류에 해당하는 일정만 골라 JSON 배열로 출력하라.
+
+- exam: 정규 학기(가을·봄)의 학기말 시험 기간 (Final exam period, Examination Period, Finals, exam period).
+  여름·겨울 계절학기의 시험, 중간 성적 보고 기간(Mid-Term Progress Reporting, midterm grading period),
+  재시험(resit exam), 성적 마감(Grades due)은 제외
+- festival: 학생 축제. 졸업식·입학식(Commencement, Convocation)은 제외
+- semester_start: 정규 학기(가을·봄) 수업 시작일 (Classes begin, First Day of Classes, Semester Start, start of education activities).
+  여름·겨울 계절학기와, 학기 중간에 시작하는 세션(Second session)은 제외
+- semester_end: 정규 학기(가을·봄) 수업 종료일 (Classes end, Last Day of Classes, 마지막 education activities 날).
+  여름·겨울 계절학기와, 학기 중간에 끝나는 세션(First session)은 제외
+- vacation_start: 여름방학·겨울방학 시작일 (winter holidays, summer holidays). 문서에 방학이 따로 적혀 있을 때만
+
+각 항목 형식: {{"title": "...", "category": "...", "start_date": "YYYY-MM-DD", "end_date": "YYYY-MM-DD"}}
+
+규칙:
+- title 은 문서에 적힌 표현(영어)을 한 글자도 바꾸지 말고 그대로 옮긴다. 날짜는 title 에 넣지 않는다.
+- 한 줄에 여러 학기의 날짜가 나란히 있으면(가을·봄·여름) 학기마다 항목을 따로 만든다. title 은 같아도 된다.
+- 같은 일정이 과정·학년별로 반복되면 학부(Undergraduate, Bachelor 1) 것 한 번만 쓴다.
+- 하루짜리 일정은 start_date 와 end_date 를 같게 쓴다.
+- 모든 날짜는 {range_start} 부터 {range_end} 사이여야 한다. 이 범위에 맞게 연도를 정한다.
+- 문서에 없는 일정은 만들지 않는다. 해당 일정이 없으면 빈 배열을 출력한다.
+
+문서 텍스트:
+{text}
+"""
+
+
 def fetch_text(url: str) -> str:
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) naeil-myeotgae-collector"}
     resp = requests.get(url, headers=headers, timeout=30)
     resp.raise_for_status()
+    if "pdf" in resp.headers.get("content-type", "").lower():        # 학사일정을 PDF로만 올리는 학교 (11/19)
+        import io
+
+        import pypdf
+        pages = pypdf.PdfReader(io.BytesIO(resp.content)).pages
+        lines = [ln.strip() for page in pages for ln in (page.extract_text() or "").splitlines()]
+        return "\n".join(ln for ln in lines if ln)
     resp.encoding = resp.apparent_encoding or resp.encoding
     soup = BeautifulSoup(resp.text, "html.parser")
     for tag in soup(["script", "style", "noscript"]):
@@ -90,7 +125,8 @@ def _squash(s: str) -> str:
 def extract(source: dict, text: str):
     """LLM 으로 일정을 뽑고, 원문에 실제로 있는 제목만 남긴다."""
     lo, hi = (dt.date.fromisoformat(d) for d in source["range"])
-    items = llm_json(PROMPT.format(hint=source["hint"], range_start=lo, range_end=hi, text=text[:60000]))
+    prompt = PROMPT_EN if source.get("lang") == "en" else PROMPT          # 영어 일정은 용어가 달라 안내문을 따로 둔다
+    items = llm_json(prompt.format(hint=source["hint"], range_start=lo, range_end=hi, text=text[:60000]))
     squashed = _squash(text)
     now = fetched_time(source)
     events = []
@@ -137,10 +173,15 @@ def derive_vacations(events: list):
         starts = sorted(day(e) for e in mine if e["type"] == "semester_start")
         vstarts = {day(e): e for e in mine if e["type"] == "vacation_start"}
         # 방학 시작일이 따로 없는 학교는 종강 다음 날을 방학 시작으로 본다
+        exams = [(day(x), dt.date.fromisoformat(x["end_date"])) for x in mine if x["type"] == "exam"]
         for e in mine:
             if e["type"] != "semester_end":
                 continue
             cand = dt.date.fromisoformat(e["end_date"]) + dt.timedelta(days=1)
+            # 수업이 끝난 뒤에 학기말 시험을 보는 학교(미국·유럽식)는 시험이 끝난 다음 날부터 방학이다
+            after = [end for start, end in exams if cand <= start <= cand + dt.timedelta(days=30)]
+            if after:
+                cand = max(after) + dt.timedelta(days=1)
             if not any(abs((v - cand).days) <= 14 for v in vstarts):
                 vstarts[cand] = e
         for v in sorted(vstarts):
@@ -220,13 +261,15 @@ def main():
     sources = json.loads(SOURCES_FILE.read_text(encoding="utf-8"))
     events = []
     for src in sources:
+        if schools is not None and src["school"] not in schools:      # 이 매장의 정보원 계획에 없는 학교는 읽지 않는다
+            continue
         name = f"{src['school']} {src['label']}"
         try:
             text = load_raw(src, args.refresh)
         except requests.RequestException as err:
             print(f"[fail] {name}: 페이지를 못 가져옴 ({err.__class__.__name__})")
             continue
-        if "시험" not in text:
+        if "시험" not in text and "exam" not in text.lower():
             print(f"[fail] {name}: 원문에 일정이 안 보임. 브라우저에서 복사해 "
                   f"{RAW_DIR / (src['school'] + '_' + src['label'] + '.txt')} 로 저장하세요.")
             continue

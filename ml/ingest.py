@@ -78,6 +78,28 @@ def _find_header(raw: pd.DataFrame, pos_type: str):
                      f"파일 첫 줄들:\n{preview}")
 
 
+def keep_needed_columns(src, dst, pos_type: str = "auto") -> dict:
+    """올린 POS 파일에서 예측에 쓰는 열(날짜·메뉴·수량, 있으면 시각·금액·부가세)만 골라 CSV(dst)로 저장한다 → 기록(남긴 열, 버린 열).
+
+    가게 손님의 정보(적립 전화번호, 회원 번호, 카드 정보 등)가 든 열을 서버에 남기지 않기 위해서다.
+    서버는 올린 원본 대신 이 CSV만 보관한다 (backend/app/main.py의 run_store).
+    줄은 그대로 둔다(합계·취소 줄 포함). 그래서 read_pos가 원본을 읽었을 때와 같은 결과를 낸다.
+    달마다 시트를 나눈 파일은 머리글이 같은 시트를 한 표로 이어 붙인다.
+    """
+    src = Path(src)
+    sheets = _read_raw(src)
+    _, header_row, cols = _find_header(sheets[0], pos_type)
+    header = [_norm_header(x) for x in sheets[0].iloc[header_row]]
+    same = [s for s in sheets if len(s) > header_row and [_norm_header(x) for x in s.iloc[header_row]] == header]
+    body = pd.concat([s.iloc[header_row + 1:] for s in same], ignore_index=True)
+    money = {header.index(n) for names in AMOUNT_COLUMNS.values() for n in names if n in header}
+    keep = sorted(set(cols.values()) | money)
+    names = [header[i] for i in keep]
+    table = pd.concat([pd.DataFrame([names]), body.iloc[:, keep].set_axis(range(len(keep)), axis=1)], ignore_index=True)
+    table.to_csv(dst, header=False, index=False, encoding="utf-8-sig")
+    return dict(kept=names, dropped=[h for i, h in enumerate(header) if h and i not in keep], rows=len(body))
+
+
 def _parse_dates(s: pd.Series) -> pd.Series:
     """여러 날짜 표기를 처리: 엑셀 날짜, '2026-10-01', '2026.10.01', '2026/10/01', '20261001', 시각 포함."""
     if pd.api.types.is_datetime64_any_dtype(s):
@@ -117,7 +139,7 @@ def read_pos(path, pos_type: str = "auto") -> tuple[pd.DataFrame, dict]:
         if hit:
             money[role] = hit[0]
     if "amount" in money:
-        df["amount"] = _parse_qty(body.iloc[:, money["amount"]]).fillna(0)
+        df["amount"] = _parse_qty(body.iloc[:, money["amount"]])          # 금액이 빈 줄은 빈 값 그대로 (판매가 계산에서 뺀다)
         if "vat" in money and header[money["amount"]] == "공급가액":
             df["amount"] += _parse_qty(body.iloc[:, money["vat"]]).fillna(0)
     # 판매 시각: 따로 열이 있거나, 날짜 칸에 시각이 같이 들어 있는 경우 (영수증 단위 파일)
@@ -137,8 +159,8 @@ def read_pos(path, pos_type: str = "auto") -> tuple[pd.DataFrame, dict]:
                dropped_cancel=int((is_cancel & ~is_total & ~is_blank).sum()),
                dropped_non_menu=int(is_other.sum()), non_menu=sorted(df.loc[is_other, "menu_raw"].unique()))
     df = df[~(is_total | is_blank | is_cancel | is_other)]
-    if "amount" in df:                                              # 메뉴별 판매가 = 금액 합 ÷ 수량 합
-        sums = df.groupby("menu_raw")[["amount", "qty"]].sum()
+    if "amount" in df:                                              # 메뉴별 판매가 = 금액 합 ÷ 수량 합 (금액을 아는 줄만)
+        sums = df[df["amount"].notna()].groupby("menu_raw")[["amount", "qty"]].sum()
         sums = sums[(sums["qty"] > 0) & (sums["amount"] > 0)]
         log["prices"] = {m: round(float(a / q)) for m, a, q in sums.itertuples()}
 
@@ -260,16 +282,38 @@ def clean_sales(pos: pd.DataFrame, store_id: str, menu_map: dict[str, str] | Non
     return sales, log
 
 
-# ---------------------------------------------------------------- 4) 한 번에
+# ---------------------------------------------------------------- 4) 직접 적은 판매분
 
-def ingest_store(pos_path, store_id: str, out: Path, pos_type: str = "auto") -> str:
+def merge_added(pos: pd.DataFrame, added_path) -> tuple[pd.DataFrame, list[str]]:
+    """화면에서 하루씩 직접 적은 판매(added.csv: date, menu, qty)를 POS 표 뒤에 덧붙인다 → (표, 덧붙인 날짜들).
+
+    POS 파일이 다루는 기간(파일의 마지막 날짜까지)은 파일이 기준이다. 그 뒤 날짜의 것만 덧붙인다.
+    → 나중에 그 날짜가 든 새 파일을 올리면 직접 적은 것은 쓰이지 않는다 (같은 판매를 두 번 세지 않는다).
+    메뉴 이름은 준비표에 보이는 이름(정리된 이름) 그대로 적힌다.
+    """
+    added = pd.read_csv(added_path, parse_dates=["date"])
+    added = added[(added["date"] > pos["date"].max()) & (added["qty"] > 0)]
+    if added.empty:
+        return pos, []
+    extra = added.rename(columns={"menu": "menu_raw"})[["date", "menu_raw", "qty"]]
+    return pd.concat([pos, extra], ignore_index=True), sorted({str(d.date()) for d in added["date"]})
+
+
+# ---------------------------------------------------------------- 5) 한 번에
+
+def ingest_store(pos_path, store_id: str, out: Path, pos_type: str = "auto", added=None) -> str:
     """POS 파일 → out/sales_clean.csv (+ ingest_log.json, menu_merge_candidates.json).  run.py가 부른다.
 
     메뉴명 규칙은 out/menu_map.json에 사람이 승인한 것만 적용한다. 없으면 그대로 둔다.
+    added = 화면에서 직접 적은 판매분 파일 (있으면 POS 파일의 마지막 날짜 뒤의 것을 덧붙인다 → merge_added)
     """
     out = Path(out)
     out.mkdir(parents=True, exist_ok=True)
     pos, read_log = read_pos(pos_path, pos_type)
+    pos_last = str(pos["date"].max().date())                            # 파일이 다루는 마지막 날짜 (직접 적기는 이 뒤부터)
+    added_days: list[str] = []
+    if added and Path(added).exists():
+        pos, added_days = merge_added(pos, added)
     map_path = out / "menu_map.json"
     menu_map = json.loads(map_path.read_text(encoding="utf-8")) if map_path.exists() else {}
     sales, clean_log = clean_sales(pos, store_id, menu_map)
@@ -287,13 +331,16 @@ def ingest_store(pos_path, store_id: str, out: Path, pos_type: str = "auto") -> 
     prices = {menu_map.get(m, m): p for m, p in read_log.pop("prices", {}).items()}      # 판매가 (금액 열이 있을 때)
     if prices:
         (out / "menu_prices.json").write_text(json.dumps(prices, ensure_ascii=False, indent=1), encoding="utf-8")
-    log = dict(read=read_log, clean=clean_log, merge_candidates=len(candidates), menus_with_price=len(prices))
+    log = dict(read=read_log, clean=clean_log, merge_candidates=len(candidates), menus_with_price=len(prices),
+               pos_last=pos_last, added_days=added_days)
     (out / "ingest_log.json").write_text(json.dumps(log, ensure_ascii=False, indent=1), encoding="utf-8")
 
     parts = [f"{read_log['pos_type']} 형식, {clean_log['days']}일·메뉴 {clean_log['menus']}개",
              f"합계·빈 행 {read_log['dropped_total_or_blank']}개, 취소 {read_log['dropped_cancel']}개 제외"
              + (f", 메뉴가 아닌 품목(금액권·충전) {len(read_log['non_menu'])}개 제외" if read_log["non_menu"] else "")
              + (f", 시트 {read_log['sheets']}개를 이어 읽음" if read_log["sheets"] > 1 else "")]
+    if added_days:
+        parts.append(f"직접 적은 판매 {len(added_days)}일 포함")
     if clean_log["closed_days"]:
         parts.append(f"휴무 {len(clean_log['closed_days'])}일")
     if clean_log["sold_out"]:

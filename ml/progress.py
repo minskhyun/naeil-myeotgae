@@ -13,7 +13,7 @@
     step      단계 시작·끝          step(ingest|collect|evaluate|predict), status(start|done), note
     status    지금 하는 일 한 줄     text
     store     매장                 name, address, lat, lon
-    sales     판매 기록             days, menus, first, last
+    sales     판매 기록             days, menus, active(지금 파는 메뉴 수: 최근 14일 안에 팔린 것), first, last
     places    주변 시설             count, places[{name, group, lat, lon, distance_m}]
     plan      AI가 고른 정보원       method, model, radius_m, reason, picks[{what, name, lat, lon, reason}]
     weather   날씨                 days, first, last (가져온 기간)
@@ -27,7 +27,8 @@
     trial     검증 중 시험 한 번     groups[정보 묶음], wape, miss(하루에 남거나 모자란 개수)
     decision  정보를 쓸지 판정        group, adopted, reason
     scores    검증 결과             model, wape, base_wape, coverage, test_days, miss·base_miss(하루에 남거나 모자란 개수),
-                                 saved_amount(지난주 방식보다 하루에 덜 틀린 금액, 판매가를 알 때만)
+                                 saved_amount(지난주 방식보다 하루에 덜 틀린 금액, 판매가를 알 때만),
+                                 days_won(test_days 중 지난주 방식을 이긴 날 수), final(최종 시험이면 true, 검증 기간이면 false)
     forecast  내일 예측             date, menus, top[{menu, prep, pred}], warnings[문장]
 """
 import json

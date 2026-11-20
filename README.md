@@ -174,6 +174,8 @@ ADMIN_EMAILS=관리자 이메일 (여러 명이면 쉼표로)            # 선�
 - 비밀번호는 받지 않습니다. 구글·카카오에서 받는 것은 이름(닉네임)·이메일·프로필 사진 주소뿐이고, `data/app.db`(SQLite, 저장소에 올리지 않음)에 저장합니다.
 - 로그인 상태는 30일 유지되는 쿠키입니다(자바스크립트가 읽지 못하는 HttpOnly, https에서는 Secure). 서버에는 세션 번호의 해시만 저장합니다.
 - 시연 모드(`DEMO_MODE=1`)는 보기 전용이라 로그인 버튼이 나오지 않습니다.
+- 처음 로그인하면 이용약관·개인정보 수집·이용 동의를 한 번 묻습니다(`Consent.tsx`). 동의 전에는 매장을 만들거나 파일을 올릴 수 없습니다. 탈퇴는 '매장 관리'의 내 계정에서 하고, 계정과 모든 매장의 자료가 지워집니다.
+- 올린 판매 기록 파일은 날짜·메뉴·수량·시각·금액 열만 남긴 CSV로 보관합니다. 원본과 나머지 열(손님 전화번호 등)은 저장하지 않습니다(`ml/ingest.keep_needed_columns`).
 
 ### 테스트
 
@@ -348,7 +350,7 @@ python -m collectors.run_all --refresh-events # 서울시 행사 목록 새로 �
 |---|---|
 | 프론트엔드 | React, TypeScript, Vite, Tailwind CSS, TanStack Query, Leaflet(지도, OpenStreetMap) |
 | 백엔드 | Python, FastAPI, SQLite(사용자·로그인·매장 주인), 구글 로그인(Google Identity Services), 카카오 로그인(REST API) |
-| 예측 | CatBoost (다중 분위 회귀), pandas |
+| 예측 | CatBoost (평균 예측) + 음이항 분포로 만든 예상 범위, pandas, scipy |
 | LLM | Claude API (Anthropic SDK, 구조화 출력) |
 | 외부 데이터 | 기상청 ASOS·단기예보, 한국천문연구원 특일 정보, 서울시 문화행사 정보, 카카오 로컬, NAVER API HUB 검색·검색어 트렌드, OpenStreetMap |
 | 배포 | Docker, Render |

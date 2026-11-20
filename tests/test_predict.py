@@ -128,3 +128,15 @@ def test_reason_for_days_before_special_day():
     from ml.predict import reason_text
     assert reason_text("special_lead", 7, 12.0) == "기념일을 1일 앞두고 있어 평소보다 약 12% 많이 예상"
     assert reason_text("special_lead", 1, -4.0) == "기념일을 7일 앞두고 있어 평소보다 약 4% 적게 예상"
+
+
+def test_recent_history_for_charts():
+    """준비표 그래프의 재료: 마지막 판매일까지 4주, 하루 합계와 메뉴별 판매량. 휴무일은 빈 값."""
+    from ml.predict import recent_history
+    days = pd.date_range("2026-10-01", "2026-10-31").delete(9)                    # 10/10은 휴무 (기록 없음)
+    sales = pd.DataFrame([dict(date=d, store_id="s", menu=m, qty=q, sold_out=False)
+                          for d in days for m, q in (("소금빵", 10), ("라떼", 3))])
+    h = recent_history(sales, ["소금빵"])
+    assert len(h.dates) == 28 and str(h.dates[0]) == "2026-10-04" and str(h.dates[-1]) == "2026-10-31"
+    assert h.total[0] == 13 and h.total[6] is None                                # 합계는 모든 메뉴, 10/10은 휴무
+    assert list(h.menus) == ["소금빵"] and h.menus["소금빵"][0] == 10 and h.menus["소금빵"][6] is None

@@ -1,8 +1,10 @@
-// 화면 위에 뜨는 창 (매장 추가, 매장 관리). 바깥을 누르거나 Esc, ✕로 닫는다.
+// 화면 위에 뜨는 창 (매장 추가, 판매 입력, 로그인). 바깥을 누르거나 Esc, ✕로 닫는다.
+// 어디서 띄우든 문서의 맨 끝(body)에 그린다 → 머리말처럼 층이 따로 있는 곳 안에서 띄워도 화면 전체를 덮는다.
 import { useEffect, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 
-// wide: 내용이 넓은 창 (주변 정보·검증 자세히 보기)
-export function Modal({ label, onClose, children, wide = false }: { label: string; onClose: () => void; children: ReactNode; wide?: boolean }) {
+// narrow: 내용이 적은 좁은 창 (로그인)
+export function Modal({ label, onClose, children, narrow = false }: { label: string; onClose: () => void; children: ReactNode; narrow?: boolean }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
     window.addEventListener('keydown', onKey)
@@ -14,21 +16,22 @@ export function Modal({ label, onClose, children, wide = false }: { label: strin
     }
   }, [onClose])
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-ink/50 p-3 sm:p-8"
+      className={`fixed inset-0 z-50 flex justify-center overflow-y-auto bg-ink-900/50 p-3 sm:p-8 ${narrow ? 'items-center' : 'items-start'}`}
       onMouseDown={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div role="dialog" aria-modal="true" aria-label={label} className={`relative w-full rounded-3xl bg-sheet shadow-2xl ${wide ? 'max-w-5xl' : 'max-w-3xl'}`}>
+      <div role="dialog" aria-modal="true" aria-label={label} className={`relative w-full rounded-3xl bg-white shadow-pop ${narrow ? 'max-w-md' : 'max-w-3xl'}`}>
         <button
           onClick={onClose}
           aria-label="닫기"
-          className="absolute top-4 right-4 flex h-9 w-9 items-center justify-center rounded-full bg-paper text-lg leading-none text-muted hover:text-ink"
+          className="absolute top-4 right-4 flex h-9 w-9 items-center justify-center rounded-full bg-surface text-lg leading-none text-ink-700 hover:text-ink-900"
         >
           ✕
         </button>
         <div className="px-5 py-6 sm:px-8 sm:py-8">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

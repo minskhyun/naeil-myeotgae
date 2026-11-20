@@ -135,7 +135,9 @@ class ForecastRow(BaseModel):
     pred: float = Field(ge=0)                   # 예상 판매량 (평균 기대값. 중앙값이 아니다 → ml/models.py)
     p10: float = Field(ge=0)                    # 10%의 날은 이보다 적게 팔림
     p90: float = Field(ge=0)                    # 90%의 날은 이보다 적게 팔림
-    prep_qty: int | None = Field(default=None, ge=0)   # 권장 준비량
+    prep_qty: int | None = Field(default=None, ge=0)   # 권장 준비량 (매장이 고른 준비 기준의 값)
+    prep_by_mode: dict[str, int] | None = None  # 준비 기준마다의 권장 준비량 {"폐기 줄이기": 38, "균형": 41, "품절 줄이기": 47}
+                                                # → 화면이 다시 계산하지 않고 바로 바꿔 보여 줄 수 있다
     model: ModelName
     reasons: list[Reason] = Field(default_factory=list)
 
@@ -188,6 +190,7 @@ class ModelScore(BaseModel):
     under: float = Field(default=0, ge=0)       # 모자랐을 개수 합 Σmax(실제−예측, 0).  over + under = Σ|실제−예측|
     days: int = Field(default=0, ge=0)          # 채점한 날짜 수 (하루 평균을 낼 때 나누는 수)
     amount: float | None = None                 # 남거나 모자란 개수를 판매가로 환산한 금액 합(원). 판매가를 모르면 None
+    days_won: int | None = None                 # days 중 '지난주 같은 요일'(M0)보다 그날 합계가 덜 틀린 날 수. M0 자신은 None
 
 
 class SignalDecision(BaseModel):
@@ -221,6 +224,13 @@ class Calibration(BaseModel):
     test_coverage_after: float | None = None    # 보정 후
     test_below_before: dict[str, float] | None = None   # 최종 테스트에서 '실제 ≤ 분위 예측' 비율 (p80이면 0.8이 이상적)
     test_below_after: dict[str, float] | None = None
+
+
+class SalesHistory(BaseModel):
+    """준비표 그래프의 재료: 최근 며칠의 실제 판매 → history.json (ml/predict.py의 recent_history)"""
+    dates: list[dt.date]                        # 예측 날짜 바로 전날까지, 오래된 날부터
+    total: list[float | None]                   # 하루 전체 판매 개수 (휴무일은 None)
+    menus: dict[str, list[float | None]]        # 메뉴별 하루 판매 개수 (휴무일·기록 없는 날은 None)
 
 
 class BacktestResult(BaseModel):

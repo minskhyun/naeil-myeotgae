@@ -1,233 +1,259 @@
 {
   "store_id": "sinchon-a",
-  "generated_at": "2026-11-19T18:59:10",
+  "generated_at": "2026-11-20T09:55:06",
   "rows": [
     {
-      "date": "2026-11-01",
-      "menu": "베이글",
-      "pred": 11.7,
-      "p10": 7.8,
-      "p90": 16.3,
-      "prep_qty": 12,
-      "model": "M3",
-      "reasons": [
-        {
-          "signal": "rain_mm",
-          "effect_pct": -17.2,
-          "text": "비 예보(9.7mm)로 평소보다 약 17% 적게 예상",
-          "source_url": "https://www.weather.go.kr"
-        }
-      ]
-    },
-    {
-      "date": "2026-11-01",
-      "menu": "소금빵",
-      "pred": 30.6,
-      "p10": 23.8,
-      "p90": 38.5,
-      "prep_qty": 31,
-      "model": "M3",
-      "reasons": [
-        {
-          "signal": "rain_mm",
-          "effect_pct": -16.2,
-          "text": "비 예보(9.7mm)로 평소보다 약 16% 적게 예상",
-          "source_url": "https://www.weather.go.kr"
-        }
-      ]
-    },
-    {
-      "date": "2026-11-01",
-      "menu": "식빵",
-      "pred": 9.6,
-      "p10": 5.7,
-      "p90": 14.4,
-      "prep_qty": 10,
-      "model": "M3",
-      "reasons": [
-        {
-          "signal": "rain_mm",
-          "effect_pct": -14.1,
-          "text": "비 예보(9.7mm)로 평소보다 약 14% 적게 예상",
-          "source_url": "https://www.weather.go.kr"
-        }
-      ]
-    },
-    {
-      "date": "2026-11-01",
-      "menu": "아메리카노(HOT)",
-      "pred": 19.6,
-      "p10": 13.4,
-      "p90": 27.5,
-      "prep_qty": 20,
-      "model": "M3",
-      "reasons": [
-        {
-          "signal": "rain_mm",
-          "effect_pct": -16.2,
-          "text": "비 예보(9.7mm)로 평소보다 약 16% 적게 예상",
-          "source_url": "https://www.weather.go.kr"
-        },
-        {
-          "signal": "temp_diff",
-          "effect_pct": 4.8,
-          "text": "기온이 최근 평균보다 12도 낮아 평소보다 약 5% 많이 예상",
-          "source_url": null
-        }
-      ]
-    },
-    {
-      "date": "2026-11-01",
-      "menu": "아이스 아메리카노",
-      "pred": 26.7,
-      "p10": 19.1,
-      "p90": 35.8,
+      "date": "2026-11-20",
+      "menu": "르뱅쿠키",
+      "pred": 26.5,
+      "p10": 18.0,
+      "p90": 36.0,
       "prep_qty": 27,
-      "model": "M3",
+      "prep_by_mode": {
+        "폐기 줄이기": 24,
+        "균형": 27,
+        "품절 줄이기": 32
+      },
+      "model": "M2",
+      "reasons": []
+    },
+    {
+      "date": "2026-11-20",
+      "menu": "말차라떼",
+      "pred": 30.3,
+      "p10": 21.0,
+      "p90": 40.0,
+      "prep_qty": 31,
+      "prep_by_mode": {
+        "폐기 줄이기": 28,
+        "균형": 31,
+        "품절 줄이기": 37
+      },
+      "model": "M2",
+      "reasons": []
+    },
+    {
+      "date": "2026-11-20",
+      "menu": "바스크치즈케이크",
+      "pred": 31.1,
+      "p10": 21.0,
+      "p90": 42.0,
+      "prep_qty": 32,
+      "prep_by_mode": {
+        "폐기 줄이기": 29,
+        "균형": 32,
+        "품절 줄이기": 38
+      },
+      "model": "M2",
+      "reasons": []
+    },
+    {
+      "date": "2026-11-20",
+      "menu": "소금빵",
+      "pred": 84.0,
+      "p10": 62.0,
+      "p90": 107.0,
+      "prep_qty": 84,
+      "prep_by_mode": {
+        "폐기 줄이기": 79,
+        "균형": 84,
+        "품절 줄이기": 98
+      },
+      "model": "M2",
+      "reasons": []
+    },
+    {
+      "date": "2026-11-20",
+      "menu": "아메리카노(HOT)",
+      "pred": 71.2,
+      "p10": 52.0,
+      "p90": 91.0,
+      "prep_qty": 72,
+      "prep_by_mode": {
+        "폐기 줄이기": 67,
+        "균형": 72,
+        "품절 줄이기": 84
+      },
+      "model": "M2",
       "reasons": [
         {
-          "signal": "rain_mm",
-          "effect_pct": -17.2,
-          "text": "비 예보(9.7mm)로 평소보다 약 17% 적게 예상",
-          "source_url": "https://www.weather.go.kr"
-        },
-        {
           "signal": "temp_diff",
-          "effect_pct": -13.6,
-          "text": "기온이 최근 평균보다 12도 낮아 평소보다 약 14% 적게 예상",
+          "effect_pct": 29.2,
+          "text": "기온이 최근 평균보다 11도 낮아 평소보다 약 29% 많이 예상",
           "source_url": null
         }
       ]
     },
     {
-      "date": "2026-11-01",
-      "menu": "아이스 카페라떼",
-      "pred": 10.0,
-      "p10": 6.5,
-      "p90": 14.4,
-      "prep_qty": 10,
-      "model": "M3",
+      "date": "2026-11-20",
+      "menu": "아메리카노(ICE)",
+      "pred": 93.9,
+      "p10": 70.0,
+      "p90": 119.0,
+      "prep_qty": 94,
+      "prep_by_mode": {
+        "폐기 줄이기": 88,
+        "균형": 94,
+        "품절 줄이기": 110
+      },
+      "model": "M2",
       "reasons": [
         {
-          "signal": "rain_mm",
-          "effect_pct": -17.3,
-          "text": "비 예보(9.7mm)로 평소보다 약 17% 적게 예상",
-          "source_url": "https://www.weather.go.kr"
-        },
-        {
           "signal": "temp_diff",
-          "effect_pct": -11.1,
-          "text": "기온이 최근 평균보다 12도 낮아 평소보다 약 11% 적게 예상",
+          "effect_pct": -12.1,
+          "text": "기온이 최근 평균보다 11도 낮아 평소보다 약 12% 적게 예상",
           "source_url": null
         }
       ]
     },
     {
-      "date": "2026-11-01",
-      "menu": "에그타르트",
-      "pred": 12.5,
-      "p10": 8.1,
-      "p90": 16.9,
-      "prep_qty": 13,
-      "model": "M3",
+      "date": "2026-11-20",
+      "menu": "자몽에이드",
+      "pred": 18.7,
+      "p10": 12.0,
+      "p90": 26.0,
+      "prep_qty": 19,
+      "prep_by_mode": {
+        "폐기 줄이기": 17,
+        "균형": 19,
+        "품절 줄이기": 23
+      },
+      "model": "M2",
+      "reasons": []
+    },
+    {
+      "date": "2026-11-20",
+      "menu": "초코라떼",
+      "pred": 23.2,
+      "p10": 15.0,
+      "p90": 32.0,
+      "prep_qty": 24,
+      "prep_by_mode": {
+        "폐기 줄이기": 21,
+        "균형": 24,
+        "품절 줄이기": 28
+      },
+      "model": "M2",
       "reasons": [
         {
-          "signal": "rain_mm",
-          "effect_pct": -16.4,
-          "text": "비 예보(9.7mm)로 평소보다 약 16% 적게 예상",
-          "source_url": "https://www.weather.go.kr"
+          "signal": "temp_diff",
+          "effect_pct": 10.6,
+          "text": "기온이 최근 평균보다 11도 낮아 평소보다 약 11% 많이 예상",
+          "source_url": null
         }
       ]
     },
     {
-      "date": "2026-11-01",
+      "date": "2026-11-20",
       "menu": "카페라떼(HOT)",
-      "pred": 10.0,
-      "p10": 6.7,
-      "p90": 14.9,
-      "prep_qty": 11,
-      "model": "M3",
+      "pred": 55.7,
+      "p10": 40.0,
+      "p90": 72.0,
+      "prep_qty": 56,
+      "prep_by_mode": {
+        "폐기 줄이기": 52,
+        "균형": 56,
+        "품절 줄이기": 66
+      },
+      "model": "M2",
       "reasons": [
         {
-          "signal": "rain_mm",
-          "effect_pct": -16.1,
-          "text": "비 예보(9.7mm)로 평소보다 약 16% 적게 예상",
-          "source_url": "https://www.weather.go.kr"
-        },
-        {
           "signal": "temp_diff",
-          "effect_pct": 4.4,
-          "text": "기온이 최근 평균보다 12도 낮아 평소보다 약 4% 많이 예상",
+          "effect_pct": 24.7,
+          "text": "기온이 최근 평균보다 11도 낮아 평소보다 약 25% 많이 예상",
           "source_url": null
         }
       ]
     },
     {
-      "date": "2026-11-01",
-      "menu": "크루아상",
-      "pred": 16.4,
-      "p10": 11.7,
-      "p90": 21.8,
-      "prep_qty": 17,
-      "model": "M3",
+      "date": "2026-11-20",
+      "menu": "카페라떼(ICE)",
+      "pred": 21.5,
+      "p10": 14.0,
+      "p90": 29.0,
+      "prep_qty": 22,
+      "prep_by_mode": {
+        "폐기 줄이기": 20,
+        "균형": 22,
+        "품절 줄이기": 26
+      },
+      "model": "M2",
       "reasons": [
         {
-          "signal": "rain_mm",
-          "effect_pct": -12.9,
-          "text": "비 예보(9.7mm)로 평소보다 약 13% 적게 예상",
-          "source_url": "https://www.weather.go.kr"
+          "signal": "temp_diff",
+          "effect_pct": -25.9,
+          "text": "기온이 최근 평균보다 11도 낮아 평소보다 약 26% 적게 예상",
+          "source_url": null
         }
       ]
     },
     {
-      "date": "2026-11-01",
-      "menu": "휘낭시에",
-      "pred": 12.5,
-      "p10": 9.3,
-      "p90": 17.7,
-      "prep_qty": 13,
-      "model": "M3",
+      "date": "2026-11-20",
+      "menu": "크루아상",
+      "pred": 33.6,
+      "p10": 23.0,
+      "p90": 45.0,
+      "prep_qty": 34,
+      "prep_by_mode": {
+        "폐기 줄이기": 31,
+        "균형": 34,
+        "품절 줄이기": 40
+      },
+      "model": "M2",
+      "reasons": []
+    },
+    {
+      "date": "2026-11-20",
+      "menu": "햄치즈샌드위치",
+      "pred": 16.5,
+      "p10": 10.0,
+      "p90": 23.0,
+      "prep_qty": 17,
+      "prep_by_mode": {
+        "폐기 줄이기": 15,
+        "균형": 17,
+        "품절 줄이기": 21
+      },
+      "model": "M2",
       "reasons": [
         {
-          "signal": "rain_mm",
-          "effect_pct": -17.1,
-          "text": "비 예보(9.7mm)로 평소보다 약 17% 적게 예상",
-          "source_url": "https://www.weather.go.kr"
+          "signal": "temp_diff",
+          "effect_pct": 10.8,
+          "text": "기온이 최근 평균보다 11도 낮아 평소보다 약 11% 많이 예상",
+          "source_url": null
         }
       ]
     }
   ],
   "signals_used": [
     "temp_diff",
-    "rain_mm",
-    "exam_period",
-    "vacation",
-    "festival",
-    "nearby_event",
-    "exam_period_diff",
-    "vacation_diff",
-    "festival_diff"
+    "rain_mm"
   ],
   "warnings": [
     {
-      "date": "2026-11-01",
+      "date": "2026-11-20",
       "menu_scope": [
-        "*"
+        "아메리카노(HOT)",
+        "아메리카노(ICE)",
+        "카페라떼(HOT)",
+        "카페라떼(ICE)",
+        "말차라떼",
+        "초코라떼"
       ],
       "situation_type": "대형행사",
       "direction": "증가",
-      "strength": "중간",
+      "strength": "낮음",
       "evidence": [
         {
-          "source_url": "/sample-news/sinchon-festival-1101.html",
-          "quote": "서대문구는 11월 1일 일요일 정오부터 오후 8시까지 신촌 연세로 일대에서 '차 없는 거리' 가을 축제를 연다고 밝혔다."
+          "source_url": "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=160171&menuNo=200008",
+          "quote": "장소: 서강대 메리홀 대극장 (매장에서 약 543m). 기간: 2026-11-19 ~ 2026-11-20. 분야: 무용."
         },
         {
-          "source_url": "/sample-news/sinchon-festival-1101.html",
-          "quote": "지난해 같은 행사에 약 3만 명이 찾았다고 설명했다."
+          "source_url": "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=160181&menuNo=200009",
+          "quote": "장소: 갤러리 지하 (매장에서 약 531m). 기간: 2026-11-20 ~ 2026-11-26. 분야: 전시/미술."
         }
       ],
-      "message": "내일 정오부터 저녁 8시까지 연세로에서 '차 없는 거리' 가을 축제가 열려 손님이 늘어날 수 있지만, 예측에는 이 행사가 반영되지 않았고 비 소식도 있으니 준비량을 살펴 주세요."
+      "message": "11월 20일 매장 근처에서 무용 공연과 전시가 열려 관람객 방문으로 음료 손님이 조금 늘 수 있으니 참고해 주세요."
     }
   ]
 }

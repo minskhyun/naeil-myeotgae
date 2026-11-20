@@ -13,6 +13,7 @@
   GET  /api/stores/{store_id}/progress     마지막 분석 때 알린 것 전부 → 화면의 '분석 과정 다시 보기'
 실행 (오래 걸리므로 작업 번호를 주고, 화면이 상태를 물어본다)
   POST /api/stores/{store_id}/run          POS 파일 + 매장 주소 → run.py 전체 실행 (주변 정보는 주소로 자동 수집)
+  POST /api/stores/{store_id}/sales        하루치 판매를 직접 적어 덧붙이기 → 그 기록까지 넣어 다시 실행
   POST /api/stores/{store_id}/demo         가상 데이터로 전체 실행 (시연용)
   POST /api/stores/{store_id}/settings     준비 방식 바꾸기 → predict 단계만 다시
   GET  /api/jobs/{job_id}                  작업 상태 (running / done / error) + 실행 기록 + 알림(events)
@@ -23,6 +24,8 @@
   GET  /api/auth/kakao/callback            카카오가 돌려보내는 곳: 확인하고 로그인 쿠키를 준 뒤 첫 화면으로
   GET  /api/auth/me                        지금 로그인한 사람 (없으면 null)
   POST /api/auth/logout                    로그아웃
+  POST /api/auth/agree                     이용약관 · 개인정보 수집·이용에 동의 (처음 한 번. 동의 전에는 매장을 만들거나 고칠 수 없다)
+  DELETE /api/auth/me                      탈퇴: 계정과 내 모든 매장의 자료(올린 파일, 결과)를 지운다
   로그인이 켜지면: 시연 매장은 누구나 보고, 내 매장은 나만 보고 고친다. 파일 올리기는 로그인해야 한다.
 내 매장 관리 (로그인한 사람만)
   GET    /api/my/stores                    내 매장 목록 (아직 준비표가 없는 매장도)
@@ -38,6 +41,7 @@
   - 결과는 backend/demo_data/ (가상 매장·공개 데이터 결과만, 저장소에 들어 있음)
   - frontend/dist가 있으면 화면도 이 서버가 함께 보여 준다 → 주소 하나로 끝 (Dockerfile 참고)
 """
+import csv
 import datetime as dt
 import json
 import os
@@ -52,14 +56,17 @@ from pathlib import Path
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, Response, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from backend.app import auth
-from contracts.schemas import DEFAULT_CLOSE_TIME, BacktestResult, Forecast, SourceReport, StoreConfig
+from contracts.schemas import DEFAULT_CLOSE_TIME, BacktestResult, Forecast, SalesHistory, SourceReport, StoreConfig
 from ml import paths, progress
-from ml.predict import PREP_MODES
+from ml.features import load_sales
+from ml.ingest import keep_needed_columns
+from ml.llm import settings as env_settings
+from ml.predict import PREP_MODES, recent_history
 
 Me = Depends(auth.current_user)     # 요청을 보낸 사람 (로그인 안 했으면 None)
 
@@ -70,6 +77,8 @@ WEB_DIST = paths.ROOT / "frontend" / "dist"      # npm run build 결과 (있으�
 UPLOADS = paths.RAW / "uploads"                  # 올린 파일 (실제 매장 자료 → 커밋 안 됨)
 STORE_ID = re.compile(r"^[a-z0-9][a-z0-9-]{0,40}$")   # 폴더 이름으로 쓰므로 안전한 글자만
 POS_SUFFIXES = (".xlsx", ".xls", ".xlsm", ".csv")
+ADDED = "added.csv"                                   # 화면에서 직접 적은 판매분 (올린 POS 파일 옆에 둔다: date, menu, qty)
+KST = dt.timezone(dt.timedelta(hours=9))              # '오늘'은 한국 날짜로 본다 (서버 시계는 다른 시간대일 수 있다)
 CLOSE_TIME = r"^([01]\d|2[0-3]):[0-5]\d$"            # 영업 종료 시각 HH:MM
 
 app = FastAPI(title="내일몇개 API")
@@ -111,8 +120,11 @@ def config():
     """화면이 처음에 물어본다: 시연 모드면 '데이터 올리기'와 준비 방식 바꾸기를 숨긴다.
     google_client_id가 있으면 구글 로그인 버튼을, kakao_login이면 카카오 로그인 버튼을 보여 준다
     (클라이언트 ID는 공개돼도 되는 값. 시연 모드는 보기 전용이라 로그인이 없다)."""
+    contact = (env_settings().get("CONTACT_URL") or "").strip()
     return {"demo_mode": DEMO_MODE, "google_client_id": None if DEMO_MODE else auth.CLIENT_ID,
-            "kakao_login": not DEMO_MODE and bool(auth.KAKAO_KEY)}
+            "kakao_login": not DEMO_MODE and bool(auth.KAKAO_KEY),
+            # 첫 화면의 '사전 신청·문의' 버튼이 여는 주소. 웹 주소일 때만 내보낸다 (.env 또는 서버 환경 변수 CONTACT_URL)
+            "contact_url": contact if contact.startswith(("https://", "http://")) else None}
 
 
 @app.get("/api/stores")
@@ -148,6 +160,17 @@ def sources(store_id: str, user: auth.User | None = Me):
     return SourceReport.model_validate_json(_read(store_id, "sources_report.json", user))
 
 
+@app.get("/api/stores/{store_id}/history", response_model=SalesHistory)
+def history(store_id: str, user: auth.User | None = Me):
+    """준비표 그래프의 재료: 최근 4주 실제 판매 (run.py가 예측할 때 history.json으로 남긴다).
+    이 파일이 생기기 전에 분석한 매장은 판매 기록에서 바로 계산해 준다."""
+    folder = _store_dir(store_id)
+    if (folder / "history.json").exists() or not (folder / "sales_clean.csv").exists():
+        return SalesHistory.model_validate_json(_read(store_id, "history.json", user))
+    fc = Forecast.model_validate_json(_read(store_id, "forecast.json", user))
+    return recent_history(load_sales(folder / "sales_clean.csv"), [r.menu for r in fc.rows])
+
+
 @app.get("/api/stores/{store_id}/progress")
 def store_progress(store_id: str, user: auth.User | None = Me):
     """마지막으로 처음부터 분석했을 때 알린 것 전부 (run.py가 progress.json으로 남긴다)."""
@@ -161,6 +184,11 @@ class GoogleLogin(BaseModel):
 
 
 STATE_COOKIE = "nm_oauth_state"            # 카카오로 보낼 때 심어 두는 확인용 값 (10분)
+APP_PAGE = "/app"                            # 분석 화면의 주소 (첫 화면은 "/"). 화면 쪽 같은 값은 frontend/src/api.ts의 APP_PATH
+ABOUT_PAGE = "/about"                        # 소개 화면의 주소 (frontend/src/api.ts의 ABOUT_PATH)
+SUPPORT_PAGE = "/support"                    # 고객지원 (자주 묻는 질문 · 사용 가이드 · 문의. api.ts의 SUPPORT_PATH)
+PRIVACY_PAGE = "/privacy"                    # 개인정보처리방침 (api.ts의 PRIVACY_PATH)
+TERMS_PAGE = "/terms"                        # 이용약관 (api.ts의 TERMS_PATH)
 KAKAO_CALLBACK = "/api/auth/kakao/callback"  # 카카오 콘솔의 '리다이렉트 URI'에 등록하는 주소의 뒷부분
 ASKED = ".nickname"                        # state 끝에 붙이는 표시: 닉네임 동의를 따로 물어보고 돌아오는 길
 
@@ -209,7 +237,7 @@ def auth_kakao_callback(request: Request, code: str | None = None, state: str | 
     mine = bool(state and saved and secrets.compare_digest(state, saved))       # 우리가 보낸 요청이 맞는가
     asked = mine and state.endswith(ASKED)                                      # 닉네임을 물어보고 돌아오는 길인가
     # 닉네임 동의를 거절하고 돌아왔어도 로그인은 이미 돼 있으니 첫 화면으로 보낸다
-    back = RedirectResponse("/" if asked and auth.current_user(request) else "/?login_error=kakao")
+    back = RedirectResponse(APP_PAGE if asked and auth.current_user(request) else "/?login_error=kakao")
     if auth.KAKAO_KEY and code and mine:
         try:
             profile = auth.kakao_profile(code, callback)
@@ -220,7 +248,7 @@ def auth_kakao_callback(request: Request, code: str | None = None, state: str | 
                 back.set_cookie(STATE_COOKIE, again, max_age=600, httponly=True, samesite="lax", secure=callback.startswith("https"))
                 _set_session(back, request, token)
                 return back
-            back = RedirectResponse("/")
+            back = RedirectResponse(APP_PAGE)                # 로그인했으면 분석 화면으로
             _set_session(back, request, token)
         except Exception as e:                       # 코드 만료, 시크릿 틀림, 카카오 서버 오류 등 → 서버 기록에 이유를 남긴다
             print(f"[카카오 로그인 실패] {type(e).__name__}: {e}", flush=True)
@@ -240,6 +268,30 @@ def auth_logout(request: Request, response: Response):
     return {"ok": True}
 
 
+@app.post("/api/auth/agree")
+def auth_agree(user: auth.User | None = Me):
+    """이용약관 · 개인정보 수집·이용에 동의한다 (처음 로그인했을 때 화면이 한 번 묻는다)."""
+    return auth.agree(_member(user)).public()
+
+
+@app.delete("/api/auth/me")
+def delete_me(response: Response, user: auth.User | None = Me):
+    """탈퇴: 내 모든 매장의 자료(결과 폴더, 올린 파일)와 계정을 지운다. 되돌릴 수 없다."""
+    user = _member(user)
+    _read_only()
+    mine = list(auth.my_stores(user))
+    with LOCK:
+        if any(s in RUNNING for s in mine):
+            raise HTTPException(409, "지금 계산 중인 매장이 있습니다. 끝난 뒤 다시 시도해 주세요.")
+    for store_id in mine:
+        for path in (ARTIFACTS / store_id, UPLOADS / store_id):
+            if path.exists():
+                shutil.rmtree(path)
+    auth.delete_user(user)
+    response.delete_cookie(auth.COOKIE)
+    return {"ok": True}
+
+
 # ---------------------------------------------------------------- 내 매장 관리
 
 class NewStore(BaseModel):
@@ -247,8 +299,12 @@ class NewStore(BaseModel):
     close_time: str = DEFAULT_CLOSE_TIME
 
 
-class StoreName(BaseModel):
-    name: str = Field(min_length=1, max_length=40)
+class StoreEdit(BaseModel):
+    """매장 정보 고치기. 준 칸만 바꾼다 (화면의 '매장 관리')."""
+    name: str | None = Field(default=None, min_length=1, max_length=40)
+    address: str | None = Field(default=None, max_length=200)      # "" = 위치 지우기
+    close_time: str | None = None
+    category: str | None = Field(default=None, min_length=1, max_length=20)   # 업종 (주변 정보를 고르는 AI에게 알려 준다)
 
 
 def _member(user: auth.User | None) -> auth.User:
@@ -267,6 +323,7 @@ def _my_store(store_id: str, created_at: str | None, mine: bool) -> dict:
     fc = folder / "forecast.json"
     updated = dt.datetime.fromtimestamp(fc.stat().st_mtime).isoformat(timespec="seconds") if fc.exists() else None
     return dict(store_id=store_id, name=store.name or store_id, address=store.address, close_time=store.close_time,
+                category=store.category,
                 created_at=created_at, updated_at=updated, ready=fc.exists(), running=store_id in RUNNING, mine=mine)
 
 
@@ -287,6 +344,7 @@ def my_stores(user: auth.User | None = Me):
 def create_my_store(body: NewStore, user: auth.User | None = Me):
     user = _member(user)
     _read_only()
+    auth.check_agreed(user)
     if not re.match(CLOSE_TIME, body.close_time):
         raise HTTPException(400, "영업 종료 시각은 21:00처럼 적어 주세요.")
     store_id = auth.create_store(user)
@@ -297,13 +355,26 @@ def create_my_store(body: NewStore, user: auth.User | None = Me):
 
 
 @app.patch("/api/my/stores/{store_id}")
-def rename_my_store(store_id: str, body: StoreName, user: auth.User | None = Me):
+def edit_my_store(store_id: str, body: StoreEdit, user: auth.User | None = Me):
+    """매장 이름·주소·영업 종료 시각을 고친다. 주소와 종료 시각은 예측의 재료라서, 바꾼 것은 다음에 분석할 때부터 반영된다
+    (주소가 바뀌면 좌표를 지워 둔다 → 다음 분석에서 새 주소로 위치를 다시 찾는다: run.py의 _store_setup)."""
     user = _member(user)
     _read_only()
     path = _store_dir(store_id) / "store.json"
     auth.check_write(user, store_id, exists=path.exists())
     store = StoreConfig.read(path) if path.exists() else StoreConfig(store_id=store_id)
-    store.name = body.name.strip()
+    if body.name is not None:
+        if not body.name.strip():
+            raise HTTPException(422, "매장 이름을 적어 주세요.")
+        store.name = body.name.strip()
+    if body.close_time is not None:
+        if not re.match(CLOSE_TIME, body.close_time):
+            raise HTTPException(400, "영업 종료 시각은 21:00처럼 적어 주세요.")
+        store.close_time = body.close_time
+    if body.category is not None:
+        store.category = body.category.strip()
+    if body.address is not None and body.address.strip() != (store.address or ""):
+        store.address, store.lat, store.lon = body.address.strip() or None, None, None
     path.parent.mkdir(parents=True, exist_ok=True)
     store.write(path)
     return _my_store(store_id, auth.my_stores(user).get(store_id), store_id in auth.my_stores(user))
@@ -372,6 +443,32 @@ def _start(store_id: str, args: list[str]) -> dict:
     return JOBS[job_id]
 
 
+def _keep_upload(store_id: str, pos: UploadFile, suffix: str) -> Path:
+    """올린 POS 파일에서 예측에 쓰는 열(날짜·메뉴·수량·시각·금액)만 골라 pos.csv로 보관한다. 원본은 남기지 않는다.
+    가게 손님의 정보(전화번호·회원 번호·카드 정보)가 든 열이 서버에 남지 않게 하려는 것 (ml/ingest.keep_needed_columns).
+    읽지 못하는 파일은 여기서 바로 거절한다 (전에 올린 파일은 그대로 둔다)."""
+    folder = UPLOADS / store_id
+    folder.mkdir(parents=True, exist_ok=True)
+    incoming, clean = folder / f"incoming{suffix}", folder / "incoming.clean"
+    try:
+        incoming.write_bytes(pos.file.read())                          # 읽는 동안만 잠깐 둔다
+        keep_needed_columns(incoming, clean)
+    except ValueError as e:                                            # 머리글을 못 찾음, 인코딩 모름
+        clean.unlink(missing_ok=True)
+        raise HTTPException(400, str(e).split("\n")[0].replace(" ml/ingest.py의 COLUMN_MAP에 열 이름을 추가하세요.", "")
+                            + " 날짜·메뉴(상품명)·수량 열이 있는 파일인지 확인해 주세요.")
+    except Exception as e:                                             # 깨진 엑셀 등
+        clean.unlink(missing_ok=True)
+        raise HTTPException(400, f"파일을 읽지 못했습니다 ({type(e).__name__}). 엑셀이나 CSV로 다시 내려받아 올려 주세요.")
+    finally:
+        incoming.unlink(missing_ok=True)
+    for old in folder.glob("pos.*"):                                   # 전에 올린 파일은 지운다 (하나만 남게)
+        old.unlink()
+    saved = folder / "pos.csv"
+    clean.rename(saved)
+    return saved
+
+
 @app.post("/api/stores/{store_id}/run", status_code=202)
 def run_store(store_id: str, pos: UploadFile = File(..., description="POS 엑셀·CSV (토스·OKPOS)"),
               close_time: str | None = Form(None, description="영업 종료 시각 HH:MM"),
@@ -390,15 +487,67 @@ def run_store(store_id: str, pos: UploadFile = File(..., description="POS 엑셀
         if store.close_time != close_time:
             store.close_time = close_time
             store.write(folder / "store.json")
-    saved = UPLOADS / store_id / f"pos{suffix}"
-    saved.parent.mkdir(parents=True, exist_ok=True)
-    saved.write_bytes(pos.file.read())
+    with LOCK:
+        if store_id in RUNNING:                                        # 계산 중에 파일을 바꿔 끼우지 않는다
+            raise HTTPException(409, f"{store_id}는 이미 실행 중입니다. 끝난 뒤 다시 시도하세요.")
+    saved = _keep_upload(store_id, pos, suffix)
     args = ["--pos", str(saved)]
+    if (saved.parent / ADDED).exists():                                # 직접 적은 판매분: 새 파일의 마지막 날짜 뒤의 것만 쓰인다
+        args += ["--added", str(saved.parent / ADDED)]
     if close_time:
         args += ["--close-time", close_time]
     if address and address.strip():
         args += ["--address", address.strip()]
     return _start(store_id, args)
+
+
+class SoldItem(BaseModel):
+    menu: str = Field(min_length=1, max_length=80)
+    qty: int = Field(ge=0, le=100_000)
+
+
+class SalesEntry(BaseModel):
+    """하루치 판매 (화면의 '오늘 판매 입력')."""
+    date: dt.date
+    items: list[SoldItem] = Field(min_length=1, max_length=300)
+
+
+@app.post("/api/stores/{store_id}/sales", status_code=202)
+def add_sales(store_id: str, entry: SalesEntry, user: auth.User | None = Me):
+    """파일을 다시 올리지 않고 하루치 판매를 직접 적어 덧붙인다 → 그 기록까지 넣어 다시 분석한다.
+    올린 POS 파일이 기준이다: 파일의 마지막 날짜 뒤의 날만 적을 수 있고, 같은 날을 다시 적으면 그날 것을 바꾼다.
+    적은 것은 올린 파일 옆의 added.csv에 쌓인다 (매장을 지우면 함께 지워진다)."""
+    folder = _store_dir(store_id)
+    _read_only()
+    auth.check_write(user, store_id, exists=folder.exists())
+    files = sorted((UPLOADS / store_id).glob("pos.*"), key=lambda p: p.stat().st_mtime)
+    if not files:
+        raise HTTPException(400, "먼저 판매 기록 파일을 올려 주세요. 직접 적기는 올린 기록 뒤에 하루씩 덧붙이는 기능입니다.")
+    if entry.date > dt.datetime.now(KST).date():
+        raise HTTPException(400, "아직 오지 않은 날짜입니다.")
+    log = folder / "ingest_log.json"
+    pos_last = json.loads(log.read_text(encoding="utf-8")).get("pos_last") if log.exists() else None
+    if pos_last and entry.date.isoformat() <= pos_last:
+        raise HTTPException(400, f"올린 파일에 {pos_last}까지의 기록이 이미 있습니다. 그 뒤 날짜만 적을 수 있어요.")
+    sold: dict[str, int] = {}
+    for item in entry.items:                                           # 같은 메뉴를 두 번 적었으면 더한다
+        name = " ".join(item.menu.split())
+        if name and item.qty:
+            sold[name] = sold.get(name, 0) + item.qty
+    if not sold:
+        raise HTTPException(400, "판매 수량을 하나 이상 적어 주세요.")
+    with LOCK:
+        if store_id in RUNNING:
+            raise HTTPException(409, f"{store_id}는 이미 실행 중입니다. 끝난 뒤 다시 시도하세요.")
+    path = UPLOADS / store_id / ADDED
+    day = entry.date.isoformat()
+    kept = [r for r in csv.DictReader(path.open(encoding="utf-8", newline=""))] if path.exists() else []
+    rows = [r for r in kept if r["date"] != day] + [dict(date=day, menu=m, qty=q) for m, q in sold.items()]
+    with path.open("w", encoding="utf-8", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=["date", "menu", "qty"])
+        writer.writeheader()
+        writer.writerows(rows)
+    return _start(store_id, ["--pos", str(files[-1]), "--added", str(path)])
 
 
 @app.post("/api/stores/{store_id}/demo", status_code=202)
@@ -436,5 +585,15 @@ def job(job_id: str, user: auth.User | None = Me):
 
 
 # 빌드된 화면 (맨 마지막에 둔다: /api/... 가 먼저 처리되고, 나머지 주소는 화면 파일)
+# 화면의 주소: "/" 첫 화면, ABOUT_PAGE 소개, SUPPORT_PAGE 고객지원, PRIVACY_PAGE 개인정보처리방침, TERMS_PAGE 이용약관, APP_PAGE 분석 화면.
+# 모두 같은 index.html을 주고, 어느 화면을 그릴지는 화면 코드(App.tsx)가 정한다.
 if WEB_DIST.exists():
+    @app.get(APP_PAGE, include_in_schema=False)
+    @app.get(ABOUT_PAGE, include_in_schema=False)
+    @app.get(SUPPORT_PAGE, include_in_schema=False)
+    @app.get(PRIVACY_PAGE, include_in_schema=False)
+    @app.get(TERMS_PAGE, include_in_schema=False)
+    def app_page():
+        return FileResponse(WEB_DIST / "index.html")
+
     app.mount("/", StaticFiles(directory=WEB_DIST, html=True), name="web")

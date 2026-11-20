@@ -28,7 +28,7 @@ from ml import progress
 from ml.calibration import apply_calibration, below_rates, check_calibration, fit_calibration
 from ml.features import (DEFAULT_CLOSE_TIME, FEATURE_SETS, SIGNAL_GROUPS, available_signals, base_level, build_frame,
                          signals_in)
-from ml.metrics import bootstrap_wape_change, coverage, score, scored
+from ml.metrics import bootstrap_wape_change, coverage, days_won, score, scored
 from ml.models import SHORT_DATA_DAYS, make_model
 from ml.paths import ARTIFACTS
 
@@ -157,23 +157,18 @@ def beats(after: dict, before: dict) -> tuple[bool, int, float]:
 
 def pick_combo(scores: dict[tuple, dict]) -> list[str]:
     """{조합(묶음 이름 튜플): 교차검증 점수} → 고른 조합.  () = 신호 없음(M1).
-    1) 신호 없음보다 beats()를 통과한 조합 중 전체 WAPE가 가장 낮은 것
-    2) 그 조합 안의 묶음마다 '빼면 나빠지는가'(beats)를 확인해, 제 몫을 못 하는 묶음을 하나씩 뺀다
-       (빼도 가장 덜 나빠지는 것부터). 남은 조합이 신호 없음보다 낫지 않으면 [] (신호 없이 M1).
-    1등만 고르면 우연히 좋게 나온 조합을 고를 위험이 커서 이 조건들을 둔다."""
-    passing = [c for c in scores if c and beats(scores[c], scores[()])[0]]
-    if not passing:
-        return []
-    combo = min(passing, key=lambda c: scores[c]["wape"])
-    without = lambda c, g: tuple(x for x in c if x != g)
-    while combo:
-        weak = [g for g in combo if not beats(scores[combo], scores[without(combo, g)])[0]]
-        if not weak:
-            break
-        combo = without(combo, min(weak, key=lambda g: scores[without(combo, g)]["wape"]))
-        if combo and not beats(scores[combo], scores[()])[0]:
-            return []
-    return list(combo)
+    아래 두 조건을 모두 채우는 조합 가운데 전체 WAPE가 가장 낮은 것을 고른다. 없으면 [] (신호 없이 M1).
+      1) 신호 없음보다 낫다 (beats)
+      2) 무임승차하는 묶음이 없다: 묶음을 하나씩 빼 보면 매번 나빠진다 (beats)
+    WAPE 1등만 고르면 우연히 좋게 나온 조합이나, 한 묶음 덕에 좋아진 조합에 다른 묶음이 얹혀 가는 것을 고를 위험이 커서 2)를 둔다.
+
+    11/19 고침: 전에는 WAPE 1등 조합에서 약한 묶음을 하나씩 빼 나가다가, 도중의 조합이 1)을 못 채우면 '채택 없음'으로 끝냈다.
+    그래서 혼자서도 기준을 통과하는 묶음이 있는데 채택되지 않는 일이 있었다 (첫 실매장: 날씨 −4.9%, 2구간 모두 개선인데 미채택).
+    기준(MIN_GAIN_PCT, 과반 구간)은 그대로다."""
+    without = lambda c, g: tuple(x for x in c if x != g)      # noqa: E731
+    solid = [c for c in scores if c and beats(scores[c], scores[()])[0]
+             and all(beats(scores[c], scores[without(c, g)])[0] for g in c)]
+    return list(min(solid, key=lambda c: scores[c]["wape"])) if solid else []
 
 
 def decide(group: str, signals: list[str], before: dict | None, after: dict | None,
@@ -246,9 +241,11 @@ def comparison_table(cv: CrossValidator, cv_m0: pd.DataFrame, adopted: list[str]
         key = cv.key(FEATURE_SETS[name])
         if key not in seen:                            # 신호 자료가 없어 앞 모델과 같으면 생략
             seen.add(key)
-            table.append(score(cv.run(FEATURE_SETS[name])[0], name))
+            preds = cv.run(FEATURE_SETS[name])[0]
+            table.append(score(preds, name) | dict(days_won=days_won(preds, cv_m0)))
     if cv.key(adopted) not in seen:
-        table.append(score(cv.run(adopted)[0], f"{model_label(adopted)}(채택 신호만)"))
+        preds = cv.run(adopted)[0]
+        table.append(score(preds, f"{model_label(adopted)}(채택 신호만)") | dict(days_won=days_won(preds, cv_m0)))
     return table
 
 
@@ -270,7 +267,8 @@ def final_test(frame: pd.DataFrame, plan: FoldPlan, adopted: list[str], shifts: 
         effect = dict(test_coverage_before=round(coverage(d_raw["qty"], d_raw["p10"], d_raw["p90"]), 3),
                       test_coverage_after=round(coverage(d_cal["qty"], d_cal["p10"], d_cal["p90"]), 3),
                       test_below_before=below_rates(t_raw), test_below_after=below_rates(t_final))
-    return [score(t_m0, "M0"), score(t_final, chosen)], effect, int(t_m0["sold_out"].astype(bool).sum())
+    mine = score(t_final, chosen) | dict(days_won=days_won(t_final, t_m0))
+    return [score(t_m0, "M0"), mine], effect, int(t_m0["sold_out"].astype(bool).sum())
 
 
 # ---------------------------------------------------------------- 6. 설명 문장

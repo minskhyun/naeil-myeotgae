@@ -57,6 +57,13 @@ def score(preds: pd.DataFrame, model: str) -> dict:
     )
 
 
+def days_won(preds: pd.DataFrame, base: pd.DataFrame) -> int:
+    """preds가 base(지난주 같은 요일 방식)보다 그날의 남거나 모자란 개수 합이 작았던 날 수. 같은 날끼리 비교한다."""
+    miss = lambda p: (scored(p)["pred"] - scored(p)["qty"]).abs().groupby(scored(p)["date"]).sum()      # noqa: E731
+    mine, theirs = miss(preds).align(miss(base), join="inner")
+    return int((mine < theirs).sum())
+
+
 def miss_counts(d: pd.DataFrame) -> dict:
     """예측대로 준비했다면 남거나 모자랐을 개수 (비율이 아니라 개수) → over, under, days, amount.
     amount = 그 개수 × 메뉴 판매가의 합. 예측표에 price 열이 있을 때만 (판매가를 모르는 메뉴는 0원으로 친다)."""

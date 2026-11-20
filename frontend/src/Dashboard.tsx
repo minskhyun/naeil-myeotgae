@@ -1,205 +1,237 @@
-// 로그인 뒤의 분석 결과 화면: 한 매장의 내일 준비를 한눈에.
-//   맨 위   날짜 · 준비 기준
-//   요약    숫자 네 칸 (준비할 양 · 평소와 다른 메뉴 · 지난주 방식보다 덜 틀린 개수 · 주의할 소식)
-//   본문    왼쪽: 메뉴별 준비표      오른쪽: AI 주의 안내 · 예측에 쓴 주변 정보 · 얼마나 맞나
-// 자세한 내용(주변 정보 전체, 검증 전체)은 길게 늘어놓지 않고 '자세히'를 누르면 창으로 뜬다.
-// 조각들은 기존 화면의 것을 그대로 쓴다 (ForecastView.tsx, BacktestView.tsx, SourcesView.tsx).
+// 분석 화면(Workspace.tsx)의 두 탭.
+//   DashboardTab  오늘 할 일: 판매 기록 올리기(분석 시작) · 준비 기준 · 준비할 개수 · 메뉴별 준비표 · 주의할 소식
+//   AnalysisTab   얼마나 믿을 만한가: 예측 정확도(지난주 그대로 준비할 때와 비교) · 판매 그래프 · 예측에 쓴 주변 정보
+// 모양은 첫 화면(Landing.tsx)과 같다: 옅은 회색 바탕 위의 흰 칸, 작은 고정폭 글씨의 구역 이름, 큰 숫자.
+//   하루 오차 = 예측대로 준비했다면 남거나 모자랐을 개수 (모든 메뉴 합, 하루 평균). '지난주 그대로' = 지난주 같은 요일만큼 준비
 import { useQuery } from '@tanstack/react-query'
-import { useState, type ReactNode } from 'react'
-import { api, type ModelScore } from './api'
-import { BacktestView, BarRow } from './BacktestView'
+import type { ReactNode } from 'react'
+import { api, type ProgressEvent } from './api'
+import { BacktestView } from './BacktestView'
+import { DayBars, WeekdayBars } from './ForecastCharts'
 import { ForecastTable, Notice, PrepToggle } from './ForecastView'
-import { count, fmtDate, fmtTime, GROUP_LABELS, missPerDay, pct1, rangeScore, savedPerDay, won } from './format'
-import { Modal } from './Modal'
-import { SourcesView } from './SourcesView'
+import { average, count, dayPrefix, fmtDate, pct1, sameWeekday, shortDate, SITUATION_LABELS, weekdayName } from './format'
+import { CountWhenSeen } from './Reveal'
+import { ArrowLink } from './Site'
+import { SignalsBoard } from './SignalsBoard'
+import { periodName, verdict } from './verdict'
 
 const MENUS_SHOWN = 8 // 준비표에 처음 보여 줄 메뉴 수 (나머지는 '더 보기')
+const MISS_HELP = '예측대로 준비했다면 남거나 모자랐을 개수 (모든 메뉴 합, 하루 평균)'
 
-// 요약 숫자 한 칸: 이름 · 큰 숫자 · 한 줄 설명
-function Tile({ label, value, note, warn = false }: { label: string; value: string; note: string; warn?: boolean }) {
+// 탭의 머리: 작은 설명 · 큰 제목 · (오른쪽의 버튼)
+function TabHead({ sub, title, action }: { sub?: string; title: string; action?: ReactNode }) {
   return (
-    <div className="rounded-3xl bg-sheet px-6 py-5 shadow-sm">
-      <p className="flex items-center gap-2 text-sm text-muted">
-        {warn && <span className="h-2 w-2 rounded-full bg-warn" aria-hidden="true" />}
-        {label}
-      </p>
-      <p className="mt-1 text-3xl font-extrabold tracking-tight tabular-nums">{value}</p>
-      <p className="mt-1 text-sm text-muted">{note}</p>
+    <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-5">
+      <div>
+        {sub && <p className="text-label text-ink-500">{sub}</p>}
+        <h2 className="mt-1 text-h1">{title}</h2>
+      </div>
+      {action}
     </div>
   )
 }
 
-// 본문의 카드 한 장: 제목 (+ '자세히') · 내용
-function Card({ title, onMore, children }: { title: string; onMore?: () => void; children: ReactNode }) {
+// 흰 칸 한 장: (제목) · 내용. grow = 줄에서 남는 높이를 이 칸이 채운다
+function Card({ title, grow = false, children }: { title?: string; grow?: boolean; children: ReactNode }) {
   return (
-    <section className="min-w-0 rounded-3xl bg-sheet p-5 shadow-sm sm:p-6">
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <h3 className="text-lg font-bold">{title}</h3>
-        {onMore && (
-          <button onClick={onMore} className="rounded-full bg-paper px-3.5 py-1 text-sm font-semibold text-muted hover:text-ink">
-            자세히
-          </button>
-        )}
-      </div>
-      {children}
+    <section className={`min-w-0 rounded-[32px] bg-white p-6 sm:p-8 ${grow ? 'flex flex-1 flex-col' : ''}`}>
+      {title && <h3 className="mb-5 text-h3">{title}</h3>}
+      {grow ? <div className="min-h-0 flex-1">{children}</div> : children}
     </section>
   )
 }
 
-export function Dashboard({ storeId, storeName, prepMode, readOnly, onReplay }: {
+// 요약 숫자 한 칸: 이름 · 큰 숫자(단위는 작게 회색) · 짧은 덧말. big = 이 화면에서 가장 큰 숫자, point = 주황으로 강조
+function Tile({ label, value, note, help, big = false, point = false }: { label: string; value: ReactNode; note?: string; help?: string; big?: boolean; point?: boolean }) {
+  return (
+    <div className="rounded-[32px] bg-white px-7 py-7" title={help}>
+      <p className="text-label text-ink-500">{label}</p>
+      <p className={`mt-2 whitespace-nowrap tabular-nums ${big ? 'text-display' : 'text-h1'} ${point ? 'text-point' : ''}`}>{value}</p>
+      {note && <p className="mt-2 text-sm text-ink-700">{note}</p>}
+    </div>
+  )
+}
+const Unit = ({ children, big = false }: { children: ReactNode; big?: boolean }) => (
+  <span className={`ml-1 font-normal tracking-normal text-ink-500 ${big ? 'text-[28px]' : 'text-xl'}`}>{children}</span>
+)
+
+// ---------------------------------------------------------------- 대시보드
+export function DashboardTab({ storeId, storeName, prepMode, readOnly, onUpload, onEnter }: {
   storeId: string
   storeName: string
   prepMode: string
   readOnly: boolean
-  onReplay?: () => void // 분석 과정 다시 보기 (기록이 있을 때만)
+  onUpload?: () => void // 이 매장의 판매 기록을 (다시) 올려 분석을 시작한다. 고칠 수 없는 매장이면 없다
+  onEnter?: () => void // 하루치 판매를 직접 적는 창을 연다 (SalesEntry.tsx). 고칠 수 없는 매장이면 없다
 }) {
   const forecast = useQuery({ queryKey: ['forecast', storeId], queryFn: () => api.forecast(storeId) })
-  const backtest = useQuery({ queryKey: ['backtest', storeId], queryFn: () => api.backtest(storeId) }).data
-  const [detail, setDetail] = useState<'sources' | 'backtest' | null>(null)
+  const history = useQuery({ queryKey: ['history', storeId], queryFn: () => api.history(storeId), retry: false }).data
 
-  if (forecast.isLoading) return <p className="text-muted">불러오는 중…</p>
-  if (forecast.error || !forecast.data) return <p className="text-up">{(forecast.error as Error)?.message ?? '예측이 없습니다.'}</p>
+  if (forecast.isLoading) return <p className="text-ink-700">불러오는 중…</p>
+  if (forecast.error || !forecast.data) return <p className="text-down">{(forecast.error as Error)?.message ?? '예측이 없습니다.'}</p>
   const fc = forecast.data
-
-  // 요약 숫자에 쓸 값들
+  const date = fc.rows[0].date
   const totalPrep = fc.rows.reduce((sum, r) => sum + (r.prep_qty ?? 0), 0)
   const totalPred = Math.round(fc.rows.reduce((sum, r) => sum + r.pred, 0))
-  const effect = (r: (typeof fc.rows)[number]) => r.reasons.reduce((sum, x) => sum + x.effect_pct, 0)
-  const more = fc.rows.filter((r) => effect(r) > 0).length
-  const less = fc.rows.filter((r) => effect(r) < 0).length
-  const test = Object.fromEntries((backtest?.test_scores ?? []).map((s) => [s.model.slice(0, 2), s])) as Record<string, ModelScore>
-  const mine = backtest ? test[backtest.chosen_model.slice(0, 2)] : undefined
-  const base = test.M0
-  const gain = mine && base ? Math.round((1 - mine.wape / base.wape) * 100) : null
-  // 하루에 남거나 모자란 개수 (모든 메뉴 합): 지난주 같은 요일만큼 준비했을 때 vs 내일몇개 예측대로 준비했을 때
-  const period = backtest?.test_period
-  const testDays = period ? Math.round((Date.parse(period[1]) - Date.parse(period[0])) / 86400000) + 1 : 1
-  const mineMiss = mine ? missPerDay(mine, testDays) : 0
-  const baseMiss = base ? missPerDay(base, testDays) : 0
-  const money = mine && base ? savedPerDay(mine, base) : null
+  // 예상 판매가 평소 같은 요일(지난 4주 평균)보다 몇 % 많은가
+  const usual = history ? average(sameWeekday(history.dates, history.total, date)) : null
+  const diff = usual ? Math.round((totalPred / usual - 1) * 100) : null
+  const first = fc.warnings[0]
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
-        <div>
-          <p className="text-sm text-muted">{storeName} · 내일 준비표</p>
-          <h2 className="mt-0.5 text-3xl font-extrabold tracking-tight">{fmtDate(fc.rows[0].date)}</h2>
-        </div>
-        <div className="flex flex-wrap items-end gap-3">
-          {onReplay && (
-            <button onClick={onReplay} className="rounded-full bg-accent-soft px-4 py-1.5 text-sm font-semibold text-accent hover:bg-accent hover:text-white">
-              분석 과정 다시 보기
-            </button>
-          )}
-          <PrepToggle storeId={storeId} prepMode={prepMode} readOnly={readOnly} />
-        </div>
-      </div>
+    <div className="space-y-6">
+      <TabHead
+        // 예측 날짜가 오늘·어제로 보일 때 헷갈리지 않게: 어느 날까지의 판매 기록으로 만든 준비표인지 적는다
+        sub={`${storeName}${history?.dates.length ? ` · 판매 기록 ${shortDate(history.dates[history.dates.length - 1])}까지` : ''}`}
+        title={fmtDate(date)}
+        action={
+          onUpload && (
+            <div className="flex flex-wrap items-center gap-3">
+              {onEnter && <ArrowLink onClick={onEnter}>판매 입력</ArrowLink>}
+              <ArrowLink onClick={onUpload} dark>
+                판매 기록 올리고 분석하기
+              </ArrowLink>
+            </div>
+          )
+        }
+      />
 
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <Tile label="내일 준비할 양" value={`${totalPrep}개`} note={`메뉴 ${fc.rows.length}개 · 예상 판매 ${totalPred}개`} />
+      <Card>
+        <PrepToggle storeId={storeId} prepMode={prepMode} readOnly={readOnly} />
+      </Card>
+
+      <div className="grid gap-5 md:grid-cols-3">
         <Tile
-          label="평소와 다른 메뉴"
-          value={`${more + less}개`}
-          note={more + less ? `평소보다 많이 ${more}개 · 적게 ${less}개` : '모든 메뉴가 평소와 비슷해요'}
+          big
+          label={`${dayPrefix(date)}준비할 개수`}
+          value={
+            <>
+              {count(totalPrep)}
+              <Unit big>개</Unit>
+            </>
+          }
+          note={`메뉴 ${fc.rows.length}개`}
         />
         <Tile
-          label="지난주 방식보다 덜 틀린 양"
-          value={mine && base ? (baseMiss > mineMiss ? `하루 ${count(baseMiss - mineMiss)}개` : '차이 없음') : '–'}
-          note={
-            mine && base
-              ? `남거나 모자란 개수 ${count(baseMiss)}개 → ${count(mineMiss)}개${money !== null && money > 0 ? ` · 판매가로 약 ${won(money)}` : ''}`
-              : '기록이 짧아 최종 시험이 없어요'
+          label="예상 판매"
+          value={
+            <>
+              {count(totalPred)}
+              <Unit>개</Unit>
+            </>
           }
+          note={diff === null ? undefined : Math.abs(diff) < 3 ? `평소 ${weekdayName(date)}요일과 비슷` : `평소 ${weekdayName(date)}요일보다 ${Math.abs(diff)}% ${diff > 0 ? '많음' : '적음'}`}
         />
         <Tile
           label="주의할 소식"
-          value={fc.warnings.length ? `${fc.warnings.length}건` : '없음'}
-          note={fc.warnings.length ? `${fc.warnings[0].situation_type} · 손님 ${fc.warnings[0].direction} 가능` : 'AI가 모은 소식에 특별한 것이 없어요'}
-          warn={fc.warnings.length > 0}
+          value={
+            fc.warnings.length ? (
+              <>
+                {fc.warnings.length}
+                <Unit>건</Unit>
+              </>
+            ) : (
+              '없음'
+            )
+          }
+          note={first ? `${SITUATION_LABELS[first.situation_type] ?? first.situation_type} · 손님 ${first.direction} 가능` : undefined}
         />
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-[1.75fr_1fr]">
+      <div className="grid gap-5 xl:grid-cols-[1.7fr_1fr]">
         <Card title="메뉴별 준비표">
-          <ForecastTable rows={fc.rows} limit={MENUS_SHOWN} compact />
-          <p className="mt-3 text-xs leading-relaxed text-faint">
-            준비 = 고른 준비 기준({prepMode})의 권장 개수 · 예상 범위 = 실제 판매가 들어올 것으로 보는 구간(세로 눈금이 예상값) · 평소와 다른 점에
-            마우스를 올리면 설명 · {fmtTime(fc.generated_at)}에 계산
-          </p>
+          <ForecastTable rows={fc.rows} limit={MENUS_SHOWN} compact storeId={storeId} />
         </Card>
-
-        <div className="min-w-0 space-y-5">
-          <Card title="AI 주의 안내">
-            {fc.warnings.length ? (
-              <div className="space-y-3">
-                {fc.warnings.map((w, i) => (
-                  <Notice key={i} w={w} />
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted">내일은 특별히 주의할 소식이 없어요.</p>
-            )}
-          </Card>
-
-          <Card title="예측에 쓴 주변 정보" onMore={() => setDetail('sources')}>
-            {backtest ? (
-              <ul className="space-y-2 text-sm">
-                {backtest.decisions.map((d) => (
-                  <li key={d.signal_group} className="flex items-center justify-between gap-3" title={d.reason}>
-                    <span>{GROUP_LABELS[d.signal_group] ?? d.signal_group}</span>
-                    <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${d.adopted ? 'bg-accent text-white' : 'bg-paper text-faint'}`}>
-                      {d.adopted ? '씀' : '안 씀'}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-sm text-muted">검증 결과가 없습니다.</p>
-            )}
-            <p className="mt-3 text-xs text-faint">지난 기록으로 시험해 예측이 실제로 나아진 정보만 써요.</p>
-          </Card>
-
-          <Card title="얼마나 맞나" onMore={() => setDetail('backtest')}>
-            {mine && base ? (
-              <>
-                <BarRow label="지난주 같은 요일만큼" value={baseMiss} max={Math.max(baseMiss, mineMiss)} strong={false} />
-                <BarRow label="내일몇개 예측" value={mineMiss} max={Math.max(baseMiss, mineMiss)} strong />
-                <p className="mt-3 text-sm text-muted">
-                  하루에 남거나 모자란 개수(모든 메뉴 합, 짧을수록 좋음).{' '}
-                  {gain !== null && gain > 0 ? (
-                    <b className="text-ink">
-                      지난주만큼 준비할 때보다 하루 {count(baseMiss - mineMiss)}개({gain}%) 덜 틀려요
-                      {money !== null && money > 0 && `. 판매가로 하루 약 ${won(money)}`}.
-                    </b>
-                  ) : (
-                    '지난주만큼 준비하는 것보다 나아지지 않았어요.'
-                  )}
-                </p>
-                <p className="mt-3 flex items-baseline justify-between gap-3 border-t border-rule pt-3 text-sm">
-                  <span>
-                    예상 범위 정확도 <span className="text-faint">(100%가 만점)</span>
-                  </span>
-                  <b className="text-lg tabular-nums">{pct1(rangeScore(mine.coverage_80))}</b>
-                </p>
-                <p className="mt-1 text-xs text-faint">실제 판매의 {pct1(mine.coverage_80)}가 범위 안 · 목표 80%를 맞추면 100%</p>
-              </>
-            ) : (
-              <p className="text-sm text-muted">기록이 짧아 최종 시험 없이 검증 기간 결과만 있어요. '자세히'에서 볼 수 있습니다.</p>
-            )}
-          </Card>
-        </div>
+        <Card title="주의할 소식">
+          {fc.warnings.length ? (
+            <div className="space-y-3">
+              {fc.warnings.map((w, i) => (
+                <Notice key={i} w={w} />
+              ))}
+            </div>
+          ) : (
+            <p className="text-ink-700">특별한 소식이 없어요.</p>
+          )}
+        </Card>
       </div>
+    </div>
+  )
+}
 
-      {detail === 'sources' && (
-        <Modal label="주변 정보" onClose={() => setDetail(null)} wide>
-          <SourcesView storeId={storeId} />
-        </Modal>
+// ---------------------------------------------------------------- 분석
+export function AnalysisTab({ storeId, storeName, onReplay, events }: {
+  storeId: string
+  storeName: string
+  onReplay?: () => void // 분석 과정 다시 보기 (기록이 있을 때만)
+  events?: ProgressEvent[] // 이 매장을 마지막으로 분석했을 때의 기록 (지도와 '모은 정보' 숫자의 재료)
+}) {
+  const forecast = useQuery({ queryKey: ['forecast', storeId], queryFn: () => api.forecast(storeId) }).data
+  const backtest = useQuery({ queryKey: ['backtest', storeId], queryFn: () => api.backtest(storeId) }).data
+  const history = useQuery({ queryKey: ['history', storeId], queryFn: () => api.history(storeId), retry: false }).data
+  const v = verdict(backtest) // 마지막 확인 기간의 결과, 기록이 짧아 없으면 검증 기간 결과
+  const rows = forecast?.rows ?? []
+  const date = rows[0]?.date
+  const sum = (pick: (r: (typeof rows)[number]) => number) => rows.reduce((total, r) => total + pick(r), 0)
+
+  return (
+    <div className="space-y-6">
+      <TabHead
+        sub={`${storeName}${v ? ` · ${periodName(v)} 동안 맞혀 본 결과` : ''}`}
+        title="예측이 얼마나 맞나요"
+        action={onReplay && <ArrowLink onClick={onReplay}>분석 과정 다시 보기</ArrowLink>}
+      />
+
+      {v ? (
+        <div className="grid gap-5 md:grid-cols-3" title={MISS_HELP}>
+          <Tile
+            big
+            point={v.saved > 0}
+            label="지난주 그대로 준비할 때 대비 정확도 향상"
+            value={
+              <>
+                <CountWhenSeen to={Math.max(v.gain, 0)} />%
+              </>
+            }
+            note="남거나 모자라는 개수가 줄어든 비율"
+          />
+          <Tile
+            label="하루 오차"
+            value={
+              <>
+                {count(v.baseShown)} → <CountWhenSeen to={v.mineShown} />
+                <Unit>개</Unit>
+              </>
+            }
+            note="모든 메뉴의 남은 개수와 모자란 개수의 합"
+          />
+          <Tile label="예상 범위 안에 든 비율" value={<CountWhenSeen to={v.mine.coverage_80} format={pct1} />} note="80%가 이상적" />
+        </div>
+      ) : (
+        <Card>
+          <p className="text-ink-700">검증 결과가 아직 없어요.</p>
+        </Card>
       )}
-      {detail === 'backtest' && (
-        <Modal label="얼마나 맞나" onClose={() => setDetail(null)} wide>
-          <BacktestView storeId={storeId} />
-        </Modal>
+
+      {history && date && (
+        <div className="grid gap-5 xl:grid-cols-[1.7fr_1fr]">
+          <Card title="최근 4주 판매와 예측">
+            <DayBars dates={history.dates} values={history.total} next={{ date, value: sum((r) => r.pred), lo: sum((r) => r.p10), hi: sum((r) => r.p90) }} height={220} />
+          </Card>
+          <div className="flex min-w-0 flex-col">
+            <Card title="요일별 판매" grow>
+              <WeekdayBars dates={history.dates} values={history.total} date={date} />
+            </Card>
+          </div>
+        </div>
       )}
+
+      <Card title="예측 정확도">
+        <BacktestView storeId={storeId} />
+      </Card>
+
+      <Card title="예측에 쓴 주변 정보">
+        <SignalsBoard storeId={storeId} events={events} />
+      </Card>
     </div>
   )
 }

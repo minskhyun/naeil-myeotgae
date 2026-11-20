@@ -188,3 +188,17 @@ def test_short_data_without_test_period(sample):
     bt = run_backtest(_first_days(sales, 30), signals, iterations=30)
     assert bt.test_period is None and bt.test_scores == []
     assert "최종 테스트" in bt.data_note and "판매 기록 30일" in bt.data_note
+
+
+def test_pick_combo_keeps_a_group_that_passes_alone():
+    """날씨 혼자 기준을 통과하면, WAPE 1등 조합에 무임승차가 섞여 있어도 날씨는 채택된다 (11/19 실매장에서 나온 모양)."""
+    sc = lambda w, folds: dict(wape=w, wape_by_fold=folds)                 # noqa: E731
+    scores = {(): sc(0.4265, [0.376, 0.490]),
+              ("weather",): sc(0.4057, [0.370, 0.450]),                    # −4.9%, 2구간 모두 개선 → 통과
+              ("events",): sc(0.4151, [0.380, 0.455]),                     # 1구간만 개선 → 탈락
+              ("special",): sc(0.4335, [0.380, 0.495]),
+              ("weather", "events"): sc(0.4058, [0.378, 0.440]),           # 1구간만 개선 → 탈락
+              ("weather", "special"): sc(0.4061, [0.371, 0.450]),
+              ("events", "special"): sc(0.4157, [0.381, 0.456]),
+              ("weather", "events", "special"): sc(0.4014, [0.372, 0.438])}   # WAPE 1등이지만 날씨 말고는 얹혀 가는 묶음
+    assert pick_combo(scores) == ["weather"]
