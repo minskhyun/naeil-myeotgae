@@ -246,7 +246,7 @@ export function AnalysisView({ events, status, error, log, onClose, replay = fal
             <Card title="얼마나 맞나">
               {scores ? (
                 <>
-                  <p className="text-sm text-ink-700">지난주대로 준비할 때보다</p>
+                  <p className="text-sm text-ink-700">지난주 그대로 준비할 때보다</p>
                   <p className={`mt-1 text-h1 tabular-nums ${gain > 0 ? 'text-point' : ''}`}>
                     {gain > 0 ? (
                       <>

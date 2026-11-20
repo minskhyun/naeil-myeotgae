@@ -78,6 +78,28 @@ def _find_header(raw: pd.DataFrame, pos_type: str):
                      f"파일 첫 줄들:\n{preview}")
 
 
+def keep_needed_columns(src, dst, pos_type: str = "auto") -> dict:
+    """올린 POS 파일에서 예측에 쓰는 열(날짜·메뉴·수량, 있으면 시각·금액·부가세)만 골라 CSV(dst)로 저장한다 → 기록(남긴 열, 버린 열).
+
+    가게 손님의 정보(적립 전화번호, 회원 번호, 카드 정보 등)가 든 열을 서버에 남기지 않기 위해서다.
+    서버는 올린 원본 대신 이 CSV만 보관한다 (backend/app/main.py의 run_store).
+    줄은 그대로 둔다(합계·취소 줄 포함). 그래서 read_pos가 원본을 읽었을 때와 같은 결과를 낸다.
+    달마다 시트를 나눈 파일은 머리글이 같은 시트를 한 표로 이어 붙인다.
+    """
+    src = Path(src)
+    sheets = _read_raw(src)
+    _, header_row, cols = _find_header(sheets[0], pos_type)
+    header = [_norm_header(x) for x in sheets[0].iloc[header_row]]
+    same = [s for s in sheets if len(s) > header_row and [_norm_header(x) for x in s.iloc[header_row]] == header]
+    body = pd.concat([s.iloc[header_row + 1:] for s in same], ignore_index=True)
+    money = {header.index(n) for names in AMOUNT_COLUMNS.values() for n in names if n in header}
+    keep = sorted(set(cols.values()) | money)
+    names = [header[i] for i in keep]
+    table = pd.concat([pd.DataFrame([names]), body.iloc[:, keep].set_axis(range(len(keep)), axis=1)], ignore_index=True)
+    table.to_csv(dst, header=False, index=False, encoding="utf-8-sig")
+    return dict(kept=names, dropped=[h for i, h in enumerate(header) if h and i not in keep], rows=len(body))
+
+
 def _parse_dates(s: pd.Series) -> pd.Series:
     """여러 날짜 표기를 처리: 엑셀 날짜, '2026-10-01', '2026.10.01', '2026/10/01', '20261001', 시각 포함."""
     if pd.api.types.is_datetime64_any_dtype(s):

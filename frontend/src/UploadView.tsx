@@ -53,7 +53,7 @@ function PosFile({ file, onPick }: { file?: File; onPick: (f: File) => void }) {
       <div className="min-w-0 flex-1">
         <p className="font-medium">POS 판매 기록</p>
         <p className="text-sm text-ink-700">
-          {file ? file.name : 'POS·매출 프로그램에서 내려받은 CSV 또는 엑셀(.xlsx) — 끌어다 놓아도 됩니다'}
+          {file ? file.name : 'POS·매출 프로그램에서 내려받은 CSV 또는 엑셀(.xlsx) — 끌어다 놓아도 됩니다. 날짜·메뉴·수량·금액 열만 보관해요'}
         </p>
       </div>
       <button type="button" onClick={open} className="btn-md btn-secondary">

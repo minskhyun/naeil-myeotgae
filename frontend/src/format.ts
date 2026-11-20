@@ -46,7 +46,7 @@ export const SCHOOL_LABELS: Record<string, string> = {
 }
 
 export const MODEL_LABELS: Record<string, string> = {
-  M0: '지난주 같은 요일만큼',
+  M0: '지난주 같은 요일 그대로',
   M1: '판매 기록',
   M2: '판매 기록 + 날씨',
   M3: '판매 기록 + 모든 주변 정보',

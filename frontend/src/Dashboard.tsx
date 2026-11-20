@@ -1,8 +1,8 @@
 // 분석 화면(Workspace.tsx)의 두 탭.
 //   DashboardTab  오늘 할 일: 판매 기록 올리기(분석 시작) · 준비 기준 · 준비할 개수 · 메뉴별 준비표 · 주의할 소식
-//   AnalysisTab   얼마나 믿을 만한가: 예측 정확도(지난주대로 준비할 때와 비교) · 판매 그래프 · 예측에 쓴 주변 정보
+//   AnalysisTab   얼마나 믿을 만한가: 예측 정확도(지난주 그대로 준비할 때와 비교) · 판매 그래프 · 예측에 쓴 주변 정보
 // 모양은 첫 화면(Landing.tsx)과 같다: 옅은 회색 바탕 위의 흰 칸, 작은 고정폭 글씨의 구역 이름, 큰 숫자.
-//   하루 오차 = 예측대로 준비했다면 남거나 모자랐을 개수 (모든 메뉴 합, 하루 평균). '지난주대로' = 지난주 같은 요일만큼 준비
+//   하루 오차 = 예측대로 준비했다면 남거나 모자랐을 개수 (모든 메뉴 합, 하루 평균). '지난주 그대로' = 지난주 같은 요일만큼 준비
 import { useQuery } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 import { api, type ProgressEvent } from './api'
@@ -186,7 +186,7 @@ export function AnalysisTab({ storeId, storeName, onReplay, events }: {
           <Tile
             big
             point={v.saved > 0}
-            label="지난주대로 준비할 때 대비 정확도 향상"
+            label="지난주 그대로 준비할 때 대비 정확도 향상"
             value={
               <>
                 <CountWhenSeen to={Math.max(v.gain, 0)} />%

@@ -154,7 +154,7 @@ export function Landing({ login, contactUrl, canEnter }: SiteProps) {
           <div className="nm-hero-map relative isolate order-last mt-12 h-[340px] lg:absolute lg:-top-16 lg:right-0 lg:bottom-0 lg:mt-0 lg:h-auto lg:w-[58%]">
             <CollectMap events={past!} />
             <div className="nm-hero-veil pointer-events-none absolute inset-0 z-[900]" />
-            <p className="absolute right-6 bottom-9 z-[900] rounded-full bg-white px-4 py-2 text-sm font-medium text-ink-700">
+            <p className="absolute right-32 bottom-6 z-[900] rounded-full bg-white px-4 py-2 text-sm font-medium text-ink-700">
               가게 주변의 정보를 모으는 모습 (예시 매장)
             </p>
           </div>
@@ -348,7 +348,7 @@ export function Landing({ login, contactUrl, canEnter }: SiteProps) {
       {/* 6. 숫자 몇 개 (검증은 여기서 길게 말하지 않는다 → 소개) */}
       {v && (
         <Screen>
-          <Chapter title={'지난주만큼 준비할 때보다\n정확도가 올라가요'} />
+          <Chapter title={'지난주 그대로 준비할 때보다\n정확도가 올라가요'} />
           <div className="mt-12 grid gap-5 md:grid-cols-3">
             <Stat lag={0.2} label="정확도 향상 (남거나 모자라는 개수가 줄어든 비율)">
               <span className="text-point">
@@ -366,7 +366,7 @@ export function Landing({ login, contactUrl, canEnter }: SiteProps) {
             <p className="max-w-2xl text-sm leading-relaxed text-ink-500">
               예시 매장(판매 기록은 가상)의 {periodName(v)} 기준{date ? ` · ${fmtDate(date)} 예측까지` : ''}. 지난 날짜를 전날까지의 기록만 보고 맞혀 본 결과입니다.
             </p>
-            <ArrowLink href={`${ABOUT_PATH}#example`}>어떻게 쟀는지 보기</ArrowLink>
+            <ArrowLink href={`${ABOUT_PATH}#example`}>평가 방법 보기</ArrowLink>
           </Reveal>
         </Screen>
       )}

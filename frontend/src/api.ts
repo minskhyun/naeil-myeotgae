@@ -103,7 +103,8 @@ export type StoreInfo = { store_id: string; name: string; prep_mode: string; can
 
 // 로그인한 사람 (GET /api/auth/me). 서버 규칙은 backend/app/auth.py
 // provider: 어느 로그인인지. 카카오는 이메일 제공에 동의하지 않으면 email이 없다
-export type User = { provider: 'google' | 'kakao'; email: string | null; name: string; picture: string | null; is_admin: boolean }
+// agreed = 이용약관 · 개인정보 수집·이용에 동의했는가 (처음 로그인하면 Consent.tsx가 한 번 묻는다)
+export type User = { provider: 'google' | 'kakao'; email: string | null; name: string; picture: string | null; is_admin: boolean; agreed: boolean }
 
 // 이 서버가 쓰는 로그인 방법 (GET /api/config에서 만든다). 하나도 없으면 로그인을 안 쓰는 서버
 export type LoginConfig = { google: string | null; kakao: boolean } // google = 구글 클라이언트 ID
@@ -114,6 +115,7 @@ export type MyStore = {
   name: string
   address: string | null
   close_time: string
+  category: string // 업종 (주변 정보를 고르는 AI에게 알려 준다)
   created_at: string | null
   updated_at: string | null // 마지막으로 준비표를 만든 때
   ready: boolean // 준비표가 있는지
@@ -153,12 +155,13 @@ export type Job = {
   error: string | null
 }
 
-// 화면의 주소: '/' 첫 화면(Landing), ABOUT_PATH 소개(About), SUPPORT_PATH 고객지원, PRIVACY_PATH 개인정보처리방침, APP_PATH 분석 화면(Workspace).
+// 화면의 주소: '/' 첫 화면(Landing), ABOUT_PATH 소개(About), SUPPORT_PATH 고객지원, PRIVACY_PATH 개인정보처리방침, TERMS_PATH 이용약관, APP_PATH 분석 화면(Workspace).
 // 서버 쪽 같은 값은 backend/app/main.py의 APP_PAGE · ABOUT_PAGE
 export const APP_PATH = '/app'
 export const ABOUT_PATH = '/about'
 export const SUPPORT_PATH = '/support' // 고객지원 (Support.tsx)
 export const PRIVACY_PATH = '/privacy' // 개인정보처리방침 (Privacy.tsx)
+export const TERMS_PATH = '/terms' // 이용약관 (Terms.tsx)
 export const PREP_MODES = ['폐기 줄이기', '균형', '품절 줄이기'] as const
 
 const JSON_BODY = { 'Content-Type': 'application/json' }
@@ -180,11 +183,13 @@ export const api = {
   loginGoogle: (credential: string) =>
     call<User>('/auth/google', { method: 'POST', headers: JSON_BODY, body: JSON.stringify({ credential }) }),
   logout: () => call<{ ok: boolean }>('/auth/logout', { method: 'POST' }),
+  agree: () => call<User>('/auth/agree', { method: 'POST' }), // 이용약관 · 개인정보 수집·이용 동의
+  deleteMe: () => call<{ ok: boolean }>('/auth/me', { method: 'DELETE' }), // 탈퇴: 계정과 모든 매장의 자료를 지운다
   // 내 매장 관리 (로그인한 사람만). 매장 ID는 서버가 지어 준다
   myStores: () => call<MyStore[]>('/my/stores'),
   createStore: (name: string, closeTime: string) =>
     call<MyStore>('/my/stores', { method: 'POST', headers: JSON_BODY, body: JSON.stringify({ name, close_time: closeTime }) }),
-  updateStore: (id: string, fields: { name?: string; address?: string; close_time?: string }) =>
+  updateStore: (id: string, fields: { name?: string; address?: string; close_time?: string; category?: string }) =>
     call<MyStore>(`/my/stores/${id}`, { method: 'PATCH', headers: JSON_BODY, body: JSON.stringify(fields) }),
   deleteStore: (id: string) => call<{ ok: boolean }>(`/my/stores/${id}`, { method: 'DELETE' }),
   stores: () => call<StoreInfo[]>('/stores'),

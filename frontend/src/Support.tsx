@@ -1,7 +1,7 @@
 // 고객지원 ('/support'): 처음 쓰는 법 → 자주 묻는 질문 → 문의. 도움이 필요할 때 여기 한 곳만 보면 되게 모았다.
 // 한 화면에 한 내용 (index.css의 nm-screen · nm-snap). 적는 내용은 지금 실제로 되는 것만.
 import { type CSSProperties, type ReactNode } from 'react'
-import { PRIVACY_PATH } from './api'
+import { PRIVACY_PATH, TERMS_PATH } from './api'
 import { FAQ } from './example'
 import { Lines, Reveal } from './Reveal'
 import { useSnapScroll } from './scrub'
@@ -16,7 +16,7 @@ const GUIDE = [
 
 // 판매 기록을 다룰 때 알아 둘 것
 const TIPS = [
-  { title: '손님 정보는 빼고 올려 주세요', text: '적립 전화번호, 회원 번호, 카드 정보가 든 열은 지우고 올려 주세요. 예측에는 날짜·메뉴·수량만 씁니다.' },
+  { title: '필요한 열만 보관해요', text: '올린 파일에서 날짜·메뉴·수량·시각·금액 열만 남기고 나머지는 저장하지 않아요. 손님 전화번호나 카드 정보가 든 열은 서버에 남지 않습니다.' },
   { title: '하루치는 직접 적어도 돼요', text: '파일을 다시 내려받지 않아도, 대시보드의 판매 입력에서 그날 판매 수량을 적으면 그 기록까지 넣어 다시 예측합니다.' },
   { title: '새 파일이 기준이에요', text: '나중에 그 날짜가 든 새 파일을 올리면 직접 적은 것 대신 파일의 기록을 씁니다. 같은 판매가 두 번 세어지지 않아요.' },
 ]
@@ -113,6 +113,7 @@ export function Support({ login, contactUrl, canEnter }: SiteProps) {
               <p className="rounded-2xl bg-white px-6 py-5 text-ink-700">문의 창구를 준비하고 있어요. 지금은 시연 단계입니다.</p>
             )}
             <ArrowLink href={PRIVACY_PATH}>개인정보처리방침</ArrowLink>
+            <ArrowLink href={TERMS_PATH}>이용약관</ArrowLink>
           </Reveal>
         </Screen>
       </main>

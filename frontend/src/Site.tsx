@@ -1,6 +1,6 @@
 // 첫 화면(Landing) · 소개(About) · 고객지원(Support) · 개인정보처리방침(Privacy)이 함께 쓰는 틀: 맨 위 머리말, 맨 아래의 '내 가게로 해 보기' 띠, 바닥글.
 import { useEffect, useRef, type ReactNode } from 'react'
-import { ABOUT_PATH, APP_PATH, PRIVACY_PATH, SUPPORT_PATH, type LoginConfig } from './api'
+import { ABOUT_PATH, APP_PATH, PRIVACY_PATH, SUPPORT_PATH, TERMS_PATH, type LoginConfig } from './api'
 import { AccountBox, LoginButtons } from './Auth'
 import { Logo } from './Logo'
 import { watchScroll } from './scrub'
@@ -42,6 +42,22 @@ function ContactLink({ url, className }: { url: string; className: string }) {
   )
 }
 
+// 화면 오른쪽 아래에 늘 떠 있는 문의 버튼: 고객지원의 문의 자리로 간다 (도움을 청할 곳이 어디서나 보이게).
+// 첫 화면 · 소개 · 정책 화면은 머리말이, 분석 화면은 Workspace가 띄운다. 고객지원 화면에는 띄우지 않는다
+export function HelpButton() {
+  return (
+    <a
+      href={`${SUPPORT_PATH}#contact`}
+      className="fixed right-5 bottom-5 z-40 inline-flex h-12 items-center gap-2 rounded-full bg-ink-900 px-5 text-sm font-semibold text-white shadow-pop transition-colors duration-150 hover:bg-ink-hover"
+    >
+      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12Z" />
+      </svg>
+      문의
+    </a>
+  )
+}
+
 // 머리말: 맨 위에서는 바탕 없이 화면과 이어지고, 스크롤하면 흰 바탕과 선이 생긴다. here = 지금 보는 화면
 // 메뉴는 셋: 홈 · 소개 · 고객지원 ('none' = 메뉴에 없는 화면: 개인정보처리방침)
 export function SiteHeader({ login, canEnter, contactUrl, here }: SiteProps & { here: 'home' | 'about' | 'support' | 'none' }) {
@@ -53,7 +69,9 @@ export function SiteHeader({ login, canEnter, contactUrl, here }: SiteProps & { 
     </a>
   )
   return (
-    <header ref={bar} className="sticky top-0 z-30 border-b border-transparent bg-transparent transition-colors duration-300 data-scrolled:border-line data-scrolled:bg-page">
+    <>
+      {here !== 'support' && <HelpButton />}
+      <header ref={bar} className="sticky top-0 z-30 border-b border-transparent bg-transparent transition-colors duration-300 data-scrolled:border-line data-scrolled:bg-page">
       <div className="mx-auto flex min-h-16 max-w-content flex-wrap items-center justify-between gap-x-8 gap-y-2 px-5 py-2 md:px-10">
         <div className="flex items-center gap-x-8">
           <a href="/" aria-label="내일몇개 첫 화면">
@@ -74,7 +92,8 @@ export function SiteHeader({ login, canEnter, contactUrl, here }: SiteProps & { 
           {login ? <AccountBox login={login} /> : !canEnter && contactUrl && <ContactLink url={contactUrl} className="btn-md btn-primary" />}
         </div>
       </div>
-    </header>
+      </header>
+    </>
   )
 }
 
@@ -139,6 +158,9 @@ export function SiteFooter({ contactUrl }: { contactUrl: string | null }) {
         <nav className="flex flex-wrap items-center gap-x-5 gap-y-1">
           <a href={SUPPORT_PATH} className="hover:text-ink-900">
             고객지원
+          </a>
+          <a href={TERMS_PATH} className="hover:text-ink-900">
+            이용약관
           </a>
           <a href={PRIVACY_PATH} className="font-semibold text-ink-900 hover:underline">
             개인정보처리방침

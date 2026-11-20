@@ -24,6 +24,8 @@
   GET  /api/auth/kakao/callback            카카오가 돌려보내는 곳: 확인하고 로그인 쿠키를 준 뒤 첫 화면으로
   GET  /api/auth/me                        지금 로그인한 사람 (없으면 null)
   POST /api/auth/logout                    로그아웃
+  POST /api/auth/agree                     이용약관 · 개인정보 수집·이용에 동의 (처음 한 번. 동의 전에는 매장을 만들거나 고칠 수 없다)
+  DELETE /api/auth/me                      탈퇴: 계정과 내 모든 매장의 자료(올린 파일, 결과)를 지운다
   로그인이 켜지면: 시연 매장은 누구나 보고, 내 매장은 나만 보고 고친다. 파일 올리기는 로그인해야 한다.
 내 매장 관리 (로그인한 사람만)
   GET    /api/my/stores                    내 매장 목록 (아직 준비표가 없는 매장도)
@@ -62,6 +64,7 @@ from backend.app import auth
 from contracts.schemas import DEFAULT_CLOSE_TIME, BacktestResult, Forecast, SalesHistory, SourceReport, StoreConfig
 from ml import paths, progress
 from ml.features import load_sales
+from ml.ingest import keep_needed_columns
 from ml.llm import settings as env_settings
 from ml.predict import PREP_MODES, recent_history
 
@@ -185,6 +188,7 @@ APP_PAGE = "/app"                            # 분석 화면의 주소 (첫 화�
 ABOUT_PAGE = "/about"                        # 소개 화면의 주소 (frontend/src/api.ts의 ABOUT_PATH)
 SUPPORT_PAGE = "/support"                    # 고객지원 (자주 묻는 질문 · 사용 가이드 · 문의. api.ts의 SUPPORT_PATH)
 PRIVACY_PAGE = "/privacy"                    # 개인정보처리방침 (api.ts의 PRIVACY_PATH)
+TERMS_PAGE = "/terms"                        # 이용약관 (api.ts의 TERMS_PATH)
 KAKAO_CALLBACK = "/api/auth/kakao/callback"  # 카카오 콘솔의 '리다이렉트 URI'에 등록하는 주소의 뒷부분
 ASKED = ".nickname"                        # state 끝에 붙이는 표시: 닉네임 동의를 따로 물어보고 돌아오는 길
 
@@ -264,6 +268,30 @@ def auth_logout(request: Request, response: Response):
     return {"ok": True}
 
 
+@app.post("/api/auth/agree")
+def auth_agree(user: auth.User | None = Me):
+    """이용약관 · 개인정보 수집·이용에 동의한다 (처음 로그인했을 때 화면이 한 번 묻는다)."""
+    return auth.agree(_member(user)).public()
+
+
+@app.delete("/api/auth/me")
+def delete_me(response: Response, user: auth.User | None = Me):
+    """탈퇴: 내 모든 매장의 자료(결과 폴더, 올린 파일)와 계정을 지운다. 되돌릴 수 없다."""
+    user = _member(user)
+    _read_only()
+    mine = list(auth.my_stores(user))
+    with LOCK:
+        if any(s in RUNNING for s in mine):
+            raise HTTPException(409, "지금 계산 중인 매장이 있습니다. 끝난 뒤 다시 시도해 주세요.")
+    for store_id in mine:
+        for path in (ARTIFACTS / store_id, UPLOADS / store_id):
+            if path.exists():
+                shutil.rmtree(path)
+    auth.delete_user(user)
+    response.delete_cookie(auth.COOKIE)
+    return {"ok": True}
+
+
 # ---------------------------------------------------------------- 내 매장 관리
 
 class NewStore(BaseModel):
@@ -276,6 +304,7 @@ class StoreEdit(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=40)
     address: str | None = Field(default=None, max_length=200)      # "" = 위치 지우기
     close_time: str | None = None
+    category: str | None = Field(default=None, min_length=1, max_length=20)   # 업종 (주변 정보를 고르는 AI에게 알려 준다)
 
 
 def _member(user: auth.User | None) -> auth.User:
@@ -294,6 +323,7 @@ def _my_store(store_id: str, created_at: str | None, mine: bool) -> dict:
     fc = folder / "forecast.json"
     updated = dt.datetime.fromtimestamp(fc.stat().st_mtime).isoformat(timespec="seconds") if fc.exists() else None
     return dict(store_id=store_id, name=store.name or store_id, address=store.address, close_time=store.close_time,
+                category=store.category,
                 created_at=created_at, updated_at=updated, ready=fc.exists(), running=store_id in RUNNING, mine=mine)
 
 
@@ -314,6 +344,7 @@ def my_stores(user: auth.User | None = Me):
 def create_my_store(body: NewStore, user: auth.User | None = Me):
     user = _member(user)
     _read_only()
+    auth.check_agreed(user)
     if not re.match(CLOSE_TIME, body.close_time):
         raise HTTPException(400, "영업 종료 시각은 21:00처럼 적어 주세요.")
     store_id = auth.create_store(user)
@@ -340,6 +371,8 @@ def edit_my_store(store_id: str, body: StoreEdit, user: auth.User | None = Me):
         if not re.match(CLOSE_TIME, body.close_time):
             raise HTTPException(400, "영업 종료 시각은 21:00처럼 적어 주세요.")
         store.close_time = body.close_time
+    if body.category is not None:
+        store.category = body.category.strip()
     if body.address is not None and body.address.strip() != (store.address or ""):
         store.address, store.lat, store.lon = body.address.strip() or None, None, None
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -410,6 +443,32 @@ def _start(store_id: str, args: list[str]) -> dict:
     return JOBS[job_id]
 
 
+def _keep_upload(store_id: str, pos: UploadFile, suffix: str) -> Path:
+    """올린 POS 파일에서 예측에 쓰는 열(날짜·메뉴·수량·시각·금액)만 골라 pos.csv로 보관한다. 원본은 남기지 않는다.
+    가게 손님의 정보(전화번호·회원 번호·카드 정보)가 든 열이 서버에 남지 않게 하려는 것 (ml/ingest.keep_needed_columns).
+    읽지 못하는 파일은 여기서 바로 거절한다 (전에 올린 파일은 그대로 둔다)."""
+    folder = UPLOADS / store_id
+    folder.mkdir(parents=True, exist_ok=True)
+    incoming, clean = folder / f"incoming{suffix}", folder / "incoming.clean"
+    try:
+        incoming.write_bytes(pos.file.read())                          # 읽는 동안만 잠깐 둔다
+        keep_needed_columns(incoming, clean)
+    except ValueError as e:                                            # 머리글을 못 찾음, 인코딩 모름
+        clean.unlink(missing_ok=True)
+        raise HTTPException(400, str(e).split("\n")[0].replace(" ml/ingest.py의 COLUMN_MAP에 열 이름을 추가하세요.", "")
+                            + " 날짜·메뉴(상품명)·수량 열이 있는 파일인지 확인해 주세요.")
+    except Exception as e:                                             # 깨진 엑셀 등
+        clean.unlink(missing_ok=True)
+        raise HTTPException(400, f"파일을 읽지 못했습니다 ({type(e).__name__}). 엑셀이나 CSV로 다시 내려받아 올려 주세요.")
+    finally:
+        incoming.unlink(missing_ok=True)
+    for old in folder.glob("pos.*"):                                   # 전에 올린 파일은 지운다 (하나만 남게)
+        old.unlink()
+    saved = folder / "pos.csv"
+    clean.rename(saved)
+    return saved
+
+
 @app.post("/api/stores/{store_id}/run", status_code=202)
 def run_store(store_id: str, pos: UploadFile = File(..., description="POS 엑셀·CSV (토스·OKPOS)"),
               close_time: str | None = Form(None, description="영업 종료 시각 HH:MM"),
@@ -428,11 +487,10 @@ def run_store(store_id: str, pos: UploadFile = File(..., description="POS 엑셀
         if store.close_time != close_time:
             store.close_time = close_time
             store.write(folder / "store.json")
-    saved = UPLOADS / store_id / f"pos{suffix}"
-    saved.parent.mkdir(parents=True, exist_ok=True)
-    for old in saved.parent.glob("pos.*"):                             # 전에 올린 파일은 지운다 (형식이 달라도 하나만 남게)
-        old.unlink()
-    saved.write_bytes(pos.file.read())
+    with LOCK:
+        if store_id in RUNNING:                                        # 계산 중에 파일을 바꿔 끼우지 않는다
+            raise HTTPException(409, f"{store_id}는 이미 실행 중입니다. 끝난 뒤 다시 시도하세요.")
+    saved = _keep_upload(store_id, pos, suffix)
     args = ["--pos", str(saved)]
     if (saved.parent / ADDED).exists():                                # 직접 적은 판매분: 새 파일의 마지막 날짜 뒤의 것만 쓰인다
         args += ["--added", str(saved.parent / ADDED)]
@@ -527,13 +585,14 @@ def job(job_id: str, user: auth.User | None = Me):
 
 
 # 빌드된 화면 (맨 마지막에 둔다: /api/... 가 먼저 처리되고, 나머지 주소는 화면 파일)
-# 화면의 주소: "/" 첫 화면, ABOUT_PAGE 소개, SUPPORT_PAGE 고객지원, PRIVACY_PAGE 개인정보처리방침, APP_PAGE 분석 화면.
+# 화면의 주소: "/" 첫 화면, ABOUT_PAGE 소개, SUPPORT_PAGE 고객지원, PRIVACY_PAGE 개인정보처리방침, TERMS_PAGE 이용약관, APP_PAGE 분석 화면.
 # 모두 같은 index.html을 주고, 어느 화면을 그릴지는 화면 코드(App.tsx)가 정한다.
 if WEB_DIST.exists():
     @app.get(APP_PAGE, include_in_schema=False)
     @app.get(ABOUT_PAGE, include_in_schema=False)
     @app.get(SUPPORT_PAGE, include_in_schema=False)
     @app.get(PRIVACY_PAGE, include_in_schema=False)
+    @app.get(TERMS_PAGE, include_in_schema=False)
     def app_page():
         return FileResponse(WEB_DIST / "index.html")
 

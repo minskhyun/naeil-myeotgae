@@ -1,7 +1,7 @@
 // '얼마나 맞나' 화면 (로그인 뒤의 '자세히' 창, 첫 화면의 예시 3).
 // 글은 최소로: 큰 결론 한 줄 → 숫자 세 칸 → 방법별 막대. 용어 풀이와 검증 기록은 접어 둔다.
 //   하루 오차 = 예측대로 준비했다면 남았을 개수 + 모자랐을 개수 (모든 메뉴 합, 하루 평균)
-//   지난주대로 = 지난주 같은 요일에 팔린 만큼 준비하는 방법 (사장님들이 흔히 쓰는 방식, 비교 기준)
+//   지난주 그대로 = 지난주 같은 요일에 팔린 만큼 준비하는 방법 (사장님들이 흔히 쓰는 방식, 비교 기준)
 import { useQuery } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 import { api, type ModelScore, type SignalDecision } from './api'
@@ -76,7 +76,7 @@ export function BacktestView({ storeId, hideDecisions = false }: { storeId: stri
   // 실제로 쓰는 방법의 줄: 고른 신호 조합이 기본 M1~M3와 다르면 '(채택 신호만)' 줄이 따로 있다
   const picked = data.cv_scores.find((s) => s.model.includes('채택'))?.model ?? data.chosen_model
   const used = data.decisions.filter((d) => d.adopted).map((d) => GROUP_LABELS[d.signal_group] ?? d.signal_group)
-  const name = (m: string) => (m === 'M0' ? '지난주대로 준비' : m === picked ? '내일몇개' : (MODEL_LABELS[base(m)] ?? m))
+  const name = (m: string) => (m === 'M0' ? '지난주 그대로 준비' : m === picked ? '내일몇개' : (MODEL_LABELS[base(m)] ?? m))
   const v = verdict(data) // 마지막 확인 기간의 결과, 기록이 짧아 없으면 검증 기간 결과
 
   return (
@@ -87,10 +87,10 @@ export function BacktestView({ storeId, hideDecisions = false }: { storeId: stri
           <h2 className="mt-1 text-h1">
             {v.saved > 0 ? (
               <>
-                지난주대로 준비할 때보다 <span className="text-point">정확도 {v.gain}% 향상</span>
+                지난주 그대로 준비할 때보다 <span className="text-point">정확도 {v.gain}% 향상</span>
               </>
             ) : (
-              '지난주대로 준비하는 것과 비슷해요'
+              '지난주 그대로 준비하는 것과 비슷해요'
             )}
           </h2>
         </header>
@@ -100,7 +100,7 @@ export function BacktestView({ storeId, hideDecisions = false }: { storeId: stri
 
       {v && (
         <div className="grid gap-3 sm:grid-cols-3">
-          <Stat label="하루 오차" value={`${count(v.mineShown)}개`} note={`지난주대로 준비하면 ${count(v.baseShown)}개`} />
+          <Stat label="하루 오차" value={`${count(v.mineShown)}개`} note={`지난주 그대로 준비하면 ${count(v.baseShown)}개`} />
           <Stat label="예상 범위 안에 든 비율" value={pct1(v.mine.coverage_80)} note={RANGE_TARGET_TEXT} />
           <Stat label="쓰는 정보" value={<span className="text-xl">{used.length ? `판매 기록 + ${used.join('·')}` : '판매 기록'}</span>} />
         </div>
@@ -108,7 +108,7 @@ export function BacktestView({ storeId, hideDecisions = false }: { storeId: stri
 
       {v && (
         <section>
-          <BarRow label="지난주대로 준비" value={v.baseMiss} max={Math.max(v.baseMiss, v.mineMiss)} strong={false} />
+          <BarRow label="지난주 그대로 준비" value={v.baseMiss} max={Math.max(v.baseMiss, v.mineMiss)} strong={false} />
           <BarRow label="내일몇개" value={v.mineMiss} max={Math.max(v.baseMiss, v.mineMiss)} strong />
         </section>
       )}
@@ -125,7 +125,7 @@ export function BacktestView({ storeId, hideDecisions = false }: { storeId: stri
         <ul className="mt-3 max-w-3xl list-disc space-y-1.5 pl-5">
           <li>지난 날짜를 그 전날까지의 기록만 보고 예측한 뒤, 실제 판매와 비교했습니다.</li>
           <li>하루 오차 = 예측대로 준비했다면 남았을 개수 + 모자랐을 개수 (모든 메뉴 합, 하루 평균)</li>
-          <li>지난주대로 준비 = 지난주 같은 요일에 팔린 만큼 준비하는 방법</li>
+          <li>지난주 그대로 준비 = 지난주 같은 요일에 팔린 만큼 준비하는 방법</li>
           <li>
             예상 범위는 실제 판매 10번 중 8번이 그 안에 들도록 만듭니다. 80%보다 낮으면 범위가 좁다는 뜻, 높으면 넓다는 뜻입니다.
           </li>

@@ -17,6 +17,7 @@ import { Logo } from './Logo'
 import { Modal } from './Modal'
 import { Lines } from './Reveal'
 import { SalesEntry } from './SalesEntry'
+import { HelpButton } from './Site'
 import { StoresView } from './StoresView'
 import { UploadView } from './UploadView'
 import { useJob } from './useJob'
@@ -259,6 +260,7 @@ export function Workspace({ login }: { login: LoginConfig | null }) {
           <UploadView key={adding.target ?? 'new'} onStarted={started} busy={running} account={account} initialTarget={adding.target} />
         </Modal>
       )}
+      <HelpButton />
       {entering && storeId && (
         <Modal label="판매 입력" onClose={() => setEntering(false)}>
           <SalesEntry storeId={storeId} onStarted={started} />

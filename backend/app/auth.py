@@ -16,6 +16,8 @@
   users     누구인지 (어느 로그인인지, 그 서비스의 계정 번호, 이메일, 이름)
   sessions  로그인 상태 (세션 번호는 해시만 저장 → DB가 새도 남의 로그인을 쓸 수 없음)
   stores    매장 주인
+  처음 로그인하면 화면이 이용약관 · 개인정보 수집·이용 동의를 한 번 묻는다 (users.agreed_at). 동의 전에는 매장을 만들거나 고칠 수 없다.
+  탈퇴(delete_user)하면 계정과 로그인 상태, 매장 주인 기록을 지운다 (매장 자료는 main.delete_me가 지운다).
 
 권한 (로그인이 켜져 있을 때)
   - 시연 매장(backend/demo_data에 있는 ID): 누구나 본다. 다시 계산은 관리자만
@@ -63,6 +65,7 @@ CREATE TABLE IF NOT EXISTS users (
     picture       TEXT,
     created_at    TEXT NOT NULL,
     last_login_at TEXT NOT NULL,
+    agreed_at     TEXT,                   -- 이용약관 · 개인정보 수집·이용에 동의한 시각 (비어 있으면 아직 동의하지 않음)
     UNIQUE (provider, subject)
 );
 CREATE TABLE IF NOT EXISTS sessions (
@@ -91,6 +94,7 @@ class User:
     email: str | None
     name: str
     picture: str | None
+    agreed: bool = False            # 이용약관 · 개인정보 수집·이용에 동의했는가 (동의 전에는 매장을 만들거나 고칠 수 없다)
 
     @property
     def is_admin(self) -> bool:
@@ -98,7 +102,8 @@ class User:
 
     def public(self) -> dict:
         """화면에 주는 내 정보."""
-        return dict(provider=self.provider, email=self.email, name=self.name, picture=self.picture, is_admin=self.is_admin)
+        return dict(provider=self.provider, email=self.email, name=self.name, picture=self.picture, is_admin=self.is_admin,
+                    agreed=self.agreed)
 
 
 # ---------------------------------------------------------------- DB
@@ -110,6 +115,8 @@ def _prepare(con: sqlite3.Connection) -> None:
     if old:
         con.execute("ALTER TABLE users RENAME TO users_old")
     con.executescript(SCHEMA)
+    if "agreed_at" not in {row[1] for row in con.execute("PRAGMA table_info(users)")}:    # 동의 칸이 생기기 전의 DB
+        con.execute("ALTER TABLE users ADD COLUMN agreed_at TEXT")
     if old:
         con.executescript(
             "INSERT INTO users (id, provider, subject, email, name, picture, created_at, last_login_at) "
@@ -141,7 +148,8 @@ def _hash(token: str) -> str:
 
 
 def _user(row: sqlite3.Row) -> User:
-    return User(id=row["id"], provider=row["provider"], email=row["email"], name=row["name"], picture=row["picture"])
+    return User(id=row["id"], provider=row["provider"], email=row["email"], name=row["name"], picture=row["picture"],
+                agreed=bool(row["agreed_at"]))
 
 
 # ---------------------------------------------------------------- 로그인·로그아웃
@@ -228,6 +236,28 @@ def logout(token: str | None) -> None:
             con.execute("DELETE FROM sessions WHERE token_hash = ?", (_hash(token),))
 
 
+def agree(user: User) -> User:
+    """이용약관 · 개인정보 수집·이용 동의를 기록한다 (처음 로그인했을 때 화면이 한 번 묻는다)."""
+    with _db() as con:
+        con.execute("UPDATE users SET agreed_at = COALESCE(agreed_at, ?) WHERE id = ?", (_now(), user.id))
+        row = con.execute("SELECT * FROM users WHERE id = ?", (user.id,)).fetchone()
+    return _user(row)
+
+
+def check_agreed(user: User | None) -> None:
+    """동의하지 않은 사람은 매장을 만들거나 고치지 못한다 (로그인을 안 쓰는 서버에는 해당 없음)."""
+    if enabled() and user is not None and not user.agreed:
+        raise HTTPException(403, "이용약관과 개인정보 수집·이용에 동의한 뒤 쓸 수 있습니다.")
+
+
+def delete_user(user: User) -> None:
+    """탈퇴: 계정, 로그인 상태, 매장 주인 기록을 지운다. 매장 자료(폴더)는 부르는 쪽이 먼저 지운다 (main.delete_me)."""
+    with _db() as con:
+        con.execute("DELETE FROM sessions WHERE user_id = ?", (user.id,))
+        con.execute("DELETE FROM stores WHERE owner_id = ?", (user.id,))
+        con.execute("DELETE FROM users WHERE id = ?", (user.id,))
+
+
 def current_user(request: Request) -> User | None:
     """요청의 쿠키로 누구인지 찾는다. 로그인 안 했거나 만료됐으면 None. (FastAPI의 Depends로 쓴다)"""
     token = request.cookies.get(COOKIE)
@@ -290,6 +320,7 @@ def check_write(user: User | None, store_id: str, exists: bool, create: bool = F
         return
     if user is None:
         raise HTTPException(401, "로그인이 필요합니다.")
+    check_agreed(user)
     if create and store_id not in DEMO_STORES and (not exists or user.is_admin):
         with _db() as con:                                           # 이미 주인이 있으면 아무 일도 안 일어난다
             con.execute("INSERT OR IGNORE INTO stores (store_id, owner_id, created_at) VALUES (?, ?, ?)",

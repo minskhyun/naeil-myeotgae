@@ -1,14 +1,16 @@
-// 분석 화면(Workspace.tsx)의 '매장 관리' 탭 (로그인한 사람만): 내가 만든 매장의 이름·주소·닫는 시간을 고치고,
-// 판매 기록을 다시 올리고, 매장을 지운다. 새 매장은 '매장 추가' 버튼으로 (창이 뜬다).
+// 분석 화면(Workspace.tsx)의 '매장 관리' 탭 (로그인한 사람만): 내가 만든 매장의 이름·업종·주소·닫는 시간을 고치고,
+// 판매 기록을 다시 올리고, 매장을 지운다. 새 매장은 '매장 추가' 버튼으로 (창이 뜬다). 맨 아래에 내 계정(탈퇴).
 // 주소와 닫는 시간은 예측의 재료라서, 고친 것은 다음에 분석할 때부터 반영된다.
 // 서버 쪽은 backend/app/main.py의 /api/my/stores, 권한 규칙은 backend/app/auth.py.
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { api, type MyStore } from './api'
 import { fmtTime } from './format'
+import { useMe } from './useMe'
 import { ArrowLink } from './Site'
 
 const LINK = 'underline underline-offset-4 hover:text-ink-900 disabled:opacity-40'
+const CATEGORIES = ['카페', '베이커리', '카페·베이커리', '디저트', '음식점', '기타'] // 업종: 주변 정보를 고르는 AI에게 알려 준다 (StoreConfig.category)
 
 // 매장의 지금 상태를 한 줄로
 function status(s: MyStore) {
@@ -28,11 +30,12 @@ function StoreCard({ s, onOpen, onUpload, onChanged }: {
   const [name, setName] = useState<string | null>(null)
   const [address, setAddress] = useState<string | null>(null)
   const [closeTime, setCloseTime] = useState<string | null>(null)
+  const [category, setCategory] = useState<string | null>(null)
   const [asking, setAsking] = useState(false) // 지울지 한 번 더 묻는 중
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const now = { name: name ?? s.name, address: address ?? s.address ?? '', close_time: closeTime ?? s.close_time }
-  const dirty = now.name !== s.name || now.address !== (s.address ?? '') || now.close_time !== s.close_time
+  const now = { name: name ?? s.name, address: address ?? s.address ?? '', close_time: closeTime ?? s.close_time, category: category ?? s.category }
+  const dirty = now.name !== s.name || now.address !== (s.address ?? '') || now.close_time !== s.close_time || now.category !== s.category
   const moved = now.address !== (s.address ?? '') || now.close_time !== s.close_time // 예측에 영향을 주는 칸을 바꿨는가
 
   const act = async (work: () => Promise<unknown>, done?: () => void) => {
@@ -52,6 +55,7 @@ function StoreCard({ s, onOpen, onUpload, onChanged }: {
         setName(null)
         setAddress(null)
         setCloseTime(null)
+        setCategory(null)
         setSaved(true)
       },
     )
@@ -85,7 +89,15 @@ function StoreCard({ s, onOpen, onUpload, onChanged }: {
           <span className="text-sm font-medium">닫는 시간</span>
           <input type="time" value={now.close_time} onChange={(e) => touch(setCloseTime)(e.target.value)} className="field mt-1 w-full" />
         </label>
-        <label className="block sm:col-span-2">
+        <label className="block">
+          <span className="text-sm font-medium">업종</span>
+          <select value={now.category} onChange={(e) => touch(setCategory)(e.target.value)} className="field mt-1 w-full">
+            {[...new Set([...CATEGORIES, now.category])].map((c) => (
+              <option key={c}>{c}</option>
+            ))}
+          </select>
+        </label>
+        <label className="block">
           <span className="text-sm font-medium">매장 위치 (주소)</span>
           <input value={now.address} maxLength={200} onChange={(e) => touch(setAddress)(e.target.value)} className="field mt-1 w-full" placeholder="서울 성동구 서울숲2길 12-7" />
           <span className="mt-1 block text-sm text-ink-500">이 위치의 날씨와 근처 행사를 찾습니다. 비워 두면 판매 기록만으로 예측합니다</span>
@@ -164,6 +176,50 @@ export function StoresView({ onOpen, onUpload }: {
           <StoreCard key={s.store_id} s={s} onOpen={onOpen} onUpload={onUpload} onChanged={refresh} />
         ))}
       </ul>
+      <Account />
     </div>
+  )
+}
+
+// 내 계정: 어느 계정으로 로그인했는지 보여 주고, 탈퇴한다 (계정과 모든 매장의 자료가 지워진다 → main.delete_me)
+function Account() {
+  const me = useMe(true).data
+  const [asking, setAsking] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  if (!me) return null
+  const leave = async () => {
+    try {
+      await api.deleteMe()
+      window.google?.accounts.id.disableAutoSelect() // 다음에 자동으로 다시 로그인되지 않게
+      window.location.assign('/')
+    } catch (e) {
+      setError((e as Error).message)
+    }
+  }
+  return (
+    <section className="rounded-[32px] bg-white p-6 sm:p-8">
+      <h3 className="text-h3">내 계정</h3>
+      <p className="mt-2 text-ink-700">
+        {me.name} · {me.provider === 'google' ? '구글' : '카카오'} 계정으로 로그인{me.email ? ` (${me.email})` : ''}
+      </p>
+      <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-line pt-5 text-sm">
+        {asking ? (
+          <>
+            <span className="text-down">계정과 모든 매장의 판매 기록·결과가 지워지고 되돌릴 수 없습니다.</span>
+            <button onClick={leave} className="btn-md bg-down text-white">
+              탈퇴하기
+            </button>
+            <button onClick={() => setAsking(false)} className={LINK}>
+              취소
+            </button>
+          </>
+        ) : (
+          <button onClick={() => setAsking(true)} className={`text-down ${LINK}`}>
+            탈퇴
+          </button>
+        )}
+      </div>
+      {error && <p className="mt-3 text-sm text-down">{error}</p>}
+    </section>
   )
 }
