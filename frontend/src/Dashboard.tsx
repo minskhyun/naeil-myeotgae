@@ -5,14 +5,14 @@
 //   하루 오차 = 예측대로 준비했다면 남거나 모자랐을 개수 (모든 메뉴 합, 하루 평균). '지난주대로' = 지난주 같은 요일만큼 준비
 import { useQuery } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
-import { api } from './api'
+import { api, type ProgressEvent } from './api'
 import { BacktestView } from './BacktestView'
 import { DayBars, WeekdayBars } from './ForecastCharts'
 import { ForecastTable, Notice, PrepToggle } from './ForecastView'
 import { average, count, dayPrefix, fmtDate, pct1, sameWeekday, shortDate, SITUATION_LABELS, weekdayName } from './format'
 import { CountWhenSeen } from './Reveal'
 import { ArrowLink } from './Site'
-import { SourcesView } from './SourcesView'
+import { SignalsBoard } from './SignalsBoard'
 import { periodName, verdict } from './verdict'
 
 const MENUS_SHOWN = 8 // 준비표에 처음 보여 줄 메뉴 수 (나머지는 '더 보기')
@@ -157,10 +157,11 @@ export function DashboardTab({ storeId, storeName, prepMode, readOnly, onUpload 
 }
 
 // ---------------------------------------------------------------- 분석
-export function AnalysisTab({ storeId, storeName, onReplay }: {
+export function AnalysisTab({ storeId, storeName, onReplay, events }: {
   storeId: string
   storeName: string
   onReplay?: () => void // 분석 과정 다시 보기 (기록이 있을 때만)
+  events?: ProgressEvent[] // 이 매장을 마지막으로 분석했을 때의 기록 (지도와 '모은 정보' 숫자의 재료)
 }) {
   const forecast = useQuery({ queryKey: ['forecast', storeId], queryFn: () => api.forecast(storeId) }).data
   const backtest = useQuery({ queryKey: ['backtest', storeId], queryFn: () => api.backtest(storeId) }).data
@@ -228,7 +229,7 @@ export function AnalysisTab({ storeId, storeName, onReplay }: {
       </Card>
 
       <Card title="예측에 쓴 주변 정보">
-        <SourcesView storeId={storeId} />
+        <SignalsBoard storeId={storeId} events={events} />
       </Card>
     </div>
   )

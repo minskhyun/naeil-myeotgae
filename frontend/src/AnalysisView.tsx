@@ -73,12 +73,14 @@ function Card({ title, children }: { title: string; children: ReactNode }) {
   )
 }
 
-export function AnalysisView({ events, status, error, log, onClose, replay = false }: {
+export function AnalysisView({ events, status, error, log, onClose, replay = false, onDone, doneLabel }: {
   events: ProgressEvent[] // 지금까지 서버가 알려 준 것 전부
   status: Job['status']
   error?: string | null
   log?: string[]
   onClose: () => void
+  onDone?: () => void // 끝났을 때 맨 아래의 큰 버튼을 누르면 (없으면 그냥 닫는다)
+  doneLabel?: string // 그 버튼의 이름 (예: '분석 페이지로 가기')
   replay?: boolean // 지난 분석을 다시 보는 중
 }) {
   const [shown, setShown] = useState(0) // 화면에 풀어 놓은 알림 수
@@ -282,8 +284,8 @@ export function AnalysisView({ events, status, error, log, onClose, replay = fal
 
         {(finished || failed) && (
           <div className="mt-10 flex justify-center pb-10">
-            <button onClick={onClose} className="btn-pill group bg-ink-900 text-white hover:bg-ink-hover">
-              {failed ? '닫기' : replay ? '닫기' : '준비표 보기'}
+            <button onClick={failed || !onDone ? onClose : onDone} className="btn-pill group bg-ink-900 text-white hover:bg-ink-hover">
+              {failed ? '닫기' : onDone && doneLabel ? doneLabel : replay ? '닫기' : '준비표 보기'}
               <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-ink-900 transition-transform duration-200 group-hover:translate-x-1" aria-hidden>
                 →
               </span>

@@ -88,10 +88,20 @@ export function Workspace({ login }: { login: LoginConfig | null }) {
     setAdding(null)
     setWatching(true)
   }
+  // 분석 과정 화면의 '분석 페이지로 가기': 화면을 닫고 분석 탭을 연다
+  const toAnalysis = () => {
+    setWatching(false)
+    setReplaying(false)
+    setTab('analysis')
+  }
   const overlays = (
     <>
-      {watching && job && <AnalysisView events={job.events} status={job.status} error={job.error} log={job.log} onClose={() => setWatching(false)} />}
-      {replaying && past && !watching && <AnalysisView events={past} status="done" replay onClose={() => setReplaying(false)} />}
+      {watching && job && (
+        <AnalysisView events={job.events} status={job.status} error={job.error} log={job.log} onClose={() => setWatching(false)} onDone={toAnalysis} doneLabel="분석 페이지로 가기" />
+      )}
+      {replaying && past && !watching && (
+        <AnalysisView events={past} status="done" replay onClose={() => setReplaying(false)} onDone={toAnalysis} doneLabel="분석 페이지로 가기" />
+      )}
     </>
   )
   const logo = (
@@ -235,7 +245,7 @@ export function Workspace({ login }: { login: LoginConfig | null }) {
             />
           )}
           {showing === 'analysis' && storeId && (
-            <AnalysisTab storeId={storeId} storeName={store?.name ?? storeId} onReplay={past?.length ? () => setReplaying(true) : undefined} />
+            <AnalysisTab storeId={storeId} storeName={store?.name ?? storeId} onReplay={past?.length ? () => setReplaying(true) : undefined} events={past} />
           )}
         </main>
       </div>
