@@ -153,10 +153,12 @@ export type Job = {
   error: string | null
 }
 
-// 화면의 주소는 셋이다: '/' 첫 화면(Landing), ABOUT_PATH 소개(About), APP_PATH 분석 화면(Workspace).
+// 화면의 주소: '/' 첫 화면(Landing), ABOUT_PATH 소개(About), SUPPORT_PATH 고객지원, PRIVACY_PATH 개인정보처리방침, APP_PATH 분석 화면(Workspace).
 // 서버 쪽 같은 값은 backend/app/main.py의 APP_PAGE · ABOUT_PAGE
 export const APP_PATH = '/app'
 export const ABOUT_PATH = '/about'
+export const SUPPORT_PATH = '/support' // 고객지원 (Support.tsx)
+export const PRIVACY_PATH = '/privacy' // 개인정보처리방침 (Privacy.tsx)
 export const PREP_MODES = ['폐기 줄이기', '균형', '품절 줄이기'] as const
 
 const JSON_BODY = { 'Content-Type': 'application/json' }
@@ -206,4 +208,7 @@ export const api = {
     if (opts.address) form.append('address', opts.address)
     return call<Job>(`/stores/${id}/run`, { method: 'POST', body: form })
   },
+  // 하루치 판매를 직접 적어 덧붙인다 → 그 기록까지 넣어 다시 분석한다 (올린 파일의 마지막 날짜 뒤의 날만)
+  addSales: (id: string, date: string, items: { menu: string; qty: number }[]) =>
+    call<Job>(`/stores/${id}/sales`, { method: 'POST', headers: JSON_BODY, body: JSON.stringify({ date, items }) }),
 }

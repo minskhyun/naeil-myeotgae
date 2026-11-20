@@ -260,16 +260,38 @@ def clean_sales(pos: pd.DataFrame, store_id: str, menu_map: dict[str, str] | Non
     return sales, log
 
 
-# ---------------------------------------------------------------- 4) 한 번에
+# ---------------------------------------------------------------- 4) 직접 적은 판매분
 
-def ingest_store(pos_path, store_id: str, out: Path, pos_type: str = "auto") -> str:
+def merge_added(pos: pd.DataFrame, added_path) -> tuple[pd.DataFrame, list[str]]:
+    """화면에서 하루씩 직접 적은 판매(added.csv: date, menu, qty)를 POS 표 뒤에 덧붙인다 → (표, 덧붙인 날짜들).
+
+    POS 파일이 다루는 기간(파일의 마지막 날짜까지)은 파일이 기준이다. 그 뒤 날짜의 것만 덧붙인다.
+    → 나중에 그 날짜가 든 새 파일을 올리면 직접 적은 것은 쓰이지 않는다 (같은 판매를 두 번 세지 않는다).
+    메뉴 이름은 준비표에 보이는 이름(정리된 이름) 그대로 적힌다.
+    """
+    added = pd.read_csv(added_path, parse_dates=["date"])
+    added = added[(added["date"] > pos["date"].max()) & (added["qty"] > 0)]
+    if added.empty:
+        return pos, []
+    extra = added.rename(columns={"menu": "menu_raw"})[["date", "menu_raw", "qty"]]
+    return pd.concat([pos, extra], ignore_index=True), sorted({str(d.date()) for d in added["date"]})
+
+
+# ---------------------------------------------------------------- 5) 한 번에
+
+def ingest_store(pos_path, store_id: str, out: Path, pos_type: str = "auto", added=None) -> str:
     """POS 파일 → out/sales_clean.csv (+ ingest_log.json, menu_merge_candidates.json).  run.py가 부른다.
 
     메뉴명 규칙은 out/menu_map.json에 사람이 승인한 것만 적용한다. 없으면 그대로 둔다.
+    added = 화면에서 직접 적은 판매분 파일 (있으면 POS 파일의 마지막 날짜 뒤의 것을 덧붙인다 → merge_added)
     """
     out = Path(out)
     out.mkdir(parents=True, exist_ok=True)
     pos, read_log = read_pos(pos_path, pos_type)
+    pos_last = str(pos["date"].max().date())                            # 파일이 다루는 마지막 날짜 (직접 적기는 이 뒤부터)
+    added_days: list[str] = []
+    if added and Path(added).exists():
+        pos, added_days = merge_added(pos, added)
     map_path = out / "menu_map.json"
     menu_map = json.loads(map_path.read_text(encoding="utf-8")) if map_path.exists() else {}
     sales, clean_log = clean_sales(pos, store_id, menu_map)
@@ -287,13 +309,16 @@ def ingest_store(pos_path, store_id: str, out: Path, pos_type: str = "auto") -> 
     prices = {menu_map.get(m, m): p for m, p in read_log.pop("prices", {}).items()}      # 판매가 (금액 열이 있을 때)
     if prices:
         (out / "menu_prices.json").write_text(json.dumps(prices, ensure_ascii=False, indent=1), encoding="utf-8")
-    log = dict(read=read_log, clean=clean_log, merge_candidates=len(candidates), menus_with_price=len(prices))
+    log = dict(read=read_log, clean=clean_log, merge_candidates=len(candidates), menus_with_price=len(prices),
+               pos_last=pos_last, added_days=added_days)
     (out / "ingest_log.json").write_text(json.dumps(log, ensure_ascii=False, indent=1), encoding="utf-8")
 
     parts = [f"{read_log['pos_type']} 형식, {clean_log['days']}일·메뉴 {clean_log['menus']}개",
              f"합계·빈 행 {read_log['dropped_total_or_blank']}개, 취소 {read_log['dropped_cancel']}개 제외"
              + (f", 메뉴가 아닌 품목(금액권·충전) {len(read_log['non_menu'])}개 제외" if read_log["non_menu"] else "")
              + (f", 시트 {read_log['sheets']}개를 이어 읽음" if read_log["sheets"] > 1 else "")]
+    if added_days:
+        parts.append(f"직접 적은 판매 {len(added_days)}일 포함")
     if clean_log["closed_days"]:
         parts.append(f"휴무 {len(clean_log['closed_days'])}일")
     if clean_log["sold_out"]:

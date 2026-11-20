@@ -10,7 +10,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react'
 import { AnalysisMap } from './AnalysisMap'
-import { ABOUT_PATH, api, APP_PATH, PREP_MODES, type ProgressEvent } from './api'
+import { ABOUT_PATH, api, APP_PATH, PREP_MODES, SUPPORT_PATH, type ProgressEvent } from './api'
 import { LoginButtons } from './Auth'
 import { useExample } from './example'
 import { ForecastTable, Notice, PrepToggle } from './ForecastView'
@@ -378,7 +378,7 @@ export function Landing({ login, contactUrl, canEnter }: SiteProps) {
           {[
             { href: `${ABOUT_PATH}#how`, title: '판매 기록이 준비표가 되기까지' },
             { href: `${ABOUT_PATH}#example`, title: '예시 매장의 준비표와 검증 결과' },
-            { href: `${ABOUT_PATH}#faq`, title: '어떤 파일을 올리면 되나요' },
+            { href: `${SUPPORT_PATH}#faq`, title: '어떤 파일을 올리면 되나요' },
           ].map((c, i) => (
             <Reveal key={c.href} lag={0.15 + i * 0.12}>
               <a href={c.href} className="group block h-full rounded-[32px] bg-white px-8 py-10">

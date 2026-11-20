@@ -16,6 +16,7 @@ import { AnalysisTab, DashboardTab } from './Dashboard'
 import { Logo } from './Logo'
 import { Modal } from './Modal'
 import { Lines } from './Reveal'
+import { SalesEntry } from './SalesEntry'
 import { StoresView } from './StoresView'
 import { UploadView } from './UploadView'
 import { useJob } from './useJob'
@@ -69,6 +70,7 @@ export function Workspace({ login }: { login: LoginConfig | null }) {
   const filePicker = useRef<HTMLInputElement>(null)
   const [uploadTo, setUploadTo] = useState<string | null>(null) // 고른 파일을 올릴 매장
   const [uploadError, setUploadError] = useState<string | null>(null)
+  const [entering, setEntering] = useState(false) // 하루치 판매를 직접 적는 창 (SalesEntry)
   const pickFile = (target: string) => {
     setUploadError(null)
     setUploadTo(target)
@@ -87,6 +89,7 @@ export function Workspace({ login }: { login: LoginConfig | null }) {
   const started = (id: string) => {
     setJobId(id)
     setAdding(null)
+    setEntering(false)
     setWatching(true)
   }
   // 분석 과정 화면의 '분석 페이지로 가기': 화면을 닫고 분석 탭을 연다
@@ -242,6 +245,7 @@ export function Workspace({ login }: { login: LoginConfig | null }) {
               prepMode={store?.prep_mode ?? '균형'}
               readOnly={store?.can_edit === false}
               onUpload={store?.can_edit === false || running ? undefined : () => pickFile(storeId)}
+              onEnter={() => setEntering(true)}
             />
           )}
           {showing === 'analysis' && storeId && (
@@ -253,6 +257,11 @@ export function Workspace({ login }: { login: LoginConfig | null }) {
       {adding && (
         <Modal label={account ? '매장 추가' : '데이터 올리기'} onClose={() => setAdding(null)}>
           <UploadView key={adding.target ?? 'new'} onStarted={started} busy={running} account={account} initialTarget={adding.target} />
+        </Modal>
+      )}
+      {entering && storeId && (
+        <Modal label="판매 입력" onClose={() => setEntering(false)}>
+          <SalesEntry storeId={storeId} onStarted={started} />
         </Modal>
       )}
       {overlays}

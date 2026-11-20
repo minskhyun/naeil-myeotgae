@@ -84,6 +84,7 @@ def test_app_page_serves_the_same_screen_file():
     assert app_page.status_code == 200 and "text/html" in app_page.headers["content-type"]
     assert app_page.text == home.text
     assert client.get(main.ABOUT_PAGE).text == home.text
+    assert client.get(main.SUPPORT_PAGE).text == home.text and client.get(main.PRIVACY_PAGE).text == home.text
 
 def test_demo_data_follows_contracts():
     from contracts.schemas import BacktestResult, Forecast, SalesHistory, SourceReport
@@ -106,3 +107,24 @@ def test_history_endpoint_serves_chart_data():
     assert r.status_code == 200
     body = r.json()
     assert len(body["dates"]) == 28 == len(body["total"]) and "소금빵" in body["menus"]
+
+
+def test_add_sales_by_hand(client, tmp_path, monkeypatch):
+    """하루치 판매를 직접 적으면 올린 파일 옆 added.csv에 쌓고(같은 날은 바꾼다), 그 파일을 넣어 다시 실행한다."""
+    started = []
+    monkeypatch.setattr(main, "_start", lambda store_id, args: started.append(args) or {"job_id": "j", "status": "running"})
+    day = {"date": "2026-10-03", "items": [{"menu": "소금빵", "qty": 8}, {"menu": "라떼", "qty": 0}]}
+    assert client.post("/api/stores/sinchon-a/sales", json=day).status_code == 400          # 올린 파일이 없다
+
+    folder = tmp_path / "uploads" / "sinchon-a"
+    folder.mkdir(parents=True)
+    (folder / "pos.csv").write_text("날짜,상품명,수량\n2026-10-02,소금빵,12\n", encoding="utf-8")
+    (tmp_path / "sinchon-a" / "ingest_log.json").write_text('{"pos_last": "2026-10-02"}', encoding="utf-8")
+    assert client.post("/api/stores/sinchon-a/sales", json={**day, "date": "2026-10-02"}).status_code == 400   # 파일에 이미 있는 날
+    assert client.post("/api/stores/sinchon-a/sales", json={**day, "date": "2999-01-01"}).status_code == 400   # 오지 않은 날
+    assert client.post("/api/stores/sinchon-a/sales", json={**day, "items": [{"menu": "라떼", "qty": 0}]}).status_code == 400
+
+    assert client.post("/api/stores/sinchon-a/sales", json=day).status_code == 202
+    assert client.post("/api/stores/sinchon-a/sales", json={**day, "items": [{"menu": "소금빵", "qty": 9}]}).status_code == 202
+    assert (folder / "added.csv").read_text(encoding="utf-8").split() == ["date,menu,qty", "2026-10-03,소금빵,9"]
+    assert started[-1] == ["--pos", str(folder / "pos.csv"), "--added", str(folder / "added.csv")]

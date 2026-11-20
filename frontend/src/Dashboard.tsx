@@ -56,12 +56,13 @@ const Unit = ({ children, big = false }: { children: ReactNode; big?: boolean })
 )
 
 // ---------------------------------------------------------------- 대시보드
-export function DashboardTab({ storeId, storeName, prepMode, readOnly, onUpload }: {
+export function DashboardTab({ storeId, storeName, prepMode, readOnly, onUpload, onEnter }: {
   storeId: string
   storeName: string
   prepMode: string
   readOnly: boolean
   onUpload?: () => void // 이 매장의 판매 기록을 (다시) 올려 분석을 시작한다. 고칠 수 없는 매장이면 없다
+  onEnter?: () => void // 하루치 판매를 직접 적는 창을 연다 (SalesEntry.tsx). 고칠 수 없는 매장이면 없다
 }) {
   const forecast = useQuery({ queryKey: ['forecast', storeId], queryFn: () => api.forecast(storeId) })
   const history = useQuery({ queryKey: ['history', storeId], queryFn: () => api.history(storeId), retry: false }).data
@@ -85,9 +86,12 @@ export function DashboardTab({ storeId, storeName, prepMode, readOnly, onUpload 
         title={fmtDate(date)}
         action={
           onUpload && (
-            <ArrowLink onClick={onUpload} dark>
-              판매 기록 올리고 분석하기
-            </ArrowLink>
+            <div className="flex flex-wrap items-center gap-3">
+              {onEnter && <ArrowLink onClick={onEnter}>판매 입력</ArrowLink>}
+              <ArrowLink onClick={onUpload} dark>
+                판매 기록 올리고 분석하기
+              </ArrowLink>
+            </div>
           )
         }
       />

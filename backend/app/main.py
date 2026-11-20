@@ -13,6 +13,7 @@
   GET  /api/stores/{store_id}/progress     마지막 분석 때 알린 것 전부 → 화면의 '분석 과정 다시 보기'
 실행 (오래 걸리므로 작업 번호를 주고, 화면이 상태를 물어본다)
   POST /api/stores/{store_id}/run          POS 파일 + 매장 주소 → run.py 전체 실행 (주변 정보는 주소로 자동 수집)
+  POST /api/stores/{store_id}/sales        하루치 판매를 직접 적어 덧붙이기 → 그 기록까지 넣어 다시 실행
   POST /api/stores/{store_id}/demo         가상 데이터로 전체 실행 (시연용)
   POST /api/stores/{store_id}/settings     준비 방식 바꾸기 → predict 단계만 다시
   GET  /api/jobs/{job_id}                  작업 상태 (running / done / error) + 실행 기록 + 알림(events)
@@ -38,6 +39,7 @@
   - 결과는 backend/demo_data/ (가상 매장·공개 데이터 결과만, 저장소에 들어 있음)
   - frontend/dist가 있으면 화면도 이 서버가 함께 보여 준다 → 주소 하나로 끝 (Dockerfile 참고)
 """
+import csv
 import datetime as dt
 import json
 import os
@@ -72,6 +74,8 @@ WEB_DIST = paths.ROOT / "frontend" / "dist"      # npm run build 결과 (있으�
 UPLOADS = paths.RAW / "uploads"                  # 올린 파일 (실제 매장 자료 → 커밋 안 됨)
 STORE_ID = re.compile(r"^[a-z0-9][a-z0-9-]{0,40}$")   # 폴더 이름으로 쓰므로 안전한 글자만
 POS_SUFFIXES = (".xlsx", ".xls", ".xlsm", ".csv")
+ADDED = "added.csv"                                   # 화면에서 직접 적은 판매분 (올린 POS 파일 옆에 둔다: date, menu, qty)
+KST = dt.timezone(dt.timedelta(hours=9))              # '오늘'은 한국 날짜로 본다 (서버 시계는 다른 시간대일 수 있다)
 CLOSE_TIME = r"^([01]\d|2[0-3]):[0-5]\d$"            # 영업 종료 시각 HH:MM
 
 app = FastAPI(title="내일몇개 API")
@@ -179,6 +183,8 @@ class GoogleLogin(BaseModel):
 STATE_COOKIE = "nm_oauth_state"            # 카카오로 보낼 때 심어 두는 확인용 값 (10분)
 APP_PAGE = "/app"                            # 분석 화면의 주소 (첫 화면은 "/"). 화면 쪽 같은 값은 frontend/src/api.ts의 APP_PATH
 ABOUT_PAGE = "/about"                        # 소개 화면의 주소 (frontend/src/api.ts의 ABOUT_PATH)
+SUPPORT_PAGE = "/support"                    # 고객지원 (자주 묻는 질문 · 사용 가이드 · 문의. api.ts의 SUPPORT_PATH)
+PRIVACY_PAGE = "/privacy"                    # 개인정보처리방침 (api.ts의 PRIVACY_PATH)
 KAKAO_CALLBACK = "/api/auth/kakao/callback"  # 카카오 콘솔의 '리다이렉트 URI'에 등록하는 주소의 뒷부분
 ASKED = ".nickname"                        # state 끝에 붙이는 표시: 닉네임 동의를 따로 물어보고 돌아오는 길
 
@@ -424,13 +430,66 @@ def run_store(store_id: str, pos: UploadFile = File(..., description="POS 엑셀
             store.write(folder / "store.json")
     saved = UPLOADS / store_id / f"pos{suffix}"
     saved.parent.mkdir(parents=True, exist_ok=True)
+    for old in saved.parent.glob("pos.*"):                             # 전에 올린 파일은 지운다 (형식이 달라도 하나만 남게)
+        old.unlink()
     saved.write_bytes(pos.file.read())
     args = ["--pos", str(saved)]
+    if (saved.parent / ADDED).exists():                                # 직접 적은 판매분: 새 파일의 마지막 날짜 뒤의 것만 쓰인다
+        args += ["--added", str(saved.parent / ADDED)]
     if close_time:
         args += ["--close-time", close_time]
     if address and address.strip():
         args += ["--address", address.strip()]
     return _start(store_id, args)
+
+
+class SoldItem(BaseModel):
+    menu: str = Field(min_length=1, max_length=80)
+    qty: int = Field(ge=0, le=100_000)
+
+
+class SalesEntry(BaseModel):
+    """하루치 판매 (화면의 '오늘 판매 입력')."""
+    date: dt.date
+    items: list[SoldItem] = Field(min_length=1, max_length=300)
+
+
+@app.post("/api/stores/{store_id}/sales", status_code=202)
+def add_sales(store_id: str, entry: SalesEntry, user: auth.User | None = Me):
+    """파일을 다시 올리지 않고 하루치 판매를 직접 적어 덧붙인다 → 그 기록까지 넣어 다시 분석한다.
+    올린 POS 파일이 기준이다: 파일의 마지막 날짜 뒤의 날만 적을 수 있고, 같은 날을 다시 적으면 그날 것을 바꾼다.
+    적은 것은 올린 파일 옆의 added.csv에 쌓인다 (매장을 지우면 함께 지워진다)."""
+    folder = _store_dir(store_id)
+    _read_only()
+    auth.check_write(user, store_id, exists=folder.exists())
+    files = sorted((UPLOADS / store_id).glob("pos.*"), key=lambda p: p.stat().st_mtime)
+    if not files:
+        raise HTTPException(400, "먼저 판매 기록 파일을 올려 주세요. 직접 적기는 올린 기록 뒤에 하루씩 덧붙이는 기능입니다.")
+    if entry.date > dt.datetime.now(KST).date():
+        raise HTTPException(400, "아직 오지 않은 날짜입니다.")
+    log = folder / "ingest_log.json"
+    pos_last = json.loads(log.read_text(encoding="utf-8")).get("pos_last") if log.exists() else None
+    if pos_last and entry.date.isoformat() <= pos_last:
+        raise HTTPException(400, f"올린 파일에 {pos_last}까지의 기록이 이미 있습니다. 그 뒤 날짜만 적을 수 있어요.")
+    sold: dict[str, int] = {}
+    for item in entry.items:                                           # 같은 메뉴를 두 번 적었으면 더한다
+        name = " ".join(item.menu.split())
+        if name and item.qty:
+            sold[name] = sold.get(name, 0) + item.qty
+    if not sold:
+        raise HTTPException(400, "판매 수량을 하나 이상 적어 주세요.")
+    with LOCK:
+        if store_id in RUNNING:
+            raise HTTPException(409, f"{store_id}는 이미 실행 중입니다. 끝난 뒤 다시 시도하세요.")
+    path = UPLOADS / store_id / ADDED
+    day = entry.date.isoformat()
+    kept = [r for r in csv.DictReader(path.open(encoding="utf-8", newline=""))] if path.exists() else []
+    rows = [r for r in kept if r["date"] != day] + [dict(date=day, menu=m, qty=q) for m, q in sold.items()]
+    with path.open("w", encoding="utf-8", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=["date", "menu", "qty"])
+        writer.writeheader()
+        writer.writerows(rows)
+    return _start(store_id, ["--pos", str(files[-1]), "--added", str(path)])
 
 
 @app.post("/api/stores/{store_id}/demo", status_code=202)
@@ -468,10 +527,13 @@ def job(job_id: str, user: auth.User | None = Me):
 
 
 # 빌드된 화면 (맨 마지막에 둔다: /api/... 가 먼저 처리되고, 나머지 주소는 화면 파일)
-# 화면의 주소는 셋: "/" 첫 화면, ABOUT_PAGE 소개, APP_PAGE 분석 화면. 모두 같은 index.html을 주고, 어느 화면을 그릴지는 화면 코드(App.tsx)가 정한다.
+# 화면의 주소: "/" 첫 화면, ABOUT_PAGE 소개, SUPPORT_PAGE 고객지원, PRIVACY_PAGE 개인정보처리방침, APP_PAGE 분석 화면.
+# 모두 같은 index.html을 주고, 어느 화면을 그릴지는 화면 코드(App.tsx)가 정한다.
 if WEB_DIST.exists():
     @app.get(APP_PAGE, include_in_schema=False)
     @app.get(ABOUT_PAGE, include_in_schema=False)
+    @app.get(SUPPORT_PAGE, include_in_schema=False)
+    @app.get(PRIVACY_PAGE, include_in_schema=False)
     def app_page():
         return FileResponse(WEB_DIST / "index.html")
 

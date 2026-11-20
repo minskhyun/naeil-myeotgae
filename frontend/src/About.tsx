@@ -1,5 +1,5 @@
 // 소개 ('/about'): 어떻게 예측하고, 결과가 어떻게 나오고, 얼마나 맞는지를 한 곳에 정리한다.
-//   네 단계 → 예측 방법 → 주변 정보를 고르는 기준 → AI가 하는 일 → 예시 매장의 실제 결과(준비표 · 쓴 정보 · 검증) → 자주 묻는 질문
+//   네 단계 → 예측 방법 → 주변 정보를 고르는 기준 → AI가 하는 일 → 예시 매장의 실제 결과(준비표 · 쓴 정보 · 검증). 자주 묻는 질문은 고객지원(Support.tsx)에 있다
 // 첫 화면(Landing.tsx)은 무엇을 해 주는지만 보여 주고, 방법과 검증은 여기에 모은다.
 // 적는 내용은 코드가 실제로 하는 일과 같아야 한다 (숫자 기준은 ml/evaluate.py, ml/models.py, ml/features.py).
 import { useState, type CSSProperties, type ReactNode } from 'react'
@@ -9,7 +9,7 @@ import { ForecastView } from './ForecastView'
 import { Lines, Reveal } from './Reveal'
 import { useSnapScroll } from './scrub'
 import { JoinBand, SiteFooter, SiteHeader, type SiteProps } from './Site'
-import { FAQ, useExample } from './example'
+import { useExample } from './example'
 import { SourcesView } from './SourcesView'
 
 const MENUS_SHOWN = 8 // 예시 준비표에 처음 보여 줄 메뉴 수
@@ -194,22 +194,6 @@ export function About({ login, contactUrl, canEnter }: SiteProps) {
               </Part>
             </>
           )}
-
-        <Block id="faq" title="자주 묻는 질문">
-          <Reveal className="divide-y divide-line rounded-3xl bg-white px-6 sm:px-8">
-            {FAQ.map((f) => (
-              <details key={f.q} className="group py-5">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-semibold">
-                  {f.q}
-                  <span className="text-ink-500 transition-transform group-open:rotate-180" aria-hidden>
-                    ▾
-                  </span>
-                </summary>
-                <p className="mt-3 text-sm leading-relaxed text-ink-700">{f.a}</p>
-              </details>
-            ))}
-          </Reveal>
-        </Block>
       </main>
 
       <section className="nm-screen !justify-start !py-0">

@@ -131,7 +131,7 @@ def _tell_demo_surroundings(store_id: str, out: Path) -> None:
 def _ingest_pos(args, out: Path) -> str:
     """실데이터: POS 파일 정리 → 매장 설정 → 주변 정보 (사장님은 POS와 주소만 준다)."""
     progress.status("판매 기록을 읽는 중")
-    notes = [ingest_store(Path(args.pos), args.store, out, pos_type=args.pos_type)]
+    notes = [ingest_store(Path(args.pos), args.store, out, pos_type=args.pos_type, added=args.added)]
     _tell_sales(load_sales(out / "sales_clean.csv"))
     if args.address:
         progress.status("매장 위치를 찾는 중")
@@ -302,6 +302,7 @@ def parse_args(argv=None):
     p.add_argument("--demo-days", type=int, help="가상 데이터를 앞 N일로 잘라 실행 (짧은 데이터 모드 시연)")
     p.add_argument("--pos", help="POS 파일 경로 (실데이터)")
     p.add_argument("--pos-type", default="auto", choices=["auto", "toss", "okpos", "items"])
+    p.add_argument("--added", help="화면에서 직접 적은 판매분 (date, menu, qty CSV). POS 파일의 마지막 날짜 뒤의 것만 덧붙인다")
     p.add_argument("--address", help="매장 주소 → 위치를 찾아 날씨·행사·뉴스를 자동 수집 (store.json에 저장)")
     p.add_argument("--close-time", help="영업 종료 시각 HH:MM (store.json이 없을 때만 씀, 기본 21:00)")
     p.add_argument("--signals", help="[개발용] 외부 신호 파일 (SignalRow 형식 .json/.csv). 주면 자동 수집을 하지 않음")

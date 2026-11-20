@@ -1,6 +1,8 @@
-// 어떤 화면을 보여 줄지 정한다. 주소가 셋이다.
+// 어떤 화면을 보여 줄지 정한다. 주소는 다섯이다.
 //   /        첫 화면 (Landing.tsx): 무엇을 해 주는 서비스인지. 누구나 본다
-//   /about   소개 (About.tsx): 어떻게 예측하는지, 예시 매장의 결과와 검증, 자주 묻는 질문. 누구나 본다
+//   /about   소개 (About.tsx): 어떻게 예측하는지, 예시 매장의 결과와 검증. 누구나 본다
+//   /support 고객지원 (Support.tsx): 처음 쓰는 법, 자주 묻는 질문, 문의. 누구나 본다
+//   /privacy 개인정보처리방침 (Privacy.tsx). 누구나 본다
 //   /app     분석 화면 (Workspace.tsx): 내 매장의 준비표, 매장 추가·관리. 로그인한 사람만 (로그인을 안 쓰는 서버는 누구나)
 // 들어갈 수 있는 사람에게는 첫 화면과 소개에 '분석하러 가기' 버튼이 보인다.
 // 로그인하지 않았거나 보기 전용 시연 사이트에서 /app 을 열면 첫 화면으로 돌려보낸다.
@@ -8,8 +10,10 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { About } from './About'
-import { ABOUT_PATH, api, APP_PATH, type LoginConfig } from './api'
+import { ABOUT_PATH, api, APP_PATH, PRIVACY_PATH, SUPPORT_PATH, type LoginConfig } from './api'
 import { Landing } from './Landing'
+import { Privacy } from './Privacy'
+import { Support } from './Support'
 import { useMe } from './useMe'
 import { Workspace } from './Workspace'
 
@@ -46,5 +50,8 @@ export default function App() {
   if (wantApp) return canEnter ? <Workspace login={login} /> : null
   // 첫 화면과 소개에 함께 넘기는 것. contactUrl = '사전 신청·문의' 버튼이 여는 주소 (서버 설정 CONTACT_URL)
   const site = { login: demo ? null : login, canEnter, contactUrl: config.data!.contact_url ?? null }
-  return path === ABOUT_PATH ? <About {...site} /> : <Landing {...site} />
+  if (path === ABOUT_PATH) return <About {...site} />
+  if (path === SUPPORT_PATH) return <Support {...site} />
+  if (path === PRIVACY_PATH) return <Privacy {...site} />
+  return <Landing {...site} />
 }

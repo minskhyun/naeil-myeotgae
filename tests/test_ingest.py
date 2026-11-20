@@ -158,3 +158,20 @@ def test_unit_prices_from_amount_columns(tmp_path):
     q.write_text("날짜,상품명,수량\n2026-10-01,소금빵,10\n", encoding="utf-8")
     ingest_store(q, "s", tmp_path / "out2")
     assert not (tmp_path / "out2" / "menu_prices.json").exists()
+
+
+def test_added_sales_follow_the_pos_file(tmp_path):
+    """화면에서 직접 적은 판매(added.csv)는 POS 파일의 마지막 날짜 뒤의 것만 덧붙는다 (파일이 다루는 날은 파일이 기준)."""
+    import json
+    from ml.ingest import ingest_store
+    pos = tmp_path / "pos.csv"
+    pos.write_text("날짜,상품명,수량\n2026-10-01,소금빵,10\n2026-10-02,소금빵,12\n2026-10-02,라떼,3\n", encoding="utf-8")
+    added = tmp_path / "added.csv"
+    added.write_text("date,menu,qty\n2026-10-02,소금빵,99\n2026-10-03,소금빵,8\n2026-10-03,라떼,0\n", encoding="utf-8")
+    note = ingest_store(pos, "s", tmp_path / "out", added=added)
+    sales = pd.read_csv(tmp_path / "out" / "sales_clean.csv")
+    bread = sales[sales["menu"] == "소금빵"].set_index("date")["qty"].to_dict()
+    assert bread == {"2026-10-01": 10, "2026-10-02": 12, "2026-10-03": 8}   # 10/2는 파일 값 그대로, 10/3이 붙었다
+    log = json.loads((tmp_path / "out" / "ingest_log.json").read_text(encoding="utf-8"))
+    assert log["pos_last"] == "2026-10-02" and log["added_days"] == ["2026-10-03"]
+    assert "직접 적은 판매 1일" in note

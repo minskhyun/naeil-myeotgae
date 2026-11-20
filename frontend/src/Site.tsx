@@ -1,6 +1,6 @@
-// 첫 화면(Landing.tsx)과 소개(About.tsx)가 함께 쓰는 틀: 맨 위 머리말, 맨 아래의 '내 가게로 해 보기' 띠, 바닥글.
+// 첫 화면(Landing) · 소개(About) · 고객지원(Support) · 개인정보처리방침(Privacy)이 함께 쓰는 틀: 맨 위 머리말, 맨 아래의 '내 가게로 해 보기' 띠, 바닥글.
 import { useEffect, useRef, type ReactNode } from 'react'
-import { ABOUT_PATH, APP_PATH, type LoginConfig } from './api'
+import { ABOUT_PATH, APP_PATH, PRIVACY_PATH, SUPPORT_PATH, type LoginConfig } from './api'
 import { AccountBox, LoginButtons } from './Auth'
 import { Logo } from './Logo'
 import { watchScroll } from './scrub'
@@ -43,7 +43,8 @@ function ContactLink({ url, className }: { url: string; className: string }) {
 }
 
 // 머리말: 맨 위에서는 바탕 없이 화면과 이어지고, 스크롤하면 흰 바탕과 선이 생긴다. here = 지금 보는 화면
-export function SiteHeader({ login, canEnter, contactUrl, here }: SiteProps & { here: 'home' | 'about' }) {
+// 메뉴는 셋: 홈 · 소개 · 고객지원 ('none' = 메뉴에 없는 화면: 개인정보처리방침)
+export function SiteHeader({ login, canEnter, contactUrl, here }: SiteProps & { here: 'home' | 'about' | 'support' | 'none' }) {
   const bar = useRef<HTMLElement>(null)
   useEffect(() => watchScroll(() => bar.current?.toggleAttribute('data-scrolled', window.scrollY >= 8)), [])
   const tab = (path: string, text: string, on: boolean) => (
@@ -61,6 +62,7 @@ export function SiteHeader({ login, canEnter, contactUrl, here }: SiteProps & { 
           <nav className="flex items-center gap-x-6 text-base text-ink-700">
             {tab('/', '홈', here === 'home')}
             {tab(ABOUT_PATH, '소개', here === 'about')}
+            {tab(SUPPORT_PATH, '고객지원', here === 'support')}
           </nav>
         </div>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
@@ -132,6 +134,17 @@ export function SiteFooter({ contactUrl }: { contactUrl: string | null }) {
             <li>주변 정보를 읽는 데 외부 AI(Anthropic Claude)를 쓰며, 가게 이름·위치와 메뉴 이름, 예측 숫자가 전달됩니다.</li>
           </ul>
         </div>
+      </div>
+      <div className="mx-auto flex max-w-content flex-wrap items-center justify-between gap-x-8 gap-y-2 px-5 pb-8 text-sm text-ink-500 md:px-10">
+        <nav className="flex flex-wrap items-center gap-x-5 gap-y-1">
+          <a href={SUPPORT_PATH} className="hover:text-ink-900">
+            고객지원
+          </a>
+          <a href={PRIVACY_PATH} className="font-semibold text-ink-900 hover:underline">
+            개인정보처리방침
+          </a>
+        </nav>
+        <p>© 2026 내일몇개</p>
       </div>
     </footer>
   )
