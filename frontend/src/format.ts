@@ -103,7 +103,7 @@ export const savedPerDay = (mine: { amount?: number | null; days?: number }, bas
 // 예상 범위는 실제 판매의 80%가 들어오도록 만든다. 화면에는 실제로 든 비율을 그대로 적고 목표(80%)를 옆에 둔다
 // (목표에 견준 점수로 바꿔 적으면 숫자가 실제보다 좋아 보인다)
 // '목표 80%'라고 적으면 못 채운 점수처럼 읽히고, '80%가 이상적'만 적으면 무슨 뜻인지 알 수 없다 → 왜 80%인지를 적는다 (그림은 RangeMeter.tsx)
-export const RANGE_TARGET_TEXT = '10번 중 8번 들도록 잡은 폭이라, 80%에 가까울수록 알맞아요'
+export const RANGE_TARGET_TEXT = '실제 판매가 10번 중 8번 들도록 잡은 폭이에요'
 export const RANGE_TARGET = 80 // 예상 범위에 들도록 잡은 비율(%)
 export const RANGE_NEAR = 5 // 목표에서 이만큼(%p) 안이면 '알맞다'고 적는다
 // 실제로 든 비율(0~1) → 범위의 폭이 어떤지 한마디

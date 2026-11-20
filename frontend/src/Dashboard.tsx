@@ -210,7 +210,7 @@ export function AnalysisTab({ storeId, storeName, onReplay, events }: {
           <Tile
             label="예상 범위 안에 든 비율"
             value={<CountWhenSeen to={v.mine.coverage_80} format={pct1} />}
-            note={`${RANGE_TARGET_TEXT}. 지금은 ${rangeVerdict(v.mine.coverage_80)}`}
+            note={`${RANGE_TARGET_TEXT}. 지금은 ${rangeVerdict(v.mine.coverage_80)}.`}
             extra={<RangeMeter value={v.mine.coverage_80} />}
           />
         </div>

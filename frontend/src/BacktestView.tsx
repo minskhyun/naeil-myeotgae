@@ -95,6 +95,7 @@ export function BacktestView({ storeId, hideDecisions = false }: { storeId: stri
               '지난주 그대로 준비하는 것과 비슷해요'
             )}
           </h2>
+          <p className="mt-2 text-ink-700">지난주 그대로 준비 = 지난주 같은 요일에 팔린 만큼 준비하는 방법</p>
         </header>
       ) : (
         <h2 className="text-h3">검증 결과가 없습니다.</h2>
