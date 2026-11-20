@@ -146,12 +146,13 @@ export function Landing({ login, contactUrl = null }: { login: LoginConfig | nul
       {/* 첫머리: 뒤에는 지도에서 정보를 모으는 장면(넓은 화면만), 앞에는 흰 판 위의 인사말. 가게 표시는 판 아래쪽에 보인다 */}
       <section className="relative overflow-hidden border-b border-line bg-white">
         {heroMap && (
-          <div className="nm-fade absolute inset-0 hidden md:block" aria-hidden>
+          <div className="nm-fade absolute inset-0 isolate hidden md:block" aria-hidden>
             <HeroMap events={past!} />
+            <div className="nm-hero-veil absolute inset-0 z-[900]" />
           </div>
         )}
         <div className={`pointer-events-none relative mx-auto max-w-content px-5 pt-16 text-center md:px-10 md:pt-24 ${heroMap ? 'pb-16 md:pb-60' : 'pb-16 md:pb-24'}`}>
-          <div className={`pointer-events-auto mx-auto max-w-4xl rounded-3xl px-5 py-10 md:px-12 md:py-14 ${heroMap ? 'md:bg-white/90' : ''}`}>
+          <div className="pointer-events-auto mx-auto max-w-4xl px-5 py-10 md:px-12 md:py-14">
           <p className="text-body-lg text-ink-700">카페·베이커리를 위한 내일 판매 예측</p>
           <h2 className="mt-3 text-hero">내일 몇 개 만들까요?</h2>
           <p className="mx-auto mt-6 max-w-2xl text-xl leading-8 text-ink-700">
@@ -207,7 +208,7 @@ export function Landing({ login, contactUrl = null }: { login: LoginConfig | nul
           <>
             <div className="space-y-10">
               {virtual && (
-                <p className="mx-auto w-fit rounded-md bg-tag-sand px-3 py-1.5 text-sm font-medium text-ink-900">
+                <p className="mx-auto w-fit rounded-md bg-surface px-3 py-1.5 text-sm font-medium text-ink-700">
                   아래는 가상으로 만든 예시 매장입니다
                 </p>
               )}

@@ -161,7 +161,7 @@ body {
 .nm-fading { animation: nm-fade-out 4s ease-out forwards; }
 
 /* 주변 시설의 작은 점 */
-.nm-dot { position: absolute; width: 8px; height: 8px; border-radius: 999px; background: color-mix(in srgb, var(--c) 60%, #fff); border: 1.5px solid #fff;
+.nm-dot { position: absolute; width: 8px; height: 8px; border-radius: 999px; background: var(--c); border: 1.5px solid #fff;
   animation: nm-pop 0.45s cubic-bezier(0.2, 1.4, 0.4, 1) both; }
 
 /* 이름표가 붙는 표시 (AI가 고른 근거 시설, 행사) */
@@ -227,4 +227,7 @@ body {
 .nm-map-ambient .leaflet-tile-pane { filter: grayscale(1) brightness(1.06); opacity: 0.4; }
 .nm-map-ambient .leaflet-container { background: #fff; cursor: default; }
 .nm-map-ambient .leaflet-control-attribution { font-size: 10px; background: rgb(255 255 255 / 0.7); }
+/* 글이 놓이는 가운데만 흰빛이 번지듯 덮는다 (테두리가 없는 흰 안개). 판으로 나누지 않고 글이 지도에 녹아들게 */
+.nm-hero-veil { pointer-events: none;
+  background: radial-gradient(ellipse 58% 52% at 50% 38%, rgb(255 255 255 / 0.97) 0%, rgb(255 255 255 / 0.92) 42%, rgb(255 255 255 / 0.55) 72%, rgb(255 255 255 / 0) 100%); }
 

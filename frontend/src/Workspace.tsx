@@ -90,9 +90,9 @@ export function Workspace({ login }: { login: LoginConfig | null }) {
       </header>
 
       {running && !watching && (
-        <p className="bg-tag-sand px-5 py-2.5 text-center text-sm text-ink-900">
+        <p className="bg-ink-900 px-5 py-2.5 text-center text-sm text-white">
           준비표를 만드는 중입니다…{' '}
-          <button onClick={() => setWatching(true)} className="font-semibold underline underline-offset-4 hover:text-ink-900">
+          <button onClick={() => setWatching(true)} className="font-semibold underline underline-offset-4 hover:text-white/80">
             진행 상황 보기
           </button>
         </p>

@@ -26,18 +26,18 @@ function Range({ row, max, narrow = false }: { row: ForecastRow; max: number; na
 // AI가 읽은 소식 한 건: 상황 한 줄 · 안내 문장. 근거(원문 인용과 링크)는 접어 두고 누르면 펼친다
 export function Notice({ w }: { w: Warning }) {
   return (
-    <section className="rounded-2xl bg-tag-sand px-5 py-4">
-      <p className="text-label font-semibold text-ink-900">
+    <section className="rounded-2xl bg-ink-900 px-5 py-4 text-white">
+      <p className="text-label font-semibold text-point">
         {SITUATION_LABELS[w.situation_type] ?? w.situation_type} · 손님 {w.direction} 가능
       </p>
       <p className="mt-1.5 text-[17px] leading-relaxed">{w.message}</p>
       {w.evidence.length > 0 && (
         <details className="mt-2 text-sm">
-          <summary className="cursor-pointer font-semibold text-ink-900 underline-offset-4 hover:underline">근거 {w.evidence.length}건</summary>
+          <summary className="cursor-pointer font-semibold text-white underline-offset-4 hover:underline">근거 {w.evidence.length}건</summary>
           {w.evidence.map((e, i) => (
-            <blockquote key={i} className="mt-2 border-l border-ink-900/20 pl-3 leading-relaxed text-ink-700">
+            <blockquote key={i} className="mt-2 border-l border-white/30 pl-3 leading-relaxed text-white/75">
               {e.quote}{' '}
-              <a href={e.source_url} target="_blank" rel="noreferrer" className="whitespace-nowrap text-ink-900 underline underline-offset-2">
+              <a href={e.source_url} target="_blank" rel="noreferrer" className="whitespace-nowrap text-white underline underline-offset-2">
                 원문
               </a>
             </blockquote>
