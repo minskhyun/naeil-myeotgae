@@ -48,13 +48,16 @@ function Screen({ id, className = '', children }: { id?: string; className?: str
   )
 }
 
-// 사장님의 고충 (첫머리 바로 아래). 팀이 한 사장님 인터뷰의 기록에서 옮겼다 (PROJECT_CONTEXT.md 7장 '인터뷰 기록'). 가게 이름은 적지 않는다.
-// ★ 받아 적은 말 그대로가 아니라 기록을 옮긴 것이다 → 따옴표를 붙이지 않고 '들은 이야기'로 적는다. 인터뷰가 늘면 이 목록만 고친다.
-//   heard = 사장님께 들은 것, 아니면 그 이야기에서 팀이 정리한 것
+// 사장님의 고충 (첫머리 바로 아래). 팀이 한 사장님 인터뷰에서 (2026년 11월, 사용자가 준 정리본). 가게 이름은 적지 않는다.
+// 말하려는 것: 준비량은 대부분 경험과 감으로 정하는데, **그렇게 해도 내일을 맞히기는 어렵다.**
+// ★ 누구의 말인지 섞지 않는다.
+//   quote = 인터뷰 정리본의 문장 그대로 (따옴표로 적는다. 고쳐 쓰지 않는다. 길면 문장 단위로 덜어 낼 수는 있다)
+//   hard  = 그 방법에서 우리가 본 어려움 (사장님의 말이 아니다 → 주황 글씨로 따로 적고, 아래에 그렇게 밝힌다)
+//   who   = 어느 가게 사장님인지 (동네와 업종까지만)
 const PAINS = [
-  { heard: true, big: '재료비가 비싸서\n일부러 모자라게 만들어요', small: '그래서 품절이 잦아요.' },
-  { heard: true, big: '날씨, 시험, 축제, 방학\n전부 매출에 타격이 커요', small: '내일이 어떤 날인지에 따라 달라져요.' },
-  { heard: false, big: '남으면 버리고\n모자라면 못 팔아요', small: '어느 쪽이든 손해예요.' },
+  { who: '이대 앞 카페 사장님', quote: '20년 경력으로 감으로 맞춘다.', hard: '20년이 쌓여야 생기는 감이에요' },
+  { who: '연대 동문 베이커리 사장님', quote: '평일은 지난 통계를 참고하지만 주말은 예약 손님에 맞춰 그때그때 준비한다.', hard: '주말에는 기댈 숫자가 없어요' },
+  { who: '성수 카페 사장님', quote: '제철 과일을 쓰기 때문에 한 달 단위로 수요를 예측하고, 평일과 주말만 나눠서 본다.', hard: '하루하루 달라지는 것은 담기 어려워요' },
 ]
 const MONTH_DAYS = 30 // 한 달 금액으로 바꿀 때 곱하는 날 수 (매일 여는 가게로 본다)
 // 원가율: 원가 ÷ 판매가. ★ 가정한 값이다 (판매 기록에는 원가가 없다). 금액 예시에만 쓰고, 화면에 가정이라고 적는다.
@@ -219,22 +222,34 @@ export function Landing({ login, contactUrl, canEnter, viewOnly }: SiteProps) {
         </div>
       </section>
 
-      {/* 2. 사장님의 고충: 인터뷰에서 들은 이야기를 큰 글씨로 */}
+      {/* 2. 사장님의 고충: 경험과 감으로 정해도 내일은 맞히기 어렵다.
+             칸마다 위는 인터뷰에서 들은 말(따옴표), 아래 주황 글씨는 우리가 본 어려움. 어두운 띠는 숫자로 본 어려움 (예시 매장) */}
       <Screen id="why">
-        <Lines text={'얼마나 만들지,\n매일 감으로 정하고 계신가요'} className="text-title" />
-        <ul className="mt-12 grid gap-5 lg:grid-cols-3">
+        <Lines text={'경험과 감으로 정해도\n내일은 맞히기 어려워요'} className="text-title" />
+        <ul className="mt-10 grid gap-5 lg:grid-cols-3">
           {PAINS.map((pain, i) => (
-            <li key={pain.big}>
-              <Reveal lag={0.15 + i * 0.12} className={`flex h-full flex-col rounded-[32px] px-8 py-10 ${pain.heard ? 'bg-white' : 'bg-ink-900 text-white'}`}>
-                <span className={`text-label ${pain.heard ? 'text-point-text' : 'text-white/70'}`}>{pain.heard ? '사장님께 들은 이야기' : '그래서'}</span>
-                <p className="mt-5 whitespace-pre-line text-h2">{pain.big}</p>
-                <p className={`mt-auto pt-8 text-lg ${pain.heard ? 'text-ink-700' : 'text-white/75'}`}>{pain.small}</p>
+            <li key={pain.who}>
+              <Reveal lag={0.15 + i * 0.12} className="flex h-full flex-col rounded-[32px] bg-white px-8 py-8">
+                <span className="text-label text-ink-500">{pain.who}</span>
+                <p className="mt-4 text-[22px] leading-[32px] font-semibold tracking-[-0.02em]">“{pain.quote}”</p>
+                <p className="mt-auto flex items-start gap-2 pt-6 text-lg font-semibold text-point-text">
+                  <span aria-hidden>→</span>
+                  {pain.hard}
+                </p>
               </Reveal>
             </li>
           ))}
         </ul>
-        <Reveal as="p" lag={0.5} className="mt-6 text-sm text-ink-500">
-          신촌의 베이커리 사장님 인터뷰에서 (2026년 11월). 가게 이름은 밝히지 않아요.
+        <Reveal lag={0.5} className="mt-5 flex flex-wrap items-center justify-between gap-x-10 gap-y-2 rounded-[32px] bg-ink-900 px-8 py-7 text-white">
+          <p className="text-h2">날씨, 시험, 축제, 방학… 내일을 흔드는 일이 많아요</p>
+          {v && (
+            <p className="text-lg text-white/75">
+              지난주 그대로 준비하면 하루 <b className="font-semibold text-white">{count(v.baseShown)}개</b>가 남거나 모자라요 (예시 매장)
+            </p>
+          )}
+        </Reveal>
+        <Reveal as="p" lag={0.6} className="mt-5 text-sm text-ink-500">
+          2026년 11월 사장님 인터뷰에서 (가게 이름은 밝히지 않아요). 주황 글씨는 사장님의 말이 아니라 저희가 본 어려움이에요.
         </Reveal>
       </Screen>
 
