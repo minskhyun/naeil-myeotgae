@@ -330,9 +330,9 @@ export function Landing({ login, contactUrl, canEnter }: SiteProps) {
         {/* 숫자 몇 개 (검증은 여기서 길게 말하지 않는다 → 소개) */}
         {v && (
           <section className="space-y-14">
-            <Chapter label="Result" title={'지난주만큼 준비할 때보다\n더 잘 맞혀요'} />
+            <Chapter label="Result" title={'지난주만큼 준비할 때보다\n정확도가 올라가요'} />
             <div className="grid gap-5 md:grid-cols-3">
-              <Stat label="더 맞혀요 (남거나 모자라는 개수가 줄어든 비율)">
+              <Stat label="정확도 향상 (남거나 모자라는 개수가 줄어든 비율)">
                 <span className="text-point">
                   <CountWhenSeen to={Math.max(v.gain, 0)} />%
                 </span>
