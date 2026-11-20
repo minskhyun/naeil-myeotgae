@@ -11,10 +11,17 @@ import { watchScroll } from './scrub'
 export type SiteProps = { login: LoginConfig | null; canEnter: boolean; contactUrl: string | null }
 
 // 화살표가 달린 알약 버튼. dark = 잉크색 바탕(가장 중요한 버튼), onDark = 어두운 띠 위에 놓는 흰 버튼, 둘 다 아니면 회색 바탕
-export function ArrowLink({ href, children, dark = false, onDark = false }: { href: string; children: ReactNode; dark?: boolean; onDark?: boolean }) {
+export function ArrowLink({ href, onClick, children, dark = false, onDark = false }: {
+  href?: string
+  onClick?: () => void // href 대신 주면 링크가 아니라 버튼이 된다
+  children: ReactNode
+  dark?: boolean
+  onDark?: boolean
+}) {
   const tone = dark ? 'bg-ink-900 text-white hover:bg-ink-hover' : onDark ? 'bg-white text-ink-900 hover:bg-pill' : 'bg-pill text-ink-900 hover:bg-line'
+  const Tag = href ? 'a' : 'button'
   return (
-    <a href={href} className={`btn-pill group ${tone}`}>
+    <Tag href={href} onClick={onClick} className={`btn-pill group ${tone}`}>
       {children}
       <span
         className={`flex h-9 w-9 items-center justify-center rounded-full transition-transform duration-200 group-hover:translate-x-1 ${dark ? 'bg-white text-ink-900' : 'bg-ink-900 text-white'}`}
@@ -22,7 +29,7 @@ export function ArrowLink({ href, children, dark = false, onDark = false }: { hr
       >
         →
       </span>
-    </a>
+    </Tag>
   )
 }
 

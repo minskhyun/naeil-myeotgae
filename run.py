@@ -159,7 +159,8 @@ def _store_setup(args, out: Path) -> tuple[StoreConfig, str]:
     store = StoreConfig.read(path) if path.exists() else \
         StoreConfig(store_id=args.store, **({"close_time": args.close_time} if args.close_time else {}))
     note = ""
-    if args.address and args.address != store.address:
+    # 주소가 바뀌었거나, 주소는 있는데 좌표가 없으면(화면의 '매장 관리'에서 주소를 고친 뒤) 위치를 다시 찾는다
+    if args.address and (args.address != store.address or store.lat is None):
         try:
             lat, lon, found = geocode.geocode(args.address)
             store.address, store.lat, store.lon = args.address, round(lat, 5), round(lon, 5)

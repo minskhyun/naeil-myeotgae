@@ -173,6 +173,10 @@ def test_my_stores_create_rename_upload_delete(site):
 
     assert alice.patch(f"/api/my/stores/{sid}", json={"name": "앨리스 베이커리"}).json()["name"] == "앨리스 베이커리"
     assert alice.patch(f"/api/my/stores/{sid}", json={"name": ""}).status_code == 422
+    # 주소와 닫는 시간도 고칠 수 있다 (준 칸만 바뀐다). 주소가 바뀌면 다음 분석에서 위치를 다시 찾도록 좌표를 지운다
+    edited = alice.patch(f"/api/my/stores/{sid}", json={"address": "서울 서대문구 연세로 12", "close_time": "22:30"}).json()
+    assert (edited["name"], edited["address"], edited["close_time"]) == ("앨리스 베이커리", "서울 서대문구 연세로 12", "22:30")
+    assert alice.patch(f"/api/my/stores/{sid}", json={"close_time": "25:00"}).status_code == 400
 
     assert bob.get("/api/my/stores").json() == []                                      # 남의 매장은 안 보이고
     assert bob.patch(f"/api/my/stores/{sid}", json={"name": "밥의 것"}).status_code == 404

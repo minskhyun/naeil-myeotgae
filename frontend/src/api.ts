@@ -182,8 +182,8 @@ export const api = {
   myStores: () => call<MyStore[]>('/my/stores'),
   createStore: (name: string, closeTime: string) =>
     call<MyStore>('/my/stores', { method: 'POST', headers: JSON_BODY, body: JSON.stringify({ name, close_time: closeTime }) }),
-  renameStore: (id: string, name: string) =>
-    call<MyStore>(`/my/stores/${id}`, { method: 'PATCH', headers: JSON_BODY, body: JSON.stringify({ name }) }),
+  updateStore: (id: string, fields: { name?: string; address?: string; close_time?: string }) =>
+    call<MyStore>(`/my/stores/${id}`, { method: 'PATCH', headers: JSON_BODY, body: JSON.stringify(fields) }),
   deleteStore: (id: string) => call<{ ok: boolean }>(`/my/stores/${id}`, { method: 'DELETE' }),
   stores: () => call<StoreInfo[]>('/stores'),
   forecast: (id: string) => call<Forecast>(`/stores/${id}/forecast`),

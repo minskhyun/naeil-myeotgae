@@ -70,12 +70,13 @@ function PosFile({ file, onPick }: { file?: File; onPick: (f: File) => void }) {
 // first: 아직 매장이 하나도 없는 사람에게 처음 보여 주는 경우 (환영 문구)
 // onStarted: 실행이 시작되면 작업 번호를 Workspace에 넘긴다 → 이 창은 닫히고 '분석 중' 화면(AnalysisView)이 뜬다
 // busy: 다른 분석이 아직 돌고 있다 (끝날 때까지 새로 시작할 수 없다)
-export function UploadView({ onStarted, busy = false, account = false, initialTarget = null, first = false }: {
+export function UploadView({ onStarted, busy = false, account = false, initialTarget = null, first = false, bare = false }: {
   onStarted: (jobId: string) => void
   busy?: boolean
   account?: boolean
   initialTarget?: string | null
   first?: boolean
+  bare?: boolean // 맨 위의 제목과 설명을 그리지 않는다 (첫 매장 화면은 옆에 큰 제목이 따로 있다)
 }) {
   const qc = useQueryClient()
   const mine = useQuery({ queryKey: ['myStores'], queryFn: api.myStores, enabled: account }).data ?? []
@@ -128,7 +129,7 @@ export function UploadView({ onStarted, busy = false, account = false, initialTa
 
   return (
     <div className="max-w-4xl">
-      <header className="pb-6">
+      <header className={bare ? 'hidden' : 'pb-6'}>
         <p className="text-sm text-ink-700">{label}</p>
         <h2 className="mt-0.5 text-h2">{title}</h2>
         <p className="mt-2 text-ink-700">

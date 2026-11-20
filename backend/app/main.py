@@ -265,8 +265,11 @@ class NewStore(BaseModel):
     close_time: str = DEFAULT_CLOSE_TIME
 
 
-class StoreName(BaseModel):
-    name: str = Field(min_length=1, max_length=40)
+class StoreEdit(BaseModel):
+    """매장 정보 고치기. 준 칸만 바꾼다 (화면의 '매장 관리')."""
+    name: str | None = Field(default=None, min_length=1, max_length=40)
+    address: str | None = Field(default=None, max_length=200)      # "" = 위치 지우기
+    close_time: str | None = None
 
 
 def _member(user: auth.User | None) -> auth.User:
@@ -315,13 +318,24 @@ def create_my_store(body: NewStore, user: auth.User | None = Me):
 
 
 @app.patch("/api/my/stores/{store_id}")
-def rename_my_store(store_id: str, body: StoreName, user: auth.User | None = Me):
+def edit_my_store(store_id: str, body: StoreEdit, user: auth.User | None = Me):
+    """매장 이름·주소·영업 종료 시각을 고친다. 주소와 종료 시각은 예측의 재료라서, 바꾼 것은 다음에 분석할 때부터 반영된다
+    (주소가 바뀌면 좌표를 지워 둔다 → 다음 분석에서 새 주소로 위치를 다시 찾는다: run.py의 _store_setup)."""
     user = _member(user)
     _read_only()
     path = _store_dir(store_id) / "store.json"
     auth.check_write(user, store_id, exists=path.exists())
     store = StoreConfig.read(path) if path.exists() else StoreConfig(store_id=store_id)
-    store.name = body.name.strip()
+    if body.name is not None:
+        if not body.name.strip():
+            raise HTTPException(422, "매장 이름을 적어 주세요.")
+        store.name = body.name.strip()
+    if body.close_time is not None:
+        if not re.match(CLOSE_TIME, body.close_time):
+            raise HTTPException(400, "영업 종료 시각은 21:00처럼 적어 주세요.")
+        store.close_time = body.close_time
+    if body.address is not None and body.address.strip() != (store.address or ""):
+        store.address, store.lat, store.lon = body.address.strip() or None, None, None
     path.parent.mkdir(parents=True, exist_ok=True)
     store.write(path)
     return _my_store(store_id, auth.my_stores(user).get(store_id), store_id in auth.my_stores(user))
