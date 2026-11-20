@@ -85,10 +85,10 @@ function HeroMap({ events }: { events: ProgressEvent[] }) {
 function Part({ n, id, title, lead, children }: { n: number; id?: string; title: string; lead: string; children: ReactNode }) {
   return (
     <section id={id} className="scroll-mt-24">
-      <Reveal className="mx-auto max-w-3xl text-center">
+      <Reveal className="mx-auto max-w-4xl text-center">
         <span className="tag bg-surface text-ink-700">예시 {n}</span>
-        <h2 className="mt-3 text-h1">{title}</h2>
-        <p className="mt-3 text-body-lg text-ink-700">{lead}</p>
+        <h2 className="mt-4 text-title">{title}</h2>
+        <p className="mt-4 text-xl leading-8 text-ink-700">{lead}</p>
       </Reveal>
       <Reveal className="mt-10 rounded-3xl border border-line bg-white p-5 sm:p-8">{children}</Reveal>
     </section>
@@ -186,7 +186,7 @@ export function Landing({ login, contactUrl = null }: { login: LoginConfig | nul
       <main className="mx-auto max-w-content space-y-32 px-5 py-24 md:px-10">
         <section>
           <Reveal className="text-center">
-            <h2 className="text-h1">세 단계면 내일 준비표가 완성됩니다</h2>
+            <h2 className="text-title">세 단계면 내일 준비표가 완성됩니다</h2>
           </Reveal>
           <ol className="mt-12 grid gap-5 md:grid-cols-3">
             {HOW.map((h, i) => (
@@ -243,7 +243,7 @@ export function Landing({ login, contactUrl = null }: { login: LoginConfig | nul
 
         <section id="faq" className="scroll-mt-24">
           <Reveal>
-            <h2 className="text-center text-h1">자주 묻는 질문</h2>
+            <h2 className="text-center text-title">자주 묻는 질문</h2>
           </Reveal>
           <Reveal className="mx-auto mt-10 max-w-3xl divide-y divide-line rounded-2xl border border-line bg-white px-6 sm:px-8">
             {FAQ.map((f) => (
@@ -263,7 +263,7 @@ export function Landing({ login, contactUrl = null }: { login: LoginConfig | nul
 
       <section className="bg-ink-900 text-white">
         <div className="mx-auto max-w-content px-5 py-24 text-center md:px-10">
-          <h2 className="text-h1">내 가게로 해 보기</h2>
+          <h2 className="text-title">내 가게로 해 보기</h2>
           {login ? (
             <>
               <p className="mx-auto mt-3 mb-7 max-w-xl text-white/75">

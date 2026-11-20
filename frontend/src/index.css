@@ -40,6 +40,7 @@
   /* 글자 크기 (크기 / 줄 간격 · 굵기 · 자간) */
   --text-display: 64px; --text-display--line-height: 72px; --text-display--font-weight: 700; --text-display--letter-spacing: -0.03em;
   --text-hero: 84px;    --text-hero--line-height: 92px;    --text-hero--font-weight: 700;    --text-hero--letter-spacing: -0.035em;  /* 첫 화면 머리 제목 (명세의 display보다 크게: 11/20 사용자 요청) */
+  --text-title: 56px;   --text-title--line-height: 66px;   --text-title--font-weight: 700;   --text-title--letter-spacing: -0.03em;   /* 첫 화면의 구역 제목 (11/20 사용자 요청으로 h1보다 크게) */
   --text-h1: 40px;      --text-h1--line-height: 48px;      --text-h1--font-weight: 700;      --text-h1--letter-spacing: -0.025em;
   --text-h2: 28px;      --text-h2--line-height: 36px;      --text-h2--font-weight: 700;      --text-h2--letter-spacing: -0.02em;
   --text-h3: 20px;      --text-h3--line-height: 28px;      --text-h3--font-weight: 600;      --text-h3--letter-spacing: -0.01em;
@@ -57,6 +58,7 @@
   :root {
     --text-display: 44px; --text-display--line-height: 52px;
     --text-hero: 46px;    --text-hero--line-height: 54px;
+    --text-title: 32px;   --text-title--line-height: 40px;
     --text-h1: 30px;      --text-h1--line-height: 38px;
     --text-h2: 22px;      --text-h2--line-height: 30px;
   }

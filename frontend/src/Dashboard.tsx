@@ -102,8 +102,9 @@ export function Dashboard({ storeId, storeName, prepMode, readOnly, onReplay }: 
           </p>
           <h2 className="mt-0.5 text-h1">{fmtDate(date)}</h2>
         </div>
-        <PrepToggle storeId={storeId} prepMode={prepMode} readOnly={readOnly} />
       </div>
+
+      <PrepToggle storeId={storeId} prepMode={prepMode} readOnly={readOnly} />
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Tile big label={`${dayPrefix(date)}준비할 개수`} value={`${count(totalPrep)}개`} note={`메뉴 ${fc.rows.length}개`} />

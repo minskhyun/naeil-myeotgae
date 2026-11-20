@@ -48,6 +48,9 @@ export function Notice({ w }: { w: Warning }) {
   )
 }
 
+// 준비 기준마다의 한 줄 풀이 (폐기 줄이기 = 분포의 40% 지점, 균형 = 예상 판매량, 품절 줄이기 = 80% 지점)
+const PREP_HINTS: Record<string, string> = { '폐기 줄이기': '남지 않게 조금 적게', 균형: '예상 판매만큼', '품절 줄이기': '모자라지 않게 넉넉히' }
+
 // 준비 기준(폐기 줄이기 · 균형 · 품절 줄이기) 고르기. 바꾸면 서버가 예측 단계만 다시 돌린다
 //   onPick  주면 서버를 부르지 않고 화면에서만 바꾼다 (보기 전용 예시: 세 기준의 개수를 눌러서 비교)
 export function PrepToggle({ storeId, prepMode, readOnly = false, onPick }: {
@@ -72,27 +75,29 @@ export function PrepToggle({ storeId, prepMode, readOnly = false, onPick }: {
     }
   }
 
+  // 가운데에 크게 둔다: 준비 개수 전체를 바꾸는 선택이라 눈에 잘 띄어야 한다. 기준마다 한 줄 풀이를 붙인다
   return (
-    <div>
-      <p className="mb-1.5 text-sm text-ink-700">
-        준비 기준 {changing && <span className="text-ink-500">· 다시 계산 중</span>}
+    <div className="mx-auto w-full max-w-2xl text-center">
+      <p className="mb-3 text-h3">
+        준비 기준 {changing && <span className="text-base font-normal text-ink-500">· 다시 계산 중</span>}
       </p>
-      <div className="flex overflow-hidden rounded-lg border border-line" role="group" aria-label="준비 기준">
+      <div className="grid grid-cols-3 overflow-hidden rounded-xl border border-ink-900" role="group" aria-label="준비 기준">
         {PREP_MODES.map((m, i) => (
           <button
             key={m}
             disabled={changing || (readOnly && !onPick)}
             onClick={() => choose(m)}
             aria-pressed={m === prepMode}
-            className={`h-10 px-4 text-sm font-medium transition-colors duration-150 ${i > 0 ? 'border-l border-line' : ''} ${
+            className={`flex flex-col items-center justify-center gap-0.5 px-2 py-3.5 transition-colors duration-150 ${i > 0 ? 'border-l border-ink-900' : ''} ${
               m === prepMode ? 'bg-ink-900 text-white' : 'bg-white hover:bg-surface'
             } ${readOnly ? 'disabled:cursor-not-allowed' : 'disabled:cursor-wait'}`}
           >
-            {m}
+            <span className="text-lg font-semibold">{m}</span>
+            <span className={`text-sm ${m === prepMode ? 'text-white/75' : 'text-ink-500'}`}>{PREP_HINTS[m]}</span>
           </button>
         ))}
       </div>
-      {(jobError || job?.status === 'error') && <p className="mt-1 text-sm text-down">{jobError ?? job?.error}</p>}
+      {(jobError || job?.status === 'error') && <p className="mt-2 text-sm text-down">{jobError ?? job?.error}</p>}
     </div>
   )
 }
@@ -299,7 +304,6 @@ export function ForecastView({ storeId, prepMode, readOnly = false, limit }: {
             </ul>
           )}
         </div>
-        <PrepToggle storeId={storeId} prepMode={mode} readOnly={readOnly} onPick={local ? setPicked : undefined} />
       </div>
 
       {data.warnings.length > 0 && (
@@ -309,6 +313,8 @@ export function ForecastView({ storeId, prepMode, readOnly = false, limit }: {
           ))}
         </div>
       )}
+
+      <PrepToggle storeId={storeId} prepMode={mode} readOnly={readOnly} onPick={local ? setPicked : undefined} />
 
       <ForecastTable rows={rows} limit={limit} storeId={storeId} />
 
