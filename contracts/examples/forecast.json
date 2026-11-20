@@ -1,11 +1,11 @@
 {
   "store_id": "sinchon-a",
-  "generated_at": "2026-11-20T14:41:17",
+  "generated_at": "2026-11-20T15:38:58",
   "rows": [
     {
       "date": "2026-11-01",
       "menu": "베이글",
-      "pred": 11.7,
+      "pred": 11.6,
       "p10": 7.0,
       "p90": 17.0,
       "prep_qty": 12,
@@ -18,8 +18,8 @@
       "reasons": [
         {
           "signal": "rain_mm",
-          "effect_pct": -17.9,
-          "text": "비 예보(9.7mm)로 평소보다 약 18% 적게 예상",
+          "effect_pct": -19.0,
+          "text": "비 예보(9.7mm)로 평소보다 약 19% 적게 예상",
           "source_url": "https://www.weather.go.kr"
         }
       ]
@@ -27,9 +27,75 @@
     {
       "date": "2026-11-01",
       "menu": "소금빵",
-      "pred": 30.6,
+      "pred": 32.2,
+      "p10": 23.0,
+      "p90": 42.0,
+      "prep_qty": 32,
+      "prep_by_mode": {
+        "폐기 줄이기": 30,
+        "균형": 32,
+        "품절 줄이기": 39
+      },
+      "model": "M3",
+      "reasons": [
+        {
+          "signal": "rain_mm",
+          "effect_pct": -16.0,
+          "text": "비 예보(9.7mm)로 평소보다 약 16% 적게 예상",
+          "source_url": "https://www.weather.go.kr"
+        }
+      ]
+    },
+    {
+      "date": "2026-11-01",
+      "menu": "식빵",
+      "pred": 10.5,
+      "p10": 6.0,
+      "p90": 15.0,
+      "prep_qty": 11,
+      "prep_by_mode": {
+        "폐기 줄이기": 9,
+        "균형": 11,
+        "품절 줄이기": 13
+      },
+      "model": "M3",
+      "reasons": [
+        {
+          "signal": "rain_mm",
+          "effect_pct": -13.0,
+          "text": "비 예보(9.7mm)로 평소보다 약 13% 적게 예상",
+          "source_url": "https://www.weather.go.kr"
+        }
+      ]
+    },
+    {
+      "date": "2026-11-01",
+      "menu": "아메리카노(HOT)",
+      "pred": 18.9,
+      "p10": 12.0,
+      "p90": 26.0,
+      "prep_qty": 19,
+      "prep_by_mode": {
+        "폐기 줄이기": 17,
+        "균형": 19,
+        "품절 줄이기": 23
+      },
+      "model": "M3",
+      "reasons": [
+        {
+          "signal": "rain_mm",
+          "effect_pct": -18.4,
+          "text": "비 예보(9.7mm)로 평소보다 약 18% 적게 예상",
+          "source_url": "https://www.weather.go.kr"
+        }
+      ]
+    },
+    {
+      "date": "2026-11-01",
+      "menu": "아이스 아메리카노",
+      "pred": 30.7,
       "p10": 21.0,
-      "p90": 40.0,
+      "p90": 41.0,
       "prep_qty": 31,
       "prep_by_mode": {
         "폐기 줄이기": 28,
@@ -40,18 +106,62 @@
       "reasons": [
         {
           "signal": "rain_mm",
-          "effect_pct": -17.9,
-          "text": "비 예보(9.7mm)로 평소보다 약 18% 적게 예상",
+          "effect_pct": -16.4,
+          "text": "비 예보(9.7mm)로 평소보다 약 16% 적게 예상",
           "source_url": "https://www.weather.go.kr"
         }
       ]
     },
     {
       "date": "2026-11-01",
-      "menu": "식빵",
-      "pred": 10.4,
-      "p10": 6.0,
-      "p90": 15.0,
+      "menu": "아이스 카페라떼",
+      "pred": 11.9,
+      "p10": 7.0,
+      "p90": 17.0,
+      "prep_qty": 12,
+      "prep_by_mode": {
+        "폐기 줄이기": 11,
+        "균형": 12,
+        "품절 줄이기": 15
+      },
+      "model": "M3",
+      "reasons": [
+        {
+          "signal": "rain_mm",
+          "effect_pct": -15.9,
+          "text": "비 예보(9.7mm)로 평소보다 약 16% 적게 예상",
+          "source_url": "https://www.weather.go.kr"
+        }
+      ]
+    },
+    {
+      "date": "2026-11-01",
+      "menu": "에그타르트",
+      "pred": 13.4,
+      "p10": 8.0,
+      "p90": 19.0,
+      "prep_qty": 13,
+      "prep_by_mode": {
+        "폐기 줄이기": 12,
+        "균형": 13,
+        "품절 줄이기": 17
+      },
+      "model": "M3",
+      "reasons": [
+        {
+          "signal": "rain_mm",
+          "effect_pct": -16.0,
+          "text": "비 예보(9.7mm)로 평소보다 약 16% 적게 예상",
+          "source_url": "https://www.weather.go.kr"
+        }
+      ]
+    },
+    {
+      "date": "2026-11-01",
+      "menu": "카페라떼(HOT)",
+      "pred": 9.8,
+      "p10": 5.0,
+      "p90": 14.0,
       "prep_qty": 10,
       "prep_by_mode": {
         "폐기 줄이기": 9,
@@ -62,23 +172,23 @@
       "reasons": [
         {
           "signal": "rain_mm",
-          "effect_pct": -13.9,
-          "text": "비 예보(9.7mm)로 평소보다 약 14% 적게 예상",
+          "effect_pct": -18.8,
+          "text": "비 예보(9.7mm)로 평소보다 약 19% 적게 예상",
           "source_url": "https://www.weather.go.kr"
         }
       ]
     },
     {
       "date": "2026-11-01",
-      "menu": "아메리카노(HOT)",
-      "pred": 21.2,
-      "p10": 14.0,
-      "p90": 29.0,
-      "prep_qty": 21,
+      "menu": "크루아상",
+      "pred": 16.7,
+      "p10": 11.0,
+      "p90": 23.0,
+      "prep_qty": 17,
       "prep_by_mode": {
-        "폐기 줄이기": 19,
-        "균형": 21,
-        "품절 줄이기": 26
+        "폐기 줄이기": 15,
+        "균형": 17,
+        "품절 줄이기": 21
       },
       "model": "M3",
       "reasons": [
@@ -92,139 +202,28 @@
     },
     {
       "date": "2026-11-01",
-      "menu": "아이스 아메리카노",
-      "pred": 26.8,
-      "p10": 18.0,
-      "p90": 36.0,
-      "prep_qty": 27,
-      "prep_by_mode": {
-        "폐기 줄이기": 25,
-        "균형": 27,
-        "품절 줄이기": 32
-      },
-      "model": "M3",
-      "reasons": [
-        {
-          "signal": "rain_mm",
-          "effect_pct": -19.6,
-          "text": "비 예보(9.7mm)로 평소보다 약 20% 적게 예상",
-          "source_url": "https://www.weather.go.kr"
-        }
-      ]
-    },
-    {
-      "date": "2026-11-01",
-      "menu": "아이스 카페라떼",
-      "pred": 10.3,
-      "p10": 6.0,
-      "p90": 15.0,
-      "prep_qty": 10,
-      "prep_by_mode": {
-        "폐기 줄이기": 9,
-        "균형": 10,
-        "품절 줄이기": 13
-      },
-      "model": "M3",
-      "reasons": [
-        {
-          "signal": "rain_mm",
-          "effect_pct": -18.7,
-          "text": "비 예보(9.7mm)로 평소보다 약 19% 적게 예상",
-          "source_url": "https://www.weather.go.kr"
-        }
-      ]
-    },
-    {
-      "date": "2026-11-01",
-      "menu": "에그타르트",
-      "pred": 13.0,
+      "menu": "휘낭시에",
+      "pred": 13.3,
       "p10": 8.0,
       "p90": 19.0,
       "prep_qty": 13,
       "prep_by_mode": {
         "폐기 줄이기": 12,
         "균형": 13,
-        "품절 줄이기": 16
+        "품절 줄이기": 17
       },
       "model": "M3",
       "reasons": [
         {
           "signal": "rain_mm",
-          "effect_pct": -17.5,
-          "text": "비 예보(9.7mm)로 평소보다 약 17% 적게 예상",
-          "source_url": "https://www.weather.go.kr"
-        }
-      ]
-    },
-    {
-      "date": "2026-11-01",
-      "menu": "카페라떼(HOT)",
-      "pred": 10.7,
-      "p10": 6.0,
-      "p90": 16.0,
-      "prep_qty": 11,
-      "prep_by_mode": {
-        "폐기 줄이기": 10,
-        "균형": 11,
-        "품절 줄이기": 14
-      },
-      "model": "M3",
-      "reasons": [
-        {
-          "signal": "rain_mm",
-          "effect_pct": -17.3,
-          "text": "비 예보(9.7mm)로 평소보다 약 17% 적게 예상",
-          "source_url": "https://www.weather.go.kr"
-        }
-      ]
-    },
-    {
-      "date": "2026-11-01",
-      "menu": "크루아상",
-      "pred": 16.2,
-      "p10": 10.0,
-      "p90": 23.0,
-      "prep_qty": 16,
-      "prep_by_mode": {
-        "폐기 줄이기": 15,
-        "균형": 16,
-        "품절 줄이기": 20
-      },
-      "model": "M3",
-      "reasons": [
-        {
-          "signal": "rain_mm",
-          "effect_pct": -18.2,
+          "effect_pct": -17.9,
           "text": "비 예보(9.7mm)로 평소보다 약 18% 적게 예상",
-          "source_url": "https://www.weather.go.kr"
-        }
-      ]
-    },
-    {
-      "date": "2026-11-01",
-      "menu": "휘낭시에",
-      "pred": 12.4,
-      "p10": 7.0,
-      "p90": 18.0,
-      "prep_qty": 12,
-      "prep_by_mode": {
-        "폐기 줄이기": 11,
-        "균형": 12,
-        "품절 줄이기": 16
-      },
-      "model": "M3",
-      "reasons": [
-        {
-          "signal": "rain_mm",
-          "effect_pct": -18.7,
-          "text": "비 예보(9.7mm)로 평소보다 약 19% 적게 예상",
           "source_url": "https://www.weather.go.kr"
         }
       ]
     }
   ],
   "signals_used": [
-    "temp_diff",
     "rain_mm",
     "vacation",
     "vacation_diff"
@@ -257,7 +256,7 @@
           "quote": "지난해 같은 행사에 약 3만 명이 찾았다고 설명했다."
         }
       ],
-      "message": "11월 1일 정오부터 오후 8시까지 신촌 연세로에서 큰 가을 축제가 열려 손님이 평소보다 많아질 수 있으니, 비 소식도 함께 살피며 준비량을 넉넉히 검토해 보세요."
+      "message": "11월 1일 정오부터 오후 8시까지 신촌 연세로에서 많은 사람이 찾는 가을 축제가 열리니, 비 소식이 있더라도 손님이 평소보다 늘어날 수 있다는 점에 주의해 주세요."
     }
   ]
 }

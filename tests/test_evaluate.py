@@ -49,7 +49,7 @@ def _days(n, start="2026-01-01"):
 
 def test_plan_normal_one_year():
     p = plan_folds(_days(365))
-    assert not p.short and len(p.folds) == 4
+    assert not p.short and len(p.folds) == 8          # 기록이 길면 검증 구간 8개 (짧으면 4개: 아래)
     assert p.test == (pd.Timestamp("2026-12-04"), pd.Timestamp("2026-12-31"))          # 마지막 28일
     assert p.folds[-1][1] == p.test[0] - pd.Timedelta(days=1)                           # 테스트 바로 앞까지 검증
     for (s1, e1), (s2, _) in zip(p.folds, p.folds[1:]):

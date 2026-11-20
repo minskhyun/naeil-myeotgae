@@ -90,7 +90,7 @@ def test_demo_data_follows_contracts():
     from contracts.schemas import BacktestResult, Forecast, SalesHistory, SourceReport
     folder = Path(main.__file__).resolve().parents[1] / "demo_data"
     stores = sorted(d.name for d in folder.iterdir() if d.is_dir())
-    assert stores == ["fr-bakery", "sinchon-a"]
+    assert stores == ["sinchon-a"]                      # 시연 사이트에는 신촌 가상 매장만 둔다
     for s in stores:
         Forecast.model_validate_json((folder / s / "forecast.json").read_text(encoding="utf-8"))
         SourceReport.model_validate_json((folder / s / "sources_report.json").read_text(encoding="utf-8"))

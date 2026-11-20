@@ -159,7 +159,7 @@ export function AnalysisView({ events, status, error, log, onClose, replay = fal
                 : (<>
                     {find('status')?.text ?? '시작하는 중'}<span className="nm-blink">…</span>
                     {status === 'running' && seconds >= 5 && (
-                      <span className="ml-3 text-sm text-ink-500">{seconds >= 60 ? `${Math.floor(seconds / 60)}분 ` : ''}{seconds % 60}초째 · 보통 2~3분 걸려요</span>
+                      <span className="ml-3 text-sm text-ink-500">{seconds >= 60 ? `${Math.floor(seconds / 60)}분 ` : ''}{seconds % 60}초째 · 보통 2~3분, 기록이 열 달을 넘으면 6분쯤 걸려요</span>
                     )}
                   </>)}
           </p>

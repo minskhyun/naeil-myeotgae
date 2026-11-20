@@ -33,7 +33,7 @@ const METHOD = [
 // 주변 정보를 쓸지 정하는 규칙 (ml/evaluate.py의 beats · pick_combo, ml/features.py의 시점 규칙)
 const RULES = [
   { art: 'gain', title: '오차가 3% 이상 줄어야 해요', text: '아무 관계 없는 숫자를 넣어도 오차는 1~2% 흔들려요. 그보다 커야 믿어요.' },
-  { art: 'folds', title: '절반이 넘는 기간에서 나아져야 해요', text: '한 기간에서만 좋았던 정보는 쓰지 않아요.' },
+  { art: 'folds', title: '절반이 넘는 기간에서 나아져야 해요', text: '그 정보의 값이 바뀐 기간만 세요. 한 기간에서만 좋았던 정보는 쓰지 않아요.' },
   { art: 'alone', title: '다른 정보에 얹혀 가면 안 돼요', text: '하나씩 빼 보고, 빼면 나빠지는 정보만 남겨요.' },
   { art: 'cutoff', title: '그때 몰랐던 정보는 쓰지 않아요', text: '전날 영업이 끝날 때까지 공개된 정보로만 예측해요. 지난 날짜 시험도 마찬가지예요.' },
 ]

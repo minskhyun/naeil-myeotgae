@@ -99,7 +99,7 @@ backend/
 - collectors/stores.json: 수집기만 따로 실행할 때의 매장 목록 (신촌 예시 매장)
 - data/external_daily.csv, data/events.json, data/stores/shinchon-cafe-a_nearby.json·_sources.json: 수집기만 따로 실행한 신촌 예시 결과 (실제 매장 결과는 data/artifacts/{매장}/collectors/에 생김)
 - data/raw/academic/: 학사일정 원문 텍스트 8개 / data/raw/seoul_culture/ (커밋 안 함): 서울 행사 원본 / data/llm_cache/ (커밋 안 함): 수집기 LLM 응답 저장
-- demo_data/sinchon-a/·fr-bakery/: 시연 사이트용 미리 계산한 결과 (forecast.json, backtest.json, sources_report.json, store.json)
+- demo_data/sinchon-a/: 시연 사이트용 미리 계산한 결과 (forecast.json, backtest.json, sources_report.json, store.json)
 
 frontend/
 - index.html: 화면 시작 페이지(제목·글꼴) / vite.config.ts: /api 프록시

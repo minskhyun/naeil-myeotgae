@@ -152,13 +152,13 @@ def test_run_backtest_full_sample(sample, tmp_path):
     by_group = {d.signal_group: d for d in bt.decisions}
     assert list(by_group) == ["temp", "rain", "exam", "vacation", "festival", "nearby", "trend", "special"]
     assert by_group["trend"].folds_total == 0 == by_group["special"].folds_total   # 유행·기념일 신호는 가상 데이터에 없음
-    assert by_group["temp"].folds_total == 4                                       # 기온은 평가됐다
+    assert by_group["temp"].folds_total == 8                                       # 기온은 모든 구간에서 값이 바뀐다
     assert [s.model for s in bt.cv_scores][:2] == ["M0", "M1"]
-    assert len(bt.folds) == 4 and bt.test_period is not None
+    assert len(bt.folds) == 8 and bt.test_period is not None
     assert [s.model for s in bt.test_scores] == ["M0", bt.chosen_model]
     assert bt.folds[-1][1] < bt.test_period[0]              # 검증은 모두 최종 테스트 전
     cal = bt.calibration
-    assert cal.folds_total == 3 and cal.reason in bt.data_note
+    assert cal.folds_total == 7 and cal.reason in bt.data_note
     if cal.adopted:                                         # 채택되면 이동량·테스트 효과가 기록됨
         assert cal.shifts and cal.test_coverage_after is not None
     else:                                                   # 아니면 비어 있음
@@ -226,7 +226,7 @@ def _family_case():
     """기온(날씨 분야의 묶음 하나) + 시험기간·방학(학사일정·행사 분야의 묶음 둘)이 있는 매장."""
     days = pd.date_range("2026-01-01", periods=8)
     frame = pd.DataFrame({"date": days, "temp_diff": range(8), "exam_period": [0, 1] * 4, "vacation": [1, 0] * 4})
-    plan = FoldPlan(folds=[(days[0], days[-1])], test=None, short=False, note="")
+    plan = FoldPlan(folds=[(days[i], days[i + 1]) for i in (0, 2, 4, 6)], test=None, short=False, note="")   # 구간 넷, 구간마다 값이 바뀐다
     sc = lambda wape, folds: {"wape": wape, "wape_by_fold": folds}      # noqa: E731
     return frame, plan, sc
 
@@ -291,3 +291,19 @@ def test_family_names_still_work_as_groups():
     assert signals_in(["events", "weather"], frame) == SIGNAL_ORDER[:10]       # 묶음을 어떤 순서로 주든 열 순서는 같다
     with pytest.raises(KeyError):
         expand(["없는묶음"])
+
+
+def test_folds_are_counted_only_where_the_signal_changes():
+    """개선된 구간은 그 정보의 값이 바뀌는 구간에서만 센다 (값이 그대로인 구간의 오르내림은 우연이다)."""
+    from ml.evaluate import beats
+    before = {"wape": 0.300, "wape_by_fold": [0.30, 0.30, 0.30, 0.30]}
+    after = {"wape": 0.285, "wape_by_fold": [0.24, 0.31, 0.31, 0.28]}          # 전체 5% 감소, 4구간 중 2구간 개선
+    assert beats(after, before)[0] is False                                    # 모든 구간을 세면 과반이 아니다
+    assert beats(after, before, [True, False, False, True])[:2] == (True, 2)   # 값이 바뀐 두 구간에서는 모두 개선
+    assert beats(after, before, [False, True, True, False])[0] is False        # 값이 바뀐 구간에서는 나빠졌다
+    assert beats(after, before, [False] * 4)[0] is False                       # 바뀌는 구간이 없으면 통과할 수 없다
+    assert beats(after, before, [True, False, False, False])[0] is False       # 바뀌는 구간이 한 곳뿐이면 한 기간만 보고 정하지 않는다
+    one = {"wape": 0.300, "wape_by_fold": [0.30]}                               # 검증 구간이 하나뿐인 짧은 기록은 그 하나로 정한다
+    assert beats({"wape": 0.280, "wape_by_fold": [0.28]}, one)[0] is True
+    d = decide("special", ["special_day"], before, after, mask=[True, False, False, True])
+    assert d["adopted"] and d["folds_total"] == 2 and "값이 바뀐 2개 구간 중 2개" in d["reason"]
